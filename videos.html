@@ -55,6 +55,13 @@
     .player-meta p{color:var(--muted);font-size:.78rem;margin-top:4px}
     .list-head{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--border);font-weight:800;color:#16324f}
     .list-head .count{margin-left:auto;font-size:.75rem;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--primary),var(--secondary));padding:3px 10px;border-radius:999px}
+    .sort-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);background:rgba(37,99,235,.04)}
+    .sort-bar label{font-size:.78rem;font-weight:700;color:#5b6b7f;white-space:nowrap}
+    .sort-bar select{
+      flex:1;min-height:40px;font-family:inherit;font-size:.85rem;font-weight:700;color:#1f2a3d;
+      border:1px solid rgba(37,99,235,.25);border-radius:12px;padding:6px 10px;background:#fff;cursor:pointer;
+    }
+    .sort-bar select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
     .playlist{max-height:62vh;overflow:auto;padding:8px}
     .pl-item{
       display:grid;grid-template-columns:92px 1fr;gap:10px;align-items:center;width:100%;text-align:left;
@@ -113,6 +120,15 @@
       </div>
       <div class="list-card">
         <div class="list-head"><i class="fa-solid fa-list-ul"></i> เพลย์ลิสต์ <span class="count" id="videoCount">0 คลิป</span></div>
+        <div class="sort-bar">
+          <label for="sortSelect"><i class="fa-solid fa-arrow-down-wide-short"></i> เรียงตาม</label>
+          <select id="sortSelect" onchange="applySort()">
+            <option value="date_asc" selected>วันที่เพิ่ม: เก่าสุด → ใหม่สุด</option>
+            <option value="date_desc">วันที่เพิ่ม: ใหม่สุด → เก่าสุด</option>
+            <option value="name_asc">ชื่อคลิป: แรก → หลัง (ก-ฮ, A-Z)</option>
+            <option value="name_desc">ชื่อคลิป: หลัง → แรก (ฮ-ก, Z-A)</option>
+          </select>
+        </div>
         <div class="playlist" id="playlist"><div class="loading"><i class="fa-solid fa-rotate"></i>กำลังโหลดรายการวิดีโอ...</div></div>
       </div>
     </div>
@@ -175,6 +191,7 @@ async function loadPlaylist() {
     if (!response.ok) throw new Error('เชื่อมต่อ Google Drive ไม่สำเร็จ (HTTP ' + response.status + ') — ตรวจสอบ API Key และการเปิดใช้ Drive API');
     const data = await response.json();
     videos = data.files || [];
+    sortVideos();
     document.getElementById('videoCount').textContent = videos.length.toLocaleString('th-TH') + ' คลิป';
     document.getElementById('lastUpdated').textContent = 'อัปเดตล่าสุด ' + new Date().toLocaleString('th-TH', { timeZone:'Asia/Bangkok', hour12:false });
     if (!videos.length) {
@@ -186,6 +203,21 @@ async function loadPlaylist() {
   } catch (error) {
     list.innerHTML = '<div class="empty"><i class="fa-solid fa-circle-exclamation"></i> ' + error.message + '</div>';
   }
+}
+
+function sortVideos() {
+  const mode = document.getElementById('sortSelect').value;
+  const byName = (a, b) => String(a.name).localeCompare(String(b.name), 'th', { numeric: true, sensitivity: 'base' });
+  const byDate = (a, b) => new Date(a.createdTime) - new Date(b.createdTime);
+  if (mode === 'date_asc') videos.sort(byDate);
+  else if (mode === 'date_desc') videos.sort((a, b) => byDate(b, a));
+  else if (mode === 'name_asc') videos.sort(byName);
+  else if (mode === 'name_desc') videos.sort((a, b) => byName(b, a));
+}
+
+function applySort() {
+  sortVideos();
+  renderPlaylist();
 }
 
 function renderPlaylist() {
