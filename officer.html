@@ -10,9 +10,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -1619,7 +1622,10 @@
       if (state.accidentMap) return;
       state.accidentMap = L.map('accidentMap').setView(NAKHON_SAWAN_CENTER,12);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19,attribution:'&copy; OpenStreetMap contributors' }).addTo(state.accidentMap);
-      state.accidentLayer = L.layerGroup().addTo(state.accidentMap);
+      // รวมจุดใกล้กันเป็นวงกลมตัวเลข (คลิก/ซูมเพื่อแตกเป็นจุดย่อย) — ถ้าปลั๊กอินโหลดไม่ได้ใช้เลเยอร์ธรรมดา
+      state.accidentLayer = (typeof L.markerClusterGroup === 'function')
+        ? L.markerClusterGroup({ maxClusterRadius: 45, spiderfyOnMaxZoom: true, showCoverageOnHover: false, disableClusteringAtZoom: 17 }).addTo(state.accidentMap)
+        : L.layerGroup().addTo(state.accidentMap);
     }
     async function loadMapData() {
       initAccidentMap();
@@ -1692,8 +1698,12 @@
     function focusMapMarker(index) {
       const item = state.mapItems[index], marker = state.mapMarkers[index];
       if (!item || !marker) return;
-      state.accidentMap.setView([item.latitude,item.longitude],17,{animate:true});
-      marker.openPopup();
+      if (typeof state.accidentLayer.zoomToShowLayer === 'function') {
+        state.accidentLayer.zoomToShowLayer(marker, () => marker.openPopup());
+      } else {
+        state.accidentMap.setView([item.latitude,item.longitude],17,{animate:true});
+        marker.openPopup();
+      }
       document.getElementById('accidentMap').scrollIntoView({behavior:'smooth',block:'center'});
     }
     function markerBadge(type) {
