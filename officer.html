@@ -607,7 +607,8 @@
       const [accRows, injuryRows, deathDates] = await Promise.all([fetchAccidents(true), fetchInjuries(true), fetchDeathDates(true)]);
       const now = new Date();
       const yesterday = new Date(now.getTime() - 24*60*60*1000);
-      const accDates = accRows.map(r => r.incident_datetime).filter(Boolean);
+      // ระบบเดิมนับสถิติจากวันที่บันทึกข้อมูล (timestamp ในชีท) ไม่ใช่วันเกิดเหตุ
+      const accDates = accRows.map(r => r.recorded_at || r.incident_datetime).filter(Boolean);
       const countBy = (dates, mode, target) => dates.filter(d => samePeriod(d, target, mode)).length;
       const injuryCounts = (mode, target) => {
         const result = { 'สาหัส':0, 'หมดสติ':0, 'เล็กน้อย':0, total:0 };
@@ -657,7 +658,7 @@
       safetyOptions.forEach(s => safetyInjuryMatrix[s] = zeroCounts(injuries));
 
       rows.forEach(row => {
-        const ym = bkkYearMonth(row.incident_datetime);
+        const ym = bkkYearMonth(row.recorded_at || row.incident_datetime);
         if (!ym) return;
         if (!yearMonthCounts[ym.year]) yearMonthCounts[ym.year] = Array(12).fill(0);
         yearMonthCounts[ym.year][ym.month - 1]++;
@@ -710,13 +711,18 @@
     /* ============ Map data ============ */
     async function computeMapData(startDate, endDate) {
       const rows = await fetchAccidents();
-      const items = rows.filter(row => {
-        if (!row.incident_datetime) return false;
-        const local = bkkStamp(row.incident_datetime, 'day');
+      // ระบบเดิมกรองช่วงวันที่จากวันที่บันทึกข้อมูล (timestamp ในชีท) ไม่ใช่วันเกิดเหตุ
+      const inRange = rows.filter(row => {
+        const stampSrc = row.recorded_at || row.incident_datetime;
+        if (!stampSrc) return false;
+        const local = bkkStamp(stampSrc, 'day');
         if (startDate && local < startDate) return false;
         if (endDate && local > endDate) return false;
-        return Number.isFinite(Number(row.latitude)) && Number.isFinite(Number(row.longitude)) && row.latitude !== null;
-      }).map(row => {
+        return true;
+      });
+      const items = inRange.filter(row =>
+        Number.isFinite(Number(row.latitude)) && Number.isFinite(Number(row.longitude)) && row.latitude !== null
+      ).map(row => {
         const severity = worstSeverityOf(row);
         let markerType = 'gray';
         if (['เสียชีวิต','หมดสติ','สาหัส'].includes(severity)) markerType = 'red';
@@ -734,7 +740,8 @@
           images: Array.isArray(row.images) ? row.images.filter(Boolean) : []
         };
       }).sort((a,b) => String(b.date).localeCompare(String(a.date)));
-      return { success:true, total:items.length, data:items };
+      // total นับทุกแถวในช่วงวันที่ (รวมที่ไม่มีพิกัด) เหมือนระบบเดิม
+      return { success:true, total:inRange.length, data:items };
     }
 
     /* ============ Session ============ */
