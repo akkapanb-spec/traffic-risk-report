@@ -13,6 +13,8 @@
 | `index.html` | เว็บทั้งหมด (ฟอร์มแจ้ง, ตารางข้อมูล, Dashboard, สถิติผู้เสียชีวิต, แผนที่) |
 | `sql/schema.sql` | สร้างตาราง + RLS ใน Supabase |
 | `sql/storage.sql` | สร้าง bucket เก็บรูปภาพ + สิทธิ์อัปโหลด |
+| `sql/import_data.sql` | นำเข้าข้อมูลเดิมทั้งหมด + สลับ URL รูปเป็น Storage |
+| `sync.html` | หน้าผู้ดูแล: ดึงข้อมูลใหม่จากระบบ GAS เดิมมาเทียบ แล้วสร้าง SQL ส่วนต่าง |
 | `data/risk_points_clean.csv` | ข้อมูลจุดเสี่ยงที่แปลงพร้อม import แล้ว |
 | `MIGRATION_GUIDE.md` | คู่มือ migrate ทีละขั้นตอน |
 | `SYNC_PLAN.md` | แผน sync ข้อมูลช่วงเปลี่ยนระบบ |

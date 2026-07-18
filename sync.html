@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sync ข้อมูลจากระบบเดิม — สภ.เมืองนครสวรรค์</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Segoe UI','Noto Sans Thai',Tahoma,sans-serif; background: linear-gradient(180deg,#eff6ff 0%,#fdf2f8 60%,#fff 100%); min-height: 100vh; }
+    .card { background: rgba(255,255,255,.92); border: 1px solid rgba(15,23,42,.10); border-radius: 20px; box-shadow: 0 14px 36px rgba(15,23,42,.10); }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+<div class="max-w-4xl mx-auto space-y-6">
+  <div class="card p-6">
+    <h1 class="text-2xl font-bold text-blue-900 mb-1">🔄 Sync ข้อมูลจากระบบเดิม (Google Sheet)</h1>
+    <p class="text-gray-600 text-sm">สำหรับผู้ดูแลระบบ — ใช้ช่วงเปลี่ยนผ่าน หากมีคนแจ้งจุดเสี่ยง/แก้สถานะในระบบ GAS เดิม
+    กดปุ่มด้านล่างเพื่อเปรียบเทียบและสร้างคำสั่ง SQL เฉพาะข้อมูลที่ยังไม่มีใน Supabase</p>
+    <button id="btnCheck" onclick="runSync()" class="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold px-6 py-3 rounded-xl shadow hover:opacity-90">
+      ตรวจสอบข้อมูลใหม่จากระบบเดิม
+    </button>
+    <div id="status" class="mt-4 text-sm text-gray-700 whitespace-pre-line"></div>
+  </div>
+
+  <div id="resultCard" class="card p-6 hidden">
+    <h2 class="text-lg font-bold text-gray-800 mb-2">ผลการเปรียบเทียบ</h2>
+    <ul id="summary" class="text-sm text-gray-700 list-disc pl-5 mb-4"></ul>
+    <div id="sqlWrap" class="hidden">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-semibold text-gray-800">SQL สำหรับนำเข้าส่วนต่าง</h3>
+        <button onclick="copySQL()" class="bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-green-700">📋 คัดลอก SQL</button>
+      </div>
+      <textarea id="sqlOut" class="w-full h-72 border rounded-xl p-3 text-xs font-mono bg-gray-50" readonly></textarea>
+      <p class="text-sm text-gray-600 mt-2">นำไปวางใน <b>Supabase → SQL Editor → New query</b> แล้วกด Run
+      (รูปภาพของรายการใหม่ยังชี้ไป Google Drive เดิม — แสดงผลได้ปกติ และย้ายเข้า Storage ทีหลังได้)</p>
+    </div>
+    <div id="noDiff" class="hidden text-green-700 font-semibold">✅ ข้อมูลตรงกันทั้งหมด ไม่มีอะไรต้อง Sync</div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxw2NKena6ZUKU7hPS25a71lcvV0ZiuMT3rwaSI0BzAjqAgHObEbQ4rycCL5i7MdoEL/exec';
+const OLD_SHEET_ID = '1ZRaMIkYdH7yO3Iy1f_RiIZQ3qYtDqrvXMM9ZFO1p60M';
+const db = window.supabase.createClient(
+  'https://ftpruljwwsmvipfcedyk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0cHJ1bGp3d3NtdmlwZmNlZHlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTM5ODgsImV4cCI6MjA5OTkyOTk4OH0.CQDf2PUO5hjsamJojOfLMuqobwL0d8EbXxMT-2EdAts'
+);
+
+function setStatus(msg) { document.getElementById('status').textContent = msg; }
+function esc(s) { return String(s ?? '').replace(/'/g, "''").trim(); }
+function sqlStr(s) { const v = String(s ?? '').trim(); return v ? `'${esc(v)}'` : 'null'; }
+
+// แปลงวันที่จากชีต ("12/8/2568, 13:42:06" หรือ "01/09/2025 7:17:44") → ISO +07
+function parseSheetDate(s) {
+  if (!s) return null;
+  const m = String(s).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s*,?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return null;
+  let [, d, mo, y, h, mi, se] = m.map(Number);
+  if (isNaN(se)) se = 0;
+  if (y > 2400) y -= 543;
+  const pad = n => String(n).padStart(2, '0');
+  return `${y}-${pad(mo)}-${pad(d)}T${pad(h)}:${pad(mi)}:${pad(se)}+07:00`;
+}
+function epochOf(iso) { const t = new Date(iso).getTime(); return isNaN(t) ? null : t; }
+
+async function gasPost(params) {
+  const res = await fetch(GAS_URL, { method: 'POST', body: new URLSearchParams(params) });
+  if (!res.ok) throw new Error('เชื่อมต่อระบบเดิมไม่สำเร็จ (HTTP ' + res.status + ')');
+  return res.json();
+}
+
+async function runSync() {
+  const btn = document.getElementById('btnCheck');
+  btn.disabled = true;
+  document.getElementById('resultCard').classList.add('hidden');
+  try {
+    setStatus('⏳ กำลังดึงข้อมูลจุดเสี่ยงจากระบบเดิม...');
+    const gasRisk = await gasPost({ action: 'getRiskData', sheetId: OLD_SHEET_ID });
+    if (!gasRisk.success || !Array.isArray(gasRisk.data)) throw new Error('อ่านข้อมูลจากระบบเดิมไม่ได้: ' + (gasRisk.message || ''));
+    const sheetRows = gasRisk.data;
+
+    setStatus('⏳ กำลังดึงข้อมูลจาก Supabase...');
+    const { data: sbRisk, error: e1 } = await db.from('risk_points').select('*');
+    if (e1) throw e1;
+    const { data: sbActs, error: e2 } = await db.from('risk_actions').select('*');
+    if (e2) throw e2;
+
+    // ---------- เทียบจุดเสี่ยง ----------
+    const sbByEpoch = new Map();
+    sbRisk.forEach(r => { const t = epochOf(r.registration_date); if (t) sbByEpoch.set(t, r); });
+    const sbLocKeys = new Set(sbRisk.map(r => `${(r.location||'').trim()}|${(r.road||'').trim()}`));
+
+    const sqls = [];
+    let newPoints = 0, statusUpdates = 0, newActions = 0;
+
+    sheetRows.forEach(row => {
+      const iso = parseSheetDate(row[0]);
+      const t = iso ? epochOf(iso) : null;
+      const loc = (row[1]||'').trim(), road = (row[2]||'').trim(), status = (row[11]||'ยังไม่ได้ดำเนินการ').trim();
+      const matched = t ? sbByEpoch.get(t) : null;
+      if (matched) {
+        if ((matched.status||'').trim() !== status) {
+          sqls.push(`update risk_points set status = ${sqlStr(status)} where id = ${matched.id};  -- ${loc}`);
+          statusUpdates++;
+        }
+      } else if (t || !sbLocKeys.has(`${loc}|${road}`)) {
+        const dateSql = iso ? `'${iso.replace('T',' ').replace('+07:00','+07')}'` : 'now()';
+        sqls.push(
+          `insert into risk_points (registration_date, location, road, village, subdistrict, district, province, coordinates, additional_details, image1_url, image2_url, status) values (` +
+          `${dateSql}, ${sqlStr(loc)}, ${sqlStr(road)}, ${sqlStr(row[3])}, ${sqlStr(row[4])}, ${sqlStr(row[5])}, ${sqlStr(row[6])}, ${sqlStr(row[7])}, ${sqlStr(row[8])}, ${sqlStr(row[9])}, ${sqlStr(row[10])}, ${sqlStr(status)});`
+        );
+        newPoints++;
+      }
+    });
+
+    // ---------- เทียบข้อมูลการดำเนินการ (ดึงต่อ location) ----------
+    setStatus('⏳ กำลังเทียบข้อมูลการดำเนินการ...');
+    const actKey = r => `${(r.location||'').trim()}|${(r.road||'').trim()}|${(r.detail||'').trim()}`;
+    const sbActKeys = new Set(sbActs.map(actKey));
+    const seenPairs = new Set();
+    for (const row of sheetRows) {
+      const loc = (row[1]||'').trim(), road = (row[2]||'').trim();
+      const pair = `${loc}|${road}`;
+      if (!loc || seenPairs.has(pair)) continue;
+      seenPairs.add(pair);
+      try {
+        const res = await gasPost({ action: 'getActionData', sheetId: OLD_SHEET_ID, location: loc, road: road });
+        if (res.success && Array.isArray(res.data)) {
+          res.data.forEach(a => {
+            const k = `${(a[1]||'').trim()}|${(a[2]||'').trim()}|${(a[5]||'').trim()}`;
+            if (!sbActKeys.has(k)) {
+              const iso = parseSheetDate(a[0]);
+              const dateSql = iso ? `'${iso.replace('T',' ').replace('+07:00','+07')}'` : 'null';
+              sqls.push(
+                `insert into risk_actions (action_date, location, road, image1_url, image2_url, detail) values (` +
+                `${dateSql}, ${sqlStr(a[1])}, ${sqlStr(a[2])}, ${sqlStr(a[3])}, ${sqlStr(a[4])}, ${sqlStr(a[5])});`
+              );
+              sbActKeys.add(k);
+              newActions++;
+            }
+          });
+        }
+      } catch (e) { console.warn('getActionData fail:', loc, e); }
+    }
+
+    // ---------- แสดงผล ----------
+    setStatus('');
+    document.getElementById('resultCard').classList.remove('hidden');
+    const summary = document.getElementById('summary');
+    summary.innerHTML = `
+      <li>ระบบเดิมมีจุดเสี่ยง ${sheetRows.length} รายการ | Supabase มี ${sbRisk.length} รายการ</li>
+      <li>จุดเสี่ยงใหม่ที่ยังไม่มีใน Supabase: <b>${newPoints}</b> รายการ</li>
+      <li>สถานะที่ถูกแก้ไขในระบบเดิม: <b>${statusUpdates}</b> รายการ</li>
+      <li>ข้อมูลการดำเนินการใหม่: <b>${newActions}</b> รายการ</li>`;
+    if (sqls.length) {
+      document.getElementById('sqlWrap').classList.remove('hidden');
+      document.getElementById('noDiff').classList.add('hidden');
+      document.getElementById('sqlOut').value =
+        '-- Sync จากระบบเดิม ' + new Date().toLocaleString('th-TH') + '\n' + sqls.join('\n');
+    } else {
+      document.getElementById('sqlWrap').classList.add('hidden');
+      document.getElementById('noDiff').classList.remove('hidden');
+    }
+  } catch (err) {
+    setStatus('❌ เกิดข้อผิดพลาด: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function copySQL() {
+  const ta = document.getElementById('sqlOut');
+  ta.select();
+  navigator.clipboard.writeText(ta.value).then(() => alert('คัดลอก SQL แล้ว — นำไปวางใน Supabase SQL Editor ได้เลย'));
+}
+</script>
+</body>
+</html>
