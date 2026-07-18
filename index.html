@@ -356,7 +356,7 @@ canvas{max-width:100%!important;}
   <!-- Navigation Tabs V6 Professional SVG -->
 <div class="nav-menu-v6">
 
-  <button class="nav-tab-v6 active" onclick="showTab('report', this)">
+  <button class="nav-tab-v6" onclick="showTab('report', this)">
     <span class="nav-icon-v6">
       <svg viewBox="0 0 64 64">
         <path d="M32 6 L60 56 H4 Z" fill="#ef4444"/>
@@ -393,7 +393,7 @@ canvas{max-width:100%!important;}
     <span>ข้อมูลจุดเสี่ยง สถานะ และแผนที่พร้อมพิกัด</span>
   </button>
 
-  <button class="nav-tab-v6" onclick="showTab('dashboard', this)">
+  <button class="nav-tab-v6 active" onclick="showTab('dashboard', this)">
     <span class="nav-icon-v6">
       <svg viewBox="0 0 64 64">
         <rect x="10" y="12" width="44" height="40" rx="6" fill="#7c3aed"/>
@@ -436,7 +436,7 @@ canvas{max-width:100%!important;}
   <!-- Main Content -->
   <div class="glass-effect rounded-2xl p-8 shadow-2xl">
     <!-- Report Tab -->
-    <div id="reportTab">
+    <div id="reportTab" style="display: none;">
       <form id="riskReportForm" class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div><label class="block text-sm font-semibold text-gray-700 mb-2"><i class="fas fa-calendar-alt icon-header mr-2"></i>วันที่ลงทะเบียน</label><input type="text" id="registrationDate" class="form-input w-full px-4 py-3 rounded-lg" readonly></div>
@@ -498,8 +498,8 @@ canvas{max-width:100%!important;}
       </div>
     </div>
 
-    <!-- Dashboard Tab -->
-    <div id="dashboardTab" style="display: none;">
+    <!-- Dashboard Tab (หน้าเริ่มต้น) -->
+    <div id="dashboardTab">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-gray-800"><img src="https://img.icons8.com/color/48/000000/dashboard.png" class="w-8 h-8 inline mr-3">DASHBOARD สถิติข้อมูล</h2>
         <div class="flex gap-4">
@@ -628,6 +628,7 @@ let cachedDeathRows = null;
 
 document.addEventListener('DOMContentLoaded', function() {
   updateDateTime(); setInterval(updateDateTime, 1000); setupEventListeners();
+  setTimeout(() => initializeDashboard(), 100); // หน้าเริ่มต้นคือ Dashboard
 });
 
 function getThaiDateTime() {
