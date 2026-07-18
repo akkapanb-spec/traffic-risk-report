@@ -502,7 +502,14 @@
         if (result.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
         throw new Error(result.message || 'ดึงข้อมูลไม่สำเร็จ');
       }
-      state.accidentRows = result.data || [];
+      state.accidentRows = (result.data || []).map(row => {
+        // ข้อมูลเก่าบางแถวเก็บ passengers เป็น {} — แปลงให้เป็น array เสมอ
+        ['party1','party2'].forEach(k => {
+          const p = row[k];
+          if (p && !Array.isArray(p.passengers)) p.passengers = [];
+        });
+        return row;
+      });
       return state.accidentRows;
     }
 
