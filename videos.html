@@ -166,7 +166,7 @@ async function loadPlaylist() {
       q: "'" + DRIVE_FOLDER_ID + "' in parents and mimeType contains 'video/' and trashed=false",
       key: GOOGLE_API_KEY,
       fields: 'files(id,name,createdTime,modifiedTime,thumbnailLink)',
-      orderBy: 'createdTime desc',
+      orderBy: 'createdTime',
       pageSize: '200',
       supportsAllDrives: 'true',
       includeItemsFromAllDrives: 'true'
