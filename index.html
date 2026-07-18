@@ -324,7 +324,19 @@ canvas{max-width:100%!important;}
 /* สถิติสไตล์หน้าเจ้าหน้าที่ (แทนการ์ดอุบัติเหตุ/บาดเจ็บ/เสียชีวิตเดิม) */
 .stats-zone{margin-bottom:18px}
 .zone-title{font-weight:800;color:#16324f;margin:0 0 10px;font-size:1.05rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.zone-title .zone-hint{font-size:.72rem;font-weight:700;color:#7c8aa0}
+.zone-title .zone-hint{
+  font-size:.72rem;font-weight:800;color:#fff;
+  background:linear-gradient(135deg,#c1122f,#e11d48);
+  padding:4px 12px;border-radius:999px;
+  display:inline-flex;align-items:center;gap:6px;
+  animation:hint-blink 1.6s infinite;
+}
+@keyframes hint-blink{
+  0%{box-shadow:0 0 0 0 rgba(193,18,47,.55);opacity:1}
+  50%{opacity:.75}
+  70%{box-shadow:0 0 0 10px rgba(193,18,47,0);opacity:1}
+  100%{box-shadow:0 0 0 0 rgba(193,18,47,0);opacity:1}
+}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .stat-card{background:rgba(255,255,255,.94);border:1px solid rgba(15,23,42,.08);border-radius:18px;padding:16px;min-height:112px;box-shadow:0 12px 30px rgba(15,23,42,.08);text-align:left}
 .stat-card .label{font-size:.8rem;font-weight:700;color:#5b6b7f;display:flex;gap:6px;align-items:center}
