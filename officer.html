@@ -447,7 +447,6 @@
         bindFormEvents();
         setDefaultDates();
         startClock();
-        startRealtimeRefresh();
         await restoreSession();
       } catch (error) {
         console.error('Application initialization failed:', error);
@@ -869,23 +868,31 @@
       document.querySelectorAll('[data-page="' + page + '"]').forEach(el => el.classList.add('active'));
       toggleDrawer(false);
       window.scrollTo({ top:0, behavior:'smooth' });
-      if (page === 'home') loadHomeStats();
+      if (page === 'home') { loadHomeStats(); startHomeAutoRefresh(); } else { stopHomeAutoRefresh(); }
       if (page === 'dashboard') loadDashboard();
       if (page === 'map') { loadMapCumulative(); loadMapData(); }
       if (page === 'map' && state.accidentMap) setTimeout(() => state.accidentMap.invalidateSize(), 250);
     }
 
-    // Real-time: รีเฟรชข้อมูลหน้าปัจจุบันอัตโนมัติทุก 30 วินาที
-    function startRealtimeRefresh() {
-      setInterval(() => {
-        if (!state.token || !state.user) return;
-        if (document.getElementById('appShell').classList.contains('hidden')) return;
-        if (document.querySelector('.swal2-container')) return; // ไม่รีเฟรชระหว่างมีป๊อปอัป
-        if (state.currentPage === 'home') loadHomeStats();
-        else if (state.currentPage === 'dashboard') loadDashboard();
-        else if (state.currentPage === 'map') { loadMapCumulative(); loadMapData(); }
-      }, 30000);
+    let homeStatsTimer = null;
+    const HOME_REFRESH_MS = 30000;
+    function startHomeAutoRefresh() {
+      stopHomeAutoRefresh();
+      homeStatsTimer = setInterval(function () {
+        if (document.hidden) return;
+        var pageEl = document.getElementById('page-home');
+        if (!pageEl || !pageEl.classList.contains('active')) return;
+        loadHomeStats(true);
+      }, HOME_REFRESH_MS);
     }
+    function stopHomeAutoRefresh() {
+      if (homeStatsTimer) { clearInterval(homeStatsTimer); homeStatsTimer = null; }
+    }
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) return;
+      var pageEl = document.getElementById('page-home');
+      if (pageEl && pageEl.classList.contains('active')) loadHomeStats(true);
+    });
 
     function startClock() {
       const render = () => {
@@ -1322,9 +1329,9 @@
     }
 
     /* ============ HOME ============ */
-    async function loadHomeStats() {
+    async function loadHomeStats(silent) {
       const container = document.getElementById('homeStats');
-      container.innerHTML = '<div class="loading-skeleton"></div>';
+      if (!silent) container.innerHTML = '<div class="loading-skeleton"></div>';
       try {
         const result = await api('getHomeStats');
         if (!result.success) throw new Error(result.message);
@@ -1344,9 +1351,9 @@
             injuryStatCard('เดือนปัจจุบัน',result.injuries.month) +
             injuryStatCard('ย้อนหลัง 1 วัน',result.injuries.yesterday) +
           '</div></div>' +
-          '<p class="hint" style="text-align:right"><i class="fa-regular fa-clock"></i> อัปเดต ' + escapeHtml(result.generatedAt) + '</p>';
+          '<p class="hint" style="text-align:right"><i class="fa-regular fa-clock"></i> Real-time · รีเฟรชอัตโนมัติทุก 30 วินาที · อัปเดตล่าสุด ' + escapeHtml(result.generatedAt) + '</p>';
       } catch (error) {
-        container.innerHTML = errorBlock(error.message, 'loadHomeStats()');
+        if (!silent) container.innerHTML = errorBlock(error.message, 'loadHomeStats()');
       }
     }
     function statCard(label,value,unit,icon,variant) {
@@ -1707,7 +1714,6 @@
     });
   </script>
 
-<div style="position:fixed;right:8px;bottom:26px;z-index:9998;font-size:10px;color:rgba(15,23,42,.62);background:rgba(255,255,255,.78);padding:3px 8px;border-radius:999px;backdrop-filter:blur(4px)"><i class="fa-regular fa-clock"></i> Real-time : รีเฟรชอัตโนมัติทุก 30 วินาที</div>
 <div style="position:fixed;right:8px;bottom:6px;z-index:9999;font-size:10px;color:rgba(15,23,42,.55);background:rgba(255,255,255,.72);padding:3px 7px;border-radius:999px;backdrop-filter:blur(4px)">By.Pol.Lt.Col.Akkpan Buasamlee Deputy Superintendent[Traffic]</div>
 </body>
 </html>
