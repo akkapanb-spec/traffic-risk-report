@@ -98,6 +98,10 @@
     .severity-badge{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:.74rem;font-weight:700;background:#eef2f7}.severity-badge.red{background:#fee2e2;color:#991b1b}.severity-badge.yellow{background:#fef9c3;color:#854d0e}.severity-badge.green{background:#dcfce7;color:#166534}
 
     .filter-bar{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}.legend{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0 15px;font-size:.8rem}.legend-item{display:flex;align-items:center;gap:6px}.dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}.dot.red{background:#dc2626}.dot.yellow{background:#facc15}.dot.green{background:#22c55e}.dot.gray{background:#64748b}
+    .legend-filter{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;cursor:pointer;font-family:inherit;font-size:.8rem;font-weight:700;color:var(--ink);transition:all .15s ease}
+    .legend-filter:hover{border-color:var(--blue);box-shadow:0 4px 12px rgba(29,78,216,.14)}
+    .legend-filter.active{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(29,78,216,.25)}
+    .legend-filter.active .dot{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
     #accidentMap,#pickerMap{width:100%;border-radius:18px;background:#dce7ef}.map-main{height:560px}.map-picker{height:430px}.marker-dot{width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}.marker-red{background:#dc2626}.marker-yellow{background:#facc15}.marker-green{background:#22c55e}.marker-gray{background:#64748b}
     .popup{min-width:270px;max-width:380px;font-family:'Sarabun',sans-serif}.popup h3{margin:0 0 5px;color:var(--navy)}.popup-date{font-size:.78rem;color:var(--muted);margin-bottom:10px}.popup-parties{display:grid;grid-template-columns:1fr 1fr;gap:8px}.popup-party{background:#f5f8fc;border-radius:10px;padding:8px}.popup-party strong{display:block;color:var(--navy);margin-bottom:5px}.popup-row{font-size:.75rem;margin:2px 0}.popup-images{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:9px}.popup-images img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}.popup-info{font-size:.78rem;margin-top:8px;line-height:1.5}
 
@@ -386,7 +390,13 @@
         <div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-chart-area"></i> อุบัติเหตุสะสม (รายปี)</h3><div class="chart-wrap"><canvas id="mapCumulativeChart"></canvas></div></div>
         <div class="card">
           <h3 class="card-title"><i class="fa-solid fa-map"></i> แผนที่และพิกัด <span id="mapTotal" class="pill">0 จุด</span></h3>
-          <div class="legend"><span class="legend-item"><span class="dot red"></span> เสียชีวิต / หมดสติ / สาหัส</span><span class="legend-item"><span class="dot yellow"></span> บาดเจ็บเล็กน้อย</span><span class="legend-item"><span class="dot green"></span> ไม่บาดเจ็บ</span><span class="legend-item"><span class="dot gray"></span> ไม่ระบุ</span></div>
+          <div class="legend" id="mapLegend">
+            <button type="button" class="legend-item legend-filter active" data-filter="all" onclick="setMapFilter('all')"><i class="fa-solid fa-layer-group" style="font-size:.75rem"></i> ทั้งหมด</button>
+            <button type="button" class="legend-item legend-filter" data-filter="red" onclick="setMapFilter('red')"><span class="dot red"></span> เสียชีวิต / หมดสติ / สาหัส</button>
+            <button type="button" class="legend-item legend-filter" data-filter="yellow" onclick="setMapFilter('yellow')"><span class="dot yellow"></span> บาดเจ็บเล็กน้อย</button>
+            <button type="button" class="legend-item legend-filter" data-filter="green" onclick="setMapFilter('green')"><span class="dot green"></span> ไม่บาดเจ็บ</button>
+            <button type="button" class="legend-item legend-filter" data-filter="gray" onclick="setMapFilter('gray')"><span class="dot gray"></span> ไม่ระบุ</button>
+          </div>
           <div id="accidentMap" class="map-main"></div>
         </div>
         <div class="card"><h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการจุดเกิดเหตุ</h3><div id="mapTable"></div></div>
@@ -1639,10 +1649,9 @@
         const result = await api('getMapData',{startDate,endDate});
         if (!result.success) throw new Error(result.message);
         state.mapItems = result.data || [];
+        state.mapTotalAll = result.total || 0;
         state.mapLoaded = true;
-        renderAccidentMap(state.mapItems);
-        renderMapTable(state.mapItems);
-        document.getElementById('mapTotal').textContent = (result.total||0) + ' จุด';
+        applyMapFilter();
       } catch (error) {
         document.getElementById('mapTable').innerHTML = errorBlock(error.message,'loadMapData()');
       }
@@ -1695,8 +1704,26 @@
       }
       container.innerHTML = '<div class="table-wrap"><table class="data-table"><thead><tr><th>วันเวลา</th><th>สถานที่</th><th>ถนน</th><th>อาการสูงสุด</th><th>พิกัด</th><th></th></tr></thead><tbody>' + items.map((item,index)=>'<tr><td>' + escapeHtml(item.date||'-') + '</td><td>' + escapeHtml(item.place||'-') + '</td><td>' + escapeHtml(item.road||'-') + '</td><td>' + markerBadge(item.markerType) + '</td><td>' + Number(item.latitude).toFixed(5) + ', ' + Number(item.longitude).toFixed(5) + '</td><td><button class="btn btn-soft btn-sm" onclick="focusMapMarker(' + index + ')"><i class="fa-solid fa-location-dot"></i> ดูหมุด</button></td></tr>').join('') + '</tbody></table></div>';
     }
+    // กรองจุดตามสีอาการ: all / red / yellow / green / gray
+    function applyMapFilter() {
+      const filter = state.mapFilter || 'all';
+      state.mapView = filter === 'all' ? state.mapItems : state.mapItems.filter(item => item.markerType === filter);
+      renderAccidentMap(state.mapView);
+      renderMapTable(state.mapView);
+      document.getElementById('mapTotal').textContent = filter === 'all'
+        ? state.mapTotalAll + ' จุด'
+        : state.mapView.length + '/' + state.mapTotalAll + ' จุด';
+    }
+
+    function setMapFilter(filter) {
+      state.mapFilter = filter;
+      document.querySelectorAll('#mapLegend .legend-filter').forEach(btn =>
+        btn.classList.toggle('active', btn.getAttribute('data-filter') === filter));
+      if (state.mapItems) applyMapFilter();
+    }
+
     function focusMapMarker(index) {
-      const item = state.mapItems[index], marker = state.mapMarkers[index];
+      const item = (state.mapView || state.mapItems)[index], marker = state.mapMarkers[index];
       if (!item || !marker) return;
       if (typeof state.accidentLayer.zoomToShowLayer === 'function') {
         state.accidentLayer.zoomToShowLayer(marker, () => marker.openPopup());
@@ -1734,7 +1761,8 @@
     Object.assign(window, {
       showRegister, showLogin, logout, toggleDrawer, openPage,
       openLocationPicker, closeLocationPicker, useCurrentLocation, confirmLocation,
-      resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard
+      resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard,
+      setMapFilter
     });
   </script>
 
