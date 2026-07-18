@@ -7,11 +7,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     body { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -27,17 +27,34 @@
     .img-clickable { cursor: pointer; transition: opacity 0.2s; }
     .img-clickable:hover { opacity: 0.8; }
     .leaflet-container { z-index: 1; }
-    .clickable-pulse { animation: pulse-animation 2s infinite; cursor: pointer; position: relative; }
-    @keyframes pulse-animation {
-      0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
-    }
-    .finger-icon { animation: finger-tap 1s infinite; display: inline-block; margin-right: 8px; }
-    @keyframes finger-tap { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    /* เอฟเฟกต์ปุ่มกด */
+.clickable-pulse {
+  animation: pulse-animation 2s infinite;
+  cursor: pointer;
+  position: relative;
+}
+
+@keyframes pulse-animation {
+  0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+}
+
+/* ไอคอนนิ้วชี้แบบแอนิเมชัน */
+.finger-icon {
+  animation: finger-tap 1s infinite;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+@keyframes finger-tap {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
 
 /* ==============================
    V6 PROFESSIONAL MOBILE FIRST UI
+   ปรับเฉพาะรูปแบบการแสดงผล ไม่เปลี่ยน Logic เดิม
 ================================= */
 :root{
   --v6-primary:#2563eb;
@@ -118,23 +135,28 @@ textarea{line-height:1.55;}
 .nav-tab img{margin-right:0!important;flex:0 0 auto;}
 .nav-tab.active{background:linear-gradient(135deg,var(--v6-primary),var(--v6-secondary))!important;color:#fff!important;}
 .nav-tab.active img{filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));}
+/* desktop nav */
 body>.container>.flex.flex-wrap.justify-center.mb-8.gap-4{
   display:grid!important;
   grid-template-columns:repeat(3,minmax(0,1fr));
   gap:14px!important;
 }
+/* main card */
 body>.container>.glass-effect.rounded-2xl{border-radius:28px!important;padding:clamp(14px,3vw,32px)!important;}
+/* data table */
 #dataTab .overflow-x-auto{border-radius:22px;}
 table{border-collapse:separate!important;border-spacing:0;min-width:900px;}
 th{font-size:.9rem;white-space:nowrap;}
 td{vertical-align:top;font-size:.92rem;}
 #riskMap{height:420px!important;}
 #dashboardDeathMap{height:min(62vh,620px)!important;min-height:320px;}
+/* dashboard cards */
 #dashboardTab .glass-effect,#deathStatsTab .glass-effect{
   transition:transform .22s ease,box-shadow .22s ease;
 }
 #dashboardTab .glass-effect:hover,#deathStatsTab .glass-effect:hover{transform:translateY(-2px);box-shadow:0 18px 48px rgba(15,23,42,.16);}
 canvas{max-width:100%!important;}
+/* V6 risk mobile card */
 .v6-risk-card{
   background:rgba(255,255,255,.94);
   border:1px solid rgba(15,23,42,.10);
@@ -150,6 +172,7 @@ canvas{max-width:100%!important;}
 .v6-risk-card__label{font-weight:700;color:#475569;}
 .v6-risk-images{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
 .v6-risk-status{margin-top:12px;width:100%;min-height:46px;border-radius:999px;}
+/* SweetAlert mobile tuning */
 .swal2-popup{border-radius:24px!important;}
 .swal2-actions{gap:10px!important;}
 .swal2-confirm,.swal2-deny,.swal2-cancel{border-radius:14px!important;min-height:44px!important;}
@@ -160,12 +183,46 @@ canvas{max-width:100%!important;}
   body>.container>.text-center.mb-8 img{width:72px!important;height:72px!important;}
   body>.container>.text-center.mb-8 p.text-lg{font-size:.95rem!important;}
   body>.container>.text-center.mb-8 .text-sm{font-size:.78rem!important;}
+  body>.container>.flex.flex-wrap.justify-center.mb-8.gap-4{
+    position:fixed;
+    left:0;right:0;bottom:0;
+    z-index:999;
+    margin:0!important;
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:7px!important;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    border-top:1px solid rgba(15,23,42,.12);
+    box-shadow:0 -16px 30px rgba(15,23,42,.12);
+  }
+  .nav-tab{
+    min-height:62px!important;
+    padding:6px 4px!important;
+    font-size:.68rem!important;
+    border-radius:16px!important;
+    flex-direction:column;
+    gap:3px;
+  }
+  .nav-tab img{width:22px!important;height:22px!important;display:block!important;}
   body>.container>.glass-effect.rounded-2xl{padding:14px!important;border-radius:24px!important;}
   form .grid{gap:14px!important;}
   label{font-size:.9rem!important;}
   .form-input,input,select,textarea{width:100%!important;min-height:52px!important;}
-  #coordinates{flex:1 1 100%!important;width:100%;display:block;margin-bottom:0;min-width:0;}
-  #coordinates + .btn-primary{flex:1 1 100%!important;width:100%;margin-top:10px;}
+  #coordinates+.btn-primary,
+  #coordinates ~ button{width:100%;margin-top:10px;}
+  #coordinates{width:100%;}
+  #coordinates.parent, #coordinates{flex:unset!important;}
+  #coordinates.closest{display:block;}
+  #coordinates{display:block;}
+  #coordinates::-webkit-input-placeholder{font-size:.86rem;}
+  #coordinates + button{display:block;}
+  #coordinates{margin-bottom:0;}
+  #coordinates:read-only{font-size:.94rem!important;}
+  #coordinates{min-width:0;}
+  #coordinates{flex:1 1 100%!important;}
+  #coordinates + .btn-primary{flex:1 1 100%!important;}
   div:has(> #coordinates){flex-wrap:wrap;}
   #imagePreview{grid-template-columns:1fr!important;}
   #imagePreview img{height:190px!important;}
@@ -185,6 +242,10 @@ canvas{max-width:100%!important;}
   .swal2-popup{width:96vw!important;margin:0!important;}
   #mapContainer{height:320px!important;}
 }
+@media (min-width: 768px) and (max-width: 1023px){
+  body>.container>.flex.flex-wrap.justify-center.mb-8.gap-4{grid-template-columns:repeat(2,minmax(0,1fr));}
+  #dashboardTab .grid.grid-cols-2.md\:grid-cols-4{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+}
 @media (min-width: 768px){
   #dataTableMobile{display:none!important;}
 }
@@ -194,6 +255,7 @@ canvas{max-width:100%!important;}
   gap: 12px;
   margin-bottom: 28px;
 }
+
 .nav-tab-v6 {
   min-height: 68px;
   padding: 12px 14px;
@@ -213,23 +275,53 @@ canvas{max-width:100%!important;}
   transition: all 0.25s ease;
   touch-action: manipulation;
 }
-.nav-tab-v6:hover { transform: translateY(-2px); box-shadow: 0 16px 32px rgba(15,23,42,0.18); }
-.nav-tab-v6.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+
+.nav-tab-v6:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(15,23,42,0.18);
+}
+
+.nav-tab-v6.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
 .nav-icon-v6 {
-  width: 40px; height: 40px; min-width: 40px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
   border-radius: 14px;
   background: rgba(255,255,255,0.9);
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.nav-icon-v6 svg { width: 32px; height: 32px; }
+
+.nav-icon-v6 svg {
+  width: 32px;
+  height: 32px;
+}
+
 @media (max-width: 640px) {
-  .nav-menu-v6 { grid-template-columns: 1fr; gap: 10px; }
-  .nav-tab-v6 { min-height: 62px; font-size: 15px; border-radius: 16px; }
+  .nav-menu-v6 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .nav-tab-v6 {
+    min-height: 62px;
+    font-size: 15px;
+    border-radius: 16px;
+  }
 }
+
 @media (min-width: 1024px) {
-  .nav-menu-v6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .nav-menu-v6 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
-  </style>
+
+</style>
 </head>
 <body>
 <div class="container mx-auto px-4 py-8 max-w-4xl">
@@ -242,82 +334,84 @@ canvas{max-width:100%!important;}
   </div>
 
   <!-- Navigation Tabs V6 Professional SVG -->
-  <div class="nav-menu-v6">
-    <button class="nav-tab-v6 active" onclick="showTab('report', this)">
-      <span class="nav-icon-v6">
-        <svg viewBox="0 0 64 64">
-          <path d="M32 6 L60 56 H4 Z" fill="#ef4444"/>
-          <path d="M32 14 L51 50 H13 Z" fill="#fee2e2"/>
-          <rect x="29" y="24" width="6" height="16" rx="3" fill="#b91c1c"/>
-          <circle cx="32" cy="46" r="3" fill="#b91c1c"/>
-        </svg>
-      </span>
-      <span>แจ้งข้อมูลจุดเสี่ยง</span>
-    </button>
+<div class="nav-menu-v6">
 
-    <button class="nav-tab-v6" onclick="openAccidentRecord()">
-      <span class="nav-icon-v6">
-        <svg viewBox="0 0 64 64">
-          <circle cx="32" cy="20" r="10" fill="#2563eb"/>
-          <path d="M16 56 C18 42 46 42 48 56 Z" fill="#1e40af"/>
-          <path d="M22 14 L32 8 L42 14 V20 C42 27 37 32 32 34 C27 32 22 27 22 20 Z" fill="#60a5fa"/>
-          <circle cx="32" cy="20" r="4" fill="#facc15"/>
-        </svg>
-      </span>
-      <span>บันทึกข้อมูลอุบัติเหตุ สำหรับเจ้าหน้าที่ตำรวจ</span>
-    </button>
+  <button class="nav-tab-v6 active" onclick="showTab('report', this)">
+    <span class="nav-icon-v6">
+      <svg viewBox="0 0 64 64">
+        <path d="M32 6 L60 56 H4 Z" fill="#ef4444"/>
+        <path d="M32 14 L51 50 H13 Z" fill="#fee2e2"/>
+        <rect x="29" y="24" width="6" height="16" rx="3" fill="#b91c1c"/>
+        <circle cx="32" cy="46" r="3" fill="#b91c1c"/>
+      </svg>
+    </span>
+    <span>แจ้งข้อมูลจุดเสี่ยง</span>
+  </button>
 
-    <button class="nav-tab-v6" onclick="showTab('data', this)">
-      <span class="nav-icon-v6">
-        <svg viewBox="0 0 64 64">
-          <rect x="16" y="10" width="32" height="46" rx="5" fill="#0ea5e9"/>
-          <rect x="22" y="18" width="20" height="4" rx="2" fill="#e0f2fe"/>
-          <rect x="22" y="28" width="20" height="4" rx="2" fill="#e0f2fe"/>
-          <rect x="22" y="38" width="15" height="4" rx="2" fill="#e0f2fe"/>
-          <rect x="24" y="6" width="16" height="8" rx="3" fill="#0369a1"/>
-        </svg>
-      </span>
-      <span>ข้อมูลจุดเสี่ยง สถานะ และแผนที่พร้อมพิกัด</span>
-    </button>
+  <button class="nav-tab-v6" onclick="openAccidentRecord()">
+    <span class="nav-icon-v6">
+      <svg viewBox="0 0 64 64">
+        <circle cx="32" cy="20" r="10" fill="#2563eb"/>
+        <path d="M16 56 C18 42 46 42 48 56 Z" fill="#1e40af"/>
+        <path d="M22 14 L32 8 L42 14 V20 C42 27 37 32 32 34 C27 32 22 27 22 20 Z" fill="#60a5fa"/>
+        <circle cx="32" cy="20" r="4" fill="#facc15"/>
+      </svg>
+    </span>
+    <span>บันทึกข้อมูลอุบัติเหตุ สำหรับเจ้าหน้าที่ตำรวจ</span>
+  </button>
 
-    <button class="nav-tab-v6" onclick="showTab('dashboard', this)">
-      <span class="nav-icon-v6">
-        <svg viewBox="0 0 64 64">
-          <rect x="10" y="12" width="44" height="40" rx="6" fill="#7c3aed"/>
-          <rect x="16" y="18" width="12" height="12" rx="3" fill="#ddd6fe"/>
-          <rect x="36" y="18" width="12" height="20" rx="3" fill="#c4b5fd"/>
-          <rect x="16" y="36" width="12" height="10" rx="3" fill="#a78bfa"/>
-          <rect x="32" y="44" width="16" height="4" rx="2" fill="#ede9fe"/>
-        </svg>
-      </span>
-      <span>DASHBOARD วิเคราะห์สถิติอุบัติเหตุเสียชีวิต แผนที่พร้อมพิกัด</span>
-    </button>
+  <button class="nav-tab-v6" onclick="showTab('data', this)">
+    <span class="nav-icon-v6">
+      <svg viewBox="0 0 64 64">
+        <rect x="16" y="10" width="32" height="46" rx="5" fill="#0ea5e9"/>
+        <rect x="22" y="18" width="20" height="4" rx="2" fill="#e0f2fe"/>
+        <rect x="22" y="28" width="20" height="4" rx="2" fill="#e0f2fe"/>
+        <rect x="22" y="38" width="15" height="4" rx="2" fill="#e0f2fe"/>
+        <rect x="24" y="6" width="16" height="8" rx="3" fill="#0369a1"/>
+      </svg>
+    </span>
+    <span>ข้อมูลจุดเสี่ยง สถานะ และแผนที่พร้อมพิกัด</span>
+  </button>
 
-    <button class="nav-tab-v6" onclick="openVideoCampaign()">
-      <span class="nav-icon-v6">
-        <svg viewBox="0 0 64 64">
-          <rect x="10" y="16" width="44" height="32" rx="6" fill="#dc2626"/>
-          <polygon points="28,24 44,32 28,40" fill="#fff"/>
-          <circle cx="18" cy="22" r="3" fill="#fecaca"/>
-          <circle cx="46" cy="22" r="3" fill="#fecaca"/>
-        </svg>
-      </span>
-      <span>Clip Video ประชาสัมพันธ์และรณรงค์ลดอุบัติเหตุ</span>
-    </button>
+  <button class="nav-tab-v6" onclick="showTab('dashboard', this)">
+    <span class="nav-icon-v6">
+      <svg viewBox="0 0 64 64">
+        <rect x="10" y="12" width="44" height="40" rx="6" fill="#7c3aed"/>
+        <rect x="16" y="18" width="12" height="12" rx="3" fill="#ddd6fe"/>
+        <rect x="36" y="18" width="12" height="20" rx="3" fill="#c4b5fd"/>
+        <rect x="16" y="36" width="12" height="10" rx="3" fill="#a78bfa"/>
+        <rect x="32" y="44" width="16" height="4" rx="2" fill="#ede9fe"/>
+      </svg>
+    </span>
+    <span>DASHBOARD วิเคราะห์สถิติอุบัติเหตุเสียชีวิต แผนที่พร้อมพิกัด</span>
+  </button>
 
-    <button class="nav-tab-v6" onclick="openHelmetProject()">
-      <span class="nav-icon-v6">
-        <svg viewBox="0 0 64 64">
-          <path d="M32 8 C18 8 8 20 8 34 V42 H56 V34 C56 20 46 8 32 8Z" fill="#ff7a00"/>
-          <path d="M32 8 C22 8 13 15 10 26 C17 18 25 14 34 14 C43 14 50 18 54 26 C51 15 42 8 32 8Z" fill="#ffb347"/>
-          <rect x="8" y="40" width="48" height="6" rx="3" fill="#374151"/>
-          <rect x="29" y="45" width="6" height="10" rx="2" fill="#111827"/>
-          <ellipse cx="24" cy="20" rx="7" ry="4" fill="#fff7ed" opacity="0.65"/>
-        </svg>
-      </span>
-      <span>โครงการสวมหมวกนิรภัย<br>ปลอดภัย ได้ส่วนลด</span>
-    </button>
-  </div>
+  <button class="nav-tab-v6" onclick="openVideoCampaign()">
+    <span class="nav-icon-v6">
+      <svg viewBox="0 0 64 64">
+        <rect x="10" y="16" width="44" height="32" rx="6" fill="#dc2626"/>
+        <polygon points="28,24 44,32 28,40" fill="#fff"/>
+        <circle cx="18" cy="22" r="3" fill="#fecaca"/>
+        <circle cx="46" cy="22" r="3" fill="#fecaca"/>
+      </svg>
+    </span>
+    <span>Clip Video ประชาสัมพันธ์และรณรงค์ลดอุบัติเหตุ</span>
+  </button>
+
+  <button class="nav-tab-v6" onclick="openHelmetProject()">
+    <span class="nav-icon-v6">
+      <svg viewBox="0 0 64 64">
+        <path d="M32 8 C18 8 8 20 8 34 V42 H56 V34 C56 20 46 8 32 8Z" fill="#ff7a00"/>
+        <path d="M32 8 C22 8 13 15 10 26 C17 18 25 14 34 14 C43 14 50 18 54 26 C51 15 42 8 32 8Z" fill="#ffb347"/>
+        <rect x="8" y="40" width="48" height="6" rx="3" fill="#374151"/>
+        <rect x="29" y="45" width="6" height="10" rx="2" fill="#111827"/>
+        <ellipse cx="24" cy="20" rx="7" ry="4" fill="#fff7ed" opacity="0.65"/>
+      </svg>
+    </span>
+    <span>โครงการสวมหมวกนิรภัย<br>ปลอดภัย ได้ส่วนลด</span>
+  </button>
+
+</div>
 
   <!-- Main Content -->
   <div class="glass-effect rounded-2xl p-8 shadow-2xl">
@@ -376,7 +470,7 @@ canvas{max-width:100%!important;}
             </tr>
           </thead>
           <tbody id="dataTableBody">
-            <tr><td colspan="9" class="px-4 py-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i>กำลังโหลดข้อมูล...</td></tr>
+            <tr><td colspan="9" class="px-4 py-8 text-center text-gray-500"><img src="https://img.icons8.com/color/48/000000/loading.png" class="w-6 h-6 inline mr-2 animate-spin">กำลังโหลดข้อมูล...</td></tr>
           </tbody>
         </table>
         <div id="dataTableMobile" class="hidden"></div>
@@ -403,14 +497,15 @@ canvas{max-width:100%!important;}
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="glass-effect rounded-xl p-6 text-center"><img src="https://img.icons8.com/color/48/000000/car-crash.png" class="w-12 h-12 mx-auto mb-3"><h3 class="text-lg font-semibold text-gray-700 mb-2">ข้อมูลอุบัติเหตุ</h3><p class="text-3xl font-bold text-orange-600" id="totalAccidents">0</p></div>
         <div class="glass-effect rounded-xl p-6 text-center"><img src="https://img.icons8.com/color/48/000000/bandage.png" class="w-12 h-12 mx-auto mb-3"><h3 class="text-lg font-semibold text-gray-700 mb-2">ผู้ได้รับบาดเจ็บ</h3><p class="text-3xl font-bold text-purple-600" id="totalInjured">0</p></div>
-        <div class="glass-effect rounded-xl p-6 text-center cursor-pointer hover:shadow-lg transition-all clickable-pulse" onclick="showDeathStatistics()">
-          <img src="https://img.icons8.com/color/48/000000/death.png" class="w-12 h-12 mx-auto mb-3">
-          <h3 class="text-lg font-semibold text-gray-700 mb-2">ผู้เสียชีวิตสะสม</h3>
-          <p class="text-3xl font-bold text-red-800" id="totalDeaths">0</p>
-          <p class="text-sm text-gray-500 mt-2"><i class="fas fa-mouse-pointer mr-1"></i>คลิกเพื่อดูรายละเอียด</p>
-        </div>
-      </div>
-    </div>
+        <!-- ค้นหาจุดนี้แล้วใส่คลาสเพิ่ม -->
+<div class="glass-effect rounded-xl p-6 text-center cursor-pointer hover:shadow-lg transition-all clickable-pulse" onclick="showDeathStatistics()">
+  <img src="https://img.icons8.com/color/48/000000/death.png" class="w-12 h-12 mx-auto mb-3">
+  <h3 class="text-lg font-semibold text-gray-700 mb-2">ผู้เสียชีวิตสะสม</h3>
+  <p class="text-3xl font-bold text-red-800" id="totalDeaths">0</p>
+  <p class="text-sm text-gray-500 mt-2"><i class="fas fa-mouse-pointer mr-1"></i>คลิกเพื่อดูรายละเอียด</p>
+</div>
+ </div>
+</div>
 
     <!-- Death Statistics Tab -->
     <div id="deathStatsTab" style="display: none;">
@@ -425,6 +520,8 @@ canvas{max-width:100%!important;}
       </div>
 
       <div class="space-y-6">
+
+        <!-- สถิติจำนวนผู้เสียชีวิตสะสม (บนสุด) -->
         <div class="glass-effect rounded-xl p-6">
           <h3 class="text-xl font-bold text-gray-800 mb-4"><img src="https://img.icons8.com/color/48/000000/line-chart.png" class="w-6 h-6 inline mr-2">สถิติจำนวนผู้เสียชีวิตสะสม แยกตามเดือน</h3>
           <div class="flex gap-4 mb-4">
@@ -435,89 +532,101 @@ canvas{max-width:100%!important;}
           <div class="h-[300px] w-full"><canvas id="monthlyChart"></canvas></div>
         </div>
 
+        <!-- แถวที่ 1: Age, Gender, Domicile -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามช่วงอายุ</h3><div class="h-[250px]"><canvas id="ageChart"></canvas></div></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามเพศ</h3><div class="h-[250px]"><canvas id="genderChart"></canvas></div></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามภูมิลำเนา</h3><div class="h-[250px]"><canvas id="domicileChart"></canvas></div></div>
         </div>
 
+        <!-- แถวที่ 2: Vehicle, Status, License -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามประเภทรถ</h3><div class="h-[250px]"><canvas id="vehicleChart"></canvas></div></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามสถานะ</h3><div class="h-[250px]"><canvas id="statusChart"></canvas></div></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามใบอนุญาตขับขี่</h3><div class="h-[250px]"><canvas id="licenseChart"></canvas></div></div>
         </div>
 
+        <!-- แถวที่ 3: Safety, Time, Cause -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">การใช้เครื่องป้องกัน</h3><div class="h-[250px]"><canvas id="safetyChart"></canvas></div></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามเวลา</h3><div class="h-[250px]"><canvas id="timeChart"></canvas></div></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">สาเหตุที่ทำให้เกิดอุบัติเหตุ</h3><div class="h-[250px]"><canvas id="causeChart"></canvas></div></div>
         </div>
 
+        <!-- แถวที่ 4: RoadType, RoadName, District -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามลักษณะถนน</h3><div class="h-[250px]"><canvas id="roadTypeChart"></canvas></div></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามถนน</h3><div class="h-[250px]"><canvas id="roadNameChart"></canvas></div></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามตำบล</h3><div class="h-[250px]"><canvas id="districtChart"></canvas></div></div>
         </div>
 
+        <!-- แผนที่พิกัด (ย้ายมาอยู่ด้านล่างสุด ใต้กราฟทั้งหมด) -->
         <div class="glass-effect rounded-xl p-6 w-full">
-          <h3 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-map-marker-alt text-red-500 mr-2"></i>แผนที่พิกัดผู้เสียชีวิต</h3>
-          <div id="dashboardDeathMap" class="w-full h-[600px] rounded-lg shadow-inner border-2 border-gray-200 z-0"></div>
-          <div class="mt-4 p-4 bg-white rounded-lg shadow-sm text-sm border flex items-center flex-wrap gap-4">
-            <p class="font-bold text-gray-800 mr-2">คำอธิบายสี (ปีเกิดเหตุ):</p>
-            <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #ef4444;"></span> 2023</div>
-            <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #3b82f6;"></span> 2024</div>
-            <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #10b981;"></span> 2025</div>
-            <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #f59e0b;"></span> 2026</div>
-            <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #8b5cf6;"></span> 2027</div>
-          </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-map-marker-alt text-red-500 mr-2"></i>แผนที่พิกัดผู้เสียชีวิต</h3>
+            <div id="dashboardDeathMap" class="w-full h-[600px] rounded-lg shadow-inner border-2 border-gray-200 z-0"></div>
+            <!-- คำอธิบายสีตามปี -->
+            <div class="mt-4 p-4 bg-white rounded-lg shadow-sm text-sm border flex items-center flex-wrap gap-4">
+              <p class="font-bold text-gray-800 mr-2">คำอธิบายสี (ปีเกิดเหตุ):</p>
+              <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #ef4444;"></span> 2023</div>
+              <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #3b82f6;"></span> 2024</div>
+              <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #10b981;"></span> 2025</div>
+              <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #f59e0b;"></span> 2026</div>
+              <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #8b5cf6;"></span> 2027</div>
+            </div>
         </div>
       </div>
     </div>
-  </div>
 </div>
 
 <script>
 /* ============================================================
-   CONFIG
-   - รูปภาพเก็บใน Supabase Storage (bucket: risk-images)
+   Backend: Supabase (แทน Google Apps Script — UI เดิม 100%)
 ============================================================ */
-const APP_CONFIG = {
-  SUPABASE_URL: 'https://ftpruljwwsmvipfcedyk.supabase.co',
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0cHJ1bGp3d3NtdmlwZmNlZHlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTM5ODgsImV4cCI6MjA5OTkyOTk4OH0.CQDf2PUO5hjsamJojOfLMuqobwL0d8EbXxMT-2EdAts',
-  STORAGE_BUCKET: 'risk-images'
-};
+const SUPABASE_URL = 'https://ftpruljwwsmvipfcedyk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0cHJ1bGp3d3NtdmlwZmNlZHlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTM5ODgsImV4cCI6MjA5OTkyOTk4OH0.CQDf2PUO5hjsamJojOfLMuqobwL0d8EbXxMT-2EdAts';
+const STORAGE_BUCKET = 'risk-images';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const db = window.supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
+let cachedDeathRows = null;
 
 document.addEventListener('DOMContentLoaded', function() {
   updateDateTime(); setInterval(updateDateTime, 1000); setupEventListeners();
 });
 
-/* ============ Utilities ============ */
 function getThaiDateTime() {
   const now = new Date(); const utc7 = new Date(now.getTime() + (7 * 60 * 60 * 1000));
   return `${String(utc7.getUTCDate()).padStart(2, '0')}/${String(utc7.getUTCMonth() + 1).padStart(2, '0')}/${utc7.getUTCFullYear()} ${String(utc7.getUTCHours()).padStart(2, '0')}:${String(utc7.getUTCMinutes()).padStart(2, '0')}:${String(utc7.getUTCSeconds()).padStart(2, '0')}`;
 }
 
-// แปลง timestamp จาก Supabase (ISO) → dd/MM/yyyy HH:mm:ss เวลาไทย
+// ระบบจัดรูปแบบเวลาของตาราง (รองรับสตริง ISO จาก Supabase)
 function formatThaiDateTimeStr(dateString) {
-  if (!dateString) return '-';
-  try {
-    const d = new Date(dateString);
-    if (isNaN(d.getTime())) return dateString;
-    return d.toLocaleString('en-GB', {
-      timeZone: 'Asia/Bangkok', day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-    }).replace(',', '');
-  } catch(e) { return dateString; }
+  if (!dateString) return '';
+  const text = String(dateString);
+  if (text.includes('T')) {
+    try {
+      const d = new Date(text);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleString('en-GB', {
+          timeZone: 'Asia/Bangkok', day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+        }).replace(',', '');
+      }
+    } catch(e) { return text; }
+  }
+  return text;
 }
 
-// Date object ของเหตุการณ์ตามเวลาไทย (ใช้คำนวณสถิติ ปี/เดือน/ชั่วโมง)
-function toBangkokParts(dateString) {
-  const d = new Date(dateString);
+// แปลงเวลาเป็นเขตกรุงเทพ { y, m(0-11), d, h }
+function bkkParts(value) {
+  const d = new Date(value);
   if (isNaN(d.getTime())) return null;
-  const bkk = new Date(d.getTime() + 7 * 60 * 60 * 1000);
-  return { date: d, year: bkk.getUTCFullYear(), month: bkk.getUTCMonth(), hour: bkk.getUTCHours() };
+  const s = d.toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' }); // YYYY-MM-DD HH:mm:ss
+  return { y: Number(s.slice(0,4)), m: Number(s.slice(5,7)) - 1, d: Number(s.slice(8,10)), h: Number(s.slice(11,13)) };
+}
+function bkkDay(value) {
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' }).slice(0,10);
 }
 
 function updateDateTime() {
@@ -534,12 +643,6 @@ function setupEventListeners() {
   document.getElementById('riskReportForm').addEventListener('submit', handleFormSubmit);
 }
 
-function v6IsMobile(){ return window.matchMedia('(max-width: 767px)').matches; }
-function v6EscapeHTML(value){
-  return String(value ?? '').replace(/[&<>'"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s]));
-}
-
-/* ============ Image upload (Cloudinary) ============ */
 function handleImageUpload(event) {
   const files = Array.from(event.target.files);
   const preview = document.getElementById('imagePreview');
@@ -558,16 +661,6 @@ function handleImageUpload(event) {
   });
 }
 
-async function uploadImage(file) {
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error } = await db.storage.from(APP_CONFIG.STORAGE_BUCKET).upload(path, file, { contentType: file.type });
-  if (error) throw new Error('อัพโหลดรูปภาพไม่สำเร็จ: ' + error.message);
-  const { data } = db.storage.from(APP_CONFIG.STORAGE_BUCKET).getPublicUrl(path);
-  return data.publicUrl;
-}
-
-/* ============ พิกัด GPS / แผนที่เลือกตำแหน่ง ============ */
 function getLocation() {
   Swal.fire({
     title: 'เลือกวิธีการระบุตำแหน่ง',
@@ -581,8 +674,11 @@ function getLocation() {
       denyButton: 'bg-green-600 text-white px-4 py-2 rounded-lg font-semibold'
     }
   }).then((result) => {
-    if (result.isConfirmed) showMapPicker();
-    else if (result.isDenied) getCurrentGPS();
+    if (result.isConfirmed) {
+      showMapPicker();
+    } else if (result.isDenied) {
+      getCurrentGPS();
+    }
   });
 }
 
@@ -602,38 +698,17 @@ function getCurrentGPS() {
 }
 
 let mapInstance, mapMarker;
-function showMapPicker() {
-  Swal.fire({
-    title: 'คลิกหรือลากหมุดเพื่อเลือกตำแหน่ง',
-    html: '<div id="mapContainer" style="height: 400px; width: 100%; border-radius: 14px;"></div>',
-    width: v6IsMobile() ? '96%' : '80%',
-    showCancelButton: true,
-    confirmButtonText: 'ยืนยันตำแหน่งนี้',
-    cancelButtonText: 'ยกเลิก',
-    didOpen: () => {
-      let startLat = 15.705, startLng = 100.140;
-      const currentCoords = document.getElementById('coordinates').value;
-      if (currentCoords && currentCoords.includes(',')) {
-        const parts = currentCoords.split(',');
-        startLat = parseFloat(parts[0].trim());
-        startLng = parseFloat(parts[1].trim());
-      }
-      mapInstance = L.map('mapContainer').setView([startLat, startLng], 14);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(mapInstance);
-      mapMarker = L.marker([startLat, startLng], {draggable: true}).addTo(mapInstance);
-      mapInstance.on('click', function(e) { mapMarker.setLatLng(e.latlng); });
-      setTimeout(() => { mapInstance.invalidateSize(); }, 180);
-    }
-  }).then((result) => {
-    if (result.isConfirmed) {
-      const position = mapMarker.getLatLng();
-      document.getElementById('coordinates').value = `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
-      Swal.fire({ icon: 'success', title: 'ระบุพิกัดสำเร็จ', timer: 1500, showConfirmButton: false });
-    }
-  });
+
+// อัปโหลดรูปเข้า Supabase Storage แล้วคืน URL สาธารณะ
+async function uploadImageToStorage(file) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await sb.storage.from(STORAGE_BUCKET).upload(path, file, { contentType: file.type });
+  if (error) throw new Error('อัพโหลดรูปภาพไม่สำเร็จ: ' + error.message);
+  const { data } = sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
 }
 
-/* ============ ส่งรายงานจุดเสี่ยง ============ */
 async function handleFormSubmit(event) {
   event.preventDefault();
   const req = ['location', 'road', 'subdistrict', 'district', 'province'];
@@ -646,10 +721,10 @@ async function handleFormSubmit(event) {
   try {
     const imageFiles = document.getElementById('imageUpload').files;
     let image1_url = null, image2_url = null;
-    if (imageFiles[0]) image1_url = await uploadImage(imageFiles[0]);
-    if (imageFiles[1]) image2_url = await uploadImage(imageFiles[1]);
+    if (imageFiles[0]) image1_url = await uploadImageToStorage(imageFiles[0]);
+    if (imageFiles[1]) image2_url = await uploadImageToStorage(imageFiles[1]);
 
-    const { error } = await db.from('risk_points').insert({
+    const { error } = await sb.from('risk_points').insert({
       registration_date: new Date().toISOString(),
       location: document.getElementById('location').value,
       road: document.getElementById('road').value,
@@ -668,14 +743,12 @@ async function handleFormSubmit(event) {
     Swal.fire({icon: 'success', title: 'บันทึกสำเร็จ', timer: 2000}).then(() => {
       document.getElementById('riskReportForm').reset();
       document.getElementById('imagePreview').innerHTML = '';
-      document.getElementById('charCount').textContent = '0';
     });
   } catch (error) { Swal.fire({icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message}); }
 }
 
-/* ============ สลับแท็บ ============ */
 function showTab(tabName, element) {
-  document.querySelectorAll('.nav-tab-v6').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
   if (element) element.classList.add('active');
 
   ['reportTab', 'dataTab', 'dashboardTab', 'deathStatsTab'].forEach(id => {
@@ -685,122 +758,73 @@ function showTab(tabName, element) {
   const target = document.getElementById(tabName + 'Tab');
   if (target) target.style.display = 'block';
 
-  if (!element && tabName === 'dashboard') {
-    const btn = Array.from(document.querySelectorAll('.nav-tab-v6')).find(b => b.getAttribute('onclick')?.includes("showTab('dashboard'"));
-    if (btn) btn.classList.add('active');
-  }
-
   if (tabName === 'data') refreshData();
   if (tabName === 'dashboard') setTimeout(() => initializeDashboard(), 100);
-  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function openAccidentRecord() { window.open('officer.html', '_blank'); }
 function openHelmetProject() { window.open('https://script.google.com/macros/s/AKfycbwm9oEypRxDHeDcNU_tGVoPLIGiXyEuqjKAuqYZM2jTDucEw7ZUA0hfbZXQNAu3lfXCFA/exec', '_blank'); }
-function openVideoCampaign() { window.open('https://drive.google.com/drive/folders/1EyT0dgnBzMWOgqEfiURrgVrKfCPq6GNd?usp=sharing', '_blank'); }
-
-/* ============ ตารางข้อมูลจุดเสี่ยง ============ */
-let mapRisk;
 
 async function refreshData() {
   const tableBody = document.getElementById('dataTableBody');
   try {
-    const { data, error } = await db.from('risk_points').select('*').order('registration_date', { ascending: true });
-    if (error) throw error;
-    displayRiskData(data || []);
+    const { data, error } = await sb.from('risk_points').select('*').order('registration_date', { ascending: true });
+    if (error) throw new Error(error.message);
+
+    // แปลงเป็นรูปแบบแถวแบบชีตเดิม เพื่อให้โค้ดแสดงผลเดิมทำงานได้ 100%
+    const records = (data || []).map(r => [
+      formatThaiDateTimeStr(r.registration_date), r.location || '', r.road || '', r.village || '',
+      r.subdistrict || '', r.district || '', r.province || '', r.coordinates || '',
+      r.additional_details || '', r.image1_url || '', r.image2_url || '',
+      r.status || 'ยังไม่ได้ดำเนินการ', ''
+    ]);
+
+    if (records.length > 0) {
+      displayRiskData(records);
+    } else {
+      tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4">ไม่พบข้อมูลในระบบ</td></tr>`;
+      const mobileWrap = document.getElementById('dataTableMobile');
+      if (mobileWrap) mobileWrap.innerHTML = `<div class="v6-risk-card text-center text-gray-500">ไม่พบข้อมูลในระบบ</div>`;
+      initRiskMap([]);
+    }
   } catch (error) {
     console.error(error);
-    tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-red-500">โหลดข้อมูลไม่สำเร็จ: ${v6EscapeHTML(error.message)}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-red-500">ไม่สามารถเชื่อมต่อข้อมูลได้</td></tr>`;
   }
-}
-
-function displayRiskData(data) {
-  const tableBody = document.getElementById('dataTableBody');
-  const mobileWrap = document.getElementById('dataTableMobile');
-
-  if (!data || data.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4">ไม่พบข้อมูลในตาราง</td></tr>`;
-    mobileWrap.innerHTML = `<div class="v6-risk-card text-center text-gray-500">ไม่พบข้อมูลในระบบ</div>`;
-    initRiskMap([]);
-    return;
-  }
-
-  const rows = data.map((r) => ({
-    id: r.id,
-    dDate: formatThaiDateTimeStr(r.registration_date),
-    dLoc: r.location || '-',
-    dRoad: r.road || '-',
-    dVillage: r.village || '-',
-    dSub: r.subdistrict || '-',
-    dProv: r.province || '-',
-    dCoords: r.coordinates || '-',
-    dStatus: r.status || 'ยังไม่ได้ดำเนินการ',
-    imageHtml: getImageElements(r.image1_url, r.image2_url),
-    statusColorClass: getStatusColor(r.status || 'ยังไม่ได้ดำเนินการ'),
-    rawLoc: r.location || '',
-    rawRoad: r.road || ''
-  }));
-
-  tableBody.innerHTML = rows.map(r => `
-    <tr class="border-b hover:bg-gray-50 transition-colors duration-200">
-      <td class="px-4 py-3 whitespace-nowrap">${v6EscapeHTML(r.dDate)}</td>
-      <td class="px-4 py-3">${v6EscapeHTML(r.dLoc)}</td>
-      <td class="px-4 py-3">${v6EscapeHTML(r.dRoad)}</td>
-      <td class="px-4 py-3">${v6EscapeHTML(r.dVillage)}</td>
-      <td class="px-4 py-3">${v6EscapeHTML(r.dSub)}</td>
-      <td class="px-4 py-3">${v6EscapeHTML(r.dProv)}</td>
-      <td class="px-4 py-3 text-xs text-gray-500">${v6EscapeHTML(r.dCoords)}</td>
-      <td class="px-4 py-3"><div class="flex gap-2 justify-center">${r.imageHtml}</div></td>
-      <td class="px-4 py-3 text-center">
-        <button data-loc="${v6EscapeHTML(r.rawLoc)}" data-road="${v6EscapeHTML(r.rawRoad)}" onclick="showStatusDetails(this.dataset.loc, this.dataset.road)" class="px-4 py-2 rounded-full text-sm font-semibold shadow-md transition-transform transform hover:scale-105 hover:shadow-lg focus:outline-none ${r.statusColorClass}">
-          <i class="fas fa-search-plus mr-1 opacity-75"></i> ${v6EscapeHTML(r.dStatus)}
-        </button>
-      </td>
-    </tr>
-  `).join('');
-
-  mobileWrap.innerHTML = rows.map(r => `
-    <article class="v6-risk-card">
-      <div class="v6-risk-card__top">
-        <div class="v6-risk-card__title">${v6EscapeHTML(r.dLoc)}</div>
-        <div class="v6-risk-card__date">${v6EscapeHTML(r.dDate)}</div>
-      </div>
-      <div class="v6-risk-card__grid">
-        <div><span class="v6-risk-card__label">ถนน:</span> ${v6EscapeHTML(r.dRoad)}</div>
-        <div><span class="v6-risk-card__label">หมู่/ตำบล:</span> ${v6EscapeHTML(r.dVillage)} / ${v6EscapeHTML(r.dSub)}</div>
-        <div><span class="v6-risk-card__label">จังหวัด:</span> ${v6EscapeHTML(r.dProv)}</div>
-        <div><span class="v6-risk-card__label">พิกัด:</span> ${v6EscapeHTML(r.dCoords)}</div>
-      </div>
-      <div class="v6-risk-images">${r.imageHtml || '<span class="text-sm text-gray-400">ไม่มีรูปภาพ</span>'}</div>
-      <button data-loc="${v6EscapeHTML(r.rawLoc)}" data-road="${v6EscapeHTML(r.rawRoad)}" onclick="showStatusDetails(this.dataset.loc, this.dataset.road)" class="v6-risk-status ${r.statusColorClass} font-semibold shadow-md">
-        <i class="fas fa-search-plus mr-1"></i>${v6EscapeHTML(r.dStatus)}
-      </button>
-    </article>
-  `).join('');
-
-  initRiskMap(data);
 }
 
 function initRiskMap(data) {
   if (mapRisk) { mapRisk.remove(); mapRisk = null; }
+
+  // ตรวจสอบ div map ว่ามีอยู่จริง
   const mapDiv = document.getElementById('riskMap');
   if (!mapDiv) return;
   mapRisk = L.map('riskMap').setView([15.705, 100.140], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(mapRisk);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(mapRisk);
 
+  // วนลูปเฉพาะแถวที่มีพิกัดถูกต้อง
   data.forEach(row => {
-    const coords = row.coordinates;
+    const coords = Array.isArray(row) ? row[7] : row.coordinates;
+
     if (coords && typeof coords === 'string' && coords.includes(',')) {
       const parts = coords.split(',');
       const lat = parseFloat(parts[0].trim());
       const lng = parseFloat(parts[1].trim());
+
       if (!isNaN(lat) && !isNaN(lng)) {
         const marker = L.marker([lat, lng]).addTo(mapRisk);
-        const imgHtml = row.image1_url ? `<img src="${row.image1_url}" class="w-24 h-24 object-cover mt-2">` : 'ไม่มีรูป';
+
+        const locPopup = Array.isArray(row) ? row[1] : row.location;
+        const roadPopup = Array.isArray(row) ? row[2] : row.road;
+        const imgPopup = Array.isArray(row) ? row[9] : (row.image1 || '');
+
+        const imgHtml = imgPopup ? `<img src="${imgPopup}" class="w-24 h-24 object-cover mt-2">` : 'ไม่มีรูป';
         marker.bindPopup(`
           <div class="text-sm">
-            <strong>สถานที่:</strong> ${v6EscapeHTML(row.location || 'ไม่ระบุ')}<br>
-            <strong>ถนน:</strong> ${v6EscapeHTML(row.road || 'ไม่ระบุ')}<br>
+            <strong>สถานที่:</strong> ${locPopup || 'ไม่ระบุ'}<br>
+            <strong>ถนน:</strong> ${roadPopup || 'ไม่ระบุ'}<br>
             ${imgHtml}
           </div>
         `);
@@ -808,6 +832,7 @@ function initRiskMap(data) {
     }
   });
 
+  // บังคับให้แผนที่ปรับขนาดให้พอดีกับ div หลังจากโหลดเสร็จ
   setTimeout(() => mapRisk.invalidateSize(), 500);
 }
 
@@ -819,8 +844,12 @@ function getStatusColor(status) {
 
 function getImageElements(image1, image2) {
   let images = '';
-  if (image1) images += `<img src="${image1}" class="w-16 h-16 object-cover rounded-lg shadow-sm mb-1 img-clickable" onclick="showImageModal('${image1}')" title="คลิกเพื่อขยาย">`;
-  if (image2) images += `<img src="${image2}" class="w-16 h-16 object-cover rounded-lg shadow-sm img-clickable" onclick="showImageModal('${image2}')" title="คลิกเพื่อขยาย">`;
+  if (image1) {
+    images += `<img src="${image1}" class="w-16 h-16 object-cover rounded-lg shadow-sm mb-1 img-clickable" onclick="showImageModal('${image1}')" title="คลิกเพื่อขยาย">`;
+  }
+  if (image2) {
+    images += `<img src="${image2}" class="w-16 h-16 object-cover rounded-lg shadow-sm img-clickable" onclick="showImageModal('${image2}')" title="คลิกเพื่อขยาย">`;
+  }
   return images || '<span class="text-gray-400 text-sm">ไม่มีรูป</span>';
 }
 
@@ -833,28 +862,39 @@ function showImageModal(imageUrl) {
     width: 'auto',
     padding: '1rem',
     backdrop: `rgba(0,0,0,0.85)`,
-    customClass: { image: 'max-h-[85vh] object-contain rounded-lg shadow-xl' }
+    customClass: {
+      image: 'max-h-[85vh] object-contain rounded-lg shadow-xl'
+    }
   });
 }
 
 async function showStatusDetails(location, road) {
   try {
-    const { data, error } = await db.from('risk_actions').select('*')
-      .eq('location', location).eq('road', road)
-      .order('action_date', { ascending: true });
-    if (error) throw error;
+    const { data, error } = await sb.from('risk_actions').select('*')
+      .eq('location', location).eq('road', road).order('action_date', { ascending: true });
+    if (error) throw new Error(error.message);
+
+    // แปลงเป็นแถวแบบชีตเดิม [วันที่, สถานที่, ถนน, รูป1, รูป2, รายละเอียด]
+    const rows = (data || []).map(r => [
+      r.action_date ? formatThaiDateTimeStr(r.action_date) : '', r.location || '', r.road || '',
+      r.image1_url || '', r.image2_url || '', r.detail || ''
+    ]);
 
     let tableContent = '';
-    if (data && data.length > 0) {
-      tableContent = data.map(row => `
-        <tr class="border-b">
-          <td class="px-4 py-3">${v6EscapeHTML(formatThaiDateTimeStr(row.action_date))}</td>
-          <td class="px-4 py-3">${v6EscapeHTML(row.location || '')}</td>
-          <td class="px-4 py-3">${v6EscapeHTML(row.road || '')}</td>
-          <td class="px-4 py-3">${getImageElements(row.image1_url, row.image2_url)}</td>
-          <td class="px-4 py-3">${v6EscapeHTML(row.detail || '')}</td>
-        </tr>
-      `).join('');
+    if (rows.length > 0) {
+      tableContent = rows.map(row => {
+        const images = getImageElements(row[3], row[4]);
+        const formattedDate = formatThaiDateTimeStr(row[0]);
+        return `
+          <tr class="border-b">
+            <td class="px-4 py-3">${formattedDate}</td>
+            <td class="px-4 py-3">${row[1] || ''}</td>
+            <td class="px-4 py-3">${row[2] || ''}</td>
+            <td class="px-4 py-3">${images}</td>
+            <td class="px-4 py-3">${row[5] || ''}</td>
+          </tr>
+        `;
+      }).join('');
     } else {
       tableContent = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">ไม่มีข้อมูลการดำเนินการในขณะนี้</td></tr>`;
     }
@@ -877,7 +917,7 @@ async function showStatusDetails(location, road) {
           </table>
         </div>
       `,
-      width: v6IsMobile() ? '96%' : '80%',
+      width: '80%',
       showConfirmButton: true,
       confirmButtonText: 'ปิด'
     });
@@ -886,8 +926,8 @@ async function showStatusDetails(location, road) {
   }
 }
 
-/* ============ Dashboard ============ */
 let charts = {};
+
 
 function initializeDashboard() {
   const endDate = new Date();
@@ -897,17 +937,20 @@ function initializeDashboard() {
   refreshDashboard();
 }
 
-function dateRangeFilter(query, column, startDate, endDate) {
-  if (startDate) query = query.gte(column, `${startDate}T00:00:00+07:00`);
-  if (endDate) query = query.lte(column, `${endDate}T23:59:59+07:00`);
-  return query;
+function rangeToIso(startDate, endDate) {
+  const result = {};
+  if (startDate) result.gte = startDate + 'T00:00:00+07:00';
+  if (endDate) result.lte = endDate + 'T23:59:59+07:00';
+  return result;
 }
 
-async function countRows(table, column, startDate, endDate) {
-  let query = db.from(table).select('*', { count: 'exact', head: true });
-  query = dateRangeFilter(query, column, startDate, endDate);
+async function countTable(table, column, startDate, endDate) {
+  let query = sb.from(table).select('*', { count: 'exact', head: true });
+  const range = rangeToIso(startDate, endDate);
+  if (range.gte) query = query.gte(column, range.gte);
+  if (range.lte) query = query.lte(column, range.lte);
   const { count, error } = await query;
-  if (error) { console.error(table, error); return 0; }
+  if (error) throw new Error(error.message);
   return count || 0;
 }
 
@@ -917,41 +960,41 @@ async function refreshDashboard() {
   const endDate = document.getElementById('endDate').value;
 
   try {
-    let riskQuery = db.from('risk_points').select('status');
-    riskQuery = dateRangeFilter(riskQuery, 'registration_date', startDate, endDate);
+    // สถิติจุดเสี่ยง (แยกตามสถานะ)
+    let riskQuery = sb.from('risk_points').select('status');
+    const range = rangeToIso(startDate, endDate);
+    if (range.gte) riskQuery = riskQuery.gte('registration_date', range.gte);
+    if (range.lte) riskQuery = riskQuery.lte('registration_date', range.lte);
     const { data: riskRows, error: riskError } = await riskQuery;
-    if (riskError) throw riskError;
+    if (riskError) throw new Error(riskError.message);
 
-    const stats = { total: (riskRows || []).length, completed: 0, inProgress: 0, notStarted: 0 };
-    (riskRows || []).forEach(r => {
-      const s = (r.status || 'ยังไม่ได้ดำเนินการ').trim();
-      if (s === 'ดำเนินการแก้ไขแล้ว') stats.completed++;
-      else if (s === 'อยู่ระหว่างดำเนินการ') stats.inProgress++;
-      else stats.notStarted++;
+    const riskStats = { totalRisks: (riskRows||[]).length, completed: 0, inProgress: 0, notStarted: 0 };
+    (riskRows||[]).forEach(r => {
+      const status = (r.status || 'ยังไม่ได้ดำเนินการ').trim();
+      if (status === 'ดำเนินการแก้ไขแล้ว') riskStats.completed++;
+      else if (status === 'อยู่ระหว่างดำเนินการ') riskStats.inProgress++;
+      else riskStats.notStarted++;
     });
 
     const [accidents, injured, deaths] = await Promise.all([
-      countRows('accidents_public', 'incident_datetime', startDate, endDate),
-      countRows('injuries', 'incident_datetime', startDate, endDate),
-      countRows('deaths', 'incident_datetime', startDate, endDate)
+      countTable('accidents_public', 'incident_datetime', startDate, endDate),
+      countTable('injuries', 'incident_datetime', startDate, endDate),
+      countTable('deaths', 'incident_datetime', startDate, endDate)
     ]);
 
-    document.getElementById('totalRisks').textContent = stats.total;
-    document.getElementById('completedRisks').textContent = stats.completed;
-    document.getElementById('inProgressRisks').textContent = stats.inProgress;
-    document.getElementById('notStartedRisks').textContent = stats.notStarted;
-    document.getElementById('totalAccidents').textContent = accidents;
-    document.getElementById('totalInjured').textContent = injured;
-    document.getElementById('totalDeaths').textContent = deaths;
+    document.getElementById('totalRisks').textContent = riskStats.totalRisks || 0;
+    document.getElementById('completedRisks').textContent = riskStats.completed || 0;
+    document.getElementById('inProgressRisks').textContent = riskStats.inProgress || 0;
+    document.getElementById('notStartedRisks').textContent = riskStats.notStarted || 0;
+    document.getElementById('totalAccidents').textContent = accidents || 0;
+    document.getElementById('totalInjured').textContent = injured || 0;
+    document.getElementById('totalDeaths').textContent = deaths || 0;
 
     Swal.close();
   } catch (error) {
     Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message });
   }
 }
-
-/* ============ สถิติผู้เสียชีวิต (คำนวณฝั่ง client — Logic เดิมจาก GAS 100%) ============ */
-let allDeathRows = null; // cache
 
 function showDeathStatistics() {
   document.getElementById('dashboardTab').style.display = 'none';
@@ -961,24 +1004,24 @@ function showDeathStatistics() {
 
 function initializeDeathStatistics() {
   const currentYear = new Date().getFullYear();
-  document.getElementById('deathStartDate').value = `${currentYear}-01-01`;
-  document.getElementById('deathEndDate').value = `${currentYear}-12-31`;
+  document.getElementById('deathStartDate').value = new Date(currentYear, 0, 1).toISOString().split('T')[0];
+  document.getElementById('deathEndDate').value = new Date(currentYear, 11, 31).toISOString().split('T')[0];
   loadDeathStatistics();
 }
 
 async function refreshDeathStatistics() { loadDeathStatistics(); }
 
-async function fetchAllDeaths(force = false) {
-  if (allDeathRows && !force) return allDeathRows;
+async function fetchDeathRows(force) {
+  if (cachedDeathRows && !force) return cachedDeathRows;
   const rows = [];
   const pageSize = 1000;
   for (let from = 0; ; from += pageSize) {
-    const { data, error } = await db.from('deaths').select('*').order('incident_datetime', { ascending: true }).range(from, from + pageSize - 1);
-    if (error) throw error;
+    const { data, error } = await sb.from('deaths').select('*').range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
     rows.push(...(data || []));
     if (!data || data.length < pageSize) break;
   }
-  allDeathRows = rows;
+  cachedDeathRows = rows;
   return rows;
 }
 
@@ -999,10 +1042,10 @@ function getEmptyDeathData() {
   };
 }
 
-function processRowStatistics(row, data, parts) {
-  const deathCount = 1;
-  if (row.age != null && row.age !== '') {
-    const age = parseInt(row.age);
+// พอร์ตจาก processRowStatistics ใน GAS (logic เดิม 100%)
+function processDeathRowStatistics(row, data, deathCount = 1) {
+  if (row.age !== null && row.age !== undefined && row.age !== '') {
+    const age = parseInt(String(row.age).trim());
     if (!isNaN(age) && age > 0) {
       if (age >= 1 && age <= 14) data.ageGroups[0] += deathCount;
       else if (age >= 15 && age <= 18) data.ageGroups[1] += deathCount;
@@ -1013,18 +1056,18 @@ function processRowStatistics(row, data, parts) {
     }
   }
   if (row.gender) {
-    const gender = row.gender.toString().toLowerCase().trim();
-    if (gender.includes('ชาย') || gender === 'ม') data.gender[0] += deathCount;
-    else if (gender.includes('หญิง') || gender === 'ญ') data.gender[1] += deathCount;
+    const gender = String(row.gender).toLowerCase().trim();
+    if (gender.includes('ชาย') && !gender.includes('หญิง')) data.gender[0] += deathCount;
+    else if (gender.includes('หญิง')) data.gender[1] += deathCount;
   }
   if (row.status) {
-    const status = row.status.toString().toLowerCase().trim();
+    const status = String(row.status).toLowerCase().trim();
     if (status.includes('ขับขี่') || status.includes('ขับ')) data.statusGroups[0] += deathCount;
     else if (status.includes('โดยสาร')) data.statusGroups[1] += deathCount;
     else if (status.includes('เดินเท้า')) data.statusGroups[2] += deathCount;
   }
   if (row.vehicle_type) {
-    const vehicle = row.vehicle_type.toString().toLowerCase();
+    const vehicle = String(row.vehicle_type).toLowerCase();
     if (vehicle.includes('จักรยานยนต์')) data.vehicleTypes[0] += deathCount;
     else if (vehicle.includes('เก๋ง') || vehicle.includes('รถยนต์')) data.vehicleTypes[1] += deathCount;
     else if (vehicle.includes('กระบะ') || vehicle.includes('pickup')) data.vehicleTypes[2] += deathCount;
@@ -1033,19 +1076,19 @@ function processRowStatistics(row, data, parts) {
     else data.vehicleTypes[5] += deathCount;
   }
   if (row.safety_equipment) {
-    const safety = row.safety_equipment.toString().trim();
+    const safety = String(row.safety_equipment).trim();
     if (safety === 'สวมหมวกนิรภัย') data.safetyEquipment[0] += deathCount;
     else if (safety === 'ไม่สวมหมวกนิรภัย') data.safetyEquipment[1] += deathCount;
     else if (safety === 'คาดเข็มขัดนิรภัย') data.safetyEquipment[2] += deathCount;
     else if (safety === 'ไม่คาดเข็มขัดนิรภัย') data.safetyEquipment[3] += deathCount;
   }
   if (row.license) {
-    const license = row.license.toString().trim();
+    const license = String(row.license).trim();
     if (license === 'มีใบอนุญาต') data.licenseGroups[0] += deathCount;
     else if (license === 'ไม่มีใบอนุญาต') data.licenseGroups[1] += deathCount;
   }
   if (row.road_type) {
-    const roadType = row.road_type.toString().trim();
+    const roadType = String(row.road_type).trim();
     if (roadType === 'ทางตรง') data.roadTypeGroups[0] += deathCount;
     else if (roadType === 'ทางโค้ง') data.roadTypeGroups[1] += deathCount;
     else if (roadType === 'ทางร่วมทางแยก') data.roadTypeGroups[2] += deathCount;
@@ -1055,7 +1098,7 @@ function processRowStatistics(row, data, parts) {
     else data.roadTypeGroups[6] += deathCount;
   }
   if (row.cause) {
-    const cause = row.cause.toString().toLowerCase();
+    const cause = String(row.cause).toLowerCase();
     if (cause.includes('เมา')) data.causes[0] += deathCount;
     else if (cause.includes('เร็ว')) data.causes[1] += deathCount;
     else if (cause.includes('ไฟ') || cause.includes('สัญญาณ')) data.causes[2] += deathCount;
@@ -1066,7 +1109,7 @@ function processRowStatistics(row, data, parts) {
     else data.causes[7] += deathCount;
   }
   if (row.road_name) {
-    const roadName = row.road_name.toString().toLowerCase();
+    const roadName = String(row.road_name).toLowerCase();
     if (roadName.includes('ทล.1') && roadName.includes('ในเขต')) data.roadNameGroups[0] += deathCount;
     else if (roadName.includes('ทล.1') && roadName.includes('นอกเขต')) data.roadNameGroups[1] += deathCount;
     else if (roadName.includes('117')) data.roadNameGroups[2] += deathCount;
@@ -1075,8 +1118,9 @@ function processRowStatistics(row, data, parts) {
     else if (roadName.includes('หนองเบน')) data.roadNameGroups[5] += deathCount;
     else data.roadNameGroups[6] += deathCount;
   }
+
   if (row.subdistrict) {
-    const district = row.subdistrict.toString().toLowerCase();
+    const district = String(row.subdistrict).toLowerCase();
     if (district.includes('ปากน้ำโพ')) data.districtGroups[0] += deathCount;
     else if (district.includes('นครสวรรค์ตก')) data.districtGroups[1] += deathCount;
     else if (district.includes('วัดไทรย์')) data.districtGroups[2] += deathCount;
@@ -1084,16 +1128,21 @@ function processRowStatistics(row, data, parts) {
     else if (district.includes('บ้านแก่ง')) data.districtGroups[4] += deathCount;
     else if (district.includes('หนองกรด')) data.districtGroups[5] += deathCount;
     else if (district.includes('หนองกระโดน')) data.districtGroups[6] += deathCount;
-    else data.districtGroups[7] += deathCount;
+    else data.districtGroups[6] += deathCount;
   } else {
-    data.districtGroups[7] += deathCount;
+    data.districtGroups[6] += deathCount;
   }
-  if (parts) {
-    const timeGroup = Math.floor(parts.hour / 2);
-    if (timeGroup >= 0 && timeGroup < 12) data.timeGroups[timeGroup] += deathCount;
+
+  if (row.incident_datetime) {
+    const parts = bkkParts(row.incident_datetime);
+    if (parts) {
+      const timeGroup = Math.floor(parts.h / 2);
+      if (timeGroup >= 0 && timeGroup < 12) data.timeGroups[timeGroup] += deathCount;
+    }
   }
+
   if (row.domicile) {
-    const dom = row.domicile.toString().trim();
+    const dom = String(row.domicile).trim();
     if (dom.includes('ใน') || dom.includes('นครสวรรค์')) data.domicileGroups[0] += deathCount;
     else if (dom !== '') data.domicileGroups[1] += deathCount;
     else data.domicileGroups[2] += deathCount;
@@ -1102,48 +1151,59 @@ function processRowStatistics(row, data, parts) {
   }
 }
 
-function computeDeathStats(rows, startDate, endDate) {
-  const data = getEmptyDeathData();
-  const start = startDate ? new Date(`${startDate}T00:00:00+07:00`) : null;
-  const end = endDate ? new Date(`${endDate}T23:59:59.999+07:00`) : null;
+async function loadDeathStatistics() {
+  Swal.fire({ title: 'กำลังโหลดข้อมูลสถิติ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  const sDate = document.getElementById('deathStartDate').value;
+  const eDate = document.getElementById('deathEndDate').value;
 
-  rows.forEach(row => {
-    if (!row.incident_datetime) return;
-    const parts = toBangkokParts(row.incident_datetime);
-    if (!parts) return;
-    if (start && parts.date < start) return;
-    if (end && parts.date > end) return;
+  try {
+    const rows = await fetchDeathRows(true);
+    const data = getEmptyDeathData();
 
-    if (parts.year >= 2023 && parts.year <= 2027) {
-      data[`monthly${parts.year}`][parts.month] += 1;
-      data.total += 1;
-    }
-    processRowStatistics(row, data, parts);
+    rows.forEach(row => {
+      if (!row.incident_datetime) return;
+      const day = bkkDay(row.incident_datetime);
+      // กรองตามช่วงวันที่ที่เลือก (Filter Date)
+      if (sDate && day < sDate) return;
+      if (eDate && day > eDate) return;
 
-    const coords = row.coordinates ? row.coordinates.toString().trim() : '';
-    if (coords && coords.includes(',')) {
-      data.mapData.push({
-        date: row.incident_datetime,
-        year: parts.year,
-        age: row.age ?? '-',
-        gender: row.gender || '-',
-        status: row.status || '-',
-        vehicle: row.vehicle_type || '-',
-        safety: row.safety_equipment || '-',
-        subdistrict: row.subdistrict || '-',
-        coords: coords
-      });
-    }
-  });
-  return data;
+      const deaths = 1;
+      const parts = bkkParts(row.incident_datetime);
+      if (parts && parts.y >= 2023 && parts.y <= 2027) {
+        data[`monthly${parts.y}`][parts.m] += deaths;
+        data.total += deaths;
+      }
+      processDeathRowStatistics(row, data, deaths);
+
+      // ดึงข้อมูลสำหรับปักหมุดแผนที่ (ถ้ามีพิกัด)
+      const coords = row.coordinates ? String(row.coordinates).trim() : '';
+      if (coords && coords.includes(',')) {
+        data.mapData.push({
+          date: formatThaiDateTimeStr(row.incident_datetime),
+          year: parts ? parts.y : '',
+          age: row.age !== null && row.age !== undefined ? row.age : '-',
+          gender: row.gender || '-',
+          status: row.status || '-',
+          vehicle: row.vehicle_type || '-',
+          safety: row.safety_equipment || '-',
+          subdistrict: row.subdistrict || '-',
+          coords: coords
+        });
+      }
+    });
+
+    createDeathCharts(data);
+    Swal.close();
+  } catch (error) { Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่สามารถโหลดสถิติได้' }); }
 }
 
-function computeMonthlyForYear(rows, targetYear) {
+async function getMonthlyDeathDataFromSheet(year) {
+  const rows = await fetchDeathRows();
   const monthlyCount = Array(12).fill(0);
   rows.forEach(row => {
     if (!row.incident_datetime) return;
-    const parts = toBangkokParts(row.incident_datetime);
-    if (parts && parts.year.toString() === targetYear.toString()) monthlyCount[parts.month] += 1;
+    const parts = bkkParts(row.incident_datetime);
+    if (parts && String(parts.y) === String(year)) monthlyCount[parts.m] += 1;
   });
   return monthlyCount;
 }
@@ -1154,30 +1214,17 @@ function calculateCumulative(monthlyData) {
   return cumulative;
 }
 
-async function loadDeathStatistics() {
-  Swal.fire({ title: 'กำลังโหลดข้อมูลสถิติ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-  try {
-    const rows = await fetchAllDeaths(true);
-    const sDate = document.getElementById('deathStartDate').value;
-    const eDate = document.getElementById('deathEndDate').value;
-    const data = computeDeathStats(rows, sDate, eDate);
-    createDeathCharts(data, rows);
-    Swal.close();
-  } catch (error) {
-    console.error(error);
-    Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่สามารถโหลดสถิติได้' });
-  }
-}
-
+// ประกาศตัวแปรแยก
 let dashboardDeathMap, deathMarkersLayer;
 
-function createDeathCharts(data, allRows) {
+async function createDeathCharts(data) {
   try {
     const chartIds = [
       'monthlyChart', 'ageChart', 'genderChart', 'domicileChart',
       'vehicleChart', 'statusChart', 'licenseChart', 'safetyChart',
       'timeChart', 'causeChart', 'roadTypeChart', 'roadNameChart', 'districtChart'
     ];
+
     chartIds.forEach(id => {
       const existingChart = Chart.getChart(id);
       if (existingChart) existingChart.destroy();
@@ -1186,14 +1233,13 @@ function createDeathCharts(data, allRows) {
 
     const y1 = document.getElementById('year1').value;
     const y2 = document.getElementById('year2').value;
-    const md1 = computeMonthlyForYear(allRows, y1);
-    const md2 = computeMonthlyForYear(allRows, y2);
+    const md1 = await getMonthlyDeathDataFromSheet(y1);
+    const md2 = await getMonthlyDeathDataFromSheet(y2);
 
     const chartOptions = (title) => ({
       maintainAspectRatio: false,
       plugins: { title: { display: true, text: title, font: { size: 14 } } }
     });
-
     const ctxMonthly = document.getElementById('monthlyChart');
     if (ctxMonthly) {
       charts.monthly = new Chart(ctxMonthly.getContext('2d'), {
@@ -1208,7 +1254,6 @@ function createDeathCharts(data, allRows) {
         options: { maintainAspectRatio: false }
       });
     }
-
     const generateChart = (id, type, labels, chartData, colors, title) => {
       const el = document.getElementById(id);
       if (el) {
@@ -1220,6 +1265,7 @@ function createDeathCharts(data, allRows) {
       }
     };
 
+    // แผนภูมิตามแถว
     generateChart('ageChart', 'bar', ['1-14', '15-18', '19-24', '25-35', '36-60', '60+'], data.ageGroups || Array(6).fill(0), '#3b82f6', 'ช่วงอายุ');
     generateChart('genderChart', 'pie', ['ชาย', 'หญิง'], data.gender || [0,0], ['#3b82f6', '#ec4899'], 'เพศ');
     generateChart('domicileChart', 'doughnut', ['ในพื้นที่/จว.', 'นอกพื้นที่', 'ไม่ระบุ'], data.domicileGroups || [0,0,0], ['#10b981', '#f59e0b', '#9ca3af'], 'ภูมิลำเนา');
@@ -1234,9 +1280,12 @@ function createDeathCharts(data, allRows) {
 
     generateChart('roadTypeChart', 'bar', ['ทางตรง', 'ทางโค้ง', 'ทางแยก', 'กลับรถ', 'แยกไฟแดง', 'สะพาน', 'อื่นๆ'], data.roadTypeGroups, '#8b5cf6', 'ลักษณะถนน');
     generateChart('roadNameChart', 'bar', ['ทล.1 ในเขต', 'ทล.1 นอกเขต', 'ทล.117', 'ทล.122', 'เทศบาลนคร', 'หนองเบน', 'อื่นๆ'], data.roadNameGroups, '#f59e0b', 'ชื่อถนน');
-    generateChart('districtChart', 'bar', ['ปากน้ำโพ', 'นครสวรรค์ตก', 'วัดไทรย์', 'ตะเคียนเลื่อน', 'บ้านแก่ง', 'หนองกรด', 'หนองกระโดน', 'อื่นๆ'], data.districtGroups || Array(8).fill(0), '#3b82f6', 'ตำบล');
+    // เพิ่ม "อื่นๆ" เข้าไปใน Label เพื่อให้สอดคล้องกับ DistrictGroups ตัวใหม่
+    generateChart('districtChart', 'bar', ['ปากน้ำโพ', 'นครสวรรค์ตก', 'วัดไทรย์', 'ตะเคียนเลื่อน', 'บ้านแก่ง', 'หนองกรด', 'หนองกระโดน', 'อื่นๆ'], data.districtGroups || Array(7).fill(0), '#3b82f6', 'ตำบล');;
 
-    if (data.mapData) initDashboardDeathMap(data.mapData);
+    if(data.mapData) {
+       initDashboardDeathMap(data.mapData);
+    }
   } catch (error) {
     console.error("เกิดข้อผิดพลาดในการวาดกราฟ:", error);
   }
@@ -1245,37 +1294,51 @@ function createDeathCharts(data, allRows) {
 function initDashboardDeathMap(mapData) {
   if (!dashboardDeathMap) {
     dashboardDeathMap = L.map('dashboardDeathMap').setView([15.705, 100.140], 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(dashboardDeathMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(dashboardDeathMap);
     deathMarkersLayer = L.layerGroup().addTo(dashboardDeathMap);
   }
 
   deathMarkersLayer.clearLayers();
 
-  const yearColors = { 2023: '#ef4444', 2024: '#3b82f6', 2025: '#10b981', 2026: '#f59e0b', 2027: '#8b5cf6' };
+  const yearColors = {
+    2023: '#ef4444', 2024: '#3b82f6', 2025: '#10b981', 2026: '#f59e0b', 2027: '#8b5cf6'
+  };
 
   mapData.forEach(item => {
     const parts = item.coords.split(',');
     if (parts.length >= 2) {
       const lat = parseFloat(parts[0].trim());
       const lng = parseFloat(parts[1].trim());
+
       if (!isNaN(lat) && !isNaN(lng)) {
         const markerColor = yearColors[item.year] || '#6b7280';
+
         const marker = L.circleMarker([lat, lng], {
-          radius: 8, fillColor: markerColor, color: '#ffffff', weight: 2, opacity: 1, fillOpacity: 0.9
+          radius: 8,
+          fillColor: markerColor,
+          color: '#ffffff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.9
         });
+
+        const formattedDate = formatThaiDateTimeStr(item.date);
         marker.bindPopup(`
           <div class="text-sm p-1 min-w-[220px]">
             <h4 class="font-bold text-blue-800 border-b pb-2 mb-2"><i class="fas fa-info-circle mr-1"></i> รายละเอียดอุบัติเหตุ</h4>
             <div class="space-y-1">
-              <p><strong class="text-gray-700">📅 วันที่-เวลา:</strong> ${v6EscapeHTML(formatThaiDateTimeStr(item.date))}</p>
-              <p><strong class="text-gray-700">👤 อายุ:</strong> ${v6EscapeHTML(item.age)} ปี | <strong class="text-gray-700">เพศ:</strong> ${v6EscapeHTML(item.gender)}</p>
-              <p><strong class="text-gray-700">📌 สถานะ:</strong> <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">${v6EscapeHTML(item.status)}</span></p>
-              <p><strong class="text-gray-700">🚗 ประเภทรถ:</strong> ${v6EscapeHTML(item.vehicle)}</p>
-              <p><strong class="text-gray-700">🛡️ อุปกรณ์นิรภัย:</strong> ${v6EscapeHTML(item.safety)}</p>
-              <p><strong class="text-gray-700">📍 ตำบล:</strong> ${v6EscapeHTML(item.subdistrict || 'ไม่ระบุ')}</p>
+              <p><strong class="text-gray-700">📅 วันที่-เวลา:</strong> ${formattedDate}</p>
+              <p><strong class="text-gray-700">👤 อายุ:</strong> ${item.age} ปี | <strong class="text-gray-700">เพศ:</strong> ${item.gender}</p>
+              <p><strong class="text-gray-700">📌 สถานะ:</strong> <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">${item.status}</span></p>
+              <p><strong class="text-gray-700">🚗 ประเภทรถ:</strong> ${item.vehicle}</p>
+              <p><strong class="text-gray-700">🛡️ อุปกรณ์นิรภัย:</strong> ${item.safety}</p>
+              <p><strong class="text-gray-700">📍 ตำบล:</strong> ${item.subdistrict || 'ไม่ระบุ'}</p>
             </div>
           </div>
         `);
+
         deathMarkersLayer.addLayer(marker);
       }
     }
@@ -1284,30 +1347,171 @@ function initDashboardDeathMap(mapData) {
   setTimeout(() => dashboardDeathMap.invalidateSize(), 500);
 }
 
+
 async function updateMonthlyChart() {
   Swal.fire({ title: 'กำลังอัปเดตกราฟ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-  try {
-    const rows = await fetchAllDeaths();
-    const y1 = document.getElementById('year1').value;
-    const y2 = document.getElementById('year2').value;
-    const md1 = computeMonthlyForYear(rows, y1);
-    const md2 = computeMonthlyForYear(rows, y2);
+  const y1 = document.getElementById('year1').value;
+  const y2 = document.getElementById('year2').value;
+  const md1 = await getMonthlyDeathDataFromSheet(y1);
+  const md2 = await getMonthlyDeathDataFromSheet(y2);
 
-    if (charts.monthly) {
-      charts.monthly.data.datasets[0].label = `ค.ศ. ${y1}`; charts.monthly.data.datasets[0].data = calculateCumulative(md1);
-      charts.monthly.data.datasets[1].label = `ค.ศ. ${y2}`; charts.monthly.data.datasets[1].data = calculateCumulative(md2);
-      charts.monthly.update();
-    }
-    Swal.close();
-  } catch (error) {
-    Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'อัปเดตกราฟไม่สำเร็จ' });
+  if (charts.monthly) {
+    charts.monthly.data.datasets[0].label = `ค.ศ. ${y1}`; charts.monthly.data.datasets[0].data = calculateCumulative(md1);
+    charts.monthly.data.datasets[1].label = `ค.ศ. ${y2}`; charts.monthly.data.datasets[1].data = calculateCumulative(md2);
+    charts.monthly.update();
   }
+  Swal.close();
+}
+let mapRisk;
+
+/* ==============================
+   V6 MOBILE-FIRST OVERRIDES
+   คงชื่อฟังก์ชันเดิมเพื่อไม่กระทบการเรียกใช้งาน
+================================= */
+function v6IsMobile(){ return window.matchMedia('(max-width: 767px)').matches; }
+function v6EscapeHTML(value){
+  return String(value ?? '').replace(/[&<>'"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s]));
+}
+function v6SafeForOnclick(value){ return String(value ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' '); }
+
+// Override displayRiskData: Desktop = ตารางเดิม, Mobile = การ์ดอ่านง่าย
+function displayRiskData(data) {
+  const tableBody = document.getElementById('dataTableBody');
+  let mobileWrap = document.getElementById('dataTableMobile');
+  if (!mobileWrap) {
+    mobileWrap = document.createElement('div');
+    mobileWrap.id = 'dataTableMobile';
+    const table = tableBody.closest('table');
+    table.parentNode.insertBefore(mobileWrap, table.nextSibling);
+  }
+
+  if (!data || data.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4">ไม่พบข้อมูลในตาราง</td></tr>`;
+    mobileWrap.innerHTML = `<div class="v6-risk-card text-center text-gray-500">ไม่พบข้อมูลในระบบ</div>`;
+    initRiskMap([]);
+    return;
+  }
+
+  const rows = data.map((row) => {
+    const dDate = Array.isArray(row) ? row[0] : row.date || '-';
+    const dLoc = Array.isArray(row) ? row[1] : row.location || '-';
+    const dRoad = Array.isArray(row) ? row[2] : row.road || '-';
+    const dVillage = Array.isArray(row) ? row[3] : row.village || '-';
+    const dSub = Array.isArray(row) ? row[4] : row.subdistrict || '-';
+    const dProv = Array.isArray(row) ? row[6] : row.province || '-';
+    const dCoords = Array.isArray(row) ? row[7] : row.coordinates || '-';
+    const dStatus = Array.isArray(row) ? row[11] : row.status || 'ยังไม่ได้ดำเนินการ';
+    const img1 = Array.isArray(row) ? row[9] : row.image1 || '';
+    const img2 = Array.isArray(row) ? row[10] : row.image2 || '';
+    const imageHtml = getImageElements(img1, img2);
+    const statusColorClass = getStatusColor(dStatus);
+    const safeLoc = v6SafeForOnclick(dLoc);
+    const safeRoad = v6SafeForOnclick(dRoad);
+    return {dDate,dLoc,dRoad,dVillage,dSub,dProv,dCoords,dStatus,img1,img2,imageHtml,statusColorClass,safeLoc,safeRoad};
+  });
+
+  tableBody.innerHTML = rows.map(r => `
+    <tr class="border-b hover:bg-gray-50 transition-colors duration-200">
+      <td class="px-4 py-3 whitespace-nowrap">${v6EscapeHTML(formatThaiDateTimeStr(r.dDate))}</td>
+      <td class="px-4 py-3">${v6EscapeHTML(r.dLoc)}</td>
+      <td class="px-4 py-3">${v6EscapeHTML(r.dRoad)}</td>
+      <td class="px-4 py-3">${v6EscapeHTML(r.dVillage)}</td>
+      <td class="px-4 py-3">${v6EscapeHTML(r.dSub)}</td>
+      <td class="px-4 py-3">${v6EscapeHTML(r.dProv)}</td>
+      <td class="px-4 py-3 text-xs text-gray-500">${v6EscapeHTML(r.dCoords)}</td>
+      <td class="px-4 py-3"><div class="flex gap-2 justify-center">${r.imageHtml}</div></td>
+      <td class="px-4 py-3 text-center">
+        <button onclick="showStatusDetails('${r.safeLoc}', '${r.safeRoad}')" class="px-4 py-2 rounded-full text-sm font-semibold shadow-md transition-transform transform hover:scale-105 hover:shadow-lg focus:outline-none ${r.statusColorClass}">
+          <i class="fas fa-search-plus mr-1 opacity-75"></i> ${v6EscapeHTML(r.dStatus)}
+        </button>
+      </td>
+    </tr>
+  `).join('');
+
+  mobileWrap.innerHTML = rows.map(r => `
+    <article class="v6-risk-card">
+      <div class="v6-risk-card__top">
+        <div class="v6-risk-card__title">${v6EscapeHTML(r.dLoc)}</div>
+        <div class="v6-risk-card__date">${v6EscapeHTML(formatThaiDateTimeStr(r.dDate))}</div>
+      </div>
+      <div class="v6-risk-card__grid">
+        <div><span class="v6-risk-card__label">ถนน:</span> ${v6EscapeHTML(r.dRoad)}</div>
+        <div><span class="v6-risk-card__label">หมู่/ตำบล:</span> ${v6EscapeHTML(r.dVillage)} / ${v6EscapeHTML(r.dSub)}</div>
+        <div><span class="v6-risk-card__label">จังหวัด:</span> ${v6EscapeHTML(r.dProv)}</div>
+        <div><span class="v6-risk-card__label">พิกัด:</span> ${v6EscapeHTML(r.dCoords)}</div>
+      </div>
+      <div class="v6-risk-images">${r.imageHtml || '<span class="text-sm text-gray-400">ไม่มีรูปภาพ</span>'}</div>
+      <button onclick="showStatusDetails('${r.safeLoc}', '${r.safeRoad}')" class="v6-risk-status ${r.statusColorClass} font-semibold shadow-md">
+        <i class="fas fa-search-plus mr-1"></i>${v6EscapeHTML(r.dStatus)}
+      </button>
+    </article>
+  `).join('');
+
+  initRiskMap(data);
 }
 
+// Override showMapPicker ให้เหมาะกับมือถือ
+function showMapPicker() {
+  Swal.fire({
+    title: 'คลิกหรือลากหมุดเพื่อเลือกตำแหน่ง',
+    html: '<div id="mapContainer" style="height: 400px; width: 100%; border-radius: 14px;"></div>',
+    width: v6IsMobile() ? '96%' : '80%',
+    showCancelButton: true,
+    confirmButtonText: 'ยืนยันตำแหน่งนี้',
+    cancelButtonText: 'ยกเลิก',
+    didOpen: () => {
+      const defaultLat = 15.705;
+      const defaultLng = 100.140;
+      let startLat = defaultLat;
+      let startLng = defaultLng;
+      const currentCoords = document.getElementById('coordinates').value;
+      if(currentCoords && currentCoords.includes(',')){
+        const parts = currentCoords.split(',');
+        startLat = parseFloat(parts[0].trim());
+        startLng = parseFloat(parts[1].trim());
+      }
+      mapInstance = L.map('mapContainer').setView([startLat, startLng], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(mapInstance);
+      mapMarker = L.marker([startLat, startLng], {draggable: true}).addTo(mapInstance);
+      mapInstance.on('click', function(e) { mapMarker.setLatLng(e.latlng); });
+      setTimeout(() => { mapInstance.invalidateSize(); }, 180);
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const position = mapMarker.getLatLng();
+      document.getElementById('coordinates').value = `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
+      Swal.fire({ icon: 'success', title: 'ระบุพิกัดสำเร็จ', timer: 1500, showConfirmButton: false });
+    }
+  });
+}
+
+// ปรับ active ของ bottom navigation เมื่อกลับจากหน้าสถิติผู้เสียชีวิต
+const v6OriginalShowTab = showTab;
+showTab = function(tabName, element) {
+  v6OriginalShowTab(tabName, element);
+  if (!element && tabName === 'dashboard') {
+    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+    const btn = Array.from(document.querySelectorAll('.nav-tab')).find(b => b.getAttribute('onclick')?.includes("showTab('dashboard'"));
+    if (btn) btn.classList.add('active');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
 window.addEventListener('resize', () => {
-  if (typeof mapRisk !== 'undefined' && mapRisk) setTimeout(() => mapRisk.invalidateSize(), 150);
+  if (typeof riskMap !== 'undefined' && riskMap) setTimeout(() => riskMap.invalidateSize(), 150);
   if (typeof dashboardDeathMap !== 'undefined' && dashboardDeathMap) setTimeout(() => dashboardDeathMap.invalidateSize(), 150);
 });
+
+function openVideoCampaign() {
+  window.open(
+    'https://drive.google.com/drive/folders/1EyT0dgnBzMWOgqEfiURrgVrKfCPq6GNd?usp=sharing',
+    '_blank'
+  );
+}
+
 </script>
 </body>
 </html>
