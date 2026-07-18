@@ -321,6 +321,26 @@ canvas{max-width:100%!important;}
   }
 }
 
+/* สถิติสไตล์หน้าเจ้าหน้าที่ (แทนการ์ดอุบัติเหตุ/บาดเจ็บ/เสียชีวิตเดิม) */
+.stats-zone{margin-bottom:18px}
+.zone-title{font-weight:800;color:#16324f;margin:0 0 10px;font-size:1.05rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.zone-title .zone-hint{font-size:.72rem;font-weight:700;color:#7c8aa0}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.stat-card{background:rgba(255,255,255,.94);border:1px solid rgba(15,23,42,.08);border-radius:18px;padding:16px;min-height:112px;box-shadow:0 12px 30px rgba(15,23,42,.08);text-align:left}
+.stat-card .label{font-size:.8rem;font-weight:700;color:#5b6b7f;display:flex;gap:6px;align-items:center}
+.stat-card .value{font-size:2rem;font-weight:900;color:#123b7a;margin-top:6px;line-height:1.1}
+.stat-card.red .value{color:#c1122f}
+.stat-card.orange .value{color:#d97706}
+.stat-card .unit{font-size:.75rem;color:#8a97a8}
+.injury-mini{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.injury-mini .pill{font-size:.68rem;font-weight:800;padding:3px 8px;border-radius:999px}
+.pill.red{background:#fee2e2;color:#b91c1c}.pill.orange{background:#ffedd5;color:#c2410c}.pill.yellow{background:#fef9c3;color:#a16207}
+.stats-zone.clickable{cursor:pointer}
+.stats-zone.clickable .stat-card{transition:transform .18s ease,box-shadow .18s ease}
+.stats-zone.clickable:hover .stat-card{transform:translateY(-2px);box-shadow:0 16px 36px rgba(193,18,47,.16)}
+.stats-hint{text-align:right;font-size:.75rem;color:#8a97a8;margin-top:2px}
+@media(max-width:640px){.stats-grid{grid-template-columns:1fr;gap:10px}.stat-card{min-height:96px}}
+
 </style>
 </head>
 <body>
@@ -494,17 +514,34 @@ canvas{max-width:100%!important;}
         <div class="glass-effect rounded-xl p-6 text-center"><img src="https://img.icons8.com/color/48/000000/in-progress.png" class="w-12 h-12 mx-auto mb-3"><h3 class="text-lg font-semibold text-gray-700 mb-2">กำลังดำเนินการ</h3><p class="text-3xl font-bold text-yellow-600" id="inProgressRisks">0</p></div>
         <div class="glass-effect rounded-xl p-6 text-center"><img src="https://img.icons8.com/color/48/000000/cancel.png" class="w-12 h-12 mx-auto mb-3"><h3 class="text-lg font-semibold text-gray-700 mb-2">ยังไม่ดำเนินการ</h3><p class="text-3xl font-bold text-red-600" id="notStartedRisks">0</p></div>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="glass-effect rounded-xl p-6 text-center"><img src="https://img.icons8.com/color/48/000000/car-crash.png" class="w-12 h-12 mx-auto mb-3"><h3 class="text-lg font-semibold text-gray-700 mb-2">ข้อมูลอุบัติเหตุ</h3><p class="text-3xl font-bold text-orange-600" id="totalAccidents">0</p></div>
-        <div class="glass-effect rounded-xl p-6 text-center"><img src="https://img.icons8.com/color/48/000000/bandage.png" class="w-12 h-12 mx-auto mb-3"><h3 class="text-lg font-semibold text-gray-700 mb-2">ผู้ได้รับบาดเจ็บ</h3><p class="text-3xl font-bold text-purple-600" id="totalInjured">0</p></div>
-        <!-- ค้นหาจุดนี้แล้วใส่คลาสเพิ่ม -->
-<div class="glass-effect rounded-xl p-6 text-center cursor-pointer hover:shadow-lg transition-all clickable-pulse" onclick="showDeathStatistics()">
-  <img src="https://img.icons8.com/color/48/000000/death.png" class="w-12 h-12 mx-auto mb-3">
-  <h3 class="text-lg font-semibold text-gray-700 mb-2">ผู้เสียชีวิตสะสม</h3>
-  <p class="text-3xl font-bold text-red-800" id="totalDeaths">0</p>
-  <p class="text-sm text-gray-500 mt-2"><i class="fas fa-mouse-pointer mr-1"></i>คลิกเพื่อดูรายละเอียด</p>
-</div>
- </div>
+      <!-- สถิติแบบเรียลไทม์ สไตล์หน้าเจ้าหน้าที่ -->
+      <div id="officerStyleStats" class="mb-8">
+        <div class="stats-zone">
+          <h3 class="zone-title"><i class="fa-solid fa-car-burst" style="color:#1d4ed8"></i> สถิติข้อมูลอุบัติเหตุ สภ.เมืองนครสวรรค์</h3>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="label"><i class="fa-solid fa-calendar"></i> ปีปัจจุบัน</div><div class="value" id="accStatYear">-</div><div class="unit">ครั้ง</div></div>
+            <div class="stat-card"><div class="label"><i class="fa-solid fa-calendar-days"></i> เดือนปัจจุบัน</div><div class="value" id="accStatMonth">-</div><div class="unit">ครั้ง</div></div>
+            <div class="stat-card"><div class="label"><i class="fa-solid fa-calendar-day"></i> วันนี้</div><div class="value" id="accStatToday">-</div><div class="unit">ครั้ง</div></div>
+          </div>
+        </div>
+        <div class="stats-zone clickable" onclick="showDeathStatistics()" title="คลิกเพื่อดูรายละเอียด">
+          <h3 class="zone-title"><i class="fa-solid fa-skull-crossbones" style="color:#c1122f"></i> สถิติข้อมูลอุบัติเหตุ (เสียชีวิต) สภ.เมืองนครสวรรค์ <span class="zone-hint"><i class="fas fa-mouse-pointer"></i> คลิกเพื่อดูรายละเอียด</span></h3>
+          <div class="stats-grid">
+            <div class="stat-card red"><div class="label"><i class="fa-solid fa-user-xmark"></i> ปีปัจจุบัน</div><div class="value" id="deathStatYear">-</div><div class="unit">ราย</div></div>
+            <div class="stat-card red"><div class="label"><i class="fa-solid fa-user-xmark"></i> เดือนปัจจุบัน</div><div class="value" id="deathStatMonth">-</div><div class="unit">ราย</div></div>
+            <div class="stat-card red"><div class="label"><i class="fa-solid fa-clock-rotate-left"></i> ย้อนหลัง 1 วัน</div><div class="value" id="deathStatYesterday">-</div><div class="unit">ราย</div></div>
+          </div>
+        </div>
+        <div class="stats-zone">
+          <h3 class="zone-title"><i class="fa-solid fa-user-injured" style="color:#d97706"></i> สถิติข้อมูลอุบัติเหตุ (บาดเจ็บ) สภ.เมืองนครสวรรค์</h3>
+          <div class="stats-grid">
+            <div class="stat-card orange"><div class="label"><i class="fa-solid fa-kit-medical"></i> ปีปัจจุบัน</div><div class="value" id="injStatYear">-</div><div class="unit">ราย</div><div class="injury-mini" id="injPillsYear"></div></div>
+            <div class="stat-card orange"><div class="label"><i class="fa-solid fa-kit-medical"></i> เดือนปัจจุบัน</div><div class="value" id="injStatMonth">-</div><div class="unit">ราย</div><div class="injury-mini" id="injPillsMonth"></div></div>
+            <div class="stat-card orange"><div class="label"><i class="fa-solid fa-kit-medical"></i> ย้อนหลัง 1 วัน</div><div class="value" id="injStatYesterday">-</div><div class="unit">ราย</div><div class="injury-mini" id="injPillsYesterday"></div></div>
+          </div>
+        </div>
+        <p class="stats-hint" id="officerStatsHint"></p>
+      </div>
 </div>
 
     <!-- Death Statistics Tab -->
@@ -748,7 +785,7 @@ async function handleFormSubmit(event) {
 }
 
 function showTab(tabName, element) {
-  document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.nav-tab, .nav-tab-v6').forEach(tab => tab.classList.remove('active'));
   if (element) element.classList.add('active');
 
   ['reportTab', 'dataTab', 'dashboardTab', 'deathStatsTab'].forEach(id => {
@@ -976,24 +1013,92 @@ async function refreshDashboard() {
       else riskStats.notStarted++;
     });
 
-    const [accidents, injured, deaths] = await Promise.all([
-      countTable('accidents_public', 'incident_datetime', startDate, endDate),
-      countTable('injuries', 'incident_datetime', startDate, endDate),
-      countTable('deaths', 'incident_datetime', startDate, endDate)
-    ]);
-
     document.getElementById('totalRisks').textContent = riskStats.totalRisks || 0;
     document.getElementById('completedRisks').textContent = riskStats.completed || 0;
     document.getElementById('inProgressRisks').textContent = riskStats.inProgress || 0;
     document.getElementById('notStartedRisks').textContent = riskStats.notStarted || 0;
-    document.getElementById('totalAccidents').textContent = accidents || 0;
-    document.getElementById('totalInjured').textContent = injured || 0;
-    document.getElementById('totalDeaths').textContent = deaths || 0;
+
+    await loadOfficerStyleStats();
 
     Swal.close();
   } catch (error) {
     Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message });
   }
+}
+
+/* ============ สถิติเรียลไทม์สไตล์หน้าเจ้าหน้าที่ ============ */
+function bkkDateParts(date) {
+  const s = date.toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' }); // 'YYYY-MM-DD HH:mm:ss'
+  return { y: s.slice(0,4), m: s.slice(5,7), d: s.slice(0,10) };
+}
+
+async function countAccidentsFrom(column, fromIso, toIso) {
+  let q = sb.from('accidents_public').select('*', { count:'exact', head:true }).gte(column, fromIso);
+  if (toIso) q = q.lt(column, toIso);
+  const { count, error } = await q;
+  if (error) throw error;
+  return count || 0;
+}
+
+async function loadOfficerStyleStats() {
+  const now = new Date();
+  const p = bkkDateParts(now);
+  const py = bkkDateParts(new Date(now.getTime() - 24*60*60*1000)); // เมื่อวาน
+  const yearStart  = p.y + '-01-01T00:00:00+07:00';
+  const monthStart = p.y + '-' + p.m + '-01T00:00:00+07:00';
+  const dayStart   = p.d + 'T00:00:00+07:00';
+  const ydayStart  = py.d + 'T00:00:00+07:00';
+
+  // อุบัติเหตุ: นับจากวันบันทึกข้อมูลเหมือนระบบเดิม (ถ้า view ยังไม่มี recorded_at ให้ใช้วันเกิดเหตุแทน)
+  let col = 'recorded_at';
+  let accYear, accMonth, accToday;
+  try {
+    [accYear, accMonth, accToday] = await Promise.all([
+      countAccidentsFrom(col, yearStart), countAccidentsFrom(col, monthStart), countAccidentsFrom(col, dayStart)
+    ]);
+  } catch (e) {
+    col = 'incident_datetime';
+    [accYear, accMonth, accToday] = await Promise.all([
+      countAccidentsFrom(col, yearStart), countAccidentsFrom(col, monthStart), countAccidentsFrom(col, dayStart)
+    ]);
+  }
+
+  // เสียชีวิต + บาดเจ็บ: ดึงเฉพาะปีนี้แล้วนับฝั่งเบราว์เซอร์ (ข้อมูลไม่กี่สิบแถว)
+  const [deathRes, injRes] = await Promise.all([
+    sb.from('deaths').select('incident_datetime').gte('incident_datetime', yearStart),
+    sb.from('injuries').select('incident_datetime, raw').gte('incident_datetime', yearStart)
+  ]);
+  if (deathRes.error) throw new Error(deathRes.error.message);
+  if (injRes.error) throw new Error(injRes.error.message);
+
+  const dayOf = v => bkkDateParts(new Date(v)).d;
+  const monthOf = v => dayOf(v).slice(0,7);
+  const thisMonth = p.d.slice(0,7);
+
+  const deathDates = (deathRes.data || []).map(r => r.incident_datetime).filter(Boolean);
+  const deathYear = deathDates.length;
+  const deathMonth = deathDates.filter(v => monthOf(v) === thisMonth).length;
+  const deathYesterday = deathDates.filter(v => dayOf(v) === py.d).length;
+
+  const sevOf = raw => { let s = ((raw||{}).severity || '').trim(); if (s === 'บาดเจ็บเล็กน้อย') s = 'เล็กน้อย'; return s; };
+  const injTally = rows => {
+    const t = { 'สาหัส':0, 'หมดสติ':0, 'เล็กน้อย':0, total:0 };
+    rows.forEach(r => { const s = sevOf(r.raw); if (Object.prototype.hasOwnProperty.call(t, s)) { t[s]++; t.total++; } });
+    return t;
+  };
+  const injRows = injRes.data || [];
+  const injYear = injTally(injRows);
+  const injMonth = injTally(injRows.filter(r => r.incident_datetime && monthOf(r.incident_datetime) === thisMonth));
+  const injYesterday = injTally(injRows.filter(r => r.incident_datetime && dayOf(r.incident_datetime) === py.d));
+
+  const setNum = (id, v) => document.getElementById(id).textContent = Number(v || 0).toLocaleString('th-TH');
+  setNum('accStatYear', accYear); setNum('accStatMonth', accMonth); setNum('accStatToday', accToday);
+  setNum('deathStatYear', deathYear); setNum('deathStatMonth', deathMonth); setNum('deathStatYesterday', deathYesterday);
+  const pills = t => '<span class="pill red">สาหัส ' + t['สาหัส'] + '</span><span class="pill orange">หมดสติ ' + t['หมดสติ'] + '</span><span class="pill yellow">เล็กน้อย ' + t['เล็กน้อย'] + '</span>';
+  setNum('injStatYear', injYear.total); document.getElementById('injPillsYear').innerHTML = pills(injYear);
+  setNum('injStatMonth', injMonth.total); document.getElementById('injPillsMonth').innerHTML = pills(injMonth);
+  setNum('injStatYesterday', injYesterday.total); document.getElementById('injPillsYesterday').innerHTML = pills(injYesterday);
+  document.getElementById('officerStatsHint').innerHTML = '<i class="fa-regular fa-clock"></i> อัปเดตล่าสุด ' + now.toLocaleString('th-TH', { timeZone:'Asia/Bangkok', hour12:false });
 }
 
 function showDeathStatistics() {
@@ -1493,8 +1598,8 @@ const v6OriginalShowTab = showTab;
 showTab = function(tabName, element) {
   v6OriginalShowTab(tabName, element);
   if (!element && tabName === 'dashboard') {
-    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-    const btn = Array.from(document.querySelectorAll('.nav-tab')).find(b => b.getAttribute('onclick')?.includes("showTab('dashboard'"));
+    document.querySelectorAll('.nav-tab, .nav-tab-v6').forEach(tab => tab.classList.remove('active'));
+    const btn = Array.from(document.querySelectorAll('.nav-tab, .nav-tab-v6')).find(b => b.getAttribute('onclick')?.includes("showTab('dashboard'"));
     if (btn) btn.classList.add('active');
   }
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1505,12 +1610,7 @@ window.addEventListener('resize', () => {
   if (typeof dashboardDeathMap !== 'undefined' && dashboardDeathMap) setTimeout(() => dashboardDeathMap.invalidateSize(), 150);
 });
 
-function openVideoCampaign() {
-  window.open(
-    'https://drive.google.com/drive/folders/1EyT0dgnBzMWOgqEfiURrgVrKfCPq6GNd?usp=sharing',
-    '_blank'
-  );
-}
+function openVideoCampaign() { window.open('videos.html', '_blank'); }
 
 </script>
 </body>
