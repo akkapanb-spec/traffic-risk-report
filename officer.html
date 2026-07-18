@@ -292,7 +292,7 @@
       </section>
 
       <section id="page-accident" class="page">
-        <div class="page-head"><div class="page-icon"><i class="fa-solid fa-car-burst"></i></div><div><h2>บันทึกข้อมูลอุบัติเหตุ</h2><p>กรอกข้อมูลให้ครบถ้วนก่อนบันทึกเข้าสู่ระบบ</p></div></div>
+        <div class="page-head"><div class="page-icon"><i class="fa-solid fa-car-burst"></i></div><div><h2>บันทึกข้อมูลอุบัติเหตุ</h2><p>กรอกข้อมูลให้ครบถ้วนก่อนบันทึกเข้าสู่ Google Sheets</p></div></div>
         <form id="accidentForm" novalidate>
           <div class="card">
             <h3 class="card-title"><i class="fa-regular fa-calendar-check"></i> ข้อมูลการบันทึก</h3>
@@ -355,7 +355,7 @@
           <div class="card">
             <h3 class="card-title"><i class="fa-solid fa-camera"></i> รูปภาพจุดเกิดเหตุ</h3>
             <div class="image-drop">
-              <i class="fa-solid fa-camera-retro"></i><p><strong>ถ่ายภาพ/เลือกไฟล์ JPG หรือ PNG ได้สูงสุด 3 ภาพ</strong></p><p>ระบบจะย่อขนาดภาพก่อนอัปโหลดและบันทึก URL รูปภาพอัตโนมัติ</p>
+              <i class="fa-solid fa-camera-retro"></i><p><strong>ถ่ายภาพ/เลือกไฟล์ JPG หรือ PNG ได้สูงสุด 3 ภาพ</strong></p><p>ระบบจะย่อขนาดภาพก่อนอัปโหลดและบันทึก URL รูปภาพลง Google Sheet อัตโนมัติ</p>
               <label class="btn btn-soft" for="imageFiles"><i class="fa-solid fa-camera"></i> ถ่ายภาพ/เลือกไฟล์</label>
               <input id="imageFiles" class="sr-only" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" multiple>
             </div>
@@ -447,6 +447,7 @@
         bindFormEvents();
         setDefaultDates();
         startClock();
+        startRealtimeRefresh();
         await restoreSession();
       } catch (error) {
         console.error('Application initialization failed:', error);
@@ -872,6 +873,18 @@
       if (page === 'dashboard') loadDashboard();
       if (page === 'map') { loadMapCumulative(); loadMapData(); }
       if (page === 'map' && state.accidentMap) setTimeout(() => state.accidentMap.invalidateSize(), 250);
+    }
+
+    // Real-time: รีเฟรชข้อมูลหน้าปัจจุบันอัตโนมัติทุก 30 วินาที
+    function startRealtimeRefresh() {
+      setInterval(() => {
+        if (!state.token || !state.user) return;
+        if (document.getElementById('appShell').classList.contains('hidden')) return;
+        if (document.querySelector('.swal2-container')) return; // ไม่รีเฟรชระหว่างมีป๊อปอัป
+        if (state.currentPage === 'home') loadHomeStats();
+        else if (state.currentPage === 'dashboard') loadDashboard();
+        else if (state.currentPage === 'map') { loadMapCumulative(); loadMapData(); }
+      }, 30000);
     }
 
     function startClock() {
@@ -1362,16 +1375,16 @@
             statCard('เดือนที่เกิดเหตุสูงสุด', maxMonthLabel(result.monthly), '', 'fa-arrow-trend-up', 'orange') +
           '</div>' +
           '<div class="monthly-grid">' +
-            '<div class="card chart-card monthly-half"><h3 class="card-title"><i class="fa-solid fa-chart-column"></i> อุบัติเหตุรายเดือน ปี ' + yearLabel + '</h3><div class="chart-wrap"><canvas id="monthlyChart"></canvas></div></div>' +
-            '<div class="card chart-card cumulative-half"><h3 class="card-title"><i class="fa-solid fa-chart-area"></i> อุบัติเหตุสะสมรายปี</h3><div class="chart-wrap"><canvas id="cumulativeChart"></canvas></div></div>' +
+            '<div class="card chart-card monthly-half"><h3 class="card-title"><i class="fa-solid fa-chart-column"></i> อุบัติเหตุรายเดือน ปี ' + yearLabel + '</h3><div class="chart-wrap"><canvas id="monthlyChart"></canvas></div><div class="dashboard-note">แผนภูมิแท่ง 3 มิติ พร้อมเส้นจำนวนด้านบน ขนาดครึ่งแถว ชิดซ้าย</div></div>' +
+            '<div class="card chart-card cumulative-half"><h3 class="card-title"><i class="fa-solid fa-chart-area"></i> อุบัติเหตุสะสมรายปี</h3><div class="chart-wrap"><canvas id="cumulativeChart"></canvas></div><div class="dashboard-note">ย้ายมาอยู่แถวเดียวกับอุบัติเหตุรายเดือน และลดขนาดลงครึ่งหนึ่ง</div></div>' +
           '</div>' +
           '<div class="dashboard-detail-grid" style="margin-top:16px">' +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-venus-mars"></i> เพศ</h3><div id="genderCards" class="custom-visual"></div></div>' +
             chartCardHtml('statusChart', 'สถานะ', 'fa-users', 'แผนภูมิวงกลมโดนัท ผู้ขับขี่/ผู้โดยสาร/คนเดินเท้า') +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-people-arrows"></i> อายุ</h3><div id="agePyramid" class="custom-visual"></div><div class="dashboard-note">นับตามตัวเลขอายุจริง: 0-14, 15-18, 19-24, 25-35, 36-60, 60+</div></div>' +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-id-card"></i> ใบอนุญาตขับขี่</h3><div id="licenseCards" class="custom-visual"></div></div>' +
-            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-car-side"></i> ยานพาหนะ</h3><div id="vehicleBars" class="custom-visual"></div></div>' +
-            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-helmet-safety"></i> อุปกรณ์นิรภัย</h3><div id="safetyBars" class="custom-visual"></div></div>' +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-car-side"></i> ยานพาหนะ</h3><div id="vehicleBars" class="custom-visual"></div><div class="dashboard-note">แผนภูมิแท่งสามมิติแนวตั้ง พร้อมลูกศรและสีใหม่</div></div>' +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-helmet-safety"></i> อุปกรณ์นิรภัย</h3><div id="safetyBars" class="custom-visual"></div><div class="dashboard-note">แท่งเชิงเดี่ยว 3 มิติ แนวนอน</div></div>' +
             chartCardHtml('injuryChart', 'อาการบาดเจ็บ', 'fa-user-injured', 'เสียชีวิต/สาหัส/หมดสติ/เล็กน้อย/ไม่บาดเจ็บ') +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-person"></i> อวัยวะบาดเจ็บ</h3><div id="bodyPartFigure" class="custom-visual"></div></div>' +
             chartCardHtml('relationChart', 'ความสัมพันธ์อุปกรณ์นิรภัยกับอาการบาดเจ็บ', 'fa-link', 'เปรียบเทียบอาการบาดเจ็บตามการใช้อุปกรณ์นิรภัย') +
@@ -1694,6 +1707,7 @@
     });
   </script>
 
+<div style="position:fixed;right:8px;bottom:26px;z-index:9998;font-size:10px;color:rgba(15,23,42,.62);background:rgba(255,255,255,.78);padding:3px 8px;border-radius:999px;backdrop-filter:blur(4px)"><i class="fa-regular fa-clock"></i> Real-time : รีเฟรชอัตโนมัติทุก 30 วินาที</div>
 <div style="position:fixed;right:8px;bottom:6px;z-index:9999;font-size:10px;color:rgba(15,23,42,.55);background:rgba(255,255,255,.72);padding:3px 7px;border-radius:999px;backdrop-filter:blur(4px)">By.Pol.Lt.Col.Akkpan Buasamlee Deputy Superintendent[Traffic]</div>
 </body>
 </html>
