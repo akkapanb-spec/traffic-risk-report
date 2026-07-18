@@ -695,7 +695,7 @@ function showTab(tabName, element) {
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function openAccidentRecord() { window.open('https://script.google.com/macros/s/AKfycbwsmyBUOgWjoBA1GDoYfygJiHVwMVA6yotsvNAaAmk4GkyvPZRrUCfeyZWBgKLl1WgO/exec', '_blank'); }
+function openAccidentRecord() { window.open('officer.html', '_blank'); }
 function openHelmetProject() { window.open('https://script.google.com/macros/s/AKfycbwm9oEypRxDHeDcNU_tGVoPLIGiXyEuqjKAuqYZM2jTDucEw7ZUA0hfbZXQNAu3lfXCFA/exec', '_blank'); }
 function openVideoCampaign() { window.open('https://drive.google.com/drive/folders/1EyT0dgnBzMWOgqEfiURrgVrKfCPq6GNd?usp=sharing', '_blank'); }
 
@@ -931,7 +931,7 @@ async function refreshDashboard() {
     });
 
     const [accidents, injured, deaths] = await Promise.all([
-      countRows('accidents', 'incident_datetime', startDate, endDate),
+      countRows('accidents_public', 'incident_datetime', startDate, endDate),
       countRows('injuries', 'incident_datetime', startDate, endDate),
       countRows('deaths', 'incident_datetime', startDate, endDate)
     ]);

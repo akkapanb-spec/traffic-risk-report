@@ -14,6 +14,9 @@
 | `sql/schema.sql` | สร้างตาราง + RLS ใน Supabase |
 | `sql/storage.sql` | สร้าง bucket เก็บรูปภาพ + สิทธิ์อัปโหลด |
 | `sql/import_data.sql` | นำเข้าข้อมูลเดิมทั้งหมด + สลับ URL รูปเป็น Storage |
+| `sql/officer.sql` | ระบบเจ้าหน้าที่: ตาราง officers/sessions + RPC ทั้งหมด + ปิด PII |
+| `sql/officers_data.sql` | นำเข้าเจ้าหน้าที่ 50 นายจากชีทลงทะเบียน (อนุมัติสิทธิ์แล้ว) |
+| `officer.html` | ระบบบันทึกข้อมูลอุบัติเหตุสำหรับเจ้าหน้าที่ (login + บันทึก + สถิติ + แผนที่) |
 | `sync.html` | หน้าผู้ดูแล: ดึงข้อมูลใหม่จากระบบ GAS เดิมมาเทียบ แล้วสร้าง SQL ส่วนต่าง |
 | `data/risk_points_clean.csv` | ข้อมูลจุดเสี่ยงที่แปลงพร้อม import แล้ว |
 | `MIGRATION_GUIDE.md` | คู่มือ migrate ทีละขั้นตอน |

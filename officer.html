@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#123B7A">
+  <title>บันทึกข้อมูลอุบัติเหตุ | Traffic Police</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --navy:#123b7a; --blue:#1d4ed8; --blue2:#3b82f6; --red:#c1122f;
+      --pink:#f7c8da; --light-blue:#dff2ff; --white:#fff; --ink:#132238;
+      --muted:#64748b; --line:#dbe6f2; --success:#16834b; --warning:#d97706;
+      --danger:#b42318; --card:rgba(255,255,255,.92); --shadow:0 16px 42px rgba(22,46,90,.12);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:'Sarabun',sans-serif;color:var(--ink);background:
+      radial-gradient(circle at 8% 5%,rgba(255,255,255,.92),transparent 26%),
+      linear-gradient(145deg,#d9f1ff 0%,#eef7ff 42%,#fde5ef 100%);min-height:100vh}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .hidden{display:none!important}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+    .thai-stripe{height:8px;background:linear-gradient(to right,#a51931 0 16%,#fff 16% 32%,#2d2a4a 32% 68%,#fff 68% 84%,#a51931 84%)}
+    .auth-page{min-height:100vh;display:flex;flex-direction:column}
+    .hero{position:relative;overflow:hidden;padding:38px 18px 34px;background:
+      linear-gradient(135deg,rgba(18,59,122,.97),rgba(29,78,216,.88) 56%,rgba(193,18,47,.88));color:#fff;text-align:center}
+    .hero:before,.hero:after{content:"";position:absolute;border-radius:50%;filter:blur(1px);opacity:.17;background:#fff}
+    .hero:before{width:260px;height:260px;left:-110px;top:-130px}.hero:after{width:210px;height:210px;right:-80px;bottom:-120px}
+    .hero-inner{position:relative;z-index:1;max-width:900px;margin:auto}
+    .hero-logo{width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 10px 20px rgba(0,0,0,.22));margin-bottom:10px;border-radius:50%}
+    .hero h1{font-size:clamp(1.55rem,5vw,2.55rem);margin:0 0 8px;font-weight:800;line-height:1.25}
+    .hero p{margin:0;opacity:.93;font-size:clamp(.94rem,2.5vw,1.12rem)}
+    .auth-main{flex:1;display:grid;place-items:center;padding:28px 16px 44px}
+    .auth-card{width:min(560px,100%);background:var(--card);border:1px solid rgba(255,255,255,.8);border-radius:28px;box-shadow:var(--shadow);padding:26px;backdrop-filter:blur(14px)}
+    .auth-card h2{margin:0 0 6px;text-align:center;font-size:1.35rem}.auth-card .sub{text-align:center;color:var(--muted);margin:0 0 22px}
+    .auth-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.auth-note{font-size:.83rem;color:var(--muted);text-align:center;margin:18px 0 0}
+
+    .btn{border:0;border-radius:14px;padding:12px 17px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:9px;transition:.2s;min-height:46px}
+    .btn:hover{transform:translateY(-1px)}.btn:active{transform:translateY(0)}
+    .btn-primary{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;box-shadow:0 9px 20px rgba(29,78,216,.25)}
+    .btn-red{background:linear-gradient(135deg,#b91c1c,var(--red));color:#fff;box-shadow:0 9px 20px rgba(193,18,47,.22)}
+    .btn-soft{background:#eff6ff;color:var(--navy);border:1px solid #cfe1fb}.btn-outline{background:#fff;color:var(--navy);border:1px solid #b7cae4}
+    .btn-success{background:linear-gradient(135deg,#0f7a47,#18a05e);color:#fff}.btn-warning{background:#fff7e8;color:#9a5b00;border:1px solid #f3d49b}
+    .btn-block{width:100%}.btn-sm{padding:8px 12px;min-height:38px;border-radius:11px;font-size:.9rem}
+
+    .app-shell{min-height:100vh}.topbar{position:sticky;top:0;z-index:700;background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border-bottom:1px solid rgba(190,207,226,.75)}
+    .topbar .thai-stripe{height:6px}.topbar-inner{height:72px;display:flex;align-items:center;gap:12px;padding:0 16px;max-width:1400px;margin:auto}
+    .menu-toggle{width:44px;height:44px;border:0;border-radius:14px;color:#fff;background:linear-gradient(135deg,var(--navy),var(--blue));font-size:1.15rem}
+    .brand-mini{display:flex;align-items:center;gap:10px;min-width:0}.brand-mini img{width:46px;height:46px;object-fit:contain;border-radius:50%}.brand-text{min-width:0}
+    .brand-text strong{display:block;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand-text span{display:block;font-size:.75rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .top-spacer{flex:1}.clock{font-size:.82rem;color:var(--muted);text-align:right;line-height:1.35}.user-chip{display:flex;align-items:center;gap:8px;background:#f0f6ff;border:1px solid #d5e4f8;border-radius:14px;padding:8px 11px;max-width:220px}.user-chip i{color:var(--blue)}.user-chip span{font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .logout-icon{width:40px;height:40px;border:0;border-radius:12px;background:#fff1f3;color:var(--red)}
+
+    .drawer-backdrop{position:fixed;inset:0;background:rgba(11,28,52,.48);z-index:900;opacity:0;pointer-events:none;transition:.25s}.drawer-backdrop.open{opacity:1;pointer-events:auto}
+    .drawer{position:fixed;left:0;top:0;bottom:0;width:min(330px,86vw);background:#fff;z-index:910;transform:translateX(-105%);transition:.27s;box-shadow:25px 0 60px rgba(8,31,68,.25);display:flex;flex-direction:column}
+    .drawer.open{transform:translateX(0)}.drawer-head{padding:22px 18px;color:#fff;background:linear-gradient(145deg,var(--navy),var(--blue) 62%,var(--red));position:relative}
+    .drawer-head img{width:76px;height:76px;object-fit:contain;display:block;margin:0 auto 8px;border-radius:50%}.drawer-head h3{text-align:center;margin:0;font-size:1.12rem}.drawer-head p{text-align:center;margin:4px 0 0;font-size:.78rem;opacity:.88}
+    .drawer-close{position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff}
+    .drawer-menu{padding:14px;display:grid;gap:8px;overflow:auto}.nav-btn{border:0;background:#fff;border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:13px;color:#24364d;font-weight:700;text-align:left;border:1px solid transparent}.nav-btn i{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:#edf4ff;color:var(--blue)}
+    .nav-btn.active,.nav-btn:hover{background:#eef5ff;border-color:#d5e4fb;color:var(--navy)}.nav-btn.active i{background:var(--blue);color:#fff}
+
+    .main{max-width:1400px;margin:auto;padding:22px 16px 90px}.page{display:none;animation:fadeIn .28s ease}.page.active{display:block}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .page-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}.page-icon{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;display:grid;place-items:center;font-size:1.3rem;box-shadow:0 10px 20px rgba(29,78,216,.22)}
+    .page-head h2{margin:0;font-size:clamp(1.35rem,3.6vw,2rem)}.page-head p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
+    .card{background:var(--card);border:1px solid rgba(209,222,237,.9);border-radius:var(--radius);box-shadow:0 10px 28px rgba(23,52,88,.08);padding:20px;margin-bottom:18px}
+    .card-title{display:flex;align-items:center;gap:11px;margin:0 0 16px;font-size:1.08rem}.card-title i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#edf4ff;color:var(--blue)}
+    .section-band{display:flex;align-items:center;gap:11px;margin:-2px -2px 18px;padding:12px 14px;border-radius:15px;background:linear-gradient(90deg,#eaf3ff,#fff3f7);border-left:5px solid var(--blue)}.section-band.red{border-left-color:var(--red)}.section-band h3{margin:0;font-size:1.06rem}
+
+    .stats-zone{margin-bottom:24px}.zone-title{display:flex;align-items:center;gap:9px;margin:0 0 12px;font-size:1.05rem}.zone-title i{color:var(--blue)}
+    .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat-card{background:#fff;border-radius:18px;border:1px solid var(--line);padding:16px;min-height:130px;position:relative;overflow:hidden}.stat-card:after{content:"";position:absolute;width:76px;height:76px;border-radius:50%;right:-20px;top:-20px;background:rgba(59,130,246,.09)}
+    .stat-card .label{color:var(--muted);font-size:.84rem}.stat-card .value{font-size:2rem;font-weight:800;color:var(--navy);line-height:1.2;margin-top:8px}.stat-card .unit{font-size:.77rem;color:var(--muted)}
+    .stat-card.red .value{color:var(--red)}.stat-card.orange .value{color:#b45309}.injury-mini{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.pill{border-radius:999px;padding:5px 8px;font-size:.74rem;font-weight:700;background:#f2f6fb}.pill.red{background:#fee2e2;color:#991b1b}.pill.orange{background:#ffedd5;color:#9a3412}.pill.yellow{background:#fef9c3;color:#854d0e}
+
+    .form-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}.field{grid-column:span 4}.field.span-6{grid-column:span 6}.field.span-8{grid-column:span 8}.field.span-12{grid-column:1/-1}.field label{display:block;font-size:.86rem;font-weight:700;margin:0 0 7px;color:#263b55}.req{color:var(--red)}
+    .input,.select,.textarea{width:100%;border:1px solid #cbd9e8;border-radius:13px;background:#fff;color:var(--ink);padding:11px 12px;outline:none;transition:.18s;min-height:46px}.textarea{min-height:92px;resize:vertical}.input:focus,.select:focus,.textarea:focus{border-color:var(--blue2);box-shadow:0 0 0 4px rgba(59,130,246,.12)}.input[readonly]{background:#f3f7fb;color:#52657c}
+    .hint{font-size:.75rem;color:var(--muted);margin-top:5px}.field-actions{display:flex;gap:8px;align-items:end}.field-actions .input{flex:1}
+    .passenger-list{display:grid;gap:12px}.passenger-card{border:1px solid #d8e5f2;border-radius:17px;padding:14px;background:#fbfdff}.passenger-card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}.passenger-card-head strong{flex:1}.passenger-index{width:32px;height:32px;border-radius:10px;background:#eaf2ff;color:var(--blue);display:grid;place-items:center;font-weight:800}
+    .conditional{transition:.2s}.vehicle-other{margin-top:10px}
+    .image-drop{border:2px dashed #b9cce1;border-radius:18px;padding:20px;text-align:center;background:#f8fbff}.image-drop i{font-size:2rem;color:var(--blue);margin-bottom:8px}.image-drop p{margin:4px 0;color:var(--muted);font-size:.86rem}.image-previews{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.image-preview{position:relative;aspect-ratio:4/3;border-radius:14px;overflow:hidden;border:1px solid #d3e1ef;background:#eaf0f7}.image-preview img{width:100%;height:100%;object-fit:cover}.image-preview button{position:absolute;right:6px;top:6px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(130,0,16,.85);color:#fff}
+    .submit-bar{position:sticky;bottom:12px;z-index:80;background:rgba(255,255,255,.94);backdrop-filter:blur(13px);border:1px solid #d9e5f2;border-radius:18px;padding:10px;box-shadow:0 16px 38px rgba(20,49,85,.16);display:flex;gap:10px;justify-content:flex-end}
+
+    .chart-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.chart-card{min-height:360px}.chart-wrap{height:285px;position:relative}.chart-wide{grid-column:1/-1}.dashboard-detail-grid{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:16px;align-items:stretch}.dashboard-detail-grid .chart-card{min-height:330px}.age-tall{grid-row:span 2}.dashboard-full{grid-column:1/-1}.custom-visual{height:285px;overflow:auto}.pyramid-list{display:flex;flex-direction:column;gap:10px;padding:8px 2px}.pyramid-row{display:grid;grid-template-columns:55px 1fr 42px;align-items:center;gap:8px;font-size:.82rem}.pyramid-track{height:20px;border-radius:999px;background:#edf3fa;overflow:hidden;display:flex;justify-content:center}.pyramid-fill{height:100%;min-width:4px;border-radius:999px;background:linear-gradient(90deg,#c1122f,#1d4ed8);box-shadow:0 5px 12px rgba(29,78,216,.22)}.bar3d-list{display:grid;gap:11px;padding:8px 0}.bar3d-label{display:flex;justify-content:space-between;gap:8px;font-size:.8rem;font-weight:700;color:#34445a}.bar3d-track{height:18px;border-radius:6px;background:#eef4fb;position:relative;overflow:visible}.bar3d-fill{height:18px;border-radius:6px;background:linear-gradient(90deg,#123b7a,#f59e0b,#c1122f);box-shadow:6px 6px 0 rgba(15,23,42,.13);position:relative}.bar3d-fill:after{content:"";position:absolute;right:-12px;top:2px;border-left:13px solid #1d4ed8;border-top:7px solid transparent;border-bottom:7px solid transparent}.gender-cards,.license-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;height:285px;align-content:center}.gender-card,.license-card{border:1px solid #d8e5f2;border-radius:18px;padding:18px 12px;text-align:center;background:linear-gradient(180deg,#fff,#f7fbff);box-shadow:0 12px 25px rgba(22,44,77,.08)}.gender-card i{font-size:3rem}.gender-card.male i{color:#1d4ed8}.gender-card.female i{color:#db2777}.gender-card .num,.license-card .num{font-size:2rem;font-weight:900;color:#0f2a4a}.gender-card .label,.license-card .label{font-size:.82rem;color:var(--muted);font-weight:700}.license-icon{width:66px;height:44px;margin:0 auto 10px;border-radius:9px;background:linear-gradient(135deg,#e0f2fe,#dbeafe);border:2px solid #93c5fd;display:grid;place-items:center;color:#1d4ed8;font-size:1.5rem;box-shadow:4px 6px 0 rgba(29,78,216,.12)}.license-card.no .license-icon{background:linear-gradient(135deg,#fee2e2,#fff1f2);border-color:#fca5a5;color:#c1122f}.body-visual{height:285px;display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center}.human-parts{position:relative;width:105px;height:225px;margin:auto}.part-head{position:absolute;left:37px;top:6px;width:32px;height:32px;border-radius:50%;background:#c1122f}.part-torso{position:absolute;left:31px;top:45px;width:45px;height:78px;border-radius:18px 18px 10px 10px;background:#1d4ed8}.part-arm{position:absolute;left:8px;top:54px;width:90px;height:22px;border-radius:999px;background:#f59e0b}.part-leg{position:absolute;left:23px;top:126px;width:60px;height:82px;border-radius:12px;background:#16a34a}.part-multi{position:absolute;right:0;bottom:6px;width:30px;height:30px;border-radius:50%;background:#7c3aed;box-shadow:0 0 0 7px rgba(124,58,237,.12)}.body-legend{display:grid;gap:8px}.body-item{display:grid;grid-template-columns:12px 1fr 36px;align-items:center;gap:8px;font-size:.78rem}.body-color{width:12px;height:12px;border-radius:4px}.body-count{font-weight:900;text-align:right}.dashboard-note{font-size:.75rem;color:var(--muted);margin-top:8px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:15px}.data-table{width:100%;border-collapse:collapse;min-width:720px;background:#fff}.data-table th,.data-table td{padding:11px 12px;border-bottom:1px solid #e6edf5;text-align:left;font-size:.83rem;vertical-align:top}.data-table th{background:#eff5fc;color:#294361;position:sticky;top:0}.data-table tr:last-child td{border-bottom:0}
+    .severity-badge{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:.74rem;font-weight:700;background:#eef2f7}.severity-badge.red{background:#fee2e2;color:#991b1b}.severity-badge.yellow{background:#fef9c3;color:#854d0e}.severity-badge.green{background:#dcfce7;color:#166534}
+
+    .filter-bar{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}.legend{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0 15px;font-size:.8rem}.legend-item{display:flex;align-items:center;gap:6px}.dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}.dot.red{background:#dc2626}.dot.yellow{background:#facc15}.dot.green{background:#22c55e}.dot.gray{background:#64748b}
+    #accidentMap,#pickerMap{width:100%;border-radius:18px;background:#dce7ef}.map-main{height:560px}.map-picker{height:430px}.marker-dot{width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}.marker-red{background:#dc2626}.marker-yellow{background:#facc15}.marker-green{background:#22c55e}.marker-gray{background:#64748b}
+    .popup{min-width:270px;max-width:380px;font-family:'Sarabun',sans-serif}.popup h3{margin:0 0 5px;color:var(--navy)}.popup-date{font-size:.78rem;color:var(--muted);margin-bottom:10px}.popup-parties{display:grid;grid-template-columns:1fr 1fr;gap:8px}.popup-party{background:#f5f8fc;border-radius:10px;padding:8px}.popup-party strong{display:block;color:var(--navy);margin-bottom:5px}.popup-row{font-size:.75rem;margin:2px 0}.popup-images{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:9px}.popup-images img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}.popup-info{font-size:.78rem;margin-top:8px;line-height:1.5}
+
+    .modal{position:fixed;inset:0;background:rgba(9,25,48,.58);z-index:1200;display:none;align-items:center;justify-content:center;padding:14px}.modal.open{display:flex}.modal-panel{width:min(900px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:24px;box-shadow:0 25px 70px rgba(0,0,0,.3)}.modal-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}.modal-head h3{margin:0;flex:1}.modal-close{width:38px;height:38px;border:0;border-radius:12px;background:#f1f5f9;color:#334155}.modal-body{padding:16px}.modal-foot{display:flex;gap:10px;justify-content:flex-end;padding:14px 16px;border-top:1px solid var(--line);position:sticky;bottom:0;background:#fff}
+
+    .loading-skeleton{height:100px;border-radius:18px;background:linear-gradient(90deg,#edf3f8 25%,#f8fbfd 38%,#edf3f8 63%);background-size:400% 100%;animation:shine 1.4s infinite}@keyframes shine{0%{background-position:100% 0}100%{background-position:0 0}}
+    .empty{text-align:center;color:var(--muted);padding:30px}.empty i{display:block;font-size:2rem;color:#9bb1c8;margin-bottom:8px}
+
+    @media(max-width:900px){.field{grid-column:span 6}.chart-grid,.dashboard-detail-grid{grid-template-columns:1fr}.chart-wide,.dashboard-full,.age-tall{grid-column:auto;grid-row:auto}.map-main{height:500px}.user-chip{display:none}}
+    @media(max-width:640px){.hero{padding-top:27px}.hero-logo{width:98px;height:98px}.auth-actions{grid-template-columns:1fr}.topbar-inner{height:66px;padding:0 10px}.brand-mini img{width:40px;height:40px}.brand-text strong{font-size:.88rem}.brand-text span{font-size:.68rem}.clock{display:none}.main{padding:16px 10px 88px}.card{padding:15px;border-radius:18px}.page-head{margin-bottom:14px}.page-icon{width:46px;height:46px}.stats-grid{grid-template-columns:1fr}.stat-card{min-height:112px}.field,.field.span-6,.field.span-8{grid-column:1/-1}.form-grid{gap:11px}.filter-bar{grid-template-columns:1fr 1fr}.filter-bar .btn{grid-column:1/-1}.image-previews{grid-template-columns:repeat(2,1fr)}.popup-parties{grid-template-columns:1fr}.map-main{height:430px}.map-picker{height:360px}.submit-bar{bottom:7px}.logout-icon{width:38px;height:38px}.chart-card{min-height:330px}}
+
+    .monthly-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch}
+    .monthly-half,.cumulative-half{grid-column:auto}
+    .dashboard-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+    .age-tall{grid-row:auto}
+    .dashboard-full{grid-column:1/-1}
+    .chart-card .chart-wrap canvas{filter:drop-shadow(0 7px 11px rgba(15,23,42,.08))}
+    .bar3d-track{box-shadow:inset 0 3px 5px rgba(15,23,42,.08)}
+    .card-title .order-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:8px;background:#eef5ff;color:#123b7a;font-size:.72rem;margin-right:5px}
+    .vehicle-vertical-visual{height:285px;display:flex;align-items:flex-end;gap:12px;padding:18px 6px 28px;border-radius:16px;background:linear-gradient(180deg,#f8fbff,#eef5ff);overflow:auto;position:relative}
+    .vehicle-vertical-bar{min-width:72px;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:235px;position:relative}
+    .vehicle-vertical-fill{width:44px;min-height:4px;border-radius:10px 10px 4px 4px;box-shadow:7px 7px 0 rgba(15,23,42,.14);position:relative;transform:skewY(-2deg)}
+    .vehicle-vertical-fill:after{content:"";position:absolute;left:8px;top:-13px;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:14px solid currentColor;filter:drop-shadow(3px 3px 0 rgba(15,23,42,.12))}
+    .vehicle-vertical-value{font-weight:900;font-size:.9rem;color:#0f2a4a;margin-bottom:8px}
+    .vehicle-vertical-label{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);width:88px;text-align:center;font-size:.68rem;font-weight:800;color:#334155;line-height:1.15}
+
+    @media(max-width:900px){.monthly-grid{grid-template-columns:1fr}.monthly-half,.cumulative-half{grid-column:1/-1}.dashboard-detail-grid{grid-template-columns:1fr}.dashboard-full{grid-column:auto}}
+
+    body{padding-bottom:env(safe-area-inset-bottom);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+    .mobile-tabbar{display:none}
+    .input:focus,.select:focus,.textarea:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(29,78,216,.12);outline:none}
+    .btn,.card,.stat-card,.nav-btn,.tab-btn{-webkit-tap-highlight-color:transparent}
+    .card{transition:transform .18s ease,box-shadow .18s ease}.card:focus-within{box-shadow:0 16px 36px rgba(29,78,216,.13)}
+    @media(max-width:780px){
+      .topbar{box-shadow:0 10px 30px rgba(15,23,42,.08)}
+      .topbar-inner{height:62px}.menu-toggle{width:42px;height:42px;border-radius:15px}
+      .main{padding:14px 10px calc(112px + env(safe-area-inset-bottom))}
+      .page-head{background:rgba(255,255,255,.72);border:1px solid rgba(219,230,242,.82);border-radius:22px;padding:12px;box-shadow:0 12px 28px rgba(15,23,42,.07);backdrop-filter:blur(12px)}
+      .page-head h2{font-size:1.22rem}.page-head p{font-size:.8rem}.page-icon{width:44px;height:44px;border-radius:15px}
+      .card{border-radius:22px;padding:14px;margin-bottom:13px;background:rgba(255,255,255,.94)}
+      .stats-grid{grid-template-columns:1fr 1fr;gap:10px}.stat-card{min-height:104px;padding:13px;border-radius:19px}.stat-card .value{font-size:1.65rem}
+      .chart-card{min-height:315px}.chart-wrap,.custom-visual{height:255px}.monthly-grid,.dashboard-detail-grid{grid-template-columns:1fr!important;gap:12px}.monthly-half,.cumulative-half{grid-column:1/-1!important}
+      .form-grid{grid-template-columns:1fr}.field,.field.span-6,.field.span-8,.field.span-12{grid-column:1/-1!important}.input,.select,.textarea{min-height:48px;border-radius:16px;background:#fff}.textarea{min-height:96px}
+      .section-band{border-radius:18px;padding:11px 12px;margin-bottom:13px}.passenger-card{border-radius:18px;padding:12px;background:linear-gradient(180deg,#fff,#f8fbff)}
+      .submit-bar{position:fixed;left:10px;right:10px;bottom:calc(78px + env(safe-area-inset-bottom));border-radius:22px;z-index:760;justify-content:stretch}.submit-bar .btn{flex:1;padding-left:8px;padding-right:8px}
+      .mobile-tabbar{position:fixed;left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:750;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px;border:1px solid rgba(207,225,251,.92);border-radius:24px;background:rgba(255,255,255,.91);box-shadow:0 18px 48px rgba(15,23,42,.18);backdrop-filter:blur(18px)}
+      .tab-btn{border:0;background:transparent;color:#64748b;border-radius:18px;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-weight:800;font-size:.69rem}.tab-btn i{font-size:1.1rem}.tab-btn.active{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;box-shadow:0 9px 20px rgba(29,78,216,.22)}
+      .drawer{width:min(320px,88vw)}.drawer-menu{padding-bottom:92px}.map-main{height:470px;border-radius:22px}.map-picker{height:370px}.popup{min-width:235px;max-width:310px}.popup h3{font-size:1rem}.popup-info,.popup-row{font-size:.75rem}.body-visual{grid-template-columns:95px 1fr;height:255px}.human-parts{transform:scale(.86);transform-origin:center}.vehicle-vertical-chart{height:245px;overflow-x:auto;padding-bottom:32px}
+    }
+    @media(max-width:390px){.brand-text strong{font-size:.78rem}.stats-grid{grid-template-columns:1fr}.tab-btn span{font-size:.64rem}.chart-wrap,.custom-visual{height:235px}.submit-bar{bottom:calc(76px + env(safe-area-inset-bottom))}}
+
+    #page-dashboard .dashboard-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:10px!important}
+    #page-dashboard .dashboard-summary-grid .stat-card{min-height:96px;padding:11px 9px;border-radius:16px;margin-bottom:0}
+    #page-dashboard .dashboard-summary-grid .stat-card .label{font-size:.72rem;line-height:1.18;display:flex;align-items:flex-start;gap:5px}
+    #page-dashboard .dashboard-summary-grid .stat-card .value{font-size:1.28rem;line-height:1.1;margin-top:6px;word-break:break-word}
+    #page-dashboard .dashboard-summary-grid .stat-card .unit{font-size:.66rem}
+    #page-dashboard .dashboard-summary-grid .stat-card:after{width:48px;height:48px;right:-17px;top:-17px}
+    #page-dashboard .dashboard-recent-card{margin-top:12px!important}
+    #page-dashboard .dashboard-recent-cards{display:none}
+
+    @media(max-width:780px){
+      #page-dashboard .page-head{margin-bottom:10px}
+      #page-dashboard .page-head h2{font-size:1.05rem}
+      #page-dashboard .page-head p{font-size:.73rem}
+      #page-dashboard .dashboard-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px;margin-bottom:8px!important}
+      #page-dashboard .dashboard-summary-grid .stat-card{min-height:72px;padding:8px 6px;border-radius:13px;box-shadow:0 8px 18px rgba(23,52,88,.06)}
+      #page-dashboard .dashboard-summary-grid .stat-card .label{font-size:.58rem;line-height:1.08;gap:3px;letter-spacing:-.01em}
+      #page-dashboard .dashboard-summary-grid .stat-card .label i{font-size:.66rem;margin-top:1px}
+      #page-dashboard .dashboard-summary-grid .stat-card .value{font-size:.96rem;margin-top:4px;letter-spacing:-.03em;line-height:1.05}
+      #page-dashboard .dashboard-summary-grid .stat-card .unit{font-size:.55rem;line-height:1.05;margin-top:1px}
+      #page-dashboard .dashboard-summary-grid .stat-card:after{width:34px;height:34px;right:-13px;top:-13px}
+
+      #page-dashboard .monthly-grid,#page-dashboard .dashboard-detail-grid{gap:8px!important;margin-top:8px!important}
+      #page-dashboard .card{padding:9px;border-radius:15px;margin-bottom:8px;box-shadow:0 8px 18px rgba(23,52,88,.07)}
+      #page-dashboard .chart-card{min-height:0!important}
+      #page-dashboard .card-title{font-size:.76rem;margin:0 0 7px;gap:5px;line-height:1.18;letter-spacing:-.01em}
+      #page-dashboard .card-title i{width:24px;height:24px;border-radius:8px;font-size:.78rem;flex:0 0 24px}
+      #page-dashboard .chart-wrap,#page-dashboard .custom-visual{height:168px!important}
+      #page-dashboard .dashboard-note{font-size:.55rem;line-height:1.2;margin-top:4px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+
+      #page-dashboard .gender-cards,#page-dashboard .license-cards{height:168px!important;gap:6px;align-content:center}
+      #page-dashboard .gender-card,#page-dashboard .license-card{padding:8px 4px;border-radius:12px;box-shadow:0 8px 15px rgba(22,44,77,.06)}
+      #page-dashboard .gender-card i{font-size:1.55rem}
+      #page-dashboard .gender-card .num,#page-dashboard .license-card .num{font-size:1.12rem;line-height:1.1;margin-top:3px}
+      #page-dashboard .gender-card .label,#page-dashboard .license-card .label{font-size:.57rem;line-height:1.12}
+      #page-dashboard .license-icon{width:38px;height:27px;margin-bottom:5px;border-radius:7px;font-size:1rem;border-width:1px;box-shadow:3px 4px 0 rgba(29,78,216,.10)}
+
+      #page-dashboard .pyramid-list{gap:5px;padding:3px 0}
+      #page-dashboard .pyramid-row{grid-template-columns:38px minmax(0,1fr) 28px;gap:5px;font-size:.58rem}
+      #page-dashboard .pyramid-track{height:12px}
+      #page-dashboard .bar3d-list{gap:6px;padding:4px 0}
+      #page-dashboard .bar3d-label{font-size:.56rem;line-height:1.1}
+      #page-dashboard .bar3d-track,#page-dashboard .bar3d-fill{height:12px}
+      #page-dashboard .bar3d-fill{box-shadow:4px 4px 0 rgba(15,23,42,.11)}
+      #page-dashboard .bar3d-fill:after{right:-9px;top:1px;border-left-width:10px;border-top-width:5px;border-bottom-width:5px}
+
+      #page-dashboard .vehicle-vertical-visual{height:168px!important;gap:7px;padding:12px 4px 22px;border-radius:12px;overflow-x:auto}
+      #page-dashboard .vehicle-vertical-bar{min-width:42px;height:122px}
+      #page-dashboard .vehicle-vertical-fill{width:25px;border-radius:8px 8px 3px 3px;box-shadow:4px 4px 0 rgba(15,23,42,.12)}
+      #page-dashboard .vehicle-vertical-fill:after{left:5px;top:-10px;border-left-width:9px;border-right-width:9px;border-bottom-width:10px}
+      #page-dashboard .vehicle-vertical-value{font-size:.62rem;margin-bottom:4px}
+      #page-dashboard .vehicle-vertical-label{bottom:-19px;width:52px;font-size:.48rem;line-height:1.05}
+
+      #page-dashboard .body-visual{height:168px!important;grid-template-columns:66px minmax(0,1fr);gap:5px}
+      #page-dashboard .human-parts{transform:scale(.56);transform-origin:center;width:90px;height:205px;margin-left:-10px}
+      #page-dashboard .body-legend{gap:4px}
+      #page-dashboard .body-item{grid-template-columns:8px minmax(0,1fr) 24px;gap:5px;font-size:.55rem;line-height:1.12}
+      #page-dashboard .body-color{width:8px;height:8px;border-radius:3px}#page-dashboard .body-count{font-size:.6rem}
+
+      #page-dashboard .dashboard-recent-card{padding:9px!important;border-radius:15px;margin-top:9px!important}
+      #page-dashboard .dashboard-recent-card .card-title{font-size:.76rem;margin-bottom:7px}
+      #page-dashboard .dashboard-recent-card .table-wrap{display:none}
+      #page-dashboard .dashboard-recent-cards{display:grid;gap:7px}
+      #page-dashboard .recent-mini-card{border:1px solid #dbe7f4;border-radius:12px;background:linear-gradient(180deg,#fff,#f8fbff);padding:8px;display:grid;gap:4px}
+      #page-dashboard .recent-mini-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;font-size:.66rem;font-weight:900;color:#123b7a}
+      #page-dashboard .recent-mini-meta{font-size:.58rem;color:#64748b;line-height:1.2}
+      #page-dashboard .recent-mini-place{font-size:.64rem;font-weight:800;color:#263b55;line-height:1.25}
+      #page-dashboard .badge{font-size:.54rem;padding:3px 6px;white-space:nowrap}
+    }
+    @media(max-width:390px){
+      #page-dashboard .dashboard-summary-grid .stat-card{min-height:66px;padding:7px 5px}
+      #page-dashboard .dashboard-summary-grid .stat-card .label{font-size:.53rem}
+      #page-dashboard .dashboard-summary-grid .stat-card .value{font-size:.86rem}
+      #page-dashboard .chart-wrap,#page-dashboard .custom-visual{height:152px!important}
+      #page-dashboard .gender-cards,#page-dashboard .license-cards,#page-dashboard .vehicle-vertical-visual,#page-dashboard .body-visual{height:152px!important}
+      #page-dashboard .card-title{font-size:.71rem}
+    }
+  </style>
+</head>
+<body>
+  <section id="authPage" class="auth-page">
+    <div class="thai-stripe"></div>
+    <header class="hero">
+      <div class="hero-inner">
+        <img class="hero-logo" src="https://img2.pic.in.th/pic/-01-6.png" alt="โลโก้ระบบ" onerror="this.style.display='none'">
+        <h1>บันทึกข้อมูลอุบัติเหตุสำหรับเจ้าหน้าที่ตำรวจจราจร</h1>
+        <p>Record accident information for traffic police officers</p>
+      </div>
+    </header>
+    <main class="auth-main">
+      <div class="auth-card">
+        <h2><i class="fa-solid fa-shield-halved"></i> ระบบข้อมูลอุบัติเหตุ</h2>
+        <p class="sub">สภ.เมืองนครสวรรค์ · ปลอดภัย รวดเร็ว ใช้งานบนมือถือ</p>
+        <div class="auth-actions">
+          <button id="registerButton" class="btn btn-outline" type="button"><i class="fa-solid fa-user-plus"></i> ลงทะเบียน</button>
+          <button id="loginButton" class="btn btn-primary" type="button"><i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ</button>
+        </div>
+        <p class="auth-note">ชื่อผู้ใช้คือเลขประจำตัวประชาชน และรหัสผ่านคือเลข 4 ตัวท้าย</p>
+      </div>
+    </main>
+  </section>
+
+  <section id="appShell" class="app-shell hidden">
+    <header class="topbar">
+      <div class="thai-stripe"></div>
+      <div class="topbar-inner">
+        <button class="menu-toggle" type="button" onclick="toggleDrawer(true)" aria-label="เปิดเมนู"><i class="fa-solid fa-bars"></i></button>
+        <div class="brand-mini">
+          <img src="https://img2.pic.in.th/pic/-01-6.png" alt="โลโก้" onerror="this.style.display='none'">
+          <div class="brand-text"><strong>ระบบบันทึกข้อมูลอุบัติเหตุ</strong><span>Traffic Police Accident Record</span></div>
+        </div>
+        <div class="top-spacer"></div>
+        <div id="liveClock" class="clock"></div>
+        <div class="user-chip"><i class="fa-solid fa-user-shield"></i><span id="userDisplay">เจ้าหน้าที่</span></div>
+        <button class="logout-icon" type="button" onclick="logout()" aria-label="ออกจากระบบ"><i class="fa-solid fa-power-off"></i></button>
+      </div>
+    </header>
+
+    <div id="drawerBackdrop" class="drawer-backdrop" onclick="toggleDrawer(false)"></div>
+    <aside id="drawer" class="drawer">
+      <div class="drawer-head">
+        <button class="drawer-close" onclick="toggleDrawer(false)" aria-label="ปิดเมนู"><i class="fa-solid fa-xmark"></i></button>
+        <img src="https://img2.pic.in.th/pic/-01-6.png" alt="โลโก้" onerror="this.style.display='none'">
+        <h3>เมนู / HOME</h3><p id="drawerUser">เจ้าหน้าที่ตำรวจจราจร</p>
+      </div>
+      <nav class="drawer-menu">
+        <button class="nav-btn active" data-page="home" onclick="openPage('home',this)"><i class="fa-solid fa-house"></i> หน้าหลัก</button>
+        <button class="nav-btn" data-page="accident" onclick="openPage('accident',this)"><i class="fa-solid fa-file-pen"></i> บันทึกข้อมูลอุบัติเหตุ</button>
+        <button class="nav-btn" data-page="dashboard" onclick="openPage('dashboard',this)"><i class="fa-solid fa-chart-line"></i> สถิติอุบัติเหตุ สภ.เมืองนครสวรรค์</button>
+        <button class="nav-btn" data-page="map" onclick="openPage('map',this)"><i class="fa-solid fa-map-location-dot"></i> แผนที่พิกัดจุดเกิดอุบัติเหตุ</button>
+      </nav>
+    </aside>
+
+    <nav class="mobile-tabbar" aria-label="เมนูหลักบนมือถือ">
+      <button class="tab-btn active" data-page="home" type="button" onclick="openPage('home',this)"><i class="fa-solid fa-house"></i><span>HOME</span></button>
+      <button class="tab-btn" data-page="accident" type="button" onclick="openPage('accident',this)"><i class="fa-solid fa-car-burst"></i><span>บันทึก</span></button>
+      <button class="tab-btn" data-page="dashboard" type="button" onclick="openPage('dashboard',this)"><i class="fa-solid fa-chart-line"></i><span>สถิติ</span></button>
+      <button class="tab-btn" data-page="map" type="button" onclick="openPage('map',this)"><i class="fa-solid fa-map-location-dot"></i><span>แผนที่</span></button>
+    </nav>
+
+    <main class="main">
+      <section id="page-home" class="page active">
+        <div class="page-head"><div class="page-icon"><i class="fa-solid fa-house"></i></div><div><h2>HOME</h2><p>ภาพรวมข้อมูลอุบัติเหตุล่าสุด</p></div></div>
+        <div id="homeStats"><div class="loading-skeleton"></div></div>
+      </section>
+
+      <section id="page-accident" class="page">
+        <div class="page-head"><div class="page-icon"><i class="fa-solid fa-car-burst"></i></div><div><h2>บันทึกข้อมูลอุบัติเหตุ</h2><p>กรอกข้อมูลให้ครบถ้วนก่อนบันทึกเข้าสู่ระบบ</p></div></div>
+        <form id="accidentForm" novalidate>
+          <div class="card">
+            <h3 class="card-title"><i class="fa-regular fa-calendar-check"></i> ข้อมูลการบันทึก</h3>
+            <div class="form-grid">
+              <div class="field span-6"><label for="occurredAt">วันที่และเวลาเกิดเหตุ <span class="req">*</span></label><input id="occurredAt" class="input" type="datetime-local" required></div>
+              <div class="field span-6"><label>ผู้บันทึก</label><input id="officerDisplay" class="input" type="text" readonly></div>
+            </div>
+          </div>
+
+          <div class="card" id="party1Card">
+            <div class="section-band"><i class="fa-solid fa-person-biking"></i><h3>ฝ่ายที่ 1</h3></div>
+            <div class="form-grid">
+              <div class="field"><label>สถานะ <span class="req">*</span></label><input id="p1Status" class="input" value="ผู้ขับขี่" readonly></div>
+              <div class="field"><label for="p1Gender">เพศ <span class="req">*</span></label><select id="p1Gender" class="select" required><option value="">เลือกเพศ</option><option>ผู้ชาย</option><option>ผู้หญิง</option></select></div>
+              <div class="field"><label for="p1Age">อายุ <span class="req">*</span></label><input id="p1Age" class="input" type="number" min="0" max="120" inputmode="numeric" required></div>
+              <div class="field"><label for="p1License">ใบอนุญาตขับขี่ <span class="req">*</span></label><select id="p1License" class="select" required><option value="">เลือกข้อมูล</option><option>มี</option><option>ไม่มี</option></select></div>
+              <div class="field"><label for="p1Injury">อาการบาดเจ็บ <span class="req">*</span></label><select id="p1Injury" class="select injury-select" required></select></div>
+              <div class="field"><label for="p1BodyPart">อวัยวะบาดเจ็บ <span class="req">*</span></label><select id="p1BodyPart" class="select body-select" required></select></div>
+              <div class="field"><label for="p1Safety">อุปกรณ์นิรภัย <span class="req">*</span></label><select id="p1Safety" class="select safety-select" required></select></div>
+              <div class="field"><label for="p1Vehicle">ยานพาหนะ <span class="req">*</span></label><select id="p1Vehicle" class="select vehicle-select" data-other="p1VehicleOther" required></select><input id="p1VehicleOther" class="input vehicle-other hidden" maxlength="40" placeholder="ระบุยานพาหนะอื่นๆ"></div>
+              <div class="field"><label for="p1Plate">หมายเลขทะเบียนรถ <span class="req">*</span></label><input id="p1Plate" class="input" maxlength="20" required></div>
+              <div class="field"><label for="p1Province">จังหวัดทะเบียน <span class="req">*</span></label><select id="p1Province" class="select province-select" required></select></div>
+              <div class="field span-12"><div class="section-band"><i class="fa-solid fa-people-group"></i><h3>ผู้โดยสารฝ่ายที่ 1 (สูงสุด 6 คน)</h3></div><div id="p1Passengers" class="passenger-list"></div></div>
+            </div>
+          </div>
+
+          <div class="card" id="party2Card">
+            <div class="section-band red"><i class="fa-solid fa-people-arrows-left-right"></i><h3>ฝ่ายที่ 2</h3></div>
+            <div class="form-grid">
+              <div class="field"><label for="p2Status">สถานะ <span class="req">*</span></label><select id="p2Status" class="select" required><option value="">เลือกสถานะ</option><option>ผู้ขับขี่</option><option>ผู้โดยสาร</option><option>คนเดินเท้า</option><option>ไม่มี</option></select></div>
+              <div class="field p2-person"><label for="p2Gender">เพศ <span class="req">*</span></label><select id="p2Gender" class="select" data-required="true"><option value="">เลือกเพศ</option><option>ผู้ชาย</option><option>ผู้หญิง</option></select></div>
+              <div class="field p2-age"><label for="p2Age">อายุ <span class="req">*</span></label><input id="p2Age" class="input" type="number" min="0" max="120" inputmode="numeric" data-required="true"></div>
+              <div class="field p2-license"><label for="p2License">ใบอนุญาตขับขี่ <span class="req">*</span></label><select id="p2License" class="select" data-required="true"><option value="">เลือกข้อมูล</option><option>มี</option><option>ไม่มี</option></select></div>
+              <div class="field p2-person"><label for="p2Injury">อาการบาดเจ็บ <span class="req">*</span></label><select id="p2Injury" class="select injury-select" data-required="true"></select></div>
+              <div class="field p2-person"><label for="p2BodyPart">อวัยวะบาดเจ็บ <span class="req">*</span></label><select id="p2BodyPart" class="select body-select" data-required="true"></select></div>
+              <div class="field p2-safety"><label for="p2Safety">อุปกรณ์นิรภัย <span class="req">*</span></label><select id="p2Safety" class="select safety-select" data-required="true"></select></div>
+              <div class="field p2-vehicle"><label for="p2Vehicle">ยานพาหนะ <span class="req">*</span></label><select id="p2Vehicle" class="select vehicle-select" data-other="p2VehicleOther" data-required="true"></select><input id="p2VehicleOther" class="input vehicle-other hidden" maxlength="40" placeholder="ระบุยานพาหนะอื่นๆ"></div>
+              <div class="field p2-vehicle"><label for="p2Plate">หมายเลขทะเบียนรถ <span class="req">*</span></label><input id="p2Plate" class="input" maxlength="20" data-required="true"></div>
+              <div class="field p2-vehicle"><label for="p2Province">จังหวัดทะเบียน <span class="req">*</span></label><select id="p2Province" class="select province-select" data-required="true"></select></div>
+              <div class="field span-12 p2-passengers"><div class="section-band"><i class="fa-solid fa-people-group"></i><h3>ผู้โดยสารฝ่ายที่ 2 (สูงสุด 6 คน)</h3></div><div id="p2Passengers" class="passenger-list"></div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-band"><i class="fa-solid fa-location-crosshairs"></i><h3>ข้อมูลสถานที่เกิดเหตุ</h3></div>
+            <div class="form-grid">
+              <div class="field span-8"><label for="place">สถานที่เกิดเหตุ <span class="req">*</span></label><input id="place" class="input" maxlength="120" placeholder="กรอกรายละเอียดจุดเกิดเหตุพอสังเขป" required></div>
+              <div class="field"><label for="roadCharacter">ลักษณะทาง <span class="req">*</span></label><select id="roadCharacter" class="select" required></select><input id="roadCharacterOther" class="input vehicle-other hidden" maxlength="30" placeholder="ระบุลักษณะทางอื่นๆ"></div>
+              <div class="field span-6"><label for="road">ถนน <span class="req">*</span></label><input id="road" class="input" maxlength="60" placeholder="ดึงจากแผนที่หรือกรอกเอง" required></div>
+              <div class="field"><label for="localAuthority">อปท. <span class="req">*</span></label><select id="localAuthority" class="select" required><option value="">เลือกประเภท อปท.</option><option>เทศบาล</option><option>อบต.</option></select></div>
+              <div class="field"><label for="subdistrict">ตำบล <span class="req">*</span></label><select id="subdistrict" class="select" required></select></div>
+              <div class="field"><label for="district">อำเภอ</label><input id="district" class="input" value="เมืองนครสวรรค์" readonly></div>
+              <div class="field"><label for="locationProvince">จังหวัด</label><input id="locationProvince" class="input" value="นครสวรรค์" readonly></div>
+              <div class="field span-6"><label for="cause">สาเหตุเบื้องต้น (ไม่ใช่ความเห็นทางคดี) <span class="req">*</span></label><select id="cause" class="select" required></select></div>
+              <div class="field span-6"><label>โลเคชั่น <span class="req">*</span></label><div class="field-actions"><input id="coordinates" class="input" type="text" readonly placeholder="ยังไม่ได้เลือกพิกัด"><button class="btn btn-soft" type="button" onclick="openLocationPicker()"><i class="fa-solid fa-map-pin"></i> เลือกพิกัด</button></div><input id="latitude" type="hidden"><input id="longitude" type="hidden"></div>
+              <div class="field span-12"><label for="details">รายละเอียดอื่นๆ</label><textarea id="details" class="textarea" maxlength="80" placeholder="กรอกข้อมูลเพิ่มเติม ไม่เกิน 80 ตัวอักษร"></textarea><div class="hint"><span id="detailCount">0</span>/80 ตัวอักษร</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-camera"></i> รูปภาพจุดเกิดเหตุ</h3>
+            <div class="image-drop">
+              <i class="fa-solid fa-camera-retro"></i><p><strong>ถ่ายภาพ/เลือกไฟล์ JPG หรือ PNG ได้สูงสุด 3 ภาพ</strong></p><p>ระบบจะย่อขนาดภาพก่อนอัปโหลดและบันทึก URL รูปภาพอัตโนมัติ</p>
+              <label class="btn btn-soft" for="imageFiles"><i class="fa-solid fa-camera"></i> ถ่ายภาพ/เลือกไฟล์</label>
+              <input id="imageFiles" class="sr-only" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" multiple>
+            </div>
+            <div id="imagePreviews" class="image-previews"></div>
+          </div>
+
+          <div class="submit-bar"><button class="btn btn-outline" type="button" onclick="resetAccidentForm()"><i class="fa-solid fa-rotate-left"></i> ล้างข้อมูล</button><button class="btn btn-success" type="submit"><i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล</button></div>
+        </form>
+      </section>
+
+      <section id="page-dashboard" class="page">
+        <div class="page-head"><div class="page-icon"><i class="fa-solid fa-chart-line"></i></div><div><h2>DASHBOARD</h2><p>สถิติอุบัติเหตุ สภ.เมืองนครสวรรค์</p></div></div>
+        <div id="dashboardContent"><div class="loading-skeleton"></div></div>
+      </section>
+
+      <section id="page-map" class="page">
+        <div class="page-head"><div class="page-icon"><i class="fa-solid fa-map-location-dot"></i></div><div><h2>แผนที่จุดเกิดอุบัติเหตุพร้อมรายละเอียด</h2><p>กรองข้อมูลตามช่วงวันที่และกดหมุดเพื่อดูรายละเอียดพร้อมภาพ</p></div></div>
+        <div class="card">
+          <div class="filter-bar">
+            <div class="field"><label for="mapStartDate">วันที่เริ่มต้น</label><input id="mapStartDate" class="input" type="date"></div>
+            <div class="field"><label for="mapEndDate">วันที่สิ้นสุด</label><input id="mapEndDate" class="input" type="date"></div>
+            <button class="btn btn-primary" type="button" onclick="loadMapData()"><i class="fa-solid fa-filter"></i> แสดงข้อมูล</button>
+          </div>
+        </div>
+        <div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-chart-area"></i> อุบัติเหตุสะสม (รายปี)</h3><div class="chart-wrap"><canvas id="mapCumulativeChart"></canvas></div></div>
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-map"></i> แผนที่และพิกัด <span id="mapTotal" class="pill">0 จุด</span></h3>
+          <div class="legend"><span class="legend-item"><span class="dot red"></span> เสียชีวิต / หมดสติ / สาหัส</span><span class="legend-item"><span class="dot yellow"></span> บาดเจ็บเล็กน้อย</span><span class="legend-item"><span class="dot green"></span> ไม่บาดเจ็บ</span><span class="legend-item"><span class="dot gray"></span> ไม่ระบุ</span></div>
+          <div id="accidentMap" class="map-main"></div>
+        </div>
+        <div class="card"><h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการจุดเกิดเหตุ</h3><div id="mapTable"></div></div>
+      </section>
+    </main>
+  </section>
+
+  <div id="locationModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="locationModalTitle">
+    <div class="modal-panel">
+      <div class="modal-head"><i class="fa-solid fa-location-dot"></i><h3 id="locationModalTitle">เลือกพิกัดจุดเกิดเหตุ</h3><button class="modal-close" type="button" onclick="closeLocationPicker()"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="modal-body">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><button class="btn btn-soft btn-sm" type="button" onclick="useCurrentLocation()"><i class="fa-solid fa-crosshairs"></i> พิกัดปัจจุบัน</button><span id="pickerStatus" class="hint" style="align-self:center">แตะบนแผนที่เพื่อเลือกพิกัด</span></div>
+        <div id="pickerMap" class="map-picker"></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-outline" type="button" onclick="closeLocationPicker()">ยกเลิก</button><button class="btn btn-primary" type="button" onclick="confirmLocation()"><i class="fa-solid fa-check"></i> ใช้พิกัดนี้</button></div>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+    /* ============================================================
+       Backend: Supabase (พอร์ตจาก Google Apps Script)
+       - auth ผ่าน RPC officer_login / officer_check_session
+       - บันทึกผ่าน RPC officer_save_accident (แยกตาย/เจ็บอัตโนมัติ)
+       - สถิติ/แผนที่ คำนวณฝั่งเว็บจากข้อมูลที่ดึงผ่าน RPC
+    ============================================================ */
+    const SUPABASE_URL = 'https://ftpruljwwsmvipfcedyk.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0cHJ1bGp3d3NtdmlwZmNlZHlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTM5ODgsImV4cCI6MjA5OTkyOTk4OH0.CQDf2PUO5hjsamJojOfLMuqobwL0d8EbXxMT-2EdAts';
+    const STORAGE_BUCKET = 'risk-images';
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const NAKHON_SAWAN_CENTER = [15.7047, 100.1372];
+    const SESSION_KEY = 'accidentTrafficPoliceSession';
+    const state = {
+      token: '', user: null, preparedImages: [], currentPage: 'home',
+      dashboardLoaded: false, mapLoaded: false, dashboardData: null,
+      accidentRows: null, injuryRows: null, deathDates: null,
+      pickerMap: null, pickerMarker: null, selectedLocation: null,
+      accidentMap: null, accidentLayer: null, mapItems: [], mapMarkers: [],
+      charts: {}
+    };
+
+    const ranks = ['ส.ต.ต.','ส.ต.ท.','ส.ต.อ.','จ.ส.ต.','ด.ต.','ร.ต.ต.','ร.ต.ท.','ร.ต.อ.','พ.ต.ต.','พ.ต.ท.','พ.ต.อ.'];
+    const provinces = ['กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี'];
+    const injuries = ['เสียชีวิต','หมดสติ','สาหัส','เล็กน้อย','ไม่บาดเจ็บ'];
+    const bodyParts = ['ลำคอ-ศีรษะ','ลำตัวและเอว','แขน-เท้า','ขา-เท้า','หลายส่วน','ไม่บาดเจ็บ'];
+    const safetyOptions = ['สวมหมวกนิรภัย','ไม่สวมหมวกนิรภัย','คาดเข็มขัดนิรภัย','ไม่คาดเข็มขัดนิรภัย'];
+    const vehicles = ['รถจักรยานยนต์','รถยนต์เก๋ง','รถยนต์กระบะ','รถบรรทุก 6 ล้อ','รถบรรทุก 10 ล้อ','รถบรรทุกพ่วง','อื่นๆ'];
+    const roadCharacters = ['ทางตรง','ทางโค้ง','ทางแยก','ทางร่วม','จุดกลับรถ','ทางคู่ขนาน','ทางแคบ (กว้างไม่ถึง 7 ม.)','สะพาน','ทางม้าลาย','อื่นๆ'];
+    const subdistricts = ['ปากน้ำโพ','นครสวรรค์ตก','วัดไทรย์','ตะเคียนเลื่อน','หนองกรด','หนองกระโดน','บ้านแก่ง'];
+    const causes = ['เมาสุรา','ชนท้าย','ตัดหน้า','เปลี่ยนช่องทาง','กลับรถ','ย้อนศร','ฝ่าฝืนสัญญาณไฟ','แซงในที่คับขัน','ทัศนวิสัยแย่','ใช้โทรศัพท์','ขาดความระมัดระวัง','อ่อนล้า/หลับใน','รถขัดข้อง'];
+    const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        document.getElementById('registerButton').addEventListener('click', showRegister);
+        document.getElementById('loginButton').addEventListener('click', showLogin);
+        initializeFormOptions();
+        buildPassengerCards('p1');
+        buildPassengerCards('p2');
+        bindFormEvents();
+        setDefaultDates();
+        startClock();
+        await restoreSession();
+      } catch (error) {
+        console.error('Application initialization failed:', error);
+        if (window.Swal) Swal.fire({ icon:'error', title:'ไม่สามารถเปิดระบบได้', text:(error && error.message) || String(error) });
+      }
+    });
+
+    /* ============ ชั้นเชื่อมต่อ Supabase ============ */
+    async function rpc(fn, args) {
+      const { data, error } = await db.rpc(fn, args || {});
+      if (error) throw new Error('ไม่สามารถเชื่อมต่อระบบได้: ' + error.message);
+      return data;
+    }
+
+    async function api(action, data = {}) {
+      let result;
+      switch (action) {
+        case 'register':
+          result = await rpc('officer_register', { p_rank:data.rank, p_first:data.firstName, p_last:data.lastName, p_phone:data.phone, p_national_id:data.nationalId, p_code:data.policeCode });
+          break;
+        case 'login':
+          result = await rpc('officer_login', { p_username:data.username, p_password:data.password });
+          break;
+        case 'logout':
+          result = await rpc('officer_logout', { p_token: state.token });
+          break;
+        case 'checkSession':
+          result = await rpc('officer_check_session', { p_token: state.token });
+          break;
+        case 'getHomeStats':
+          result = await computeHomeStats();
+          break;
+        case 'getDashboardData':
+          result = await computeDashboardData();
+          break;
+        case 'getMapData':
+          result = await computeMapData(data.startDate, data.endDate);
+          break;
+        default:
+          result = { success:false, message:'ไม่พบคำสั่งที่ร้องขอ: ' + action };
+      }
+      if (result && result.code === 'AUTH_REQUIRED') {
+        clearSession();
+        showAuthPage();
+      }
+      return result;
+    }
+
+    async function fetchAccidents(force) {
+      if (state.accidentRows && !force) return state.accidentRows;
+      const result = await rpc('officer_get_accidents', { p_token: state.token });
+      if (!result.success) {
+        if (result.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
+        throw new Error(result.message || 'ดึงข้อมูลไม่สำเร็จ');
+      }
+      state.accidentRows = result.data || [];
+      return state.accidentRows;
+    }
+
+    async function fetchInjuries(force) {
+      if (state.injuryRows && !force) return state.injuryRows;
+      const rows = [];
+      const pageSize = 1000;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await db.from('injuries').select('incident_datetime, raw').range(from, from + pageSize - 1);
+        if (error) throw new Error(error.message);
+        rows.push(...(data || []));
+        if (!data || data.length < pageSize) break;
+      }
+      state.injuryRows = rows;
+      return rows;
+    }
+
+    async function fetchDeathDates(force) {
+      if (state.deathDates && !force) return state.deathDates;
+      const rows = [];
+      const pageSize = 1000;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await db.from('deaths').select('incident_datetime').range(from, from + pageSize - 1);
+        if (error) throw new Error(error.message);
+        rows.push(...(data || []));
+        if (!data || data.length < pageSize) break;
+      }
+      state.deathDates = rows.map(r => r.incident_datetime).filter(Boolean);
+      return state.deathDates;
+    }
+
+    /* ============ ตัวช่วยเวลาไทย ============ */
+    function bkkStamp(value, format) {
+      const d = value instanceof Date ? value : new Date(value);
+      if (isNaN(d.getTime())) return '';
+      const s = d.toLocaleString('sv-SE', { timeZone:'Asia/Bangkok' }); // YYYY-MM-DD HH:mm:ss
+      if (format === 'year') return s.slice(0,4);
+      if (format === 'month') return s.slice(0,7);
+      if (format === 'day') return s.slice(0,10);
+      return s;
+    }
+    function samePeriod(dateValue, target, mode) {
+      const a = bkkStamp(dateValue, mode);
+      const b = bkkStamp(target, mode);
+      return a !== '' && a === b;
+    }
+    function bkkYearMonth(value) {
+      const s = bkkStamp(value, 'month');
+      if (!s) return null;
+      return { year: Number(s.slice(0,4)), month: Number(s.slice(5,7)) };
+    }
+    function formatThaiDateTimeStr(value) {
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return String(value || '-');
+      return d.toLocaleString('th-TH', { timeZone:'Asia/Bangkok', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
+    }
+
+    /* ============ ตัว normalize (พอร์ตจาก GAS 100%) ============ */
+    function clean(v){ return v === null || v === undefined ? '' : String(v).trim(); }
+    function normalizePersonStatus(v){ v = clean(v); if (v.indexOf('ผู้โดยสาร') !== -1) return 'ผู้โดยสาร'; if (v === 'คนเดินเท้า') return 'คนเดินเท้า'; if (v === 'ผู้ขับขี่') return 'ผู้ขับขี่'; return v; }
+    function normalizeVehicle(v){ v = clean(v); if (!v || v === 'ไม่มี') return ''; if (v === 'รถบรรทุกพ่วง' || v === 'รถพ่วง' || v === 'รถเทรนเลอร์') return 'รถพ่วง/เทรนเลอร์'; const fixed = ['รถจักรยานยนต์','รถยนต์เก๋ง','รถยนต์กระบะ','รถบรรทุก 6 ล้อ','รถบรรทุก 10 ล้อ','รถพ่วง/เทรนเลอร์']; return fixed.indexOf(v) !== -1 ? v : 'อื่นๆ'; }
+    function normalizeGender(v){ v = clean(v); if (v === 'ชาย') return 'ผู้ชาย'; if (v === 'หญิง') return 'ผู้หญิง'; return v; }
+    function normalizeLicense(v){ v = clean(v); if (v === 'มี') return 'มีใบอนุญาต'; if (v === 'ไม่มี') return 'ไม่มีใบอนุญาต'; return v; }
+    function ageGroup(v){ const age = Number(v); if (!isFinite(age) || age < 0 || v === '' || v === null) return ''; if (age <= 14) return '0-14'; if (age <= 18) return '15-18'; if (age <= 24) return '19-24'; if (age <= 35) return '25-35'; if (age <= 60) return '36-60'; return '60+'; }
+    function normalizeSafety(v){ v = clean(v); if (v === 'ไม่ดาดเข็มขัดนิรภัย') return 'ไม่คาดเข็มขัดนิรภัย'; return v; }
+    function normalizeInjury(v){ v = clean(v); if (v === 'บาดเจ็บเล็กน้อย') return 'เล็กน้อย'; return v; }
+    function normalizeBodyPart(v){ v = clean(v); if (!v) return ''; if (v.indexOf('ศรีษะ') !== -1 || v.indexOf('ศีรษะ') !== -1 || v.indexOf('ลำคอ') !== -1) return 'ศรีษะ-ลำคอ'; if (v.indexOf('ลำตัว') !== -1 || v.indexOf('เอว') !== -1) return 'ลำตัว-เอว'; if (v.indexOf('แขน') !== -1 || v.indexOf('มือ') !== -1) return 'แขน-เท้า'; if (v.indexOf('ขา') !== -1 || v.indexOf('เท้า') !== -1) return 'ขา-เท้า'; if (v.indexOf('หลาย') !== -1) return 'หลายส่วน'; return 'หลายส่วน'; }
+    function normalizeRoadCharacter(v){ v = clean(v); if (!v) return ''; if (v.indexOf('ทางร่วม') !== -1) return 'ทางร่วม'; if (v.indexOf('ทางแยก') !== -1) return 'ทางแยก'; if (v.indexOf('จุดกลับรถ') !== -1) return 'จุดกลับรถ'; if (v.indexOf('ทางตรง') !== -1) return 'ทางตรง'; if (v.indexOf('ทางโค้ง') !== -1) return 'ทางโค้ง'; if (v.indexOf('สะพาน') !== -1) return 'สะพาน'; if (v.indexOf('ทางม้าลาย') !== -1) return 'ทางม้าลาย'; return 'อื่นๆ'; }
+    function normalizeLocalAuthority(v){ v = clean(v); if (!v) return ''; if (v.indexOf('เทศบาล') !== -1 || v.indexOf('ในเขต') !== -1) return 'ในเขตเทศบาล'; if (v.indexOf('อบต') !== -1 || v.indexOf('อปท') !== -1 || v.indexOf('นอกเขต') !== -1) return 'นอกเขตเทศบาล'; return v; }
+    function normalizeCause(v){ v = clean(v); if (!v) return ''; if (v.indexOf('เมา') !== -1 || v.indexOf('สุรา') !== -1) return 'ขับรถเมาสุรา'; if (v.indexOf('ฝ่าฝืนสัญญาณไฟ') !== -1) return 'ฝ่าฝืนสัญญาณไฟคับขัน'; return v; }
+    function displayVehicleOf(party){ if (!party) return ''; return party.vehicle === 'อื่นๆ' && party.vehicleOther ? party.vehicleOther : (party.vehicle || ''); }
+
+    function personsFromRow(row) {
+      const persons = [];
+      const p1 = row.party1 || null;
+      const p2 = row.party2 || null;
+      if (p1 && (p1.status || p1.gender)) {
+        const v1 = displayVehicleOf(p1);
+        persons.push({ status:p1.status || 'ผู้ขับขี่', gender:p1.gender, age:p1.age, license:p1.license, injury:p1.injury, bodyPart:p1.bodyPart, safety:p1.safety, vehicle:v1 });
+        (p1.passengers || []).forEach(p => persons.push({ status:'ผู้โดยสาร', gender:p.gender, age:p.age, license:'', injury:p.injury, bodyPart:p.bodyPart, safety:p.safety, vehicle:v1 }));
+      }
+      if (p2 && p2.status && p2.status !== 'ไม่มี') {
+        const v2 = displayVehicleOf(p2);
+        persons.push({ status:p2.status, gender:p2.gender, age:p2.age, license:p2.license, injury:p2.injury, bodyPart:p2.bodyPart, safety:p2.safety, vehicle:v2 });
+        (p2.passengers || []).forEach(p => persons.push({ status:'ผู้โดยสาร', gender:p.gender, age:p.age, license:'', injury:p.injury, bodyPart:p.bodyPart, safety:p.safety, vehicle:v2 }));
+      }
+      return persons;
+    }
+
+    function worstSeverityOf(row) {
+      const priorities = { 'ไม่บาดเจ็บ':1, 'เล็กน้อย':2, 'สาหัส':3, 'หมดสติ':4, 'เสียชีวิต':5 };
+      let worst = '', max = 0;
+      personsFromRow(row).forEach(p => {
+        const score = priorities[normalizeInjury(p.injury)] || 0;
+        if (score > max) { max = score; worst = normalizeInjury(p.injury); }
+      });
+      return worst || 'ไม่ระบุ';
+    }
+
+    /* ============ Home stats ============ */
+    async function computeHomeStats() {
+      const [accRows, injuryRows, deathDates] = await Promise.all([fetchAccidents(true), fetchInjuries(true), fetchDeathDates(true)]);
+      const now = new Date();
+      const yesterday = new Date(now.getTime() - 24*60*60*1000);
+      const accDates = accRows.map(r => r.incident_datetime).filter(Boolean);
+      const countBy = (dates, mode, target) => dates.filter(d => samePeriod(d, target, mode)).length;
+      const injuryCounts = (mode, target) => {
+        const result = { 'สาหัส':0, 'หมดสติ':0, 'เล็กน้อย':0, total:0 };
+        injuryRows.forEach(row => {
+          if (!row.incident_datetime || !samePeriod(row.incident_datetime, target, mode)) return;
+          const sev = normalizeInjury((row.raw || {}).severity || '');
+          if (Object.prototype.hasOwnProperty.call(result, sev)) { result[sev]++; result.total++; }
+        });
+        return result;
+      };
+      return {
+        success:true,
+        generatedAt: now.toLocaleString('th-TH', { timeZone:'Asia/Bangkok', hour12:false }),
+        accidents: { year:countBy(accDates,'year',now), month:countBy(accDates,'month',now), today:countBy(accDates,'day',now) },
+        deaths: { year:countBy(deathDates,'year',now), month:countBy(deathDates,'month',now), yesterday:countBy(deathDates,'day',yesterday) },
+        injuries: { year:injuryCounts('year',now), month:injuryCounts('month',now), yesterday:injuryCounts('day',yesterday) }
+      };
+    }
+
+    /* ============ Dashboard (พอร์ตจาก getDashboardData_) ============ */
+    function zeroCounts(labels){ const o = {}; labels.forEach(l => o[l] = 0); return o; }
+    function increment(object, key){ const k = clean(key); if (!k || k === 'ไม่มี') return; object[k] = (object[k] || 0) + 1; }
+    function topCounts(object, limit){ const result = {}; Object.keys(object||{}).filter(k => clean(k) !== '').sort((a,b) => Number(object[b]||0)-Number(object[a]||0)).slice(0, limit||7).forEach(k => result[k] = Number(object[k]||0)); return result; }
+
+    async function computeDashboardData() {
+      const rows = await fetchAccidents(true);
+      const dashboardYear = Number(bkkStamp(new Date(), 'year'));
+      const monthly = Array(12).fill(0);
+      const yearMonthCounts = {};
+
+      const distributions = {
+        status: zeroCounts(['ผู้ขับขี่','ผู้โดยสาร','คนเดินเท้า']),
+        vehicles: zeroCounts(['รถจักรยานยนต์','รถยนต์เก๋ง','รถยนต์กระบะ','รถบรรทุก 6 ล้อ','รถบรรทุก 10 ล้อ','รถพ่วง/เทรนเลอร์','อื่นๆ']),
+        genders: zeroCounts(['ผู้ชาย','ผู้หญิง']),
+        licenses: zeroCounts(['มีใบอนุญาต','ไม่มีใบอนุญาต']),
+        ageGroups: zeroCounts(['0-14','15-18','19-24','25-35','36-60','60+']),
+        safety: zeroCounts(safetyOptions),
+        injuries: zeroCounts(injuries),
+        bodyParts: zeroCounts(['ศรีษะ-ลำคอ','ลำตัว-เอว','แขน-เท้า','ขา-เท้า','หลายส่วน']),
+        roads: {},
+        roadCharacters: zeroCounts(['ทางตรง','ทางโค้ง','ทางแยก','ทางร่วม','จุดกลับรถ','สะพาน','ทางม้าลาย','อื่นๆ']),
+        localAuthorities: zeroCounts(['ในเขตเทศบาล','นอกเขตเทศบาล']),
+        subdistricts: zeroCounts(subdistricts),
+        causes: zeroCounts(['ขับรถเมาสุรา','ชนท้าย','ตัดหน้า','เปลี่ยนช่องทาง','กลับรถ','ย้อนศร','ฝ่าฝืนสัญญาณไฟคับขัน','ทัศนวิสัยแย่','ใช้โทรศัพท์','ขาดความระมัดระวัง','อ่อนล้า/หลับใน','รถขัดข้อง'])
+      };
+      const safetyInjuryMatrix = {};
+      safetyOptions.forEach(s => safetyInjuryMatrix[s] = zeroCounts(injuries));
+
+      rows.forEach(row => {
+        const ym = bkkYearMonth(row.incident_datetime);
+        if (!ym) return;
+        if (!yearMonthCounts[ym.year]) yearMonthCounts[ym.year] = Array(12).fill(0);
+        yearMonthCounts[ym.year][ym.month - 1]++;
+        if (ym.year !== dashboardYear) return;
+        monthly[ym.month - 1]++;
+
+        increment(distributions.vehicles, normalizeVehicle(displayVehicleOf(row.party1)));
+        increment(distributions.vehicles, normalizeVehicle(displayVehicleOf(row.party2)));
+        increment(distributions.roads, clean(row.road));
+        increment(distributions.roadCharacters, normalizeRoadCharacter(row.road_character));
+        increment(distributions.localAuthorities, normalizeLocalAuthority(row.local_authority));
+        increment(distributions.subdistricts, clean(row.subdistrict));
+        increment(distributions.causes, normalizeCause(row.cause));
+
+        personsFromRow(row).forEach(person => {
+          increment(distributions.status, normalizePersonStatus(person.status));
+          increment(distributions.genders, normalizeGender(person.gender));
+          increment(distributions.licenses, normalizeLicense(person.license));
+          increment(distributions.ageGroups, ageGroup(person.age));
+          increment(distributions.safety, normalizeSafety(person.safety));
+          increment(distributions.injuries, normalizeInjury(person.injury));
+          increment(distributions.bodyParts, normalizeBodyPart(person.bodyPart));
+          const sKey = normalizeSafety(person.safety);
+          const iKey = normalizeInjury(person.injury);
+          if (safetyInjuryMatrix[sKey] && Object.prototype.hasOwnProperty.call(safetyInjuryMatrix[sKey], iKey)) safetyInjuryMatrix[sKey][iKey]++;
+        });
+      });
+
+      distributions.roads = topCounts(distributions.roads, 7);
+
+      const years = Object.keys(yearMonthCounts).map(Number).sort((a,b)=>a-b).slice(-5);
+      const cumulativeByYear = years.map(year => {
+        let total = 0;
+        return { year, values: yearMonthCounts[year].map(count => { total += count; return total; }) };
+      });
+
+      const recent = rows.slice().sort((a,b) => new Date(b.incident_datetime||0) - new Date(a.incident_datetime||0)).slice(0,10).map(row => ({
+        id: row.accident_code || ('#'+row.id), date: formatThaiDateTimeStr(row.incident_datetime),
+        place: row.place || '-', road: row.road || '-', severity: worstSeverityOf(row)
+      }));
+
+      return {
+        success:true, currentYear:dashboardYear, dashboardYear:dashboardYear,
+        total: rows.length,
+        yearlyTotal: monthly.reduce((a,b)=>a+b,0),
+        monthly, cumulativeByYear, distributions, safetyInjuryMatrix, recent
+      };
+    }
+
+    /* ============ Map data ============ */
+    async function computeMapData(startDate, endDate) {
+      const rows = await fetchAccidents();
+      const items = rows.filter(row => {
+        if (!row.incident_datetime) return false;
+        const local = bkkStamp(row.incident_datetime, 'day');
+        if (startDate && local < startDate) return false;
+        if (endDate && local > endDate) return false;
+        return Number.isFinite(Number(row.latitude)) && Number.isFinite(Number(row.longitude)) && row.latitude !== null;
+      }).map(row => {
+        const severity = worstSeverityOf(row);
+        let markerType = 'gray';
+        if (['เสียชีวิต','หมดสติ','สาหัส'].includes(severity)) markerType = 'red';
+        else if (severity === 'เล็กน้อย') markerType = 'yellow';
+        else if (severity === 'ไม่บาดเจ็บ') markerType = 'green';
+        const p1 = row.party1 || {}; const p2 = row.party2 || {};
+        return {
+          id: row.accident_code || ('#'+row.id), date: formatThaiDateTimeStr(row.incident_datetime),
+          latitude: Number(row.latitude), longitude: Number(row.longitude), markerType,
+          place: row.place || '', road: row.road || '', roadCharacter: row.road_character || '',
+          roadCharacterOther: row.road_character_other || '', localAuthority: row.local_authority || '',
+          subdistrict: row.subdistrict || '', cause: row.cause || '', details: row.details || '',
+          party1: { status:p1.status||'', age:p1.age||'', gender:p1.gender||'', injury:p1.injury||'', vehicle:displayVehicleOf(p1), safety:p1.safety||'', passengers:p1.passengers||[] },
+          party2: { status:p2.status||'', age:p2.age||'', gender:p2.gender||'', injury:p2.injury||'', vehicle:displayVehicleOf(p2), safety:p2.safety||'', passengers:p2.passengers||[] },
+          images: Array.isArray(row.images) ? row.images.filter(Boolean) : []
+        };
+      }).sort((a,b) => String(b.date).localeCompare(String(a.date)));
+      return { success:true, total:items.length, data:items };
+    }
+
+    /* ============ Session ============ */
+    async function restoreSession() {
+      const saved = localStorage.getItem(SESSION_KEY);
+      if (!saved) { showAuthPage(); return; }
+      try {
+        const session = JSON.parse(saved);
+        state.token = session.token || '';
+        const result = await api('checkSession');
+        if (!result.success) throw new Error('expired');
+        state.user = result.user;
+        showApp();
+      } catch (error) {
+        clearSession();
+        showAuthPage();
+      }
+    }
+    function saveSession(token, user) {
+      state.token = token; state.user = user;
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ token, user }));
+    }
+    function clearSession() {
+      state.token = ''; state.user = null;
+      localStorage.removeItem(SESSION_KEY);
+    }
+    function showAuthPage() {
+      document.getElementById('authPage').classList.remove('hidden');
+      document.getElementById('appShell').classList.add('hidden');
+    }
+    function showApp() {
+      document.getElementById('authPage').classList.add('hidden');
+      document.getElementById('appShell').classList.remove('hidden');
+      const fullName = state.user.rank + ' ' + state.user.firstName + ' ' + state.user.lastName;
+      document.getElementById('userDisplay').textContent = fullName;
+      document.getElementById('drawerUser').textContent = fullName;
+      document.getElementById('officerDisplay').value = fullName + ' · ปนพ. ' + state.user.policeCode;
+      openPage('home', document.querySelector('[data-page="home"]'));
+    }
+
+    async function showRegister() {
+      const rankOptions = ranks.map(x => '<option value="' + x + '">' + x + '</option>').join('');
+      const result = await Swal.fire({
+        title: '<i class="fa-solid fa-user-plus"></i> ลงทะเบียนผู้ใช้',
+        html: '<div style="text-align:left;display:grid;gap:10px">' +
+          '<label>วันที่ลงทะเบียน<input id="regDate" class="swal2-input" style="width:100%;margin:4px 0" value="' + escapeHtml(formatThaiDate(new Date())) + '" readonly></label>' +
+          '<label>ยศ<select id="regRank" class="swal2-select" style="width:100%;margin:4px 0"><option value="">เลือกยศ</option>' + rankOptions + '</select></label>' +
+          '<label>ชื่อ<input id="regFirst" class="swal2-input" style="width:100%;margin:4px 0" maxlength="60"></label>' +
+          '<label>นามสกุล<input id="regLast" class="swal2-input" style="width:100%;margin:4px 0" maxlength="60"></label>' +
+          '<label>หมายเลขโทรศัพท์<input id="regPhone" class="swal2-input" style="width:100%;margin:4px 0" inputmode="numeric" maxlength="10"></label>' +
+          '<label>เลขประจำตัวประชาชน<input id="regId" class="swal2-input" style="width:100%;margin:4px 0" inputmode="numeric" maxlength="13"></label>' +
+          '<label>รหัส ปนพ.<input id="regCode" class="swal2-input" style="width:100%;margin:4px 0" inputmode="numeric" maxlength="20"></label>' +
+          '</div>',
+        confirmButtonText: 'ลงทะเบียน', cancelButtonText: 'ยกเลิก', showCancelButton: true,
+        confirmButtonColor: '#1d4ed8', focusConfirm: false,
+        preConfirm: async () => {
+          const payload = {
+            rank: document.getElementById('regRank').value,
+            firstName: document.getElementById('regFirst').value.trim(),
+            lastName: document.getElementById('regLast').value.trim(),
+            phone: document.getElementById('regPhone').value.trim(),
+            nationalId: document.getElementById('regId').value.trim(),
+            policeCode: document.getElementById('regCode').value.trim()
+          };
+          if (!payload.rank || !payload.firstName || !payload.lastName || !payload.phone || !payload.nationalId || !payload.policeCode) {
+            Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน'); return false;
+          }
+          if (!/^\d{13}$/.test(payload.nationalId)) { Swal.showValidationMessage('เลขประจำตัวประชาชนต้องมี 13 หลัก'); return false; }
+          try {
+            Swal.showLoading();
+            const response = await api('register', payload);
+            if (!response.success) { Swal.showValidationMessage(response.message); return false; }
+            return response;
+          } catch (error) { Swal.showValidationMessage(error.message); return false; }
+        }
+      });
+      if (result.isConfirmed && result.value) {
+        await Swal.fire({ icon:'success', title:'ลงทะเบียนสำเร็จ', text:result.value.message, confirmButtonColor:'#1d4ed8' });
+      }
+    }
+
+    async function showLogin() {
+      const result = await Swal.fire({
+        title: '<i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ',
+        html: '<div style="text-align:left;display:grid;gap:10px">' +
+          '<label>ชื่อผู้ใช้ (เลขประจำตัวประชาชน)<input id="loginUser" class="swal2-input" style="width:100%;margin:4px 0" inputmode="numeric" maxlength="13"></label>' +
+          '<label>รหัสผ่าน (เลข 4 ตัวท้าย)<input id="loginPass" class="swal2-input" style="width:100%;margin:4px 0" type="password" inputmode="numeric" maxlength="4"></label>' +
+          '</div>',
+        confirmButtonText:'เข้าสู่ระบบ', cancelButtonText:'ยกเลิก', showCancelButton:true,
+        confirmButtonColor:'#1d4ed8', focusConfirm:false,
+        preConfirm: async () => {
+          const username = document.getElementById('loginUser').value.trim();
+          const password = document.getElementById('loginPass').value.trim();
+          if (!/^\d{13}$/.test(username) || !/^\d{4}$/.test(password)) {
+            Swal.showValidationMessage('กรุณากรอกชื่อผู้ใช้ 13 หลัก และรหัสผ่าน 4 หลัก'); return false;
+          }
+          try {
+            Swal.showLoading();
+            const response = await api('login', { username, password });
+            if (!response.success) { Swal.showValidationMessage(response.message); return false; }
+            return response;
+          } catch (error) { Swal.showValidationMessage(error.message); return false; }
+        }
+      });
+      if (result.isConfirmed && result.value) {
+        saveSession(result.value.token, result.value.user);
+        await Swal.fire({ icon:'success', title:'ยินดีต้อนรับ', text:result.value.message, timer:1500, showConfirmButton:false });
+        showApp();
+      }
+    }
+
+    async function logout() {
+      const confirm = await Swal.fire({ icon:'question', title:'ออกจากระบบ?', showCancelButton:true, confirmButtonText:'ออกจากระบบ', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c1122f' });
+      if (!confirm.isConfirmed) return;
+      try { await api('logout'); } catch (error) {}
+      clearSession(); state.dashboardLoaded = false; state.mapLoaded = false;
+      state.accidentRows = null; state.injuryRows = null; state.deathDates = null;
+      showAuthPage();
+    }
+
+    function toggleDrawer(open) {
+      document.getElementById('drawer').classList.toggle('open', open);
+      document.getElementById('drawerBackdrop').classList.toggle('open', open);
+    }
+
+    function openPage(page, button) {
+      state.currentPage = page;
+      document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      document.querySelectorAll('.nav-btn,.tab-btn').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('[data-page="' + page + '"]').forEach(el => el.classList.add('active'));
+      toggleDrawer(false);
+      window.scrollTo({ top:0, behavior:'smooth' });
+      if (page === 'home') loadHomeStats();
+      if (page === 'dashboard') loadDashboard();
+      if (page === 'map') { loadMapCumulative(); loadMapData(); }
+      if (page === 'map' && state.accidentMap) setTimeout(() => state.accidentMap.invalidateSize(), 250);
+    }
+
+    function startClock() {
+      const render = () => {
+        const now = new Date();
+        document.getElementById('liveClock').innerHTML = '<strong>' + now.toLocaleDateString('th-TH',{timeZone:'Asia/Bangkok',weekday:'short',day:'numeric',month:'short',year:'numeric'}) + '</strong><br>' + now.toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour12:false}) + ' น.';
+      };
+      render(); setInterval(render, 1000);
+    }
+
+    function initializeFormOptions() {
+      fillSelects('.injury-select', injuries, 'เลือกอาการบาดเจ็บ');
+      fillSelects('.body-select', bodyParts, 'เลือกอวัยวะบาดเจ็บ');
+      fillSelects('.safety-select', safetyOptions, 'เลือกอุปกรณ์นิรภัย');
+      fillSelects('.vehicle-select', vehicles, 'เลือกยานพาหนะ');
+      fillSelects('.province-select', provinces, 'เลือกจังหวัด');
+      fillSelect(document.getElementById('roadCharacter'), roadCharacters, 'เลือกลักษณะทาง');
+      fillSelect(document.getElementById('subdistrict'), subdistricts, 'เลือกตำบล');
+      fillSelect(document.getElementById('cause'), causes, 'เลือกสาเหตุเบื้องต้น');
+    }
+    function fillSelects(selector, items, placeholder) {
+      document.querySelectorAll(selector).forEach(select => fillSelect(select, items, placeholder));
+    }
+    function fillSelect(select, items, placeholder) {
+      if (!select) return;
+      const current = select.value;
+      select.innerHTML = '<option value="">' + placeholder + '</option>' + items.map(item => '<option value="' + escapeHtml(item) + '">' + escapeHtml(item) + '</option>').join('');
+      if (items.includes(current)) select.value = current;
+    }
+
+    function buildPassengerCards(prefix) {
+      var container = document.getElementById(prefix + 'Passengers');
+      if (!container) return;
+      container.innerHTML = '';
+      for (var i = 1; i <= 6; i++) {
+        var card = document.createElement('div');
+        card.className = 'passenger-card';
+        card.setAttribute('data-index', String(i));
+        var html = '';
+        html += '<div class="passenger-card-head">';
+        html += '<span class="passenger-index">' + i + '</span>';
+        html += '<strong>ผู้โดยสารที่ ' + i + '</strong>';
+        html += '<select class="select passenger-status" style="width:130px;min-height:40px">';
+        html += '<option value="ไม่มี">ไม่มี</option><option value="มี">มี</option>';
+        html += '</select></div>';
+        html += '<div class="passenger-details hidden"><div class="form-grid">';
+        html += '<div class="field"><label>เพศ <span class="req">*</span></label><select class="select ps-gender" data-required="true"><option value="">เลือกเพศ</option><option value="ผู้ชาย">ผู้ชาย</option><option value="ผู้หญิง">ผู้หญิง</option></select></div>';
+        html += '<div class="field"><label>อายุ <span class="req">*</span></label><input class="input ps-age" type="number" min="0" max="120" inputmode="numeric" data-required="true"></div>';
+        html += '<div class="field"><label>อาการบาดเจ็บ <span class="req">*</span></label><select class="select ps-injury" data-required="true"></select></div>';
+        html += '<div class="field"><label>อวัยวะบาดเจ็บ <span class="req">*</span></label><select class="select ps-body" data-required="true"></select></div>';
+        html += '<div class="field"><label>อุปกรณ์นิรภัย <span class="req">*</span></label><select class="select ps-safety" data-required="true"></select></div>';
+        html += '</div></div>';
+        card.innerHTML = html;
+        container.appendChild(card);
+        fillSelect(card.querySelector('.ps-injury'), injuries, 'เลือกอาการบาดเจ็บ');
+        fillSelect(card.querySelector('.ps-body'), bodyParts, 'เลือกอวัยวะบาดเจ็บ');
+        fillSelect(card.querySelector('.ps-safety'), safetyOptions, 'เลือกอุปกรณ์นิรภัย');
+        (function(currentCard) {
+          var statusSelect = currentCard.querySelector('.passenger-status');
+          if (statusSelect) statusSelect.addEventListener('change', function() { updatePassengerCard(currentCard); });
+          updatePassengerCard(currentCard);
+        })(card);
+      }
+    }
+
+    function bindFormEvents() {
+      document.querySelectorAll('.vehicle-select').forEach(select => {
+        select.addEventListener('change', () => updateVehicleOther(select));
+        updateVehicleOther(select);
+      });
+      document.getElementById('roadCharacter').addEventListener('change', updateRoadCharacterOther);
+      document.getElementById('p2Status').addEventListener('change', updateParty2Visibility);
+      document.getElementById('details').addEventListener('input', event => {
+        document.getElementById('detailCount').textContent = event.target.value.length;
+      });
+      document.getElementById('imageFiles').addEventListener('change', handleImageFiles);
+      document.getElementById('accidentForm').addEventListener('submit', submitAccident);
+      updateRoadCharacterOther();
+      updateParty2Visibility();
+    }
+
+    function updateVehicleOther(select) {
+      const other = document.getElementById(select.dataset.other);
+      if (!other) return;
+      const show = select.value === 'อื่นๆ' && !select.disabled;
+      other.classList.toggle('hidden', !show);
+      other.disabled = !show;
+      other.required = show;
+      if (!show) other.value = '';
+    }
+    function updateRoadCharacterOther() {
+      const select = document.getElementById('roadCharacter');
+      const input = document.getElementById('roadCharacterOther');
+      const show = select.value === 'อื่นๆ';
+      input.classList.toggle('hidden', !show);
+      input.disabled = !show;
+      input.required = show;
+      if (!show) input.value = '';
+    }
+    function updatePassengerCard(card) {
+      const active = card.querySelector('.passenger-status').value === 'มี' && !card.closest('.p2-passengers.hidden');
+      const details = card.querySelector('.passenger-details');
+      details.classList.toggle('hidden', !active);
+      details.querySelectorAll('input,select,textarea').forEach(field => {
+        field.disabled = !active;
+        field.required = active && field.dataset.required === 'true';
+        if (!active) field.value = '';
+      });
+    }
+    function setFieldsVisible(selector, visible) {
+      document.querySelectorAll(selector).forEach(wrapper => {
+        wrapper.classList.toggle('hidden', !visible);
+        wrapper.querySelectorAll('input,select,textarea').forEach(field => {
+          field.disabled = !visible;
+          field.required = visible && field.dataset.required === 'true';
+          if (!visible) field.value = '';
+        });
+      });
+    }
+    function updateParty2Visibility() {
+      const status = document.getElementById('p2Status').value;
+      const isNone = status === '' || status === 'ไม่มี';
+      const isPedestrian = status === 'คนเดินเท้า';
+      const isPassenger = status === 'ผู้โดยสาร';
+      const isDriver = status === 'ผู้ขับขี่';
+      setFieldsVisible('.p2-person', !isNone);
+      setFieldsVisible('.p2-age', isDriver || isPassenger);
+      setFieldsVisible('.p2-license', isDriver);
+      setFieldsVisible('.p2-safety', isDriver || isPassenger);
+      setFieldsVisible('.p2-vehicle', isDriver || isPassenger);
+      const passengerArea = document.querySelector('.p2-passengers');
+      passengerArea.classList.toggle('hidden', !isDriver);
+      passengerArea.querySelectorAll('input,select,textarea').forEach(field => field.disabled = !isDriver);
+      passengerArea.querySelectorAll('.passenger-card').forEach(updatePassengerCard);
+      if (isPedestrian) {
+        document.getElementById('p2Age').value = '';
+        document.getElementById('p2License').value = '';
+        document.getElementById('p2Safety').value = '';
+      }
+      updateVehicleOther(document.getElementById('p2Vehicle'));
+    }
+
+    function setDefaultDates() {
+      document.getElementById('occurredAt').value = datetimeLocalNow();
+      const now = new Date();
+      document.getElementById('mapEndDate').value = dateInputValue(now);
+      document.getElementById('mapStartDate').value = now.getFullYear() + '-01-01';
+    }
+    function datetimeLocalNow() {
+      const date = new Date();
+      date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+      return date.toISOString().slice(0,16);
+    }
+    function dateInputValue(date) {
+      const copy = new Date(date);
+      copy.setMinutes(copy.getMinutes() - copy.getTimezoneOffset());
+      return copy.toISOString().slice(0,10);
+    }
+
+    async function handleImageFiles(event) {
+      const files = Array.from(event.target.files || []);
+      if (files.length > 3) {
+        event.target.value = '';
+        await Swal.fire({ icon:'warning', title:'เลือกได้ไม่เกิน 3 ภาพ' });
+        return;
+      }
+      for (const file of files) {
+        if (!['image/jpeg','image/png'].includes(file.type)) {
+          event.target.value = '';
+          await Swal.fire({ icon:'error', title:'ชนิดไฟล์ไม่ถูกต้อง', text:'รองรับเฉพาะ JPG และ PNG' });
+          return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          event.target.value = '';
+          await Swal.fire({ icon:'error', title:'ไฟล์มีขนาดใหญ่เกินไป', text:'แต่ละภาพต้องไม่เกิน 10 MB' });
+          return;
+        }
+      }
+      Swal.fire({ title:'กำลังเตรียมรูปภาพ', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+      try {
+        state.preparedImages = [];
+        for (const file of files) state.preparedImages.push(await resizeImage(file));
+        renderImagePreviews();
+        Swal.close();
+      } catch (error) {
+        Swal.close();
+        await Swal.fire({ icon:'error', title:'ไม่สามารถอ่านรูปภาพได้', text:error.message });
+      }
+    }
+
+    function resizeImage(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('อ่านไฟล์ไม่สำเร็จ'));
+        reader.onload = () => {
+          const image = new Image();
+          image.onerror = () => reject(new Error('รูปภาพเสียหายหรือไม่รองรับ'));
+          image.onload = () => {
+            const maxSide = 1400;
+            let width = image.width, height = image.height;
+            const scale = Math.min(1, maxSide / Math.max(width, height));
+            width = Math.round(width * scale); height = Math.round(height * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width = width; canvas.height = height;
+            canvas.getContext('2d').drawImage(image, 0, 0, width, height);
+            const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+            const dataUrl = canvas.toDataURL(outputType, .82);
+            resolve({ fileName:file.name, mimeType:outputType, data:dataUrl.split(',')[1], preview:dataUrl });
+          };
+          image.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderImagePreviews() {
+      const container = document.getElementById('imagePreviews');
+      container.innerHTML = state.preparedImages.map((image,index) => '<div class="image-preview"><img src="' + image.preview + '" alt="ภาพที่ ' + (index+1) + '"><button type="button" onclick="removeImage(' + index + ')"><i class="fa-solid fa-xmark"></i></button></div>').join('');
+    }
+    function removeImage(index) {
+      state.preparedImages.splice(index,1);
+      document.getElementById('imageFiles').value = '';
+      renderImagePreviews();
+    }
+
+    function b64ToBlob(b64, mime) {
+      const bytes = atob(b64);
+      const buffer = new Uint8Array(bytes.length);
+      for (let i = 0; i < bytes.length; i++) buffer[i] = bytes.charCodeAt(i);
+      return new Blob([buffer], { type: mime });
+    }
+
+    async function uploadAccidentImages() {
+      const urls = [];
+      for (const image of state.preparedImages) {
+        const ext = image.mimeType === 'image/png' ? 'png' : 'jpg';
+        const path = 'accidents/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+        const { error } = await db.storage.from(STORAGE_BUCKET).upload(path, b64ToBlob(image.data, image.mimeType), { contentType: image.mimeType });
+        if (error) throw new Error('อัปโหลดรูปภาพไม่สำเร็จ: ' + error.message);
+        const { data } = db.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+        urls.push(data.publicUrl);
+      }
+      return urls;
+    }
+
+    function collectPassengers(prefix) {
+      return Array.from(document.querySelectorAll('#' + prefix + 'Passengers .passenger-card'))
+        .filter(card => card.querySelector('.passenger-status').value === 'มี' && !card.querySelector('.passenger-status').disabled)
+        .map(card => ({
+          gender: card.querySelector('.ps-gender').value,
+          age: card.querySelector('.ps-age').value,
+          injury: card.querySelector('.ps-injury').value,
+          bodyPart: card.querySelector('.ps-body').value,
+          safety: card.querySelector('.ps-safety').value
+        }));
+    }
+    function collectParty(prefix, status) {
+      return {
+        status: status,
+        gender: valueOf(prefix + 'Gender'), age: valueOf(prefix + 'Age'), license: valueOf(prefix + 'License'),
+        injury: valueOf(prefix + 'Injury'), bodyPart: valueOf(prefix + 'BodyPart'), safety: valueOf(prefix + 'Safety'),
+        vehicle: valueOf(prefix + 'Vehicle'), vehicleOther: valueOf(prefix + 'VehicleOther'),
+        plate: valueOf(prefix + 'Plate'), province: valueOf(prefix + 'Province'),
+        passengers: collectPassengers(prefix)
+      };
+    }
+
+    async function submitAccident(event) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        await Swal.fire({ icon:'warning', title:'ข้อมูลยังไม่ครบถ้วน', text:'กรุณากรอกช่องที่มีเครื่องหมาย * ให้ครบ' });
+        return;
+      }
+      if (!valueOf('latitude') || !valueOf('longitude')) {
+        await Swal.fire({ icon:'warning', title:'กรุณาเลือกพิกัดจุดเกิดเหตุ' });
+        return;
+      }
+      const occurredDate = new Date(valueOf('occurredAt'));
+      if (Number.isNaN(occurredDate.getTime())) {
+        await Swal.fire({ icon:'error', title:'วันที่และเวลาไม่ถูกต้อง' }); return;
+      }
+      const payload = {
+        occurredAt: occurredDate.toISOString(),
+        party1: collectParty('p1', 'ผู้ขับขี่'),
+        party2: collectParty('p2', valueOf('p2Status')),
+        location: {
+          place:valueOf('place'), roadCharacter:valueOf('roadCharacter'), roadCharacterOther:valueOf('roadCharacterOther'),
+          road:valueOf('road'), localAuthority:valueOf('localAuthority'), subdistrict:valueOf('subdistrict'),
+          district:valueOf('district'), province:valueOf('locationProvince'), cause:valueOf('cause'),
+          latitude:valueOf('latitude'), longitude:valueOf('longitude'), details:valueOf('details')
+        }
+      };
+      Swal.fire({ title:'กำลังบันทึกข้อมูล', html:'กรุณารอสักครู่ ระบบกำลังบันทึกข้อมูลและอัปโหลดรูปภาพ', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+      try {
+        const imageUrls = await uploadAccidentImages();
+        const result = await rpc('officer_save_accident', { p_token: state.token, p_payload: payload, p_images: imageUrls });
+        if (!result.success) {
+          if (result.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
+          throw new Error(result.message || 'บันทึกข้อมูลไม่สำเร็จ');
+        }
+        await Swal.fire({ icon:'success', title:'บันทึกสำเร็จ', html:'รหัสอุบัติเหตุ<br><strong>' + escapeHtml(result.accidentId) + '</strong>', confirmButtonColor:'#16834b' });
+        resetAccidentForm();
+        state.dashboardLoaded = false; state.mapLoaded = false;
+        state.accidentRows = null; state.injuryRows = null; state.deathDates = null;
+      } catch (error) {
+        await Swal.fire({ icon:'error', title:'บันทึกข้อมูลไม่สำเร็จ', text:error.message });
+      }
+    }
+
+    function resetAccidentForm() {
+      document.getElementById('accidentForm').reset();
+      document.getElementById('p1Status').value = 'ผู้ขับขี่';
+      document.getElementById('district').value = 'เมืองนครสวรรค์';
+      document.getElementById('locationProvince').value = 'นครสวรรค์';
+      document.getElementById('officerDisplay').value = state.user ? state.user.rank + ' ' + state.user.firstName + ' ' + state.user.lastName + ' · ปนพ. ' + state.user.policeCode : '';
+      document.getElementById('occurredAt').value = datetimeLocalNow();
+      document.getElementById('detailCount').textContent = '0';
+      state.preparedImages = [];
+      document.getElementById('imageFiles').value = '';
+      renderImagePreviews();
+      document.querySelectorAll('.passenger-card').forEach(card => {
+        card.querySelector('.passenger-status').value = 'ไม่มี'; updatePassengerCard(card);
+      });
+      document.querySelectorAll('.vehicle-select').forEach(updateVehicleOther);
+      updateRoadCharacterOther(); updateParty2Visibility();
+      state.selectedLocation = null;
+    }
+
+    function valueOf(id) {
+      const element = document.getElementById(id);
+      return element && !element.disabled ? String(element.value || '').trim() : '';
+    }
+
+    /* ============ เลือกพิกัด ============ */
+    function openLocationPicker() {
+      document.getElementById('locationModal').classList.add('open');
+      const currentLat = Number(valueOf('latitude'));
+      const currentLng = Number(valueOf('longitude'));
+      if (!state.pickerMap) {
+        state.pickerMap = L.map('pickerMap').setView(NAKHON_SAWAN_CENTER, 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap contributors' }).addTo(state.pickerMap);
+        state.pickerMap.on('click', event => setPickerPosition(event.latlng.lat, event.latlng.lng, true));
+      }
+      setTimeout(() => {
+        state.pickerMap.invalidateSize();
+        if (Number.isFinite(currentLat) && Number.isFinite(currentLng) && currentLat !== 0 && currentLng !== 0) {
+          setPickerPosition(currentLat, currentLng, false);
+        } else {
+          state.pickerMap.setView(NAKHON_SAWAN_CENTER, 13);
+        }
+      }, 120);
+    }
+    function closeLocationPicker() {
+      document.getElementById('locationModal').classList.remove('open');
+    }
+    function useCurrentLocation() {
+      if (!navigator.geolocation) {
+        Swal.fire({ icon:'error', title:'อุปกรณ์ไม่รองรับการระบุตำแหน่ง' }); return;
+      }
+      document.getElementById('pickerStatus').textContent = 'กำลังค้นหาพิกัดปัจจุบัน...';
+      navigator.geolocation.getCurrentPosition(
+        position => setPickerPosition(position.coords.latitude, position.coords.longitude, true),
+        error => {
+          const messages = {1:'ไม่ได้รับอนุญาตให้เข้าถึงตำแหน่ง',2:'ไม่สามารถระบุตำแหน่งได้',3:'หมดเวลารอข้อมูลตำแหน่ง'};
+          document.getElementById('pickerStatus').textContent = messages[error.code] || 'ไม่สามารถระบุตำแหน่งได้';
+        },
+        { enableHighAccuracy:true, timeout:15000, maximumAge:30000 }
+      );
+    }
+    async function setPickerPosition(lat, lng, reverse) {
+      lat = Number(lat); lng = Number(lng);
+      state.selectedLocation = { latitude:lat, longitude:lng, road:'', subdistrict:'' };
+      if (!state.pickerMarker) {
+        state.pickerMarker = L.marker([lat,lng], { draggable:true }).addTo(state.pickerMap);
+        state.pickerMarker.on('dragend', event => {
+          const point = event.target.getLatLng();
+          setPickerPosition(point.lat, point.lng, true);
+        });
+      } else state.pickerMarker.setLatLng([lat,lng]);
+      state.pickerMap.setView([lat,lng], Math.max(state.pickerMap.getZoom(), 16));
+      document.getElementById('pickerStatus').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+      if (reverse) await reverseGeocode(lat,lng);
+    }
+    async function reverseGeocode(lat,lng) {
+      const status = document.getElementById('pickerStatus');
+      status.textContent = 'กำลังค้นหาชื่อถนนจาก OpenStreetMap...';
+      try {
+        const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng) + '&zoom=18&addressdetails=1&extratags=1&accept-language=th';
+        const response = await fetch(url, { headers:{ 'Accept':'application/json' } });
+        if (!response.ok) throw new Error('reverse geocoding failed');
+        const data = await response.json();
+        const address = data.address || {};
+        const road = formatRoadName(data);
+        const subdistrict = detectSubdistrict(address);
+        state.selectedLocation = { latitude:lat, longitude:lng, road, subdistrict, displayName:data.display_name || '' };
+        status.textContent = road ? lat.toFixed(6) + ', ' + lng.toFixed(6) + ' · ' + road : lat.toFixed(6) + ', ' + lng.toFixed(6) + ' · ไม่พบชื่อถนน กรุณากรอกเอง';
+      } catch (error) {
+        state.selectedLocation = { latitude:lat, longitude:lng, road:'', subdistrict:'' };
+        status.textContent = lat.toFixed(6) + ', ' + lng.toFixed(6) + ' · ไม่สามารถดึงชื่อถนน กรุณากรอกเอง';
+      }
+    }
+    function formatRoadName(data) {
+      const address = data.address || {};
+      const extra = data.extratags || {};
+      const rawRoad = address.road || address.pedestrian || address.residential || address.path || address.highway || data.name || '';
+      let roadName = String(rawRoad).replace(/^ถนน\s*/,'').trim();
+      let ref = extra.ref || address.road_reference || '';
+      if (!ref) {
+        const source = rawRoad + ' ' + (data.display_name || '');
+        const match = source.match(/(?:ทางหลวงแผ่นดิน|ทล\.?|Highway)\s*(?:หมายเลข)?\s*(\d+)/i);
+        if (match) ref = match[1];
+      }
+      ref = String(ref || '').split(';')[0].replace(/[^0-9ก-ฮA-Za-z-]/g,'');
+      roadName = roadName.replace(/ทางหลวงแผ่นดิน\s*(?:หมายเลข)?\s*\d*/g,'').replace(/ทล\.?\s*\d*/g,'').trim();
+      if (ref) return roadName ? 'ทล.' + ref + ' / ' + roadName : 'ทล.' + ref;
+      return rawRoad || '';
+    }
+    function detectSubdistrict(address) {
+      const source = Object.values(address || {}).join(' ');
+      return subdistricts.find(name => source.includes(name)) || '';
+    }
+    function confirmLocation() {
+      if (!state.selectedLocation) {
+        Swal.fire({ icon:'warning', title:'กรุณาเลือกพิกัดบนแผนที่' }); return;
+      }
+      const loc = state.selectedLocation;
+      document.getElementById('latitude').value = Number(loc.latitude).toFixed(6);
+      document.getElementById('longitude').value = Number(loc.longitude).toFixed(6);
+      document.getElementById('coordinates').value = Number(loc.latitude).toFixed(6) + ', ' + Number(loc.longitude).toFixed(6);
+      if (loc.road) document.getElementById('road').value = loc.road.slice(0,60);
+      if (loc.subdistrict && subdistricts.includes(loc.subdistrict)) document.getElementById('subdistrict').value = loc.subdistrict;
+      closeLocationPicker();
+    }
+
+    /* ============ HOME ============ */
+    async function loadHomeStats() {
+      const container = document.getElementById('homeStats');
+      container.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const result = await api('getHomeStats');
+        if (!result.success) throw new Error(result.message);
+        container.innerHTML =
+          '<div class="stats-zone"><h3 class="zone-title"><i class="fa-solid fa-car-burst"></i> สถิติข้อมูลอุบัติเหตุ สภ.เมืองนครสวรรค์</h3><div class="stats-grid">' +
+            statCard('ปีปัจจุบัน',result.accidents.year,'ครั้ง','fa-calendar') +
+            statCard('เดือนปัจจุบัน',result.accidents.month,'ครั้ง','fa-calendar-days') +
+            statCard('วันนี้',result.accidents.today,'ครั้ง','fa-calendar-day') +
+          '</div></div>' +
+          '<div class="stats-zone"><h3 class="zone-title"><i class="fa-solid fa-skull-crossbones" style="color:#c1122f"></i> สถิติข้อมูลอุบัติเหตุ (เสียชีวิต) สภ.เมืองนครสวรรค์</h3><div class="stats-grid">' +
+            statCard('ปีปัจจุบัน',result.deaths.year,'ราย','fa-user-xmark','red') +
+            statCard('เดือนปัจจุบัน',result.deaths.month,'ราย','fa-user-xmark','red') +
+            statCard('ย้อนหลัง 1 วัน',result.deaths.yesterday,'ราย','fa-clock-rotate-left','red') +
+          '</div></div>' +
+          '<div class="stats-zone"><h3 class="zone-title"><i class="fa-solid fa-user-injured" style="color:#d97706"></i> สถิติข้อมูลอุบัติเหตุ (บาดเจ็บ) สภ.เมืองนครสวรรค์</h3><div class="stats-grid">' +
+            injuryStatCard('ปีปัจจุบัน',result.injuries.year) +
+            injuryStatCard('เดือนปัจจุบัน',result.injuries.month) +
+            injuryStatCard('ย้อนหลัง 1 วัน',result.injuries.yesterday) +
+          '</div></div>' +
+          '<p class="hint" style="text-align:right"><i class="fa-regular fa-clock"></i> อัปเดต ' + escapeHtml(result.generatedAt) + '</p>';
+      } catch (error) {
+        container.innerHTML = errorBlock(error.message, 'loadHomeStats()');
+      }
+    }
+    function statCard(label,value,unit,icon,variant) {
+      variant = variant || '';
+      const display = typeof value === 'number' ? Number(value || 0).toLocaleString('th-TH') : escapeHtml(value || '–');
+      return '<div class="stat-card ' + variant + '"><div class="label"><i class="fa-solid ' + icon + '"></i> ' + label + '</div><div class="value">' + display + '</div><div class="unit">' + unit + '</div></div>';
+    }
+    function injuryStatCard(label,data) {
+      return '<div class="stat-card orange"><div class="label"><i class="fa-solid fa-kit-medical"></i> ' + label + '</div><div class="value">' + Number(data.total||0).toLocaleString('th-TH') + '</div><div class="unit">ราย</div><div class="injury-mini"><span class="pill red">สาหัส ' + (data['สาหัส']||0) + '</span><span class="pill orange">หมดสติ ' + (data['หมดสติ']||0) + '</span><span class="pill yellow">เล็กน้อย ' + (data['เล็กน้อย']||0) + '</span></div></div>';
+    }
+
+    /* ============ DASHBOARD ============ */
+    async function loadDashboard() {
+      const container = document.getElementById('dashboardContent');
+      if (!state.dashboardLoaded) container.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const result = await api('getDashboardData');
+        if (!result.success) throw new Error(result.message);
+        state.dashboardData = result;
+        state.dashboardLoaded = true;
+        const yearLabel = String(Number(result.dashboardYear || result.currentYear) + 543);
+        container.innerHTML =
+          '<div class="stats-grid dashboard-summary-grid" style="margin-bottom:18px">' +
+            statCard('อุบัติเหตุทั้งหมด', result.total, 'ครั้ง', 'fa-car-burst') +
+            statCard('อุบัติเหตุปี ' + yearLabel, result.yearlyTotal || result.monthly.reduce(function(a,b){return a+b;},0), 'ครั้ง', 'fa-calendar-check') +
+            statCard('เดือนที่เกิดเหตุสูงสุด', maxMonthLabel(result.monthly), '', 'fa-arrow-trend-up', 'orange') +
+          '</div>' +
+          '<div class="monthly-grid">' +
+            '<div class="card chart-card monthly-half"><h3 class="card-title"><i class="fa-solid fa-chart-column"></i> อุบัติเหตุรายเดือน ปี ' + yearLabel + '</h3><div class="chart-wrap"><canvas id="monthlyChart"></canvas></div></div>' +
+            '<div class="card chart-card cumulative-half"><h3 class="card-title"><i class="fa-solid fa-chart-area"></i> อุบัติเหตุสะสมรายปี</h3><div class="chart-wrap"><canvas id="cumulativeChart"></canvas></div></div>' +
+          '</div>' +
+          '<div class="dashboard-detail-grid" style="margin-top:16px">' +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-venus-mars"></i> เพศ</h3><div id="genderCards" class="custom-visual"></div></div>' +
+            chartCardHtml('statusChart', 'สถานะ', 'fa-users', 'แผนภูมิวงกลมโดนัท ผู้ขับขี่/ผู้โดยสาร/คนเดินเท้า') +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-people-arrows"></i> อายุ</h3><div id="agePyramid" class="custom-visual"></div><div class="dashboard-note">นับตามตัวเลขอายุจริง: 0-14, 15-18, 19-24, 25-35, 36-60, 60+</div></div>' +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-id-card"></i> ใบอนุญาตขับขี่</h3><div id="licenseCards" class="custom-visual"></div></div>' +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-car-side"></i> ยานพาหนะ</h3><div id="vehicleBars" class="custom-visual"></div></div>' +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-helmet-safety"></i> อุปกรณ์นิรภัย</h3><div id="safetyBars" class="custom-visual"></div></div>' +
+            chartCardHtml('injuryChart', 'อาการบาดเจ็บ', 'fa-user-injured', 'เสียชีวิต/สาหัส/หมดสติ/เล็กน้อย/ไม่บาดเจ็บ') +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-person"></i> อวัยวะบาดเจ็บ</h3><div id="bodyPartFigure" class="custom-visual"></div></div>' +
+            chartCardHtml('relationChart', 'ความสัมพันธ์อุปกรณ์นิรภัยกับอาการบาดเจ็บ', 'fa-link', 'เปรียบเทียบอาการบาดเจ็บตามการใช้อุปกรณ์นิรภัย') +
+            chartCardHtml('roadChart', 'ถนนสูงสุด 7 ลำดับ', 'fa-road', 'เลือกเฉพาะถนนที่เกิดอุบัติเหตุสูงสุด 7 ลำดับ') +
+            chartCardHtml('roadCharacterChart', 'ลักษณะทาง', 'fa-route', 'ทางตรง/ทางโค้ง/ทางแยก/ทางร่วม/จุดกลับรถ/สะพาน/ทางม้าลาย/อื่นๆ') +
+            chartCardHtml('localAuthorityChart', 'อปท.', 'fa-city', 'ในเขตเทศบาล/นอกเขตเทศบาล') +
+            chartCardHtml('subdistrictChart', 'ตำบล', 'fa-location-dot', '7 ตำบลในเขตพื้นที่') +
+            chartCardHtml('causeChart', 'สาเหตุเบื้องต้น', 'fa-triangle-exclamation', 'ไม่ใช่ความเห็นทางคดี') +
+          '</div>' +
+          '<div class="card dashboard-recent-card" style="margin-top:16px"><h3 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> รายการล่าสุด</h3>' + recentTable(result.recent) + '</div>';
+        renderDashboardCharts(result);
+      } catch (error) {
+        container.innerHTML = errorBlock(error.message, 'loadDashboard()');
+      }
+    }
+
+    function chartCardHtml(id, title, icon, note) {
+      return '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid ' + icon + '"></i> ' + escapeHtml(title) + '</h3><div class="chart-wrap"><canvas id="' + id + '"></canvas></div>' + (note ? '<div class="dashboard-note">' + escapeHtml(note) + '</div>' : '') + '</div>';
+    }
+    function maxMonthLabel(values) {
+      const max = Math.max(...values,0);
+      if (!max) return '–';
+      return months[values.indexOf(max)] + ' (' + max + ')';
+    }
+    function recentTable(rows) {
+      if (!rows || !rows.length) return '<div class="empty"><i class="fa-solid fa-inbox"></i>ยังไม่มีข้อมูลอุบัติเหตุ</div>';
+      const tableHtml = '<div class="table-wrap"><table class="data-table"><thead><tr><th>รหัส</th><th>วันเวลา</th><th>สถานที่</th><th>ถนน</th><th>อาการสูงสุด</th></tr></thead><tbody>' + rows.map(function(row){
+        return '<tr><td>' + escapeHtml(row.id || '-') + '</td><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.place || '-') + '</td><td>' + escapeHtml(row.road || '-') + '</td><td>' + severityBadge(row.severity) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+      const cardHtml = '<div class="dashboard-recent-cards">' + rows.slice(0, 5).map(function(row) {
+        return '<div class="recent-mini-card"><div class="recent-mini-head"><span>' + escapeHtml(row.id || '-') + '</span>' + severityBadge(row.severity) + '</div><div class="recent-mini-meta">' + escapeHtml(row.date || '-') + '</div><div class="recent-mini-place">' + escapeHtml(row.place || '-') + '</div><div class="recent-mini-meta"><i class="fa-solid fa-road"></i> ' + escapeHtml(row.road || '-') + '</div></div>';
+      }).join('') + '</div>';
+      return cardHtml + tableHtml;
+    }
+
+    function renderDashboardCharts(data) {
+      const yearLabel = String(Number(data.dashboardYear || data.currentYear) + 543);
+      createChart('monthlyChart', 'bar', {
+        labels:months,
+        datasets:[
+          {type:'bar',label:'จำนวนอุบัติเหตุ ปี ' + yearLabel,data:data.monthly,backgroundColor:chartGradient('monthlyChart','#123b7a','#c1122f'),borderRadius:10,borderSkipped:false,borderWidth:1,borderColor:'rgba(255,255,255,.78)'},
+          {type:'line',label:'เส้นจำนวน',data:data.monthly,borderColor:'#f59e0b',backgroundColor:'#f59e0b',tension:.35,pointRadius:4,pointHoverRadius:6,borderWidth:3,fill:false}
+        ]
+      }, {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{precision:0}},x:{grid:{display:false}}}});
+      renderCumulativeChart('cumulativeChart',data.cumulativeByYear);
+      renderGenderCards('genderCards', data.distributions.genders);
+      createDistributionChart('statusChart','doughnut',data.distributions.status);
+      renderAgePyramid('agePyramid', data.distributions.ageGroups);
+      renderLicenseCards('licenseCards', data.distributions.licenses);
+      renderVehicleVerticalBars('vehicleBars', data.distributions.vehicles);
+      renderBar3d('safetyBars', data.distributions.safety, true);
+      createDistributionChart('injuryChart','bar',data.distributions.injuries);
+      renderBodyPartFigure('bodyPartFigure', data.distributions.bodyParts);
+      createDistributionChart('roadChart','bar',data.distributions.roads,true);
+      createDistributionChart('roadCharacterChart','bar',data.distributions.roadCharacters,true);
+      createDistributionChart('localAuthorityChart','doughnut',data.distributions.localAuthorities);
+      createDistributionChart('subdistrictChart','bar',data.distributions.subdistricts,true);
+      createDistributionChart('causeChart','bar',data.distributions.causes,true);
+      renderRelationChart('relationChart', data.safetyInjuryMatrix);
+    }
+
+    function objectEntriesSorted(object, keepOrder) {
+      const entries = Object.entries(object || {});
+      if (keepOrder) return entries;
+      return entries.sort(function(a,b){ return Number(b[1] || 0) - Number(a[1] || 0); });
+    }
+    function renderAgePyramid(id, object) {
+      const container = document.getElementById(id);
+      if (!container) return;
+      const entries = objectEntriesSorted(object, true);
+      const max = Math.max.apply(null, entries.map(function(item){ return Number(item[1] || 0); }).concat([1]));
+      container.innerHTML = '<div class="pyramid-list">' + entries.map(function(item) {
+        const width = Math.max(4, Math.round((Number(item[1] || 0) / max) * 100));
+        return '<div class="pyramid-row"><b>' + escapeHtml(item[0]) + '</b><div class="pyramid-track"><div class="pyramid-fill" style="width:' + width + '%"></div></div><b>' + Number(item[1] || 0) + '</b></div>';
+      }).join('') + '</div>';
+    }
+    function renderBar3d(id, object) {
+      const container = document.getElementById(id);
+      if (!container) return;
+      const entries = objectEntriesSorted(object, false);
+      const max = Math.max.apply(null, entries.map(function(item){ return Number(item[1] || 0); }).concat([1]));
+      container.innerHTML = '<div class="bar3d-list">' + entries.map(function(item) {
+        const width = Math.max(Number(item[1] || 0) ? 8 : 0, Math.round((Number(item[1] || 0) / max) * 92));
+        return '<div><div class="bar3d-label"><span>' + escapeHtml(item[0]) + '</span><b>' + Number(item[1] || 0) + '</b></div><div class="bar3d-track"><div class="bar3d-fill" style="width:' + width + '%"></div></div></div>';
+      }).join('') + '</div>';
+    }
+    function renderVehicleVerticalBars(id, object) {
+      const container = document.getElementById(id);
+      if (!container) return;
+      const preferred = ['รถจักรยานยนต์','รถยนต์เก๋ง','รถยนต์กระบะ','รถบรรทุก 6 ล้อ','รถบรรทุก 10 ล้อ','รถพ่วง/เทรนเลอร์','อื่นๆ'];
+      const source = object || {};
+      const entries = preferred.map(function(label){ return [label, Number(source[label] || 0)]; });
+      const max = Math.max.apply(null, entries.map(function(item){ return Number(item[1] || 0); }).concat([1]));
+      const colors = ['#c1122f','#1d4ed8','#f59e0b','#16a34a','#7c3aed','#0891b2','#475569'];
+      container.innerHTML = '<div class="vehicle-vertical-visual">' + entries.map(function(item, index) {
+        const height = Math.max(Number(item[1] || 0) ? 12 : 0, Math.round((Number(item[1] || 0) / max) * 180));
+        const color = colors[index % colors.length];
+        return '<div class="vehicle-vertical-bar"><div class="vehicle-vertical-value">' + Number(item[1] || 0) + '</div><div class="vehicle-vertical-fill" style="height:' + height + 'px;background:linear-gradient(180deg,' + color + ',#0f2a4a);color:' + color + '"></div><div class="vehicle-vertical-label">' + escapeHtml(item[0]) + '</div></div>';
+      }).join('') + '</div>';
+    }
+    function renderGenderCards(id, object) {
+      const male = Number((object || {})['ผู้ชาย'] || 0);
+      const female = Number((object || {})['ผู้หญิง'] || 0);
+      const container = document.getElementById(id);
+      if (!container) return;
+      container.innerHTML = '<div class="gender-cards"><div class="gender-card male"><i class="fa-solid fa-person"></i><div class="num">' + male + '</div><div class="label">ผู้ชาย</div></div><div class="gender-card female"><i class="fa-solid fa-person-dress"></i><div class="num">' + female + '</div><div class="label">ผู้หญิง</div></div></div>';
+    }
+    function renderLicenseCards(id, object) {
+      const yes = Number((object || {})['มีใบอนุญาต'] || 0);
+      const no = Number((object || {})['ไม่มีใบอนุญาต'] || 0);
+      const container = document.getElementById(id);
+      if (!container) return;
+      container.innerHTML = '<div class="license-cards"><div class="license-card"><div class="license-icon"><i class="fa-solid fa-id-card"></i></div><div class="num">' + yes + '</div><div class="label">มีใบอนุญาต</div></div><div class="license-card no"><div class="license-icon"><i class="fa-solid fa-id-card-clip"></i></div><div class="num">' + no + '</div><div class="label">ไม่มีใบอนุญาต</div></div></div>';
+    }
+    function renderBodyPartFigure(id, object) {
+      const labels = ['ศรีษะ-ลำคอ','ลำตัว-เอว','แขน-เท้า','ขา-เท้า','หลายส่วน'];
+      const colors = ['#c1122f','#1d4ed8','#f59e0b','#16a34a','#7c3aed'];
+      const container = document.getElementById(id);
+      if (!container) return;
+      const legend = labels.map(function(label, index) {
+        return '<div class="body-item"><span class="body-color" style="background:' + colors[index] + '"></span><span>' + escapeHtml(label) + '</span><span class="body-count" style="color:' + colors[index] + '">' + Number((object || {})[label] || 0) + '</span></div>';
+      }).join('');
+      container.innerHTML = '<div class="body-visual"><div class="human-parts"><div class="part-head"></div><div class="part-arm"></div><div class="part-torso"></div><div class="part-leg"></div><div class="part-multi"></div></div><div class="body-legend">' + legend + '</div></div>';
+    }
+    function renderRelationChart(id, matrix) {
+      const safetyLabels = Object.keys(matrix || {});
+      const injuryLabels = ['เสียชีวิต','สาหัส','หมดสติ','เล็กน้อย','ไม่บาดเจ็บ'];
+      const colors = ['#7f1d1d','#dc2626','#f97316','#facc15','#22c55e'];
+      createChart(id,'bar',{
+        labels:safetyLabels,
+        datasets:injuryLabels.map(function(label, index) {
+          return {label:label,data:safetyLabels.map(function(safety){ return Number(((matrix || {})[safety] || {})[label] || 0); }),backgroundColor:colors[index],borderRadius:5};
+        })
+      },{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,ticks:{autoSkip:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0}}}});
+    }
+    function createDistributionChart(id,type,object,horizontal) {
+      const entries = Object.entries(object||{}).filter(function(item){ return item[0] !== ''; });
+      const colors = ['#1d4ed8','#c1122f','#f59e0b','#16a34a','#7c3aed','#0891b2','#ea580c','#475569','#db2777','#65a30d','#0f766e','#9333ea'];
+      createChart(id,type,{
+        labels:entries.map(function(x){ return x[0]; }),
+        datasets:[{label:'จำนวน',data:entries.map(function(x){ return x[1]; }),backgroundColor:entries.map(function(_,i){ return colors[i%colors.length]; }),borderWidth:type==='doughnut'?2:0,borderColor:'#fff',borderRadius:type==='bar'?7:0}]
+      },{
+        responsive:true,maintainAspectRatio:false,indexAxis:horizontal?'y':'x',
+        plugins:{legend:{display:type==='doughnut',position:'bottom'}},
+        scales:type==='bar'?{x:{beginAtZero:true,ticks:{precision:0}},y:{ticks:{autoSkip:false}}}:{}
+      });
+    }
+    function renderCumulativeChart(id,series) {
+      const colors = ['#1d4ed8','#c1122f','#16a34a','#f59e0b','#7c3aed'];
+      createChart(id,'line',{
+        labels:months,
+        datasets:(series||[]).map((item,index)=>({
+          label:String(Number(item.year)+543),data:item.values,borderColor:colors[index%colors.length],backgroundColor:colors[index%colors.length],
+          tension:.25,fill:false,pointRadius:3,borderWidth:3
+        }))
+      },{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}});
+    }
+    function chartGradient(id, startColor, endColor) {
+      const canvas = document.getElementById(id);
+      if (!canvas) return startColor;
+      const ctx = canvas.getContext('2d');
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width || 320, 0);
+      gradient.addColorStop(0, startColor);
+      gradient.addColorStop(.55, '#f59e0b');
+      gradient.addColorStop(1, endColor);
+      return gradient;
+    }
+    function compactDashboardChartOptions(options) {
+      const compact = window.matchMedia && window.matchMedia('(max-width: 780px)').matches;
+      if (!compact) return options;
+      options = options || {};
+      options.plugins = options.plugins || {};
+      options.plugins.legend = options.plugins.legend || {};
+      options.plugins.legend.position = 'bottom';
+      options.plugins.legend.labels = Object.assign({boxWidth:8, boxHeight:8, padding:6, font:{size:9, family:'Sarabun'}}, options.plugins.legend.labels || {});
+      options.plugins.tooltip = options.plugins.tooltip || {};
+      options.plugins.tooltip.bodyFont = {size:10, family:'Sarabun'};
+      options.plugins.tooltip.titleFont = {size:10, family:'Sarabun'};
+      if (options.scales) {
+        Object.keys(options.scales).forEach(function(key){
+          options.scales[key] = options.scales[key] || {};
+          options.scales[key].ticks = Object.assign({font:{size:8, family:'Sarabun'}, maxTicksLimit:6}, options.scales[key].ticks || {});
+          if (key === 'x') { options.scales[key].ticks.maxRotation = 0; options.scales[key].ticks.minRotation = 0; }
+          options.scales[key].grid = Object.assign({drawBorder:false}, options.scales[key].grid || {});
+        });
+      }
+      return options;
+    }
+    function createChart(id,type,data,options) {
+      const canvas = document.getElementById(id);
+      if (!canvas) return;
+      if (state.charts[id]) state.charts[id].destroy();
+      state.charts[id] = new Chart(canvas.getContext('2d'),{type:type,data:data,options:compactDashboardChartOptions(options)});
+    }
+
+    /* ============ แผนที่ ============ */
+    async function loadMapCumulative() {
+      try {
+        let data = state.dashboardData;
+        if (!data) {
+          data = await api('getDashboardData');
+          if (!data.success) throw new Error(data.message);
+          state.dashboardData = data;
+        }
+        renderCumulativeChart('mapCumulativeChart',data.cumulativeByYear);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    function initAccidentMap() {
+      if (state.accidentMap) return;
+      state.accidentMap = L.map('accidentMap').setView(NAKHON_SAWAN_CENTER,12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19,attribution:'&copy; OpenStreetMap contributors' }).addTo(state.accidentMap);
+      state.accidentLayer = L.layerGroup().addTo(state.accidentMap);
+    }
+    async function loadMapData() {
+      initAccidentMap();
+      const startDate = valueOf('mapStartDate');
+      const endDate = valueOf('mapEndDate');
+      if (startDate && endDate && startDate > endDate) {
+        await Swal.fire({icon:'warning',title:'ช่วงวันที่ไม่ถูกต้อง',text:'วันที่เริ่มต้นต้องไม่เกินวันที่สิ้นสุด'}); return;
+      }
+      document.getElementById('mapTable').innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const result = await api('getMapData',{startDate,endDate});
+        if (!result.success) throw new Error(result.message);
+        state.mapItems = result.data || [];
+        state.mapLoaded = true;
+        renderAccidentMap(state.mapItems);
+        renderMapTable(state.mapItems);
+        document.getElementById('mapTotal').textContent = (result.total||0) + ' จุด';
+      } catch (error) {
+        document.getElementById('mapTable').innerHTML = errorBlock(error.message,'loadMapData()');
+      }
+    }
+    function renderAccidentMap(items) {
+      initAccidentMap();
+      state.accidentLayer.clearLayers(); state.mapMarkers = [];
+      const bounds = [];
+      items.forEach((item,index) => {
+        const color = ['red','yellow','green','gray'].includes(item.markerType) ? item.markerType : 'gray';
+        const icon = L.divIcon({className:'',html:'<div class="marker-dot marker-' + color + '"></div>',iconSize:[22,22],iconAnchor:[11,11],popupAnchor:[0,-12]});
+        const marker = L.marker([item.latitude,item.longitude],{icon}).bindPopup(buildPopup(item),{maxWidth:420});
+        marker.addTo(state.accidentLayer);
+        state.mapMarkers[index] = marker; bounds.push([item.latitude,item.longitude]);
+      });
+      if (bounds.length) state.accidentMap.fitBounds(bounds,{padding:[35,35],maxZoom:16});
+      else state.accidentMap.setView(NAKHON_SAWAN_CENTER,12);
+      setTimeout(()=>state.accidentMap.invalidateSize(),100);
+    }
+    function buildPopup(item) {
+      const party = function(p) {
+        return '<div class="popup-party"><strong>' + escapeHtml(p.label) + '</strong>' +
+          '<div class="popup-row">สถานะ: ' + escapeHtml(p.status || '-') + '</div>' +
+          '<div class="popup-row">อายุ: ' + escapeHtml(p.age || '-') + '</div>' +
+          '<div class="popup-row">เพศ: ' + escapeHtml(p.gender || '-') + '</div>' +
+          '<div class="popup-row">อาการ: ' + escapeHtml(p.injury || '-') + '</div>' +
+          '<div class="popup-row">รถ: ' + escapeHtml(p.vehicle || '-') + '</div>' +
+          '<div class="popup-row">อุปกรณ์: ' + escapeHtml(p.safety || '-') + '</div>' +
+          '</div>';
+      };
+      const p1 = Object.assign({}, item.party1 || {}, {label:'ฝ่ายที่ 1'});
+      const p2 = Object.assign({}, item.party2 || {}, {label:'ฝ่ายที่ 2'});
+      const images = (item.images || []).map(function(url) {
+        return '<a href="' + safeUrl(url) + '" target="_blank" rel="noopener"><img src="' + safeUrl(url) + '" alt="ภาพจุดเกิดเหตุ" loading="lazy"></a>';
+      }).join('');
+      return '<div class="popup"><h3>' + escapeHtml(item.place || 'จุดเกิดเหตุ') + '</h3>' +
+        '<div class="popup-date"><i class="fa-regular fa-calendar"></i> ' + escapeHtml(item.date || '-') + '</div>' +
+        '<div class="popup-parties">' + party(p1) + party(p2) + '</div>' +
+        '<div class="popup-info"><b>ถนน:</b> ' + escapeHtml(item.road || '-') +
+        '<br><b>ลักษณะทาง:</b> ' + escapeHtml(item.roadCharacter || '-') + ' ' + escapeHtml(item.roadCharacterOther || '') +
+        '<br><b>ตำบล:</b> ' + escapeHtml(item.subdistrict || '-') +
+        '<br><b>พิกัด:</b> ' + Number(item.latitude).toFixed(6) + ', ' + Number(item.longitude).toFixed(6) +
+        '<br><b>สาเหตุเบื้องต้น:</b> ' + escapeHtml(item.cause || '-') + '</div>' +
+        (images ? '<div class="popup-images">' + images + '</div>' : '') + '</div>';
+    }
+    function renderMapTable(items) {
+      const container = document.getElementById('mapTable');
+      if (!items.length) {
+        container.innerHTML = '<div class="empty"><i class="fa-solid fa-map-pin"></i>ไม่พบข้อมูลในช่วงวันที่ที่เลือก</div>'; return;
+      }
+      container.innerHTML = '<div class="table-wrap"><table class="data-table"><thead><tr><th>วันเวลา</th><th>สถานที่</th><th>ถนน</th><th>อาการสูงสุด</th><th>พิกัด</th><th></th></tr></thead><tbody>' + items.map((item,index)=>'<tr><td>' + escapeHtml(item.date||'-') + '</td><td>' + escapeHtml(item.place||'-') + '</td><td>' + escapeHtml(item.road||'-') + '</td><td>' + markerBadge(item.markerType) + '</td><td>' + Number(item.latitude).toFixed(5) + ', ' + Number(item.longitude).toFixed(5) + '</td><td><button class="btn btn-soft btn-sm" onclick="focusMapMarker(' + index + ')"><i class="fa-solid fa-location-dot"></i> ดูหมุด</button></td></tr>').join('') + '</tbody></table></div>';
+    }
+    function focusMapMarker(index) {
+      const item = state.mapItems[index], marker = state.mapMarkers[index];
+      if (!item || !marker) return;
+      state.accidentMap.setView([item.latitude,item.longitude],17,{animate:true});
+      marker.openPopup();
+      document.getElementById('accidentMap').scrollIntoView({behavior:'smooth',block:'center'});
+    }
+    function markerBadge(type) {
+      const map = {red:['รุนแรง','red'],yellow:['เล็กน้อย','yellow'],green:['ไม่บาดเจ็บ','green'],gray:['ไม่ระบุ','']};
+      const item = map[type] || map.gray;
+      return '<span class="severity-badge ' + item[1] + '">' + item[0] + '</span>';
+    }
+    function severityBadge(severity) {
+      if (['เสียชีวิต','หมดสติ','สาหัส'].includes(severity)) return '<span class="severity-badge red">' + escapeHtml(severity) + '</span>';
+      if (severity === 'เล็กน้อย') return '<span class="severity-badge yellow">เล็กน้อย</span>';
+      if (severity === 'ไม่บาดเจ็บ') return '<span class="severity-badge green">ไม่บาดเจ็บ</span>';
+      return '<span class="severity-badge">' + escapeHtml(severity||'ไม่ระบุ') + '</span>';
+    }
+    function errorBlock(message,retry) {
+      return '<div class="empty"><i class="fa-solid fa-circle-exclamation"></i>' + escapeHtml(message||'เกิดข้อผิดพลาด') + '<br><button class="btn btn-soft btn-sm" style="margin-top:12px" onclick="' + retry + '"><i class="fa-solid fa-rotate"></i> ลองใหม่</button></div>';
+    }
+    function formatThaiDate(date) {
+      return date.toLocaleString('th-TH',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+    }
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>'"]/g,char=>({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char]));
+    }
+    function safeUrl(url) {
+      const text = String(url||'');
+      return /^https:\/\//i.test(text) ? escapeHtml(text) : '';
+    }
+
+    Object.assign(window, {
+      showRegister, showLogin, logout, toggleDrawer, openPage,
+      openLocationPicker, closeLocationPicker, useCurrentLocation, confirmLocation,
+      resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard
+    });
+  </script>
+
+<div style="position:fixed;right:8px;bottom:6px;z-index:9999;font-size:10px;color:rgba(15,23,42,.55);background:rgba(255,255,255,.72);padding:3px 7px;border-radius:999px;backdrop-filter:blur(4px)">By.Pol.Lt.Col.Akkpan Buasamlee Deputy Superintendent[Traffic]</div>
+</body>
+</html>
