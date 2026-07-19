@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mockup</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+  :root{--navy:#123b7a;--blue:#1d4ed8;--line:#dbe6f2;--muted:#64748b}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Sarabun','Segoe UI',sans-serif;background:#eef4fb;color:#132238;padding:14px}
+  .sec{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:22px;box-shadow:0 8px 22px rgba(15,23,42,.07)}
+  .sec-head{font-weight:900;font-size:1rem;color:#123b7a;margin-bottom:4px}
+  .sec-sub{font-size:.78rem;color:var(--muted);margin-bottom:12px}
+  table{width:100%;border-collapse:collapse;font-size:.78rem}
+  th,td{padding:8px 9px;border-bottom:1px solid #e6edf5;text-align:left;vertical-align:middle}
+  th{background:#eff5fc;color:#294361}
+  .badge{display:inline-block;border-radius:999px;padding:3px 9px;font-size:.7rem;font-weight:800}
+  .badge.green{background:#dcfce7;color:#166534}.badge.yellow{background:#fef9c3;color:#854d0e}
+  .badge.orange{background:#ffedd5;color:#c2410c}.badge.red{background:#fee2e2;color:#991b1b}
+  .btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:11px;padding:6px 10px;font-size:.72rem;font-weight:800;color:#24364d}
+  .btn.primary{background:linear-gradient(135deg,#123b7a,#1d4ed8);color:#fff;border:0}
+  .btn.danger{color:#c1122f}
+  .btn.success{color:#16834b}
+  .nu{outline:2px dashed #f97316;outline-offset:3px;position:relative;border-radius:11px}
+  .nu::before{content:"ใหม่";position:absolute;top:-15px;left:-2px;background:#f97316;color:#fff;font-size:9px;font-weight:900;padding:1px 7px;border-radius:7px;line-height:1.5}
+  .modal{background:#fff;border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,.25);padding:18px;max-width:430px;margin:8px auto;border:1px solid #eee}
+  .modal h4{margin:0 0 8px;text-align:center;font-size:1.05rem}
+  .drawer{width:280px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px;display:grid;gap:7px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;font-weight:800;font-size:.82rem;color:#24364d;background:#fff;position:relative}
+  .nav-item i{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:#f3e8ff;color:#7c3aed;font-size:.75rem}
+  .cnt{position:absolute;right:10px;background:#dc2626;color:#fff;border-radius:999px;font-size:.66rem;font-weight:900;padding:2px 8px}
+  .num{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#123b7a;color:#fff;font-size:.72rem;font-weight:900;margin-right:6px}
+</style>
+</head>
+<body>
+
+<!-- ข้อ 1 -->
+<div class="sec" id="s1">
+  <div class="sec-head"><span class="num">1</span>แก้ไข/ลบเคสอุบัติเหตุ</div>
+  <div class="sec-sub">เพิ่มปุ่มท้ายแถว ในตาราง "รายการจุดเกิดเหตุ" (หน้าแผนที่) — เห็นเฉพาะ admin</div>
+  <table>
+    <tr><th>วันเวลา ▼</th><th>สถานที่</th><th>อาการสูงสุด</th><th></th></tr>
+    <tr><td>19/07/2569 12:22</td><td style="color:#1d4ed8;font-weight:700">แยกป้อมตำรวจ</td><td><span class="badge orange">รุนแรง</span></td>
+      <td style="white-space:nowrap"><span class="btn"><i class="fa-solid fa-location-dot"></i> ดูหมุด</span>
+      <span class="nu"><span class="btn"><i class="fa-solid fa-pen"></i> แก้ไขเคส</span> <span class="btn danger"><i class="fa-solid fa-trash-can"></i></span></span></td></tr>
+    <tr><td>18/07/2569 09:31</td><td style="color:#1d4ed8;font-weight:700">สี่แยกพหลโยธิน</td><td><span class="badge green">ไม่บาดเจ็บ</span></td>
+      <td style="white-space:nowrap"><span class="btn"><i class="fa-solid fa-location-dot"></i> ดูหมุด</span>
+      <span class="nu"><span class="btn"><i class="fa-solid fa-pen"></i> แก้ไขเคส</span> <span class="btn danger"><i class="fa-solid fa-trash-can"></i></span></span></td></tr>
+  </table>
+  <div style="font-size:.74rem;color:var(--muted);margin-top:10px"><i class="fa-solid fa-arrow-turn-down" style="transform:rotate(-90deg)"></i> กด "แก้ไขเคส" → เปิดฟอร์มบันทึกอุบัติเหตุเดิม<b>พร้อมข้อมูลเติมครบทุกช่อง</b> (คู่กรณี ผู้โดยสาร พิกัด รูป) แก้แล้วบันทึกทับ — ตารางบาดเจ็บ/เสียชีวิตที่ระบบสร้างไว้ปรับตามอัตโนมัติ</div>
+</div>
+
+<!-- ข้อ 2 -->
+<div class="sec" id="s2">
+  <div class="sec-head"><span class="num">2</span>แก้เนื้อหาการแจ้งจุดเสี่ยง</div>
+  <div class="sec-sub">เพิ่มปุ่มในหน้า "จัดการจุดเสี่ยงที่ประชาชนแจ้ง" ข้างปุ่มเดิม</div>
+  <table>
+    <tr><th>เลขที่</th><th>สถานที่</th><th>สถานะ</th><th></th></tr>
+    <tr><td><b>#10</b></td><td style="color:#1d4ed8;font-weight:700">บ้านศรีมาย</td><td><span class="badge red">ยังไม่ได้ดำเนินการ</span></td>
+      <td style="white-space:nowrap"><span class="btn primary"><i class="fa-solid fa-reply"></i> ตอบรับ/บันทึกผล</span>
+      <span class="btn"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติ</span>
+      <span class="nu"><span class="btn"><i class="fa-solid fa-pen-to-square"></i> แก้ข้อมูลการแจ้ง</span></span>
+      <span class="btn danger"><i class="fa-solid fa-trash-can"></i></span></td></tr>
+  </table>
+  <div style="font-size:.74rem;color:var(--muted);margin-top:10px">→ เปิดฟอร์มเติมข้อมูลเดิม: สถานที่ / ถนน / หมู่ / ตำบล / พิกัด / รายละเอียด / รูป — ไว้แก้ตอนประชาชนพิมพ์ผิดหรือปักหมุดผิดตำแหน่ง</div>
+</div>
+
+<!-- ข้อ 3 -->
+<div class="sec" id="s3">
+  <div class="sec-head"><span class="num">3</span>สถานะตรวจสอบเคส (workflow หัวหน้างาน)</div>
+  <div class="sec-sub">เพิ่มคอลัมน์ในตารางรายการจุดเกิดเหตุ + ปุ่มติ๊กผ่าน (ช่องข้อมูลมีอยู่แล้วในระบบ แค่ยังไม่มีปุ่ม)</div>
+  <table>
+    <tr><th>วันเวลา</th><th>สถานที่</th><th class="nu" style="background:#fff7ed;color:#c2410c">ตรวจสอบ</th><th></th></tr>
+    <tr><td>19/07/2569 12:22</td><td>แยกป้อมตำรวจ</td>
+      <td><span class="badge yellow">รอตรวจสอบ</span> <span class="btn success"><i class="fa-solid fa-check"></i> ติ๊กผ่าน</span></td>
+      <td><span class="btn"><i class="fa-solid fa-location-dot"></i> ดูหมุด</span></td></tr>
+    <tr><td>18/07/2569 09:31</td><td>สี่แยกพหลโยธิน</td>
+      <td><span class="badge green"><i class="fa-solid fa-check"></i> ตรวจแล้ว</span></td>
+      <td><span class="btn"><i class="fa-solid fa-location-dot"></i> ดูหมุด</span></td></tr>
+  </table>
+  <div style="font-size:.74rem;color:var(--muted);margin-top:10px">→ หัวหน้าไล่ดูเคสที่ลูกน้องบันทึก กดติ๊กทีละเคส + ปุ่มกรอง "เฉพาะที่รอตรวจ" เห็นงานค้างทันที</div>
+</div>
+
+<!-- ข้อ 4 -->
+<div class="sec" id="s4">
+  <div class="sec-head"><span class="num">4</span>ของเสริม 3 อย่าง</div>
+  <div class="sec-sub">4.1 ประชาชนได้เลขที่การแจ้งหลังกดส่ง (หน้าแจ้งจุดเสี่ยง)</div>
+  <div class="modal nu" style="text-align:center">
+    <div style="width:52px;height:52px;border-radius:50%;border:3px solid #16a34a;color:#16a34a;display:grid;place-items:center;font-size:1.4rem;margin:0 auto 8px"><i class="fa-solid fa-check"></i></div>
+    <h4>บันทึกสำเร็จ</h4>
+    <div style="font-size:.9rem">เลขที่การแจ้งของคุณคือ</div>
+    <div style="font-size:1.7rem;font-weight:900;color:#1d4ed8;margin:4px 0">#15</div>
+    <div style="font-size:.75rem;color:var(--muted)">จดเลขนี้ไว้ กดปุ่มสถานะในหน้า "ข้อมูลจุดเสี่ยง" เพื่อติดตามผลได้ตลอด</div>
+  </div>
+  <div class="sec-sub" style="margin-top:16px">4.2 ตัวเลขงานค้างบนเมนูผู้ดูแล (เมนูข้าง + แถบล่าง)</div>
+  <div class="drawer">
+    <div class="nav-item nu"><i class="fa-solid fa-user-check"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน <span class="cnt">2</span></div>
+    <div class="nav-item nu"><i class="fa-solid fa-triangle-exclamation"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง <span class="cnt">3</span></div>
+  </div>
+  <div class="sec-sub" style="margin-top:16px">4.3 ปุ่มส่งออก Excel (หัวตารางทุกหน้า)</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <b style="font-size:.85rem"><i class="fa-solid fa-table-list"></i> รายการจุดเกิดเหตุ</b>
+    <span style="flex:1"></span>
+    <span class="nu"><span class="btn success"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</span></span>
+    <span class="btn"><i class="fa-solid fa-rotate"></i> รีเฟรช</span>
+  </div>
+</div>
+
+</body>
+</html>
