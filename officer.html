@@ -102,6 +102,11 @@
     .legend-filter:hover{border-color:var(--blue);box-shadow:0 4px 12px rgba(29,78,216,.14)}
     .legend-filter.active{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(29,78,216,.25)}
     .legend-filter.active .dot{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+    .ea-strip{display:flex;flex-wrap:wrap;gap:10px;align-items:center;min-height:74px;padding:8px;border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc}
+    .ea-thumb{position:relative;display:inline-block}
+    .ea-thumb img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block}
+    .ea-thumb button{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;background:#c1122f;color:#fff;border:2px solid #fff;cursor:pointer;font-size:12px;line-height:1;font-weight:900;padding:0}
+    .ea-thumb .ea-new{position:absolute;left:2px;bottom:2px;background:#16834b;color:#fff;font-size:.58rem;font-weight:800;padding:1px 6px;border-radius:999px}
     #accidentMap,#pickerMap{width:100%;border-radius:18px;background:#dce7ef}.map-main{height:560px}.map-picker{height:430px}.marker-dot{width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}.marker-red{background:#dc2626}.marker-yellow{background:#facc15}.marker-green{background:#22c55e}.marker-gray{background:#64748b}
     .popup{min-width:270px;max-width:380px;font-family:'Sarabun',sans-serif}.popup h3{margin:0 0 5px;color:var(--navy)}.popup-date{font-size:.78rem;color:var(--muted);margin-bottom:10px}.popup-parties{display:grid;grid-template-columns:1fr 1fr;gap:8px}.popup-party{background:#f5f8fc;border-radius:10px;padding:8px}.popup-party strong{display:block;color:var(--navy);margin-bottom:5px}.popup-row{font-size:.75rem;margin:2px 0}.popup-images{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:9px}.popup-images img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}.popup-info{font-size:.78rem;margin-top:8px;line-height:1.5}
 
@@ -1008,42 +1013,91 @@
       }
     }
 
+    // ตัวจัดการรูปในหน้าต่างลง/แก้ไขข้อมูล: โหลดรูปเดิมมาให้ก่อน กด × ลบรายรูป แล้วเพิ่มรูปใหม่ได้ (รวมไม่เกิน 2)
+    let eaState = { existing: [], files: [] };
+    function eaInit(existingUrls) {
+      eaState.files.forEach(f => URL.revokeObjectURL(f.preview));
+      eaState = { existing: (existingUrls || []).filter(Boolean), files: [] };
+    }
+    function eaCount() { return eaState.existing.length + eaState.files.length; }
+    function eaRender() {
+      const strip = document.getElementById('eaImgStrip');
+      if (!strip) return;
+      const items = [];
+      eaState.existing.forEach((url, i) =>
+        items.push('<div class="ea-thumb"><img src="' + escapeHtml(url) + '"><button type="button" title="ลบรูปนี้" onclick="eaRemove(\'existing\',' + i + ')">×</button></div>'));
+      eaState.files.forEach((f, i) =>
+        items.push('<div class="ea-thumb"><img src="' + f.preview + '"><button type="button" title="ลบรูปนี้" onclick="eaRemove(\'file\',' + i + ')">×</button><span class="ea-new">ใหม่</span></div>'));
+      strip.innerHTML = items.join('') || '<span style="color:#94a3b8;font-size:.8rem"><i class="fa-regular fa-image"></i> ยังไม่มีรูปภาพ</span>';
+      const input = document.getElementById('eaFileInput');
+      if (input) {
+        input.disabled = eaCount() >= 2;
+        const hint = document.getElementById('eaFileHint');
+        if (hint) hint.textContent = eaCount() >= 2 ? 'ครบ 2 ภาพแล้ว — กด × ลบรูปก่อนจึงเพิ่มใหม่ได้' : 'เพิ่มได้อีก ' + (2 - eaCount()) + ' ภาพ';
+      }
+    }
+    function eaRemove(kind, index) {
+      if (kind === 'existing') eaState.existing.splice(index, 1);
+      else { URL.revokeObjectURL(eaState.files[index].preview); eaState.files.splice(index, 1); }
+      eaRender();
+    }
+    function eaAddFiles(inputEl) {
+      const files = Array.from(inputEl.files || []);
+      inputEl.value = '';
+      for (const file of files) {
+        if (eaCount() >= 2) { Swal.showValidationMessage('รวมได้ไม่เกิน 2 ภาพ — กด × ลบรูปเดิมก่อน'); break; }
+        if (!['image/jpeg','image/jpg','image/png'].includes(file.type)) { Swal.showValidationMessage('รองรับเฉพาะไฟล์ .jpg และ .png'); continue; }
+        if (file.size > 5 * 1024 * 1024) { Swal.showValidationMessage('ขนาดไฟล์ต้องไม่เกิน 5MB ต่อภาพ'); continue; }
+        Swal.resetValidationMessage();
+        eaState.files.push({ file, preview: URL.createObjectURL(file) });
+      }
+      eaRender();
+    }
+    function eaImageHtml(label) {
+      return '<label>' + label + '<div class="ea-strip" id="eaImgStrip"></div>' +
+        '<input id="eaFileInput" type="file" accept=".jpg,.jpeg,.png" multiple class="swal2-file" style="width:100%;margin:6px 0 0" onchange="eaAddFiles(this)">' +
+        '<div id="eaFileHint" style="font-size:.72rem;color:#94a3b8;margin-top:2px"></div></label>';
+    }
+    async function eaFinalImages() {
+      const urls = [...eaState.existing];
+      for (const f of eaState.files) {
+        const ext = (f.file.name.split('.').pop() || 'jpg').toLowerCase();
+        const path = 'actions/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+        const { error: upErr } = await db.storage.from(STORAGE_BUCKET).upload(path, f.file, { contentType: f.file.type });
+        if (upErr) throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + upErr.message);
+        urls.push(db.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl);
+      }
+      return urls.slice(0, 2);
+    }
+
     async function openRiskActionDialog(riskId) {
       const point = (state.riskPoints || []).find(r => r.id === riskId);
       if (!point) return;
       const currentStatus = point.status || 'ยังไม่ได้ดำเนินการ';
       const statusOptions = ['ยังไม่ได้ดำเนินการ','อยู่ระหว่างดำเนินการ','ดำเนินการแก้ไขแล้ว']
         .map(s => '<option value="' + s + '"' + (s === currentStatus ? ' selected' : '') + '>' + s + '</option>').join('');
+      eaInit([]);
       const result = await Swal.fire({
         title: '<i class="fa-solid fa-reply"></i> บันทึกผลการดำเนินการ',
         html: '<div style="text-align:left;display:grid;gap:10px;font-size:.9rem">' +
           '<div style="background:#f1f5f9;border-radius:12px;padding:10px 12px"><b>' + escapeHtml(point.location || '-') + '</b><br>ถนน ' + escapeHtml(point.road || '-') + '</div>' +
           '<label>สถานะ<select id="raStatus" class="swal2-select" style="width:100%;margin:4px 0">' + statusOptions + '</select></label>' +
           '<label>รายละเอียดการดำเนินการ <span style="color:#c1122f">*</span><textarea id="raDetail" class="swal2-textarea" style="width:100%;margin:4px 0;min-height:100px" maxlength="500" placeholder="เช่น ดำเนินการติดตั้งป้ายเตือน / ประสานเทศบาลแก้ไขแล้ว"></textarea></label>' +
-          '<label>รูปภาพประกอบ (ไม่เกิน 2 ภาพ)<input id="raImages" type="file" accept=".jpg,.jpeg,.png" multiple class="swal2-file" style="width:100%;margin:4px 0"></label>' +
+          eaImageHtml('รูปภาพประกอบ (ไม่เกิน 2 ภาพ)') +
           '</div>',
         width: 560,
         confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', showCancelButton: true, confirmButtonColor: '#16834b', focusConfirm: false,
+        didOpen: () => eaRender(),
         preConfirm: () => {
           const detail = document.getElementById('raDetail').value.trim();
           if (!detail) { Swal.showValidationMessage('กรุณากรอกรายละเอียดการดำเนินการ'); return false; }
-          const files = Array.from(document.getElementById('raImages').files || []);
-          if (files.length > 2) { Swal.showValidationMessage('เลือกรูปได้ไม่เกิน 2 ภาพ'); return false; }
-          if (files.some(f => f.size > 5 * 1024 * 1024)) { Swal.showValidationMessage('ขนาดไฟล์ต้องไม่เกิน 5MB ต่อภาพ'); return false; }
-          return { status: document.getElementById('raStatus').value, detail, files };
+          return { status: document.getElementById('raStatus').value, detail };
         }
       });
       if (!result.isConfirmed || !result.value) return;
       Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       try {
-        const urls = [];
-        for (const file of result.value.files) {
-          const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-          const path = 'actions/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
-          const { error: upErr } = await db.storage.from(STORAGE_BUCKET).upload(path, file, { contentType: file.type });
-          if (upErr) throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + upErr.message);
-          urls.push(db.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl);
-        }
+        const urls = await eaFinalImages();
         const rpcResult = await rpc('admin_add_risk_action', {
           p_token: state.token, p_risk_id: riskId, p_detail: result.value.detail,
           p_image1: urls[0] || null, p_image2: urls[1] || null, p_status: result.value.status
@@ -1104,44 +1158,29 @@
     async function editRiskAction(actionId, riskId) {
       const action = (state.riskActionsCache || {})[actionId];
       if (!action) return;
-      const existingImgs = [action.image1_url, action.image2_url].filter(Boolean);
+      // โหลดข้อมูลเดิมขึ้นมาก่อน: ข้อความ + รูปเดิมทุกรูป (กด × ลบรายรูป แล้วเพิ่มใหม่ได้)
+      eaInit([action.image1_url, action.image2_url]);
       const result = await Swal.fire({
         title: '<i class="fa-solid fa-pen"></i> แก้ไขผลการดำเนินการ',
         html: '<div style="text-align:left;display:grid;gap:10px;font-size:.9rem">' +
           '<label>รายละเอียด <span style="color:#c1122f">*</span><textarea id="eaDetail" class="swal2-textarea" style="width:100%;margin:4px 0;min-height:100px" maxlength="500">' + escapeHtml(action.detail || '') + '</textarea></label>' +
-          (existingImgs.length ? '<div>รูปเดิม: ' + existingImgs.map(u => '<img src="' + escapeHtml(u) + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;margin:2px">').join('') +
-            '<label style="display:block;margin-top:4px"><input type="checkbox" id="eaClear"> ลบรูปเดิมออก</label></div>' : '') +
-          '<label>อัปโหลดรูปใหม่แทนที่ (ไม่เกิน 2 ภาพ · เว้นว่าง = คงรูปเดิม)<input id="eaImages" type="file" accept=".jpg,.jpeg,.png" multiple class="swal2-file" style="width:100%;margin:4px 0"></label>' +
+          eaImageHtml('รูปภาพ (กด × เพื่อลบรูปที่ไม่ต้องการ แล้วเพิ่มรูปใหม่ได้ · รวมไม่เกิน 2 ภาพ)') +
           '</div>',
         width: 560, confirmButtonText: 'บันทึกการแก้ไข', cancelButtonText: 'ยกเลิก', showCancelButton: true, confirmButtonColor: '#1d4ed8', focusConfirm: false,
+        didOpen: () => eaRender(),
         preConfirm: () => {
           const detail = document.getElementById('eaDetail').value.trim();
           if (!detail) { Swal.showValidationMessage('กรุณากรอกรายละเอียด'); return false; }
-          const files = Array.from(document.getElementById('eaImages').files || []);
-          if (files.length > 2) { Swal.showValidationMessage('เลือกรูปได้ไม่เกิน 2 ภาพ'); return false; }
-          if (files.some(f => f.size > 5 * 1024 * 1024)) { Swal.showValidationMessage('ขนาดไฟล์ต้องไม่เกิน 5MB ต่อภาพ'); return false; }
-          const clearEl = document.getElementById('eaClear');
-          return { detail, files, clear: !!(clearEl && clearEl.checked) };
+          return { detail };
         }
       });
       if (!result.isConfirmed || !result.value) return;
       Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       try {
-        let img1 = action.image1_url || null, img2 = action.image2_url || null;
-        if (result.value.clear) { img1 = null; img2 = null; }
-        if (result.value.files.length) {
-          const urls = [];
-          for (const file of result.value.files) {
-            const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-            const path = 'actions/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
-            const { error: upErr } = await db.storage.from(STORAGE_BUCKET).upload(path, file, { contentType: file.type });
-            if (upErr) throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + upErr.message);
-            urls.push(db.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl);
-          }
-          img1 = urls[0] || null; img2 = urls[1] || null;
-        }
+        const urls = await eaFinalImages();
         const rpcResult = await rpc('admin_update_risk_action', {
-          p_token: state.token, p_action_id: actionId, p_detail: result.value.detail, p_image1: img1, p_image2: img2
+          p_token: state.token, p_action_id: actionId, p_detail: result.value.detail,
+          p_image1: urls[0] || null, p_image2: urls[1] || null
         });
         if (!rpcResult.success) {
           if (rpcResult.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
@@ -2072,7 +2111,8 @@
       resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard,
       setMapFilter, loadAdminList, setApproval,
       loadRiskManage, openRiskActionDialog, viewRiskActions,
-      editRiskAction, deleteRiskAction, deleteRiskPoint
+      editRiskAction, deleteRiskAction, deleteRiskPoint,
+      eaRemove, eaAddFiles
     });
   </script>
 
