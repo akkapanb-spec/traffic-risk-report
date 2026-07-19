@@ -285,6 +285,7 @@
         <button class="nav-btn" data-page="dashboard" onclick="openPage('dashboard',this)"><i class="fa-solid fa-chart-line"></i> สถิติอุบัติเหตุ สภ.เมืองนครสวรรค์</button>
         <button class="nav-btn" data-page="map" onclick="openPage('map',this)"><i class="fa-solid fa-map-location-dot"></i> แผนที่พิกัดจุดเกิดอุบัติเหตุ</button>
         <button class="nav-btn" data-page="admin" id="adminNavBtn" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน</button>
+        <button class="nav-btn" data-page="riskmanage" id="riskNavBtn" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง</button>
       </nav>
     </aside>
 
@@ -413,6 +414,16 @@
           <h3 class="card-title"><i class="fa-solid fa-users"></i> รายชื่อผู้ลงทะเบียน <span id="adminTotal" class="pill">0 นาย</span>
             <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="loadAdminList()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
           <div id="adminTable"><div class="loading-skeleton"></div></div>
+        </div>
+      </section>
+
+      <!-- ADMIN: จัดการจุดเสี่ยงที่ประชาชนแจ้ง -->
+      <section id="page-riskmanage" class="page">
+        <div class="page-head"><div class="page-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div><h2>จัดการจุดเสี่ยงที่ประชาชนแจ้ง</h2><p>อัปเดตสถานะและบันทึกผลการดำเนินการ · แสดงผลให้ประชาชนเห็นทันที</p></div></div>
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-list-check"></i> รายการจุดเสี่ยง <span id="riskTotal" class="pill">0 จุด</span>
+            <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="loadRiskManage()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+          <div id="riskManageTable"><div class="loading-skeleton"></div></div>
         </div>
       </section>
     </main>
@@ -814,6 +825,7 @@
       document.getElementById('drawerUser').textContent = fullName;
       document.getElementById('officerDisplay').value = fullName + ' · ปนพ. ' + state.user.policeCode;
       document.getElementById('adminNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
+      document.getElementById('riskNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminTabBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.querySelector('.mobile-tabbar').classList.toggle('admin-mode', !!state.user.isAdmin);
       openPage('home', document.querySelector('[data-page="home"]'));
@@ -917,6 +929,7 @@
       if (page === 'map') { loadMapCumulative(); loadMapData(); }
       if (page === 'map' && state.accidentMap) setTimeout(() => state.accidentMap.invalidateSize(), 250);
       if (page === 'admin') loadAdminList();
+      if (page === 'riskmanage') loadRiskManage();
     }
 
     /* ============ ADMIN: อนุมัติสิทธิ์ ============ */
@@ -953,6 +966,122 @@
           '</tbody></table></div>';
       } catch (error) {
         container.innerHTML = errorBlock(error.message, 'loadAdminList()');
+      }
+    }
+
+    /* ============ ADMIN: จัดการจุดเสี่ยงที่ประชาชนแจ้ง ============ */
+    function riskStatusBadge(status) {
+      if (status === 'ดำเนินการแก้ไขแล้ว') return '<span class="severity-badge green">ดำเนินการแก้ไขแล้ว</span>';
+      if (status === 'อยู่ระหว่างดำเนินการ') return '<span class="severity-badge yellow">อยู่ระหว่างดำเนินการ</span>';
+      return '<span class="severity-badge red">ยังไม่ได้ดำเนินการ</span>';
+    }
+
+    async function loadRiskManage() {
+      const container = document.getElementById('riskManageTable');
+      container.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const { data, error } = await db.from('risk_points').select('*').order('registration_date', { ascending: false });
+        if (error) throw new Error(error.message);
+        state.riskPoints = data || [];
+        document.getElementById('riskTotal').textContent = state.riskPoints.length + ' จุด';
+        const pending = state.riskPoints.filter(r => (r.status || 'ยังไม่ได้ดำเนินการ') === 'ยังไม่ได้ดำเนินการ').length;
+        container.innerHTML =
+          (pending ? '<p class="hint" style="margin-top:0"><i class="fa-solid fa-circle-exclamation" style="color:#c1122f"></i> ยังไม่ได้ดำเนินการ ' + pending + ' จุด</p>' : '') +
+          '<div class="table-wrap"><table class="data-table"><thead><tr><th>วันที่แจ้ง</th><th>สถานที่</th><th>ถนน</th><th>ตำบล</th><th>รูปภาพ</th><th>สถานะ</th><th></th></tr></thead><tbody>' +
+          state.riskPoints.map(r => {
+            const imgs = [r.image1_url, r.image2_url].filter(Boolean)
+              .map(u => '<a href="' + escapeHtml(u) + '" target="_blank"><img src="' + escapeHtml(u) + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px"></a>').join(' ') || '-';
+            return '<tr><td>' + escapeHtml(formatThaiDateTimeStr(r.registration_date)) + '</td>' +
+              '<td style="max-width:220px">' + escapeHtml(r.location || '-') + '</td>' +
+              '<td>' + escapeHtml(r.road || '-') + '</td>' +
+              '<td>' + escapeHtml(r.subdistrict || '-') + '</td>' +
+              '<td>' + imgs + '</td>' +
+              '<td>' + riskStatusBadge(r.status) + '</td>' +
+              '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="openRiskActionDialog(' + r.id + ')"><i class="fa-solid fa-reply"></i> ตอบรับ/บันทึกผล</button> ' +
+              '<button class="btn btn-soft btn-sm" onclick="viewRiskActions(' + r.id + ')"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติ</button></td></tr>';
+          }).join('') +
+          '</tbody></table></div>';
+      } catch (error) {
+        container.innerHTML = errorBlock(error.message, 'loadRiskManage()');
+      }
+    }
+
+    async function openRiskActionDialog(riskId) {
+      const point = (state.riskPoints || []).find(r => r.id === riskId);
+      if (!point) return;
+      const currentStatus = point.status || 'ยังไม่ได้ดำเนินการ';
+      const statusOptions = ['ยังไม่ได้ดำเนินการ','อยู่ระหว่างดำเนินการ','ดำเนินการแก้ไขแล้ว']
+        .map(s => '<option value="' + s + '"' + (s === currentStatus ? ' selected' : '') + '>' + s + '</option>').join('');
+      const result = await Swal.fire({
+        title: '<i class="fa-solid fa-reply"></i> บันทึกผลการดำเนินการ',
+        html: '<div style="text-align:left;display:grid;gap:10px;font-size:.9rem">' +
+          '<div style="background:#f1f5f9;border-radius:12px;padding:10px 12px"><b>' + escapeHtml(point.location || '-') + '</b><br>ถนน ' + escapeHtml(point.road || '-') + '</div>' +
+          '<label>สถานะ<select id="raStatus" class="swal2-select" style="width:100%;margin:4px 0">' + statusOptions + '</select></label>' +
+          '<label>รายละเอียดการดำเนินการ <span style="color:#c1122f">*</span><textarea id="raDetail" class="swal2-textarea" style="width:100%;margin:4px 0;min-height:100px" maxlength="500" placeholder="เช่น ดำเนินการติดตั้งป้ายเตือน / ประสานเทศบาลแก้ไขแล้ว"></textarea></label>' +
+          '<label>รูปภาพประกอบ (ไม่เกิน 2 ภาพ)<input id="raImages" type="file" accept=".jpg,.jpeg,.png" multiple class="swal2-file" style="width:100%;margin:4px 0"></label>' +
+          '</div>',
+        width: 560,
+        confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', showCancelButton: true, confirmButtonColor: '#16834b', focusConfirm: false,
+        preConfirm: () => {
+          const detail = document.getElementById('raDetail').value.trim();
+          if (!detail) { Swal.showValidationMessage('กรุณากรอกรายละเอียดการดำเนินการ'); return false; }
+          const files = Array.from(document.getElementById('raImages').files || []);
+          if (files.length > 2) { Swal.showValidationMessage('เลือกรูปได้ไม่เกิน 2 ภาพ'); return false; }
+          if (files.some(f => f.size > 5 * 1024 * 1024)) { Swal.showValidationMessage('ขนาดไฟล์ต้องไม่เกิน 5MB ต่อภาพ'); return false; }
+          return { status: document.getElementById('raStatus').value, detail, files };
+        }
+      });
+      if (!result.isConfirmed || !result.value) return;
+      Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      try {
+        const urls = [];
+        for (const file of result.value.files) {
+          const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+          const path = 'actions/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+          const { error: upErr } = await db.storage.from(STORAGE_BUCKET).upload(path, file, { contentType: file.type });
+          if (upErr) throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + upErr.message);
+          urls.push(db.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl);
+        }
+        const rpcResult = await rpc('admin_add_risk_action', {
+          p_token: state.token, p_risk_id: riskId, p_detail: result.value.detail,
+          p_image1: urls[0] || null, p_image2: urls[1] || null, p_status: result.value.status
+        });
+        if (!rpcResult.success) {
+          if (rpcResult.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
+          throw new Error(rpcResult.message || 'บันทึกไม่สำเร็จ');
+        }
+        await Swal.fire({ icon: 'success', title: rpcResult.message, timer: 1500, showConfirmButton: false });
+        loadRiskManage();
+      } catch (error) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message });
+      }
+    }
+
+    async function viewRiskActions(riskId) {
+      const point = (state.riskPoints || []).find(r => r.id === riskId);
+      if (!point) return;
+      try {
+        const { data, error } = await db.from('risk_actions').select('*')
+          .eq('location', (point.location || '').trim()).eq('road', (point.road || '').trim())
+          .order('action_date', { ascending: false });
+        if (error) throw new Error(error.message);
+        const rows = (data || []).map(a => {
+          const imgs = [a.image1_url, a.image2_url].filter(Boolean)
+            .map(u => '<a href="' + escapeHtml(u) + '" target="_blank"><img src="' + escapeHtml(u) + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;margin:2px"></a>').join('') || '-';
+          return '<tr><td style="padding:8px;border-bottom:1px solid #e6edf5;white-space:nowrap">' + escapeHtml(formatThaiDateTimeStr(a.action_date)) + '</td>' +
+            '<td style="padding:8px;border-bottom:1px solid #e6edf5">' + imgs + '</td>' +
+            '<td style="padding:8px;border-bottom:1px solid #e6edf5;text-align:left">' + escapeHtml(a.detail || '-') + '</td></tr>';
+        }).join('') || '<tr><td colspan="3" style="padding:18px;color:#64748b">ยังไม่มีการบันทึกผลการดำเนินการ</td></tr>';
+        Swal.fire({
+          title: 'ประวัติการดำเนินการ',
+          html: '<div style="font-size:.85rem;margin-bottom:8px;color:#475569">' + escapeHtml(point.location || '') + '</div>' +
+            '<div style="overflow:auto;max-height:55vh"><table style="width:100%;border-collapse:collapse;font-size:.85rem">' +
+            '<thead><tr><th style="padding:8px;background:#eff5fc">วันที่</th><th style="padding:8px;background:#eff5fc">รูปภาพ</th><th style="padding:8px;background:#eff5fc">รายละเอียด</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody></table></div>',
+          width: 640, confirmButtonText: 'ปิด'
+        });
+      } catch (error) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message });
       }
     }
 
@@ -1841,7 +1970,8 @@
       showRegister, showLogin, logout, toggleDrawer, openPage,
       openLocationPicker, closeLocationPicker, useCurrentLocation, confirmLocation,
       resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard,
-      setMapFilter, loadAdminList, setApproval
+      setMapFilter, loadAdminList, setApproval,
+      loadRiskManage, openRiskActionDialog, viewRiskActions
     });
   </script>
 
