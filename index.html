@@ -853,7 +853,7 @@ function openHelmetProject() { window.open('https://script.google.com/macros/s/A
 async function refreshData() {
   const tableBody = document.getElementById('dataTableBody');
   try {
-    const { data, error } = await sb.from('risk_points').select('*').order('registration_date', { ascending: true });
+    const { data, error } = await sb.from('risk_points').select('*').order('registration_date', { ascending: false });
     if (error) throw new Error(error.message);
 
     window.__riskRows = data || []; // เก็บข้อมูลดิบไว้ให้ popup รายละเอียด
