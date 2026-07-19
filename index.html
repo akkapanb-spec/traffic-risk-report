@@ -888,7 +888,7 @@ function initRiskMap(data) {
   if (!mapRisk) {
     mapRisk = L.map('riskMap').setView([15.705, 100.140], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
+      attribution: '© OpenStreetMap', keepBuffer: 6, updateWhenZooming: false, updateWhenIdle: true
     }).addTo(mapRisk);
     riskMarkersLayer = L.layerGroup().addTo(mapRisk);
 
@@ -1535,7 +1535,7 @@ function initDashboardDeathMap(mapData) {
   if (!dashboardDeathMap) {
     dashboardDeathMap = L.map('dashboardDeathMap').setView([15.705, 100.140], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
+      attribution: '© OpenStreetMap', keepBuffer: 6, updateWhenZooming: false, updateWhenIdle: true
     }).addTo(dashboardDeathMap);
     deathMarkersLayer = L.layerGroup().addTo(dashboardDeathMap);
   }
@@ -1715,7 +1715,7 @@ function showMapPicker() {
       mapInstance = L.map('mapContainer').setView([startLat, startLng], 14);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '© OpenStreetMap'
+        attribution: '© OpenStreetMap', keepBuffer: 6, updateWhenZooming: false, updateWhenIdle: true
       }).addTo(mapInstance);
       mapMarker = L.marker([startLat, startLng], {draggable: true}).addTo(mapInstance);
       mapInstance.on('click', function(e) { mapMarker.setLatLng(e.latlng); });

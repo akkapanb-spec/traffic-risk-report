@@ -1689,7 +1689,7 @@
             if (!isNaN(lat) && !isNaN(lng)) { startLat = lat; startLng = lng; }
           }
           dfPickerMap = L.map('dfMapPicker').setView([startLat, startLng], 13);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap' }).addTo(dfPickerMap);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap', keepBuffer:6, updateWhenZooming:false, updateWhenIdle:true }).addTo(dfPickerMap);
           dfPickerMarker = L.marker([startLat, startLng], { draggable:true }).addTo(dfPickerMap);
           dfPickerMap.on('click', e => dfPickerMarker.setLatLng(e.latlng));
           setTimeout(() => dfPickerMap.invalidateSize(), 150);
@@ -2095,7 +2095,7 @@
       const currentLng = Number(valueOf('longitude'));
       if (!state.pickerMap) {
         state.pickerMap = L.map('pickerMap').setView(NAKHON_SAWAN_CENTER, 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap contributors' }).addTo(state.pickerMap);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap contributors', keepBuffer:6, updateWhenZooming:false, updateWhenIdle:true }).addTo(state.pickerMap);
         state.pickerMap.on('click', event => setPickerPosition(event.latlng.lat, event.latlng.lng, true));
       }
       setTimeout(() => {
@@ -2481,10 +2481,11 @@
     function initAccidentMap() {
       if (state.accidentMap) return;
       state.accidentMap = L.map('accidentMap').setView(NAKHON_SAWAN_CENTER,12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19,attribution:'&copy; OpenStreetMap contributors' }).addTo(state.accidentMap);
+      // keepBuffer/updateWhenZooming: เก็บแผ่นภาพเดิมไว้ระหว่างซูม ลดอาการช่องขาววาบ (กระพริบ) บนมือถือ
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19, attribution:'&copy; OpenStreetMap contributors', keepBuffer:6, updateWhenZooming:false, updateWhenIdle:true }).addTo(state.accidentMap);
       // รวมจุดใกล้กันเป็นวงกลมตัวเลข (คลิก/ซูมเพื่อแตกเป็นจุดย่อย) — ถ้าปลั๊กอินโหลดไม่ได้ใช้เลเยอร์ธรรมดา
       state.accidentLayer = (typeof L.markerClusterGroup === 'function')
-        ? L.markerClusterGroup({ maxClusterRadius: 45, spiderfyOnMaxZoom: true, showCoverageOnHover: false, disableClusteringAtZoom: 17 }).addTo(state.accidentMap)
+        ? L.markerClusterGroup({ maxClusterRadius: 45, spiderfyOnMaxZoom: true, showCoverageOnHover: false, disableClusteringAtZoom: 17, chunkedLoading: true, removeOutsideVisibleBounds: false }).addTo(state.accidentMap)
         : L.layerGroup().addTo(state.accidentMap);
     }
     async function loadMapData() {
