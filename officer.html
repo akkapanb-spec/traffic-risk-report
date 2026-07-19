@@ -1117,6 +1117,8 @@
           throw new Error(result.message || 'ดึงข้อมูลไม่สำเร็จ');
         }
         const rows = result.data || [];
+        state.officerRows = {};
+        rows.forEach(r => state.officerRows[r.nationalId] = r);
         document.getElementById('adminTotal').textContent = rows.length + ' นาย';
         const pending = rows.filter(r => r.status !== 'อนุมัติสิทธิ์').length;
         container.innerHTML =
@@ -1127,9 +1129,11 @@
             const statusBadge = approved
               ? '<span class="severity-badge green">อนุมัติสิทธิ์</span>' + (r.isAdmin ? ' <span class="severity-badge" style="background:#ede9fe;color:#6d28d9">ผู้ดูแล</span>' : '')
               : '<span class="severity-badge yellow">รออนุมัติสิทธิ์</span>';
-            const action = approved
+            const action = (approved
               ? '<button class="btn btn-soft btn-sm" onclick="setApproval(\'' + r.nationalId + '\', false)"><i class="fa-solid fa-user-slash"></i> ระงับสิทธิ์</button>'
-              : '<button class="btn btn-primary btn-sm" onclick="setApproval(\'' + r.nationalId + '\', true)"><i class="fa-solid fa-user-check"></i> อนุมัติ</button>';
+              : '<button class="btn btn-primary btn-sm" onclick="setApproval(\'' + r.nationalId + '\', true)"><i class="fa-solid fa-user-check"></i> อนุมัติ</button>') +
+              ' <button class="btn btn-soft btn-sm" onclick="editOfficer(\'' + r.nationalId + '\')"><i class="fa-solid fa-pen"></i> แก้ไข</button>' +
+              ' <button class="btn btn-soft btn-sm" style="color:#c1122f" title="ลบเจ้าหน้าที่" onclick="delOfficer(\'' + r.nationalId + '\')"><i class="fa-solid fa-trash-can"></i></button>';
             return '<tr><td>' + escapeHtml(formatThaiDateTimeStr(r.registeredAt)) + '</td>' +
               '<td>' + escapeHtml((r.rank || '') + ' ' + (r.firstName || '') + ' ' + (r.lastName || '')) + '</td>' +
               '<td>' + escapeHtml(r.phone || '-') + '</td>' +
@@ -1709,6 +1713,79 @@
         pos => { document.getElementById('dfCoords').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6); },
         () => Swal.fire({ icon:'error', title:'ไม่สามารถดึงตำแหน่งได้', text:'โปรดอนุญาตการเข้าถึงตำแหน่ง หรือกรอกพิกัดเอง' })
       );
+    }
+
+    // แก้ไขข้อมูลเจ้าหน้าที่ (แทนการแก้ใน Google Sheet ยุคเดิม)
+    async function editOfficer(nationalId) {
+      const r = (state.officerRows || {})[nationalId];
+      if (!r) return;
+      const isSelf = state.user && state.user.nationalId === nationalId;
+      const rankOptions = ranks.map(x => '<option value="' + x + '"' + (x === r.rank ? ' selected' : '') + '>' + x + '</option>').join('');
+      const result = await Swal.fire({
+        title: '<i class="fa-solid fa-user-pen"></i> แก้ไขข้อมูลเจ้าหน้าที่',
+        html: '<div style="text-align:left;display:grid;gap:10px;font-size:.9rem">' +
+          '<label>ยศ<select id="eoRank" class="swal2-select" style="width:100%;margin:4px 0">' + rankOptions + '</select></label>' +
+          '<label>ชื่อ<input id="eoFirst" class="swal2-input" style="width:100%;margin:4px 0" maxlength="60" value="' + escapeHtml(r.firstName || '') + '"></label>' +
+          '<label>นามสกุล<input id="eoLast" class="swal2-input" style="width:100%;margin:4px 0" maxlength="60" value="' + escapeHtml(r.lastName || '') + '"></label>' +
+          '<label>หมายเลขโทรศัพท์<input id="eoPhone" class="swal2-input" style="width:100%;margin:4px 0" inputmode="numeric" maxlength="10" value="' + escapeHtml(r.phone || '') + '"></label>' +
+          '<label>เลขประจำตัวประชาชน<input id="eoId" class="swal2-input" style="width:100%;margin:4px 0" inputmode="numeric" maxlength="13" value="' + escapeHtml(nationalId) + '"></label>' +
+          '<div style="font-size:.72rem;color:#9a3412;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:7px 10px"><i class="fa-solid fa-triangle-exclamation"></i> ถ้าแก้เลขบัตร รหัสผ่านจะเปลี่ยนเป็นเลข 4 ตัวท้ายของเลขใหม่ และผู้ใช้ต้อง login ใหม่</div>' +
+          '<label>รหัส ปนพ.<input id="eoCode" class="swal2-input" style="width:100%;margin:4px 0" inputmode="numeric" maxlength="20" value="' + escapeHtml(r.policeCode || '') + '"></label>' +
+          '<label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="eoAdmin" ' + (r.isAdmin ? 'checked' : '') + (isSelf ? ' disabled' : '') + '> ผู้ดูแลระบบ' + (isSelf ? ' <span style="font-size:.72rem;color:#94a3b8">(ถอดสิทธิ์ตนเองไม่ได้)</span>' : '') + '</label>' +
+          '</div>',
+        width: 520, confirmButtonText: 'บันทึกการแก้ไข', cancelButtonText: 'ยกเลิก', showCancelButton: true, confirmButtonColor: '#1d4ed8', focusConfirm: false,
+        preConfirm: () => {
+          const values = {
+            p_rank: document.getElementById('eoRank').value,
+            p_first: document.getElementById('eoFirst').value.trim(),
+            p_last: document.getElementById('eoLast').value.trim(),
+            p_phone: document.getElementById('eoPhone').value.trim(),
+            p_code: document.getElementById('eoCode').value.trim(),
+            p_new_national_id: document.getElementById('eoId').value.trim(),
+            p_is_admin: document.getElementById('eoAdmin').checked
+          };
+          if (!values.p_rank || !values.p_first || !values.p_last) { Swal.showValidationMessage('กรุณากรอกยศ ชื่อ และนามสกุล'); return false; }
+          if (!/^\d{13}$/.test(values.p_new_national_id)) { Swal.showValidationMessage('เลขประจำตัวประชาชนต้องมี 13 หลัก'); return false; }
+          return values;
+        }
+      });
+      if (!result.isConfirmed || !result.value) return;
+      try {
+        const rpcResult = await rpc('admin_update_officer', Object.assign({ p_token: state.token, p_national_id: nationalId }, result.value));
+        if (!rpcResult.success) {
+          if (rpcResult.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
+          throw new Error(rpcResult.message || 'บันทึกไม่สำเร็จ');
+        }
+        const idChanged = result.value.p_new_national_id !== nationalId;
+        await Swal.fire({ icon:'success', title: rpcResult.message,
+          text: idChanged ? 'รหัสผ่านใหม่ของผู้ใช้รายนี้คือเลข 4 ตัวท้ายของเลขบัตรใหม่ (' + result.value.p_new_national_id.slice(-4) + ')' : undefined,
+          timer: idChanged ? undefined : 1500, showConfirmButton: idChanged });
+        loadAdminList();
+      } catch (error) {
+        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
+      }
+    }
+
+    async function delOfficer(nationalId) {
+      const r = (state.officerRows || {})[nationalId];
+      if (!r) return;
+      const confirm = await Swal.fire({
+        icon: 'warning',
+        title: 'ลบเจ้าหน้าที่รายนี้?',
+        html: '<b>' + escapeHtml((r.rank || '') + ' ' + (r.firstName || '') + ' ' + (r.lastName || '')) + '</b><br>' +
+          'เลขบัตร ' + escapeHtml(nationalId) + '<br><br>' +
+          '<span style="font-size:.85rem;color:#64748b">ประวัติเคสที่เคยบันทึกไว้จะยังอยู่ครบ แต่ผู้ใช้รายนี้จะ login ไม่ได้อีก · ลบแล้วกู้คืนไม่ได้</span>',
+        showCancelButton: true, confirmButtonText: 'ลบเจ้าหน้าที่', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#c1122f'
+      });
+      if (!confirm.isConfirmed) return;
+      try {
+        const result = await rpc('admin_delete_officer', { p_token: state.token, p_national_id: nationalId });
+        if (!result.success) throw new Error(result.message || 'ลบไม่สำเร็จ');
+        await Swal.fire({ icon:'success', title: result.message, timer: 1400, showConfirmButton: false });
+        loadAdminList();
+      } catch (error) {
+        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
+      }
     }
 
     async function setApproval(nationalId, approve) {
@@ -2715,7 +2792,8 @@
       eaRemove, eaAddFiles, viewRiskDetail,
       saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation,
       renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo,
-      renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail, toggleDeathOverlay
+      renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail, toggleDeathOverlay,
+      editOfficer, delOfficer
     });
   </script>
 
