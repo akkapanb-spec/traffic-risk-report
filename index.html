@@ -891,6 +891,13 @@ function initRiskMap(data) {
     attribution: '© OpenStreetMap'
   }).addTo(mapRisk);
 
+  // สีหมุดตามสถานะการดำเนินการ
+  const statusPinColor = (status) => {
+    if (status === 'ดำเนินการแก้ไขแล้ว') return '#22c55e';
+    if (status === 'อยู่ระหว่างดำเนินการ') return '#facc15';
+    return '#ef4444';
+  };
+
   // วนลูปเฉพาะแถวที่มีพิกัดถูกต้อง
   data.forEach(row => {
     const coords = Array.isArray(row) ? row[7] : row.coordinates;
@@ -901,7 +908,14 @@ function initRiskMap(data) {
       const lng = parseFloat(parts[1].trim());
 
       if (!isNaN(lat) && !isNaN(lng)) {
-        const marker = L.marker([lat, lng]).addTo(mapRisk);
+        const statusPopup = (Array.isArray(row) ? row[11] : row.status) || 'ยังไม่ได้ดำเนินการ';
+        const pinColor = statusPinColor(statusPopup);
+        const icon = L.divIcon({
+          className: '',
+          html: '<div style="width:22px;height:22px;border-radius:50%;background:' + pinColor + ';border:3px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.35)"></div>',
+          iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -12]
+        });
+        const marker = L.marker([lat, lng], { icon }).addTo(mapRisk);
 
         const locPopup = Array.isArray(row) ? row[1] : row.location;
         const roadPopup = Array.isArray(row) ? row[2] : row.road;
@@ -912,12 +926,24 @@ function initRiskMap(data) {
           <div class="text-sm">
             <strong>สถานที่:</strong> ${locPopup || 'ไม่ระบุ'}<br>
             <strong>ถนน:</strong> ${roadPopup || 'ไม่ระบุ'}<br>
+            <strong>สถานะ:</strong> <span style="color:${pinColor};font-weight:700">${statusPopup}</span><br>
             ${imgHtml}
           </div>
         `);
       }
     }
   });
+
+  // คำอธิบายสีบนแผนที่
+  const legend = L.control({ position: 'bottomleft' });
+  legend.onAdd = function() {
+    const div = L.DomUtil.create('div');
+    div.style.cssText = 'background:rgba(255,255,255,.92);padding:8px 12px;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:12px;line-height:1.9';
+    const dot = c => '<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:' + c + ';border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15);margin-right:6px;vertical-align:middle"></span>';
+    div.innerHTML = dot('#22c55e') + 'ดำเนินการแก้ไขแล้ว<br>' + dot('#facc15') + 'อยู่ระหว่างดำเนินการ<br>' + dot('#ef4444') + 'ยังไม่ได้ดำเนินการ';
+    return div;
+  };
+  legend.addTo(mapRisk);
 
   // บังคับให้แผนที่ปรับขนาดให้พอดีกับ div หลังจากโหลดเสร็จ
   setTimeout(() => mapRisk.invalidateSize(), 500);
