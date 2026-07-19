@@ -111,6 +111,8 @@
     .legend-filter.active{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(29,78,216,.25)}
     .legend-filter.active .dot{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
     .death-pin{width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid #dc2626;display:grid;place-items:center;color:#dc2626;font-size:12px;box-shadow:0 3px 10px rgba(220,38,38,.45)}
+    .split-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .split-grid>div+div{border-left:1px dashed rgba(15,23,42,.14);padding-left:12px}
     #deathOverlayBtn.on{background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fff!important;border-color:transparent;box-shadow:0 6px 16px rgba(220,38,38,.3)}
     .ea-strip{display:flex;flex-wrap:wrap;gap:10px;align-items:center;min-height:74px;padding:8px;border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc}
     .ea-thumb{position:relative;display:inline-block}
@@ -345,7 +347,7 @@
       </section>
 
       <section id="page-accident" class="page">
-        <div class="page-head"><div class="page-icon"><i class="fa-solid fa-car-burst"></i></div><div><h2>บันทึกข้อมูลอุบัติเหตุ</h2><p>กรอกข้อมูลให้ครบถ้วนก่อนบันทึกเข้าสู่ Google Sheets</p></div></div>
+        <div class="page-head"><div class="page-icon"><i class="fa-solid fa-car-burst"></i></div><div><h2>บันทึกข้อมูลอุบัติเหตุ</h2><p>กรอกข้อมูลให้ครบถ้วนก่อนบันทึกเข้าสู่ระบบ</p></div></div>
         <form id="accidentForm" novalidate>
           <div class="card">
             <h3 class="card-title"><i class="fa-regular fa-calendar-check"></i> ข้อมูลการบันทึก</h3>
@@ -408,7 +410,7 @@
           <div class="card">
             <h3 class="card-title"><i class="fa-solid fa-camera"></i> รูปภาพจุดเกิดเหตุ</h3>
             <div class="image-drop">
-              <i class="fa-solid fa-camera-retro"></i><p><strong>ถ่ายภาพ/เลือกไฟล์ JPG หรือ PNG ได้สูงสุด 3 ภาพ</strong></p><p>ระบบจะย่อขนาดภาพก่อนอัปโหลดและบันทึก URL รูปภาพลง Google Sheet อัตโนมัติ</p>
+              <i class="fa-solid fa-camera-retro"></i><p><strong>ถ่ายภาพ/เลือกไฟล์ JPG หรือ PNG ได้สูงสุด 3 ภาพ</strong></p><p>ระบบจะย่อขนาดภาพก่อนอัปโหลดเข้าคลังรูปของระบบ และบันทึกลงฐานข้อมูลอัตโนมัติ</p>
               <label class="btn btn-soft" for="imageFiles"><i class="fa-solid fa-camera"></i> ถ่ายภาพ/เลือกไฟล์</label>
               <input id="imageFiles" class="sr-only" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" multiple>
             </div>
@@ -438,7 +440,7 @@
           <h3 class="card-title"><i class="fa-solid fa-map"></i> แผนที่และพิกัด <span id="mapTotal" class="pill">0 จุด</span></h3>
           <div class="legend" id="mapLegend">
             <button type="button" class="legend-item legend-filter active" data-filter="all" onclick="setMapFilter('all')"><i class="fa-solid fa-layer-group" style="font-size:.75rem"></i> ทั้งหมด</button>
-            <button type="button" class="legend-item legend-filter" data-filter="red" onclick="setMapFilter('red')"><span class="dot red"></span> เสียชีวิต / หมดสติ / สาหัส</button>
+            <button type="button" class="legend-item legend-filter" data-filter="orange" onclick="setMapFilter('orange')"><span class="dot orange"></span> เสียชีวิต / หมดสติ / สาหัส</button>
             <button type="button" class="legend-item legend-filter" data-filter="yellow" onclick="setMapFilter('yellow')"><span class="dot yellow"></span> บาดเจ็บเล็กน้อย</button>
             <button type="button" class="legend-item legend-filter" data-filter="green" onclick="setMapFilter('green')"><span class="dot green"></span> ไม่บาดเจ็บ</button>
             <button type="button" class="legend-item legend-filter" id="deathOverlayBtn" style="margin-left:auto;border-color:#e9d5ff;color:#6d28d9" onclick="toggleDeathOverlay()"><i class="fa-solid fa-skull-crossbones"></i> เทียบจุดเสียชีวิต</button>
@@ -767,8 +769,8 @@
         success:true,
         generatedAt: now.toLocaleString('th-TH', { timeZone:'Asia/Bangkok', hour12:false }),
         accidents: { year:countBy(accDates,'year',now), month:countBy(accDates,'month',now), today:countBy(accDates,'day',now) },
-        deaths: { year:countBy(deathDates,'year',now), month:countBy(deathDates,'month',now), yesterday:countBy(deathDates,'day',yesterday) },
-        injuries: { year:injuryCounts('year',now), month:injuryCounts('month',now), yesterday:injuryCounts('day',yesterday) }
+        deaths: { year:countBy(deathDates,'year',now), month:countBy(deathDates,'month',now), today:countBy(deathDates,'day',now), yesterday:countBy(deathDates,'day',yesterday) },
+        injuries: { year:injuryCounts('year',now), month:injuryCounts('month',now), today:injuryCounts('day',now), yesterday:injuryCounts('day',yesterday) }
       };
     }
 
@@ -869,7 +871,7 @@
       ).map(row => {
         const severity = worstSeverityOf(row);
         let markerType = 'gray';
-        if (['เสียชีวิต','หมดสติ','สาหัส'].includes(severity)) markerType = 'red';
+        if (['เสียชีวิต','หมดสติ','สาหัส'].includes(severity)) markerType = 'orange';
         else if (severity === 'เล็กน้อย') markerType = 'yellow';
         else if (severity === 'ไม่บาดเจ็บ') markerType = 'green';
         const p1 = row.party1 || {}; const p2 = row.party2 || {};
@@ -2202,12 +2204,18 @@
           '<div class="stats-zone"><h3 class="zone-title"><i class="fa-solid fa-skull-crossbones" style="color:#c1122f"></i> สถิติข้อมูลอุบัติเหตุ (เสียชีวิต) สภ.เมืองนครสวรรค์</h3><div class="stats-grid">' +
             statCard('ปีปัจจุบัน',result.deaths.year,'ราย','fa-user-xmark','red') +
             statCard('เดือนปัจจุบัน',result.deaths.month,'ราย','fa-user-xmark','red') +
-            statCard('ย้อนหลัง 1 วัน',result.deaths.yesterday,'ราย','fa-clock-rotate-left','red') +
+            '<div class="stat-card red"><div class="split-grid">' +
+              '<div><div class="label"><i class="fa-solid fa-calendar-day"></i> วันนี้</div><div class="value">' + Number(result.deaths.today||0).toLocaleString('th-TH') + '</div><div class="unit">ราย</div></div>' +
+              '<div><div class="label"><i class="fa-solid fa-clock-rotate-left"></i> ย้อนหลัง 1 วัน</div><div class="value">' + Number(result.deaths.yesterday||0).toLocaleString('th-TH') + '</div><div class="unit">ราย</div></div>' +
+            '</div></div>' +
           '</div></div>' +
           '<div class="stats-zone"><h3 class="zone-title"><i class="fa-solid fa-user-injured" style="color:#d97706"></i> สถิติข้อมูลอุบัติเหตุ (บาดเจ็บ) สภ.เมืองนครสวรรค์</h3><div class="stats-grid">' +
             injuryStatCard('ปีปัจจุบัน',result.injuries.year) +
             injuryStatCard('เดือนปัจจุบัน',result.injuries.month) +
-            injuryStatCard('ย้อนหลัง 1 วัน',result.injuries.yesterday) +
+            '<div class="stat-card orange"><div class="split-grid">' +
+              injuryHalf('วันนี้', 'fa-calendar-day', result.injuries.today) +
+              injuryHalf('ย้อนหลัง 1 วัน', 'fa-clock-rotate-left', result.injuries.yesterday) +
+            '</div></div>' +
           '</div></div>' +
           '<p class="hint" style="text-align:right"><i class="fa-regular fa-clock"></i> Real-time · รีเฟรชอัตโนมัติทุก 30 วินาที · อัปเดตล่าสุด ' + escapeHtml(result.generatedAt) + '</p>';
       } catch (error) {
@@ -2219,6 +2227,16 @@
       const display = typeof value === 'number' ? Number(value || 0).toLocaleString('th-TH') : escapeHtml(value || '–');
       return '<div class="stat-card ' + variant + '"><div class="label"><i class="fa-solid ' + icon + '"></i> ' + label + '</div><div class="value">' + display + '</div><div class="unit">' + unit + '</div></div>';
     }
+    // ครึ่งการ์ดบาดเจ็บ (ใช้ในการ์ดแบ่งครึ่ง วันนี้ | ย้อนหลัง 1 วัน)
+    function injuryHalf(label, icon, data) {
+      data = data || {};
+      return '<div><div class="label"><i class="fa-solid ' + icon + '"></i> ' + label + '</div>' +
+        '<div class="value">' + Number(data.total || 0).toLocaleString('th-TH') + '</div><div class="unit">ราย</div>' +
+        '<div class="injury-mini"><span class="pill red">สาหัส ' + (data['สาหัส'] || 0) + '</span>' +
+        '<span class="pill orange">หมดสติ ' + (data['หมดสติ'] || 0) + '</span>' +
+        '<span class="pill yellow">เล็กน้อย ' + (data['เล็กน้อย'] || 0) + '</span></div></div>';
+    }
+
     function injuryStatCard(label,data) {
       return '<div class="stat-card orange"><div class="label"><i class="fa-solid fa-kit-medical"></i> ' + label + '</div><div class="value">' + Number(data.total||0).toLocaleString('th-TH') + '</div><div class="unit">ราย</div><div class="injury-mini"><span class="pill red">สาหัส ' + (data['สาหัส']||0) + '</span><span class="pill orange">หมดสติ ' + (data['หมดสติ']||0) + '</span><span class="pill yellow">เล็กน้อย ' + (data['เล็กน้อย']||0) + '</span></div></div>';
     }
@@ -2570,7 +2588,7 @@
       const searchEl = document.getElementById('mapTableSearch');
       const query = ((searchEl && searchEl.value) || '').trim().toLowerCase();
       let items = !query ? all.slice() : all.filter(item => {
-        const badge = { red:'เสียชีวิต หมดสติ สาหัส รุนแรง', yellow:'บาดเจ็บเล็กน้อย', green:'ไม่บาดเจ็บ' }[item.markerType] || '';
+        const badge = { orange:'เสียชีวิต หมดสติ สาหัส รุนแรง', yellow:'บาดเจ็บเล็กน้อย', green:'ไม่บาดเจ็บ' }[item.markerType] || '';
         const hay = [item.date, item.place, item.road, item.roadCharacter, item.localAuthority,
           item.subdistrict, item.cause, item.details, badge,
           item.party1 && item.party1.vehicle, item.party2 && item.party2.vehicle].join(' ').toLowerCase();
@@ -2660,7 +2678,7 @@
       document.getElementById('accidentMap').scrollIntoView({behavior:'smooth',block:'center'});
     }
     function markerBadge(type) {
-      const map = {red:['รุนแรง','red'],yellow:['เล็กน้อย','yellow'],green:['ไม่บาดเจ็บ','green'],gray:['ไม่ระบุ','']};
+      const map = {orange:['รุนแรง','orange'],red:['รุนแรง','red'],yellow:['เล็กน้อย','yellow'],green:['ไม่บาดเจ็บ','green'],gray:['ไม่ระบุ','']};
       const item = map[type] || map.gray;
       return '<span class="severity-badge ' + item[1] + '">' + item[0] + '</span>';
     }
