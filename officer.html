@@ -1016,6 +1016,10 @@
       if (status === 'อยู่ระหว่างดำเนินการ') return '<span class="severity-badge yellow">อยู่ระหว่างดำเนินการ</span>';
       return '<span class="severity-badge red">ยังไม่ได้ดำเนินการ</span>';
     }
+    // ป้ายสถานะ ณ ตอนบันทึกของแต่ละรายการ (รายการเก่าที่ไม่มีสถานะ = ไม่แสดง)
+    function actionStatusBadge(status) {
+      return status ? ' ' + riskStatusBadge(status) : '';
+    }
 
     async function loadRiskManage() {
       const container = document.getElementById('riskManageTable');
@@ -1072,7 +1076,6 @@
     // ตัวจัดการรูปในหน้าต่างลง/แก้ไขข้อมูล: โหลดรูปเดิมมาให้ก่อน กด × ลบรายรูป แล้วเพิ่มรูปใหม่ได้ (รวมไม่เกิน 2)
     let eaState = { existing: [], files: [] };
     function eaInit(existingUrls) {
-      eaState.files.forEach(f => URL.revokeObjectURL(f.preview));
       eaState = { existing: (existingUrls || []).filter(Boolean), files: [] };
     }
     function eaCount() { return eaState.existing.length + eaState.files.length; }
@@ -1094,18 +1097,19 @@
     }
     function eaRemove(kind, index) {
       if (kind === 'existing') eaState.existing.splice(index, 1);
-      else { URL.revokeObjectURL(eaState.files[index].preview); eaState.files.splice(index, 1); }
+      else eaState.files.splice(index, 1);
       eaRender();
     }
-    function eaAddFiles(inputEl) {
+    async function eaAddFiles(inputEl) {
       const files = Array.from(inputEl.files || []);
       inputEl.value = '';
       for (const file of files) {
         if (eaCount() >= 2) { Swal.showValidationMessage('รวมได้ไม่เกิน 2 ภาพ — กด × ลบรูปเดิมก่อน'); break; }
         if (!['image/jpeg','image/jpg','image/png'].includes(file.type)) { Swal.showValidationMessage('รองรับเฉพาะไฟล์ .jpg และ .png'); continue; }
-        if (file.size > 5 * 1024 * 1024) { Swal.showValidationMessage('ขนาดไฟล์ต้องไม่เกิน 5MB ต่อภาพ'); continue; }
         Swal.resetValidationMessage();
-        eaState.files.push({ file, preview: URL.createObjectURL(file) });
+        try {
+          eaState.files.push(await resizeImage(file)); // ย่อรูปทันทีตอนเลือก (สูงสุด 1400px)
+        } catch (e) { Swal.showValidationMessage('อ่านรูปไม่สำเร็จ: ' + e.message); }
       }
       eaRender();
     }
@@ -1117,9 +1121,9 @@
     async function eaFinalImages() {
       const urls = [...eaState.existing];
       for (const f of eaState.files) {
-        const ext = (f.file.name.split('.').pop() || 'jpg').toLowerCase();
+        const ext = f.mimeType === 'image/png' ? 'png' : 'jpg';
         const path = 'actions/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
-        const { error: upErr } = await db.storage.from(STORAGE_BUCKET).upload(path, f.file, { contentType: f.file.type });
+        const { error: upErr } = await db.storage.from(STORAGE_BUCKET).upload(path, b64ToBlob(f.data, f.mimeType), { contentType: f.mimeType });
         if (upErr) throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + upErr.message);
         urls.push(db.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl);
       }
@@ -1140,7 +1144,7 @@
         const items = actions.map(a => {
           const imgs = [a.image1_url, a.image2_url].filter(Boolean)
             .map(u => '<a href="' + escapeHtml(u) + '" target="_blank"><img src="' + escapeHtml(u) + '"></a>').join('');
-          return '<div class="ra-item"><div class="ra-date"><i class="fa-regular fa-clock"></i> ' + escapeHtml(formatThaiDateTimeStr(a.action_date)) + '</div>' +
+          return '<div class="ra-item"><div class="ra-date"><i class="fa-regular fa-clock"></i> ' + escapeHtml(formatThaiDateTimeStr(a.action_date)) + actionStatusBadge(a.status) + '</div>' +
             '<div class="ra-detail">' + escapeHtml(a.detail || '-') + '</div>' +
             (imgs ? '<div class="ra-imgs">' + imgs + '</div>' : '') + '</div>';
         }).join('');
@@ -1206,7 +1210,7 @@
         const rows = actions.map(a => {
           const imgs = [a.image1_url, a.image2_url].filter(Boolean)
             .map(u => '<a href="' + escapeHtml(u) + '" target="_blank"><img src="' + escapeHtml(u) + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;margin:2px"></a>').join('') || '-';
-          return '<tr><td style="padding:8px;border-bottom:1px solid #e6edf5;white-space:nowrap">' + escapeHtml(formatThaiDateTimeStr(a.action_date)) + '</td>' +
+          return '<tr><td style="padding:8px;border-bottom:1px solid #e6edf5;white-space:nowrap">' + escapeHtml(formatThaiDateTimeStr(a.action_date)) + (a.status ? '<br>' + riskStatusBadge(a.status) : '') + '</td>' +
             '<td style="padding:8px;border-bottom:1px solid #e6edf5">' + imgs + '</td>' +
             '<td style="padding:8px;border-bottom:1px solid #e6edf5;text-align:left">' + escapeHtml(a.detail || '-') + '</td>' +
             '<td style="padding:8px;border-bottom:1px solid #e6edf5;white-space:nowrap">' +
