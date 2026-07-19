@@ -114,6 +114,15 @@
     .ea-thumb img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block}
     .ea-thumb button{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;background:#c1122f;color:#fff;border:2px solid #fff;cursor:pointer;font-size:12px;line-height:1;font-weight:900;padding:0}
     .ea-thumb .ea-new{position:absolute;left:2px;bottom:2px;background:#16834b;color:#fff;font-size:.58rem;font-weight:800;padding:1px 6px;border-radius:999px}
+    /* timeline การตอบรับที่ผ่านมา ในหน้าต่างบันทึกผล */
+    .ra-timeline{max-height:190px;overflow:auto;text-align:left;padding:6px 4px 2px 8px;background:#f8fafc;border:1px solid #e6edf5;border-radius:12px}
+    .ra-item{position:relative;padding:0 6px 14px 18px;border-left:2px solid #dbe6f2;margin-left:7px}
+    .ra-item:last-child{padding-bottom:4px;border-left-color:transparent}
+    .ra-item::before{content:"";position:absolute;left:-6px;top:3px;width:10px;height:10px;border-radius:50%;background:#1d4ed8;border:2px solid #fff;box-shadow:0 0 0 1px #b6cce8}
+    .ra-date{font-size:.7rem;color:#64748b;font-weight:800}
+    .ra-detail{font-size:.82rem;color:#1f2a3d;margin-top:2px;line-height:1.55;word-break:break-word}
+    .ra-imgs{margin-top:4px}
+    .ra-imgs img{width:44px;height:44px;object-fit:cover;border-radius:8px;margin:0 4px 0 0;border:1px solid #e2e8f0}
     /* มือถือ: หน้าจัดการจุดเสี่ยงแสดงเป็นการ์ด แทนตารางกว้าง */
     .risk-cards{display:none}
     .risk-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 10px 26px rgba(15,23,42,.07)}
@@ -1124,10 +1133,25 @@
       const statusOptions = ['ยังไม่ได้ดำเนินการ','อยู่ระหว่างดำเนินการ','ดำเนินการแก้ไขแล้ว']
         .map(s => '<option value="' + s + '"' + (s === currentStatus ? ' selected' : '') + '>' + s + '</option>').join('');
       eaInit([]);
+      // โหลดการตอบรับที่ผ่านมาขึ้นมาเป็น timeline ก่อน (บันทึกใหม่ = ต่อท้าย log ไม่ทับของเดิม)
+      let timelineHtml = '';
+      try {
+        const actions = await fetchRiskActions(point);
+        const items = actions.map(a => {
+          const imgs = [a.image1_url, a.image2_url].filter(Boolean)
+            .map(u => '<a href="' + escapeHtml(u) + '" target="_blank"><img src="' + escapeHtml(u) + '"></a>').join('');
+          return '<div class="ra-item"><div class="ra-date"><i class="fa-regular fa-clock"></i> ' + escapeHtml(formatThaiDateTimeStr(a.action_date)) + '</div>' +
+            '<div class="ra-detail">' + escapeHtml(a.detail || '-') + '</div>' +
+            (imgs ? '<div class="ra-imgs">' + imgs + '</div>' : '') + '</div>';
+        }).join('');
+        timelineHtml = '<div><div style="font-weight:800;font-size:.82rem;color:#334155;margin-bottom:6px"><i class="fa-solid fa-timeline"></i> การตอบรับที่ผ่านมา (' + actions.length + ' ครั้ง)</div>' +
+          '<div class="ra-timeline">' + (items || '<div style="padding:8px 4px;color:#94a3b8;font-size:.82rem"><i class="fa-regular fa-bell"></i> ยังไม่มีการตอบรับ — นี่คือการตอบรับครั้งแรก</div>') + '</div></div>';
+      } catch (e) { timelineHtml = ''; }
       const result = await Swal.fire({
         title: '<i class="fa-solid fa-reply"></i> บันทึกผลการดำเนินการ',
         html: '<div style="text-align:left;display:grid;gap:10px;font-size:.9rem">' +
           '<div style="background:#f1f5f9;border-radius:12px;padding:10px 12px"><b>' + escapeHtml(point.location || '-') + '</b><br>ถนน ' + escapeHtml(point.road || '-') + '</div>' +
+          timelineHtml +
           '<label>สถานะ<select id="raStatus" class="swal2-select" style="width:100%;margin:4px 0">' + statusOptions + '</select></label>' +
           '<label>รายละเอียดการดำเนินการ <span style="color:#c1122f">*</span><textarea id="raDetail" class="swal2-textarea" style="width:100%;margin:4px 0;min-height:100px" maxlength="500" placeholder="เช่น ดำเนินการติดตั้งป้ายเตือน / ประสานเทศบาลแก้ไขแล้ว"></textarea></label>' +
           eaImageHtml('รูปภาพประกอบ (ไม่เกิน 2 ภาพ)') +
