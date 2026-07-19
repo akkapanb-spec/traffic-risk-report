@@ -1798,6 +1798,7 @@
         title: 'จิ้มหรือลากหมุดเพื่อเลือกตำแหน่ง',
         html: '<div id="dfMapPicker" style="height:380px;width:100%;border-radius:14px"></div>',
         width: Math.min(720, window.innerWidth - 20),
+        showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' },
         showCancelButton: true, confirmButtonText: 'ยืนยันตำแหน่งนี้', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#1d4ed8',
         didOpen: () => {
           let startLat = 15.705, startLng = 100.140;
@@ -1813,11 +1814,12 @@
           dfPickerMap.on('click', e => dfPickerMarker.setLatLng(e.latlng));
           setTimeout(() => dfPickerMap.invalidateSize(), 150);
         },
+        // อ่านพิกัดตอนกดยืนยัน (ก่อน willClose ล้างตัวหมุด) — อ่านทีหลังจะได้ null เสมอ
+        preConfirm: () => dfPickerMarker ? dfPickerMarker.getLatLng() : null,
         willClose: () => { if (dfPickerMap) { dfPickerMap.remove(); dfPickerMap = null; dfPickerMarker = null; } }
       }).then(result => {
-        if (result.isConfirmed && dfPickerMarker) {
-          const p = dfPickerMarker.getLatLng();
-          document.getElementById('dfCoords').value = p.lat.toFixed(6) + ', ' + p.lng.toFixed(6);
+        if (result.isConfirmed && result.value) {
+          document.getElementById('dfCoords').value = result.value.lat.toFixed(6) + ', ' + result.value.lng.toFixed(6);
         }
       });
     }
