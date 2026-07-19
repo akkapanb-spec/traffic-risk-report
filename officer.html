@@ -73,6 +73,13 @@
     .drawer-close{position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff}
     .drawer-menu{padding:14px;display:grid;gap:8px;overflow:auto}.nav-btn{border:0;background:#fff;border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:13px;color:#24364d;font-weight:700;text-align:left;border:1px solid transparent}.nav-btn i{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:#edf4ff;color:var(--blue)}
     .nav-btn.active,.nav-btn:hover{background:#eef5ff;border-color:#d5e4fb;color:var(--navy)}.nav-btn.active i{background:var(--blue);color:#fff}
+    /* เมนูผู้ดูแลระบบ: โทนม่วง แยกจากเมนูปกติ */
+    .drawer-section{margin:10px 4px 2px;padding-top:12px;border-top:1px dashed #d8c6f5;font-size:.72rem;font-weight:800;color:#7c3aed;display:flex;align-items:center;gap:7px;letter-spacing:.4px}
+    .nav-btn.admin-item i{background:#f3e8ff;color:#7c3aed}
+    .nav-btn.admin-item.active,.nav-btn.admin-item:hover{background:#f7f1ff;border-color:#e4d4fb;color:#5b21b6}
+    .nav-btn.admin-item.active i{background:#7c3aed;color:#fff}
+    .tab-btn.admin-item{background:rgba(124,58,237,.09);color:#6d28d9}
+    .tab-btn.admin-item.active{background:linear-gradient(135deg,#5b21b6,#8b5cf6)!important;color:#fff!important;box-shadow:0 9px 20px rgba(124,58,237,.28)!important}
 
     .main{max-width:1400px;margin:auto;padding:22px 16px 90px}.page{display:none;animation:fadeIn .28s ease}.page.active{display:block}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
     .page-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}.page-icon{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;display:grid;place-items:center;font-size:1.3rem;box-shadow:0 10px 20px rgba(29,78,216,.22)}
@@ -305,8 +312,9 @@
         <button class="nav-btn" data-page="accident" onclick="openPage('accident',this)"><i class="fa-solid fa-file-pen"></i> บันทึกข้อมูลอุบัติเหตุ</button>
         <button class="nav-btn" data-page="dashboard" onclick="openPage('dashboard',this)"><i class="fa-solid fa-chart-line"></i> สถิติอุบัติเหตุ สภ.เมืองนครสวรรค์</button>
         <button class="nav-btn" data-page="map" onclick="openPage('map',this)"><i class="fa-solid fa-map-location-dot"></i> แผนที่พิกัดจุดเกิดอุบัติเหตุ</button>
-        <button class="nav-btn" data-page="admin" id="adminNavBtn" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน</button>
-        <button class="nav-btn" data-page="riskmanage" id="riskNavBtn" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง</button>
+        <div class="drawer-section" id="adminSection" style="display:none"><i class="fa-solid fa-shield-halved"></i> เมนูผู้ดูแลระบบ</div>
+        <button class="nav-btn admin-item" data-page="admin" id="adminNavBtn" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน</button>
+        <button class="nav-btn admin-item" data-page="riskmanage" id="riskNavBtn" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง</button>
       </nav>
     </aside>
 
@@ -315,8 +323,8 @@
       <button class="tab-btn" data-page="accident" type="button" onclick="openPage('accident',this)"><i class="fa-solid fa-car-burst"></i><span>บันทึก</span></button>
       <button class="tab-btn" data-page="dashboard" type="button" onclick="openPage('dashboard',this)"><i class="fa-solid fa-chart-line"></i><span>สถิติ</span></button>
       <button class="tab-btn" data-page="map" type="button" onclick="openPage('map',this)"><i class="fa-solid fa-map-location-dot"></i><span>แผนที่</span></button>
-      <button class="tab-btn" data-page="admin" id="adminTabBtn" type="button" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i><span>อนุมัติ</span></button>
-      <button class="tab-btn" data-page="riskmanage" id="riskTabBtn" type="button" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i><span>จุดเสี่ยง</span></button>
+      <button class="tab-btn admin-item" data-page="admin" id="adminTabBtn" type="button" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i><span>อนุมัติ</span></button>
+      <button class="tab-btn admin-item" data-page="riskmanage" id="riskTabBtn" type="button" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i><span>จุดเสี่ยง</span></button>
     </nav>
 
     <main class="main">
@@ -846,6 +854,7 @@
       document.getElementById('userDisplay').textContent = fullName;
       document.getElementById('drawerUser').textContent = fullName;
       document.getElementById('officerDisplay').value = fullName + ' · ปนพ. ' + state.user.policeCode;
+      document.getElementById('adminSection').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('riskNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminTabBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
