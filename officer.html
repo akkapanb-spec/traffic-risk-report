@@ -881,7 +881,7 @@
           subdistrict: row.subdistrict || '', cause: row.cause || '', details: row.details || '',
           party1: { status:p1.status||'', age:p1.age||'', gender:p1.gender||'', injury:p1.injury||'', vehicle:displayVehicleOf(p1), safety:p1.safety||'', passengers:p1.passengers||[] },
           party2: { status:p2.status||'', age:p2.age||'', gender:p2.gender||'', injury:p2.injury||'', vehicle:displayVehicleOf(p2), safety:p2.safety||'', passengers:p2.passengers||[] },
-          images: Array.isArray(row.images) ? row.images.filter(Boolean) : []
+          images: normalizeImageUrls(Array.isArray(row.images) ? row.images : [])
         };
       }).sort((a,b) => String(b.date).localeCompare(String(a.date)));
 
@@ -2444,6 +2444,19 @@
       else state.accidentMap.setView(NAKHON_SAWAN_CENTER,12);
       setTimeout(()=>state.accidentMap.invalidateSize(),100);
     }
+    // ข้อมูลเก่าบางแถวใส่หลาย URL คั่นด้วย , ในช่องเดียว และเป็นลิงก์ drive.google.com/file/d/ID/view
+    // (เปิดเป็นหน้าเว็บ ใส่ใน <img> ไม่ได้) — แตกคอมมาและแปลงเป็นลิงก์รูปตรง
+    function normalizeImageUrls(list) {
+      return (list || [])
+        .flatMap(u => String(u || '').split(','))
+        .map(u => u.trim())
+        .filter(u => u.startsWith('http'))
+        .map(u => {
+          const m = u.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+          return m ? 'https://lh3.googleusercontent.com/d/' + m[1] : u;
+        });
+    }
+
     function buildPopup(item) {
       // popup เฉพาะหมุดผู้เสียชีวิต (จากทะเบียนผู้เสียชีวิต)
       if (item.isDeath) {
