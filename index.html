@@ -988,16 +988,18 @@ function showRiskDetails(riskId) {
   const esc = v6EscapeHTML;
   const row = (label, value) => value ? '<tr><td class="py-1 pr-3 font-semibold text-gray-600 align-top whitespace-nowrap">' + label + '</td><td class="py-1 text-gray-800">' + esc(value) + '</td></tr>' : '';
   const coords = (r.coordinates || '').trim();
+  // ย่อทศนิยมพิกัดให้สั้นลงตอนแสดง (ลิงก์ยังพาไปตำแหน่งเต็ม)
+  const shortCoords = coords.split(',').map(x => { const n = parseFloat(x); return isNaN(n) ? x : n.toFixed(6); }).join(', ');
   const mapLink = coords && coords.includes(',')
-    ? '<a href="https://www.google.com/maps?q=' + encodeURIComponent(coords) + '" target="_blank" class="text-blue-600 underline"><i class="fas fa-map-marked-alt mr-1"></i>' + esc(coords) + '</a>'
+    ? '<a href="https://www.google.com/maps?q=' + encodeURIComponent(coords) + '" target="_blank" class="text-blue-600 underline" style="word-break:break-all"><i class="fas fa-map-marked-alt mr-1"></i>' + esc(shortCoords) + '</a>'
     : '';
   const imgs = [r.image1_url, r.image2_url].filter(Boolean)
     .map(u => '<img src="' + esc(u) + '" class="w-32 h-32 object-cover rounded-lg shadow img-clickable" onclick="showImageModal(\'' + esc(u) + '\')" title="คลิกเพื่อขยาย">').join(' ');
   const status = r.status || 'ยังไม่ได้ดำเนินการ';
   Swal.fire({
     title: 'รายละเอียดการแจ้ง เลขที่ #' + r.id,
-    html: '<div class="text-left text-sm">' +
-      '<table class="w-full">' +
+    html: '<div class="text-left text-sm" style="max-width:100%;overflow-x:hidden;word-break:break-word">' +
+      '<table class="w-full" style="table-layout:fixed"><colgroup><col style="width:92px"><col></colgroup>' +
       row('วันที่แจ้ง', formatThaiDateTimeStr(r.registration_date)) +
       row('สถานที่', r.location) +
       row('ถนน', r.road) +

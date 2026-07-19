@@ -1136,15 +1136,17 @@
       if (!r) return;
       const row = (label, value) => value ? '<tr><td style="padding:4px 12px 4px 0;font-weight:700;color:#475569;white-space:nowrap;vertical-align:top">' + label + '</td><td style="padding:4px 0;color:#1f2a3d">' + escapeHtml(value) + '</td></tr>' : '';
       const coords = (r.coordinates || '').trim();
+      // ย่อทศนิยมพิกัดตอนแสดง (ลิงก์ยังพาไปตำแหน่งเต็ม)
+      const shortCoords = coords.split(',').map(x => { const n = parseFloat(x); return isNaN(n) ? x : n.toFixed(6); }).join(', ');
       const mapLink = coords && coords.includes(',')
-        ? '<a href="https://www.google.com/maps?q=' + encodeURIComponent(coords) + '" target="_blank" style="color:var(--blue);text-decoration:underline"><i class="fa-solid fa-map-location-dot"></i> ' + escapeHtml(coords) + '</a>'
+        ? '<a href="https://www.google.com/maps?q=' + encodeURIComponent(coords) + '" target="_blank" style="color:var(--blue);text-decoration:underline;word-break:break-all"><i class="fa-solid fa-map-location-dot"></i> ' + escapeHtml(shortCoords) + '</a>'
         : '';
       const imgs = [r.image1_url, r.image2_url].filter(Boolean)
         .map(u => '<a href="' + escapeHtml(u) + '" target="_blank"><img src="' + escapeHtml(u) + '" style="width:130px;height:130px;object-fit:cover;border-radius:12px;border:1px solid var(--line)"></a>').join(' ');
       Swal.fire({
         title: 'รายละเอียดการแจ้ง เลขที่ #' + r.id,
-        html: '<div style="text-align:left;font-size:.9rem">' +
-          '<table style="width:100%;border-collapse:collapse">' +
+        html: '<div style="text-align:left;font-size:.9rem;max-width:100%;overflow-x:hidden;word-break:break-word">' +
+          '<table style="width:100%;border-collapse:collapse;table-layout:fixed"><colgroup><col style="width:92px"><col></colgroup>' +
           row('วันที่แจ้ง', formatThaiDateTimeStr(r.registration_date)) +
           row('สถานที่', r.location) +
           row('ถนน', r.road) +
