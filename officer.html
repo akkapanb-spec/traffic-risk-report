@@ -2547,6 +2547,7 @@
           row('อุปกรณ์นิรภัย', r.safety_equipment) + row('อาการ', r.col_g) +
           row('ลักษณะทาง', r.road_type) + row('สาเหตุ', r.cause) +
           row('ถนน', r.road_name) + row('ตำบล', r.subdistrict) + row('ภูมิลำเนา', r.domicile) +
+          ((r.coordinates || '').includes(',') ? '<div class="popup-row"><strong>พิกัด:</strong> <a href="https://www.google.com/maps?q=' + encodeURIComponent((r.coordinates || '').trim()) + '" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:underline" title="เปิดใน Google Maps">' + escapeHtml((r.coordinates || '').split(',').map(x => { const n = parseFloat(x); return isNaN(n) ? x : n.toFixed(6); }).join(', ')) + ' <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:.7em"></i></a></div>' : '') +
           '</div>' +
           (item.pairNote ? '<div style="margin-top:8px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;font-size:.75rem;color:#9a3412"><i class="fa-solid fa-link"></i> ' + escapeHtml(item.pairNote) + '</div>' : '') +
           '</div>';
@@ -2572,7 +2573,7 @@
         '<div class="popup-info"><b>ถนน:</b> ' + escapeHtml(item.road || '-') +
         '<br><b>ลักษณะทาง:</b> ' + escapeHtml(item.roadCharacter || '-') + ' ' + escapeHtml(item.roadCharacterOther || '') +
         '<br><b>ตำบล:</b> ' + escapeHtml(item.subdistrict || '-') +
-        '<br><b>พิกัด:</b> ' + Number(item.latitude).toFixed(6) + ', ' + Number(item.longitude).toFixed(6) +
+        '<br><b>พิกัด:</b> <a href="https://www.google.com/maps?q=' + Number(item.latitude).toFixed(6) + ',' + Number(item.longitude).toFixed(6) + '" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:underline" title="เปิดใน Google Maps">' + Number(item.latitude).toFixed(6) + ', ' + Number(item.longitude).toFixed(6) + ' <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:.7em"></i></a>' +
         '<br><b>สาเหตุเบื้องต้น:</b> ' + escapeHtml(item.cause || '-') + '</div>' +
         (item.pairNote ? '<div style="margin-top:8px;padding:8px 10px;background:#fee2e2;border:1px solid #fecaca;border-radius:10px;font-size:.75rem;color:#991b1b;font-weight:700"><i class="fa-solid fa-skull-crossbones"></i> ' + escapeHtml(item.pairNote) + '</div>' : '') +
         (images ? '<div class="popup-images">' + images + '</div>' : '') + '</div>';
