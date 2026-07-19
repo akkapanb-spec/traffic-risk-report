@@ -834,7 +834,7 @@ async function refreshData() {
       formatThaiDateTimeStr(r.registration_date), r.location || '', r.road || '', r.village || '',
       r.subdistrict || '', r.district || '', r.province || '', r.coordinates || '',
       r.additional_details || '', r.image1_url || '', r.image2_url || '',
-      r.status || 'ยังไม่ได้ดำเนินการ', ''
+      r.status || 'ยังไม่ได้ดำเนินการ', '', r.id
     ]);
 
     if (records.length > 0) {
@@ -926,10 +926,18 @@ function showImageModal(imageUrl) {
   });
 }
 
-async function showStatusDetails(location, road) {
+async function showStatusDetails(location, road, riskId) {
   try {
-    const { data, error } = await sb.from('risk_actions').select('*')
-      .eq('location', location).eq('road', road).order('action_date', { ascending: true });
+    // เชื่อมด้วยเลขที่การแจ้ง (risk_id) — ถ้าฐานข้อมูลยังไม่มีคอลัมน์นี้ ถอยไปจับคู่ชื่อสถานที่+ถนนแบบเดิม
+    let data, error;
+    if (riskId) {
+      ({ data, error } = await sb.from('risk_actions').select('*')
+        .eq('risk_id', riskId).order('action_date', { ascending: true }));
+    }
+    if (!riskId || error) {
+      ({ data, error } = await sb.from('risk_actions').select('*')
+        .eq('location', location).eq('road', road).order('action_date', { ascending: true }));
+    }
     if (error) throw new Error(error.message);
 
     // แปลงเป็นแถวแบบชีตเดิม [วันที่, สถานที่, ถนน, รูป1, รูป2, รายละเอียด]
@@ -1533,11 +1541,12 @@ function displayRiskData(data) {
     const dStatus = Array.isArray(row) ? row[11] : row.status || 'ยังไม่ได้ดำเนินการ';
     const img1 = Array.isArray(row) ? row[9] : row.image1 || '';
     const img2 = Array.isArray(row) ? row[10] : row.image2 || '';
+    const dId = Array.isArray(row) ? (row[13] || 0) : (row.id || 0);
     const imageHtml = getImageElements(img1, img2);
     const statusColorClass = getStatusColor(dStatus);
     const safeLoc = v6SafeForOnclick(dLoc);
     const safeRoad = v6SafeForOnclick(dRoad);
-    return {dDate,dLoc,dRoad,dVillage,dSub,dProv,dCoords,dStatus,img1,img2,imageHtml,statusColorClass,safeLoc,safeRoad};
+    return {dDate,dLoc,dRoad,dVillage,dSub,dProv,dCoords,dStatus,dId,img1,img2,imageHtml,statusColorClass,safeLoc,safeRoad};
   });
 
   tableBody.innerHTML = rows.map(r => `
@@ -1551,7 +1560,7 @@ function displayRiskData(data) {
       <td class="px-4 py-3 text-xs text-gray-500">${v6EscapeHTML(r.dCoords)}</td>
       <td class="px-4 py-3"><div class="flex gap-2 justify-center">${r.imageHtml}</div></td>
       <td class="px-4 py-3 text-center">
-        <button onclick="showStatusDetails('${r.safeLoc}', '${r.safeRoad}')" class="px-4 py-2 rounded-full text-sm font-semibold shadow-md transition-transform transform hover:scale-105 hover:shadow-lg focus:outline-none ${r.statusColorClass}">
+        <button onclick="showStatusDetails('${r.safeLoc}', '${r.safeRoad}', ${r.dId})" class="px-4 py-2 rounded-full text-sm font-semibold shadow-md transition-transform transform hover:scale-105 hover:shadow-lg focus:outline-none ${r.statusColorClass}">
           <i class="fas fa-search-plus mr-1 opacity-75"></i> ${v6EscapeHTML(r.dStatus)}
         </button>
       </td>
@@ -1571,7 +1580,7 @@ function displayRiskData(data) {
         <div><span class="v6-risk-card__label">พิกัด:</span> ${v6EscapeHTML(r.dCoords)}</div>
       </div>
       <div class="v6-risk-images">${r.imageHtml || '<span class="text-sm text-gray-400">ไม่มีรูปภาพ</span>'}</div>
-      <button onclick="showStatusDetails('${r.safeLoc}', '${r.safeRoad}')" class="v6-risk-status ${r.statusColorClass} font-semibold shadow-md">
+      <button onclick="showStatusDetails('${r.safeLoc}', '${r.safeRoad}', ${r.dId})" class="v6-risk-status ${r.statusColorClass} font-semibold shadow-md">
         <i class="fas fa-search-plus mr-1"></i>${v6EscapeHTML(r.dStatus)}
       </button>
     </article>

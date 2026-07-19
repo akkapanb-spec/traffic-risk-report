@@ -987,18 +987,20 @@
         const pending = state.riskPoints.filter(r => (r.status || 'ยังไม่ได้ดำเนินการ') === 'ยังไม่ได้ดำเนินการ').length;
         container.innerHTML =
           (pending ? '<p class="hint" style="margin-top:0"><i class="fa-solid fa-circle-exclamation" style="color:#c1122f"></i> ยังไม่ได้ดำเนินการ ' + pending + ' จุด</p>' : '') +
-          '<div class="table-wrap"><table class="data-table"><thead><tr><th>วันที่แจ้ง</th><th>สถานที่</th><th>ถนน</th><th>ตำบล</th><th>รูปภาพ</th><th>สถานะ</th><th></th></tr></thead><tbody>' +
+          '<div class="table-wrap"><table class="data-table"><thead><tr><th>เลขที่</th><th>วันที่แจ้ง</th><th>สถานที่</th><th>ถนน</th><th>ตำบล</th><th>รูปภาพ</th><th>สถานะ</th><th></th></tr></thead><tbody>' +
           state.riskPoints.map(r => {
             const imgs = [r.image1_url, r.image2_url].filter(Boolean)
               .map(u => '<a href="' + escapeHtml(u) + '" target="_blank"><img src="' + escapeHtml(u) + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px"></a>').join(' ') || '-';
-            return '<tr><td>' + escapeHtml(formatThaiDateTimeStr(r.registration_date)) + '</td>' +
+            return '<tr><td><b>#' + r.id + '</b></td>' +
+              '<td>' + escapeHtml(formatThaiDateTimeStr(r.registration_date)) + '</td>' +
               '<td style="max-width:220px">' + escapeHtml(r.location || '-') + '</td>' +
               '<td>' + escapeHtml(r.road || '-') + '</td>' +
               '<td>' + escapeHtml(r.subdistrict || '-') + '</td>' +
               '<td>' + imgs + '</td>' +
               '<td>' + riskStatusBadge(r.status) + '</td>' +
               '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="openRiskActionDialog(' + r.id + ')"><i class="fa-solid fa-reply"></i> ตอบรับ/บันทึกผล</button> ' +
-              '<button class="btn btn-soft btn-sm" onclick="viewRiskActions(' + r.id + ')"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติ</button></td></tr>';
+              '<button class="btn btn-soft btn-sm" onclick="viewRiskActions(' + r.id + ')"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติ</button> ' +
+              '<button class="btn btn-soft btn-sm" style="color:#c1122f" title="ลบจุดเสี่ยงที่แจ้งผิด" onclick="deleteRiskPoint(' + r.id + ')"><i class="fa-solid fa-trash-can"></i></button></td></tr>';
           }).join('') +
           '</tbody></table></div>';
       } catch (error) {
@@ -1057,29 +1059,127 @@
       }
     }
 
+    async function fetchRiskActions(point) {
+      // เชื่อมด้วยเลขที่การแจ้ง — ถ้าฐานข้อมูลยังไม่มีคอลัมน์ risk_id ถอยไปจับคู่ชื่อสถานที่+ถนนแบบเดิม
+      let res = await db.from('risk_actions').select('*').eq('risk_id', point.id).order('action_date', { ascending: false });
+      if (res.error) {
+        res = await db.from('risk_actions').select('*')
+          .eq('location', (point.location || '').trim()).eq('road', (point.road || '').trim())
+          .order('action_date', { ascending: false });
+      }
+      if (res.error) throw new Error(res.error.message);
+      return res.data || [];
+    }
+
     async function viewRiskActions(riskId) {
       const point = (state.riskPoints || []).find(r => r.id === riskId);
       if (!point) return;
       try {
-        const { data, error } = await db.from('risk_actions').select('*')
-          .eq('location', (point.location || '').trim()).eq('road', (point.road || '').trim())
-          .order('action_date', { ascending: false });
-        if (error) throw new Error(error.message);
-        const rows = (data || []).map(a => {
+        const actions = await fetchRiskActions(point);
+        state.riskActionsCache = {};
+        actions.forEach(a => state.riskActionsCache[a.id] = a);
+        const rows = actions.map(a => {
           const imgs = [a.image1_url, a.image2_url].filter(Boolean)
             .map(u => '<a href="' + escapeHtml(u) + '" target="_blank"><img src="' + escapeHtml(u) + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;margin:2px"></a>').join('') || '-';
           return '<tr><td style="padding:8px;border-bottom:1px solid #e6edf5;white-space:nowrap">' + escapeHtml(formatThaiDateTimeStr(a.action_date)) + '</td>' +
             '<td style="padding:8px;border-bottom:1px solid #e6edf5">' + imgs + '</td>' +
-            '<td style="padding:8px;border-bottom:1px solid #e6edf5;text-align:left">' + escapeHtml(a.detail || '-') + '</td></tr>';
-        }).join('') || '<tr><td colspan="3" style="padding:18px;color:#64748b">ยังไม่มีการบันทึกผลการดำเนินการ</td></tr>';
+            '<td style="padding:8px;border-bottom:1px solid #e6edf5;text-align:left">' + escapeHtml(a.detail || '-') + '</td>' +
+            '<td style="padding:8px;border-bottom:1px solid #e6edf5;white-space:nowrap">' +
+              '<button class="btn btn-soft btn-sm" onclick="editRiskAction(' + a.id + ',' + riskId + ')"><i class="fa-solid fa-pen"></i> แก้ไข</button> ' +
+              '<button class="btn btn-soft btn-sm" style="color:#c1122f" onclick="deleteRiskAction(' + a.id + ',' + riskId + ')"><i class="fa-solid fa-trash-can"></i> ลบ</button></td></tr>';
+        }).join('') || '<tr><td colspan="4" style="padding:18px;color:#64748b">ยังไม่มีการบันทึกผลการดำเนินการ</td></tr>';
         Swal.fire({
-          title: 'ประวัติการดำเนินการ',
+          title: 'ประวัติการดำเนินการ · เลขที่ #' + riskId,
           html: '<div style="font-size:.85rem;margin-bottom:8px;color:#475569">' + escapeHtml(point.location || '') + '</div>' +
             '<div style="overflow:auto;max-height:55vh"><table style="width:100%;border-collapse:collapse;font-size:.85rem">' +
-            '<thead><tr><th style="padding:8px;background:#eff5fc">วันที่</th><th style="padding:8px;background:#eff5fc">รูปภาพ</th><th style="padding:8px;background:#eff5fc">รายละเอียด</th></tr></thead>' +
+            '<thead><tr><th style="padding:8px;background:#eff5fc">วันที่</th><th style="padding:8px;background:#eff5fc">รูปภาพ</th><th style="padding:8px;background:#eff5fc">รายละเอียด</th><th style="padding:8px;background:#eff5fc"></th></tr></thead>' +
             '<tbody>' + rows + '</tbody></table></div>',
-          width: 640, confirmButtonText: 'ปิด'
+          width: 720, confirmButtonText: 'ปิด'
         });
+      } catch (error) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message });
+      }
+    }
+
+    async function editRiskAction(actionId, riskId) {
+      const action = (state.riskActionsCache || {})[actionId];
+      if (!action) return;
+      const existingImgs = [action.image1_url, action.image2_url].filter(Boolean);
+      const result = await Swal.fire({
+        title: '<i class="fa-solid fa-pen"></i> แก้ไขผลการดำเนินการ',
+        html: '<div style="text-align:left;display:grid;gap:10px;font-size:.9rem">' +
+          '<label>รายละเอียด <span style="color:#c1122f">*</span><textarea id="eaDetail" class="swal2-textarea" style="width:100%;margin:4px 0;min-height:100px" maxlength="500">' + escapeHtml(action.detail || '') + '</textarea></label>' +
+          (existingImgs.length ? '<div>รูปเดิม: ' + existingImgs.map(u => '<img src="' + escapeHtml(u) + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;margin:2px">').join('') +
+            '<label style="display:block;margin-top:4px"><input type="checkbox" id="eaClear"> ลบรูปเดิมออก</label></div>' : '') +
+          '<label>อัปโหลดรูปใหม่แทนที่ (ไม่เกิน 2 ภาพ · เว้นว่าง = คงรูปเดิม)<input id="eaImages" type="file" accept=".jpg,.jpeg,.png" multiple class="swal2-file" style="width:100%;margin:4px 0"></label>' +
+          '</div>',
+        width: 560, confirmButtonText: 'บันทึกการแก้ไข', cancelButtonText: 'ยกเลิก', showCancelButton: true, confirmButtonColor: '#1d4ed8', focusConfirm: false,
+        preConfirm: () => {
+          const detail = document.getElementById('eaDetail').value.trim();
+          if (!detail) { Swal.showValidationMessage('กรุณากรอกรายละเอียด'); return false; }
+          const files = Array.from(document.getElementById('eaImages').files || []);
+          if (files.length > 2) { Swal.showValidationMessage('เลือกรูปได้ไม่เกิน 2 ภาพ'); return false; }
+          if (files.some(f => f.size > 5 * 1024 * 1024)) { Swal.showValidationMessage('ขนาดไฟล์ต้องไม่เกิน 5MB ต่อภาพ'); return false; }
+          const clearEl = document.getElementById('eaClear');
+          return { detail, files, clear: !!(clearEl && clearEl.checked) };
+        }
+      });
+      if (!result.isConfirmed || !result.value) return;
+      Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      try {
+        let img1 = action.image1_url || null, img2 = action.image2_url || null;
+        if (result.value.clear) { img1 = null; img2 = null; }
+        if (result.value.files.length) {
+          const urls = [];
+          for (const file of result.value.files) {
+            const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+            const path = 'actions/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+            const { error: upErr } = await db.storage.from(STORAGE_BUCKET).upload(path, file, { contentType: file.type });
+            if (upErr) throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + upErr.message);
+            urls.push(db.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl);
+          }
+          img1 = urls[0] || null; img2 = urls[1] || null;
+        }
+        const rpcResult = await rpc('admin_update_risk_action', {
+          p_token: state.token, p_action_id: actionId, p_detail: result.value.detail, p_image1: img1, p_image2: img2
+        });
+        if (!rpcResult.success) {
+          if (rpcResult.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
+          throw new Error(rpcResult.message || 'บันทึกไม่สำเร็จ');
+        }
+        await Swal.fire({ icon: 'success', title: rpcResult.message, timer: 1200, showConfirmButton: false });
+        viewRiskActions(riskId);
+      } catch (error) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message });
+      }
+    }
+
+    async function deleteRiskAction(actionId, riskId) {
+      const confirm = await Swal.fire({ icon: 'warning', title: 'ลบรายการดำเนินการนี้?', text: 'ลบแล้วไม่สามารถกู้คืนได้',
+        showCancelButton: true, confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#c1122f' });
+      if (!confirm.isConfirmed) return;
+      try {
+        const result = await rpc('admin_delete_risk_action', { p_token: state.token, p_action_id: actionId });
+        if (!result.success) throw new Error(result.message || 'ลบไม่สำเร็จ');
+        await Swal.fire({ icon: 'success', title: result.message, timer: 1200, showConfirmButton: false });
+        viewRiskActions(riskId);
+      } catch (error) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message });
+      }
+    }
+
+    async function deleteRiskPoint(riskId) {
+      const point = (state.riskPoints || []).find(r => r.id === riskId);
+      if (!point) return;
+      const confirm = await Swal.fire({ icon: 'warning', title: 'ลบจุดเสี่ยงเลขที่ #' + riskId + '?',
+        html: '<b>' + escapeHtml(point.location || '') + '</b><br>ประวัติการดำเนินการของจุดนี้จะถูกลบไปด้วย และไม่สามารถกู้คืนได้',
+        showCancelButton: true, confirmButtonText: 'ลบจุดเสี่ยงนี้', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#c1122f' });
+      if (!confirm.isConfirmed) return;
+      try {
+        const result = await rpc('admin_delete_risk_point', { p_token: state.token, p_id: riskId });
+        if (!result.success) throw new Error(result.message || 'ลบไม่สำเร็จ');
+        await Swal.fire({ icon: 'success', title: result.message, timer: 1200, showConfirmButton: false });
+        loadRiskManage();
       } catch (error) {
         Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message });
       }
@@ -1971,7 +2071,8 @@
       openLocationPicker, closeLocationPicker, useCurrentLocation, confirmLocation,
       resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard,
       setMapFilter, loadAdminList, setApproval,
-      loadRiskManage, openRiskActionDialog, viewRiskActions
+      loadRiskManage, openRiskActionDialog, viewRiskActions,
+      editRiskAction, deleteRiskAction, deleteRiskPoint
     });
   </script>
 
