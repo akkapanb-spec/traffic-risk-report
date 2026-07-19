@@ -807,7 +807,7 @@ async function handleFormSubmit(event) {
     if (imageFiles[0]) image1_url = await uploadImageToStorage(imageFiles[0]);
     if (imageFiles[1]) image2_url = await uploadImageToStorage(imageFiles[1]);
 
-    const { error } = await sb.from('risk_points').insert({
+    const { data, error } = await sb.from('risk_points').insert({
       registration_date: new Date().toISOString(),
       location: document.getElementById('location').value,
       road: document.getElementById('road').value,
@@ -820,10 +820,19 @@ async function handleFormSubmit(event) {
       image1_url: image1_url,
       image2_url: image2_url,
       status: 'ยังไม่ได้ดำเนินการ'
-    });
+    }).select('id').single();
     if (error) throw new Error(error.message);
 
-    Swal.fire({icon: 'success', title: 'บันทึกสำเร็จ', timer: 2000}).then(() => {
+    // แจ้งเลขที่การแจ้งให้ประชาชนใช้ติดตามเรื่องต่อได้
+    Swal.fire({
+      icon: 'success',
+      title: 'บันทึกสำเร็จ',
+      html: '<div class="text-sm text-gray-600">เลขที่การแจ้งของคุณคือ</div>' +
+        '<div style="font-size:2rem;font-weight:900;color:#1d4ed8;margin:6px 0">#' + (data ? data.id : '-') + '</div>' +
+        '<div class="text-xs text-gray-500">จดเลขนี้ไว้ แล้วกดปุ่มสถานะในหน้า "ข้อมูลจุดเสี่ยง" เพื่อติดตามผลการดำเนินการได้ตลอด</div>',
+      confirmButtonText: 'รับทราบ',
+      confirmButtonColor: '#1d4ed8'
+    }).then(() => {
       document.getElementById('riskReportForm').reset();
       document.getElementById('imagePreview').innerHTML = '';
     });

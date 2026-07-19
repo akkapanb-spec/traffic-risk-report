@@ -78,6 +78,9 @@
     .nav-btn.admin-item i{background:#f3e8ff;color:#7c3aed}
     .nav-btn.admin-item.active,.nav-btn.admin-item:hover{background:#f7f1ff;border-color:#e4d4fb;color:#5b21b6}
     .nav-btn.admin-item.active i{background:#7c3aed;color:#fff}
+    .menu-badge{margin-left:auto;background:#dc2626;color:#fff;border-radius:999px;font-size:.68rem;font-weight:900;min-width:20px;height:20px;display:inline-grid;place-items:center;padding:0 6px}
+    .tab-btn{position:relative}
+    .tab-btn .menu-badge{position:absolute;top:3px;right:8px;margin:0;min-width:17px;height:17px;font-size:.6rem;padding:0 5px}
     .tab-btn.admin-item{background:rgba(124,58,237,.09);color:#6d28d9}
     .tab-btn.admin-item.active{background:linear-gradient(135deg,#5b21b6,#8b5cf6)!important;color:#fff!important;box-shadow:0 9px 20px rgba(124,58,237,.28)!important}
 
@@ -327,8 +330,8 @@
         <button class="nav-btn" data-page="dashboard" onclick="openPage('dashboard',this)"><i class="fa-solid fa-chart-line"></i> สถิติอุบัติเหตุ สภ.เมืองนครสวรรค์</button>
         <button class="nav-btn" data-page="map" onclick="openPage('map',this)"><i class="fa-solid fa-map-location-dot"></i> แผนที่พิกัดจุดเกิดอุบัติเหตุ</button>
         <div class="drawer-section" id="adminSection" style="display:none"><i class="fa-solid fa-shield-halved"></i> เมนูผู้ดูแลระบบ</div>
-        <button class="nav-btn admin-item" data-page="admin" id="adminNavBtn" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน</button>
-        <button class="nav-btn admin-item" data-page="riskmanage" id="riskNavBtn" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง</button>
+        <button class="nav-btn admin-item" data-page="admin" id="adminNavBtn" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน <span class="menu-badge" id="badgeApprove" style="display:none"></span></button>
+        <button class="nav-btn admin-item" data-page="riskmanage" id="riskNavBtn" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง <span class="menu-badge" id="badgeRisk" style="display:none"></span></button>
         <button class="nav-btn admin-item" data-page="deaths" id="deathsNavBtn" style="display:none" onclick="openPage('deaths',this)"><i class="fa-solid fa-skull-crossbones"></i> บันทึกข้อมูลผู้เสียชีวิต</button>
       </nav>
     </aside>
@@ -338,7 +341,7 @@
       <button class="tab-btn" data-page="accident" type="button" onclick="openPage('accident',this)"><i class="fa-solid fa-car-burst"></i><span>บันทึก</span></button>
       <button class="tab-btn" data-page="dashboard" type="button" onclick="openPage('dashboard',this)"><i class="fa-solid fa-chart-line"></i><span>สถิติ</span></button>
       <button class="tab-btn" data-page="map" type="button" onclick="openPage('map',this)"><i class="fa-solid fa-map-location-dot"></i><span>แผนที่</span></button>
-      <button class="tab-btn admin-item" id="adminMenuTab" type="button" style="display:none" onclick="openAdminMenu()"><i class="fa-solid fa-shield-halved"></i><span>ผู้ดูแล</span></button>
+      <button class="tab-btn admin-item" id="adminMenuTab" type="button" style="display:none" onclick="openAdminMenu()"><i class="fa-solid fa-shield-halved"></i><span>ผู้ดูแล</span><span class="menu-badge" id="badgeAdminTab" style="display:none"></span></button>
     </nav>
 
     <main class="main">
@@ -418,7 +421,7 @@
             <div id="imagePreviews" class="image-previews"></div>
           </div>
 
-          <div class="submit-bar"><button class="btn btn-outline" type="button" onclick="resetAccidentForm()"><i class="fa-solid fa-rotate-left"></i> ล้างข้อมูล</button><button class="btn btn-success" type="submit"><i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล</button></div>
+          <div class="submit-bar"><button class="btn btn-outline" type="button" id="cancelEditCaseBtn" style="display:none;color:#c1122f" onclick="resetAccidentForm()"><i class="fa-solid fa-xmark"></i> ยกเลิกการแก้ไข</button><button class="btn btn-outline" type="button" onclick="resetAccidentForm()"><i class="fa-solid fa-rotate-left"></i> ล้างข้อมูล</button><button class="btn btn-success" type="submit" id="accidentSubmitBtn"><i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล</button></div>
         </form>
       </section>
 
@@ -448,7 +451,8 @@
           </div>
           <div id="accidentMap" class="map-main"></div>
         </div>
-        <div class="card"><h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการจุดเกิดเหตุ</h3>
+        <div class="card"><h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการจุดเกิดเหตุ
+          <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="exportMapCsv()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button></h3>
           <input id="mapTableSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: สถานที่, ถนน, ตำบล, สาเหตุ, อาการ, วันที่..." oninput="state.mapTablePage=1;renderMapTable()">
           <div id="mapTable"></div></div>
       </section>
@@ -458,7 +462,8 @@
         <div class="page-head"><div class="page-icon"><i class="fa-solid fa-user-check"></i></div><div><h2>อนุมัติสิทธิ์ผู้ลงทะเบียน</h2><p>สำหรับผู้ดูแลระบบ · กดอนุมัติ/ระงับสิทธิ์การใช้งานของเจ้าหน้าที่</p></div></div>
         <div class="card">
           <h3 class="card-title"><i class="fa-solid fa-users"></i> รายชื่อผู้ลงทะเบียน <span id="adminTotal" class="pill">0 นาย</span>
-            <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="loadAdminList()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+            <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="exportOfficerCsv()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
+            <button class="btn btn-soft btn-sm" type="button" onclick="loadAdminList()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
           <div id="adminTable"><div class="loading-skeleton"></div></div>
         </div>
       </section>
@@ -468,7 +473,8 @@
         <div class="page-head"><div class="page-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div><h2>จัดการจุดเสี่ยงที่ประชาชนแจ้ง</h2><p>อัปเดตสถานะและบันทึกผลการดำเนินการ · แสดงผลให้ประชาชนเห็นทันที</p></div></div>
         <div class="card">
           <h3 class="card-title"><i class="fa-solid fa-list-check"></i> รายการจุดเสี่ยง <span id="riskTotal" class="pill">0 จุด</span>
-            <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="loadRiskManage()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+            <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="exportRiskCsv()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
+            <button class="btn btn-soft btn-sm" type="button" onclick="loadRiskManage()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
           <div id="riskManageTable"><div class="loading-skeleton"></div></div>
         </div>
       </section>
@@ -506,7 +512,8 @@
         </div>
         <div class="card">
           <h3 class="card-title"><i class="fa-solid fa-table-list"></i> ข้อมูลทั้งหมด <span id="deathTotal" class="pill">0 ราย</span>
-            <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="loadDeathList()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+            <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="exportDeathCsv()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
+            <button class="btn btn-soft btn-sm" type="button" onclick="loadDeathList()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
           <input id="deathSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ปี, เดือน, ตำบล, สาเหตุ, เพศ, อายุ, ประเภทรถ..." oninput="renderDeathList()">
           <div id="deathListTable"><div class="loading-skeleton"></div></div>
         </div>
@@ -877,7 +884,7 @@
         else if (severity === 'ไม่บาดเจ็บ') markerType = 'green';
         const p1 = row.party1 || {}; const p2 = row.party2 || {};
         return {
-          id: row.accident_code || ('#'+row.id), date: formatThaiDateTimeStr(row.incident_datetime),
+          id: row.accident_code || ('#'+row.id), rowId: row.id, date: formatThaiDateTimeStr(row.incident_datetime),
           ts: row.incident_datetime,
           latitude: Number(row.latitude), longitude: Number(row.longitude), markerType,
           place: row.place || '', road: row.road || '', roadCharacter: row.road_character || '',
@@ -981,6 +988,7 @@
       document.getElementById('deathsNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminMenuTab').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.querySelector('.mobile-tabbar').classList.toggle('admin-mode', !!state.user.isAdmin);
+      updateAdminBadges();
       openPage('home', document.querySelector('[data-page="home"]'));
     }
 
@@ -1089,13 +1097,33 @@
       if (adminMenuTab) adminMenuTab.classList.toggle('active', ['admin','riskmanage','deaths'].includes(page));
     }
 
+    // ตัวเลขงานค้างบนเมนูผู้ดูแล (รออนุมัติสิทธิ์ + จุดเสี่ยงที่ยังไม่ตอบรับ)
+    async function updateAdminBadges() {
+      if (!state.user || !state.user.isAdmin || !state.token) return;
+      try {
+        const [offRes, riskRes] = await Promise.all([
+          rpc('officer_list_registrations', { p_token: state.token }),
+          db.from('risk_points').select('*', { count:'exact', head:true }).eq('status', 'ยังไม่ได้ดำเนินการ')
+        ]);
+        const pendingOfficers = offRes.success ? (offRes.data || []).filter(r => r.status !== 'อนุมัติสิทธิ์').length : 0;
+        const pendingRisk = riskRes.count || 0;
+        state.badges = { officers: pendingOfficers, risk: pendingRisk };
+        const setBadge = (id, n) => { const el = document.getElementById(id); if (el) { el.textContent = n; el.style.display = n > 0 ? 'inline-grid' : 'none'; } };
+        setBadge('badgeApprove', pendingOfficers);
+        setBadge('badgeRisk', pendingRisk);
+        setBadge('badgeAdminTab', pendingOfficers + pendingRisk);
+      } catch (e) { /* เงียบไว้ ไม่กวนการใช้งาน */ }
+    }
+
     // เมนูย่อยผู้ดูแลบนมือถือ (แถบล่างปุ่มเดียว ไม่เบียดแท็บอื่น)
     function openAdminMenu() {
+      const b = state.badges || {};
+      const cnt = n => n > 0 ? ' <span class="menu-badge" style="margin-left:6px">' + n + '</span>' : '';
       Swal.fire({
         title: '<i class="fa-solid fa-shield-halved" style="color:#7c3aed"></i> เมนูผู้ดูแลระบบ',
         html: '<div style="display:grid;gap:10px;text-align:left">' +
-          '<button class="btn btn-soft" style="justify-content:flex-start;width:100%" onclick="adminMenuGo(\'admin\')"><i class="fa-solid fa-user-check" style="color:#7c3aed"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน</button>' +
-          '<button class="btn btn-soft" style="justify-content:flex-start;width:100%" onclick="adminMenuGo(\'riskmanage\')"><i class="fa-solid fa-triangle-exclamation" style="color:#7c3aed"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง</button>' +
+          '<button class="btn btn-soft" style="justify-content:flex-start;width:100%" onclick="adminMenuGo(\'admin\')"><i class="fa-solid fa-user-check" style="color:#7c3aed"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน' + cnt(b.officers) + '</button>' +
+          '<button class="btn btn-soft" style="justify-content:flex-start;width:100%" onclick="adminMenuGo(\'riskmanage\')"><i class="fa-solid fa-triangle-exclamation" style="color:#7c3aed"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง' + cnt(b.risk) + '</button>' +
           '<button class="btn btn-soft" style="justify-content:flex-start;width:100%" onclick="adminMenuGo(\'deaths\')"><i class="fa-solid fa-skull-crossbones" style="color:#7c3aed"></i> บันทึกข้อมูลผู้เสียชีวิต</button>' +
           '</div>',
         showConfirmButton: false, showCloseButton: true, width: 400
@@ -1182,6 +1210,7 @@
               '<td>' + riskStatusBadge(r.status) + '</td>' +
               '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="openRiskActionDialog(' + r.id + ')"><i class="fa-solid fa-reply"></i> ตอบรับ/บันทึกผล</button> ' +
               '<button class="btn btn-soft btn-sm" onclick="viewRiskActions(' + r.id + ')"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติ</button> ' +
+              '<button class="btn btn-soft btn-sm" title="แก้ข้อมูลการแจ้ง" onclick="editRiskReport(' + r.id + ')"><i class="fa-solid fa-pen-to-square"></i> แก้ข้อมูล</button> ' +
               '<button class="btn btn-soft btn-sm" style="color:#c1122f" title="ลบจุดเสี่ยงที่แจ้งผิด" onclick="deleteRiskPoint(' + r.id + ')"><i class="fa-solid fa-trash-can"></i></button></td></tr>';
           }).join('') +
           '</tbody></table></div>' +
@@ -1198,9 +1227,10 @@
                 '<br><i class="fa-regular fa-calendar"></i> ' + escapeHtml(formatThaiDateTimeStr(r.registration_date)) + '</div>' +
               '</div><div>' + riskStatusBadge(r.status) + '</div></div>' +
               (imgs ? '<div class="risk-card-imgs">' + imgs + '</div>' : '') +
-              '<div class="risk-card-actions">' +
+              '<div class="risk-card-actions" style="grid-template-columns:1.4fr 1fr auto auto">' +
                 '<button class="btn btn-primary btn-sm" onclick="openRiskActionDialog(' + r.id + ')"><i class="fa-solid fa-reply"></i> ตอบรับ/บันทึกผล</button>' +
                 '<button class="btn btn-soft btn-sm" onclick="viewRiskActions(' + r.id + ')"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติ</button>' +
+                '<button class="btn btn-soft btn-sm" title="แก้ข้อมูลการแจ้ง" onclick="editRiskReport(' + r.id + ')"><i class="fa-solid fa-pen-to-square"></i></button>' +
                 '<button class="btn btn-soft btn-sm" style="color:#c1122f" onclick="deleteRiskPoint(' + r.id + ')"><i class="fa-solid fa-trash-can"></i></button>' +
               '</div></article>';
           }).join('') +
@@ -1358,6 +1388,7 @@
         }
         await Swal.fire({ icon: 'success', title: rpcResult.message, timer: 1500, showConfirmButton: false });
         loadRiskManage();
+        updateAdminBadges();
       } catch (error) {
         Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message });
       }
@@ -1457,6 +1488,58 @@
       }
     }
 
+    // แก้เนื้อหาการแจ้งของประชาชน (สถานที่/ถนน/หมู่/ตำบล/พิกัด/รายละเอียด/รูป)
+    async function editRiskReport(riskId) {
+      const r = (state.riskPoints || []).find(x => x.id === riskId);
+      if (!r) return;
+      eaInit([r.image1_url, r.image2_url]);
+      const subOptions = subdistrictsFull.map(s => '<option value="' + s + '"' + (s === r.subdistrict ? ' selected' : '') + '>' + s + '</option>').join('');
+      const result = await Swal.fire({
+        title: '<i class="fa-solid fa-pen-to-square"></i> แก้ข้อมูลการแจ้ง เลขที่ #' + r.id,
+        html: '<div style="text-align:left;display:grid;gap:10px;font-size:.9rem">' +
+          '<label>สถานที่ <span style="color:#c1122f">*</span><textarea id="rrLocation" class="swal2-textarea" style="width:100%;margin:4px 0;min-height:70px" maxlength="300">' + escapeHtml(r.location || '') + '</textarea></label>' +
+          '<label>ถนน<input id="rrRoad" class="swal2-input" style="width:100%;margin:4px 0" maxlength="120" value="' + escapeHtml(r.road || '') + '"></label>' +
+          '<label>หมู่<input id="rrVillage" class="swal2-input" style="width:100%;margin:4px 0" inputmode="numeric" maxlength="4" value="' + escapeHtml(r.village || '') + '"></label>' +
+          '<label>ตำบล<select id="rrSubdistrict" class="swal2-select" style="width:100%;margin:4px 0"><option value="">เลือกตำบล</option>' + subOptions + '</select></label>' +
+          '<label>พิกัด (ละติจูด, ลองจิจูด)<input id="rrCoords" class="swal2-input" style="width:100%;margin:4px 0" value="' + escapeHtml(r.coordinates || '') + '" placeholder="15.7051, 100.1372"></label>' +
+          '<label>รายละเอียด<textarea id="rrDetails" class="swal2-textarea" style="width:100%;margin:4px 0;min-height:70px" maxlength="500">' + escapeHtml(r.additional_details || '') + '</textarea></label>' +
+          eaImageHtml('รูปภาพ (กด × เพื่อลบรูปที่ไม่ต้องการ แล้วเพิ่มรูปใหม่ได้ · รวมไม่เกิน 2 ภาพ)') +
+          '</div>',
+        width: 560, confirmButtonText: 'บันทึกการแก้ไข', cancelButtonText: 'ยกเลิก', showCancelButton: true, confirmButtonColor: '#1d4ed8', focusConfirm: false,
+        didOpen: () => eaRender(),
+        preConfirm: () => {
+          const location = document.getElementById('rrLocation').value.trim();
+          if (!location) { Swal.showValidationMessage('กรุณากรอกสถานที่'); return false; }
+          const coords = document.getElementById('rrCoords').value.trim();
+          if (coords && !/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(coords)) { Swal.showValidationMessage('รูปแบบพิกัดไม่ถูกต้อง เช่น 15.7051, 100.1372'); return false; }
+          return {
+            p_location: location,
+            p_road: document.getElementById('rrRoad').value.trim(),
+            p_village: document.getElementById('rrVillage').value.trim(),
+            p_subdistrict: document.getElementById('rrSubdistrict').value,
+            p_coordinates: coords,
+            p_details: document.getElementById('rrDetails').value.trim()
+          };
+        }
+      });
+      if (!result.isConfirmed || !result.value) return;
+      Swal.fire({ title:'กำลังบันทึก...', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+      try {
+        const urls = await eaFinalImages();
+        const rpcResult = await rpc('admin_update_risk_report', Object.assign({
+          p_token: state.token, p_id: riskId, p_image1: urls[0] || null, p_image2: urls[1] || null
+        }, result.value));
+        if (!rpcResult.success) {
+          if (rpcResult.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
+          throw new Error(rpcResult.message || 'บันทึกไม่สำเร็จ');
+        }
+        await Swal.fire({ icon:'success', title:rpcResult.message, timer:1400, showConfirmButton:false });
+        loadRiskManage();
+      } catch (error) {
+        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
+      }
+    }
+
     async function deleteRiskPoint(riskId) {
       const point = (state.riskPoints || []).find(r => r.id === riskId);
       if (!point) return;
@@ -1469,6 +1552,7 @@
         if (!result.success) throw new Error(result.message || 'ลบไม่สำเร็จ');
         await Swal.fire({ icon: 'success', title: result.message, timer: 1200, showConfirmButton: false });
         loadRiskManage();
+        updateAdminBadges();
       } catch (error) {
         Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message });
       }
@@ -1807,6 +1891,7 @@
         }
         await Swal.fire({ icon:'success', title: result.message, timer: 1400, showConfirmButton: false });
         loadAdminList();
+        updateAdminBadges();
       } catch (error) {
         Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text: error.message });
       }
@@ -2065,6 +2150,7 @@
     async function uploadAccidentImages() {
       const urls = [];
       for (const image of state.preparedImages) {
+        if (image.existingUrl) { urls.push(image.existingUrl); continue; } // รูปเดิมตอนแก้ไขเคส — ใช้ URL เดิม
         const ext = image.mimeType === 'image/png' ? 'png' : 'jpg';
         const path = 'accidents/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
         const { error } = await db.storage.from(STORAGE_BUCKET).upload(path, b64ToBlob(image.data, image.mimeType), { contentType: image.mimeType });
@@ -2127,15 +2213,23 @@
       Swal.fire({ title:'กำลังบันทึกข้อมูล', html:'กรุณารอสักครู่ ระบบกำลังบันทึกข้อมูลและอัปโหลดรูปภาพ', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
       try {
         const imageUrls = await uploadAccidentImages();
-        const result = await rpc('officer_save_accident', { p_token: state.token, p_payload: payload, p_images: imageUrls });
+        let result;
+        if (state.editingAccident) {
+          // โหมดแก้ไขเคส (admin)
+          result = await rpc('admin_update_accident', { p_token: state.token, p_id: state.editingAccident.id, p_payload: payload, p_images: imageUrls });
+        } else {
+          result = await rpc('officer_save_accident', { p_token: state.token, p_payload: payload, p_images: imageUrls });
+        }
         if (!result.success) {
           if (result.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
           throw new Error(result.message || 'บันทึกข้อมูลไม่สำเร็จ');
         }
-        await Swal.fire({ icon:'success', title:'บันทึกสำเร็จ', html:'รหัสอุบัติเหตุ<br><strong>' + escapeHtml(result.accidentId) + '</strong>', confirmButtonColor:'#16834b' });
+        const wasEditing = !!state.editingAccident;
+        await Swal.fire({ icon:'success', title: wasEditing ? 'แก้ไขเคสเรียบร้อย' : 'บันทึกสำเร็จ', html:'รหัสอุบัติเหตุ<br><strong>' + escapeHtml(result.accidentId) + '</strong>', confirmButtonColor:'#16834b' });
         resetAccidentForm();
         state.dashboardLoaded = false; state.mapLoaded = false;
         state.accidentRows = null; state.injuryRows = null; state.deathDates = null; state.deathFull = null;
+        if (wasEditing) openPage('map', document.querySelector('[data-page="map"]'));
       } catch (error) {
         await Swal.fire({ icon:'error', title:'บันทึกข้อมูลไม่สำเร็จ', text:error.message });
       }
@@ -2158,6 +2252,109 @@
       document.querySelectorAll('.vehicle-select').forEach(updateVehicleOther);
       updateRoadCharacterOther(); updateParty2Visibility();
       state.selectedLocation = null;
+      // ออกจากโหมดแก้ไขเคส
+      state.editingAccident = null;
+      document.getElementById('cancelEditCaseBtn').style.display = 'none';
+      document.getElementById('accidentSubmitBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล';
+      const head = document.querySelector('#page-accident .page-head h2');
+      if (head) head.textContent = 'บันทึกข้อมูลอุบัติเหตุ';
+    }
+
+    /* ============ ADMIN: แก้ไข/ลบเคสอุบัติเหตุ ============ */
+    async function editAccidentCase(rowId) {
+      const rows = await fetchAccidents();
+      const row = rows.find(r => r.id === rowId);
+      if (!row) { Swal.fire({ icon:'error', title:'ไม่พบเคสนี้' }); return; }
+      openPage('accident', document.querySelector('[data-page="accident"]'));
+      resetAccidentForm();
+      state.editingAccident = row;
+      const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v == null ? '' : v; };
+
+      set('occurredAt', bkkDatetimeLocal(row.incident_datetime));
+      // ข้อมูลยุคเก่าใช้ค่าย่อ (เช่น "หญิง"/"มี") — ลองค่าตรงก่อน ไม่ติดค่อยผ่านตัวแปลง
+      const setSel = (el, raw, normFn) => {
+        if (!el) return false;
+        const candidates = [raw, normFn ? normFn(raw || '') : null].filter(v => v);
+        for (const v of candidates) { el.value = v; if (el.value === v) return true; }
+        el.value = ''; return false;
+      };
+      const byId = id => document.getElementById(id);
+      const fillParty = (prefix, p) => {
+        p = p || {};
+        set(prefix + 'Status', p.status || (prefix === 'p1' ? 'ผู้ขับขี่' : 'ไม่มี'));
+        if (prefix === 'p2') updateParty2Visibility();
+        setSel(byId(prefix + 'Gender'), p.gender, normalizeGender);
+        set(prefix + 'Age', p.age);
+        setSel(byId(prefix + 'License'), p.license, normalizeLicense);
+        setSel(byId(prefix + 'Injury'), p.injury, normalizeInjury);
+        setSel(byId(prefix + 'BodyPart'), p.bodyPart, normalizeBodyPart);
+        setSel(byId(prefix + 'Safety'), p.safety, normalizeSafety);
+        const vOk = setSel(byId(prefix + 'Vehicle'), p.vehicle, normalizeVehicle);
+        if (!vOk && (p.vehicle || '').trim()) { byId(prefix + 'Vehicle').value = 'อื่นๆ'; }
+        updateVehicleOther(byId(prefix + 'Vehicle'));
+        set(prefix + 'VehicleOther', p.vehicleOther || (!vOk && (p.vehicle || '').trim() ? p.vehicle : ''));
+        set(prefix + 'Plate', p.plate); set(prefix + 'Province', p.province);
+        const cards = document.querySelectorAll('#' + prefix + 'Passengers .passenger-card');
+        (Array.isArray(p.passengers) ? p.passengers : []).forEach((ps, i) => {
+          const card = cards[i]; if (!card) return;
+          card.querySelector('.passenger-status').value = 'มี';
+          updatePassengerCard(card);
+          setSel(card.querySelector('.ps-gender'), ps.gender, normalizeGender);
+          card.querySelector('.ps-age').value = ps.age || '';
+          setSel(card.querySelector('.ps-injury'), ps.injury, normalizeInjury);
+          setSel(card.querySelector('.ps-body'), ps.bodyPart, normalizeBodyPart);
+          setSel(card.querySelector('.ps-safety'), ps.safety, normalizeSafety);
+        });
+      };
+      fillParty('p1', row.party1);
+      fillParty('p2', row.party2);
+
+      set('place', row.place);
+      setSel(byId('roadCharacter'), row.road_character, normalizeRoadCharacter); updateRoadCharacterOther();
+      set('roadCharacterOther', row.road_character_other);
+      set('road', row.road);
+      setSel(byId('localAuthority'), row.local_authority, normalizeLocalAuthority);
+      set('subdistrict', row.subdistrict); set('district', row.district || 'เมืองนครสวรรค์');
+      set('locationProvince', row.province || 'นครสวรรค์');
+      setSel(byId('cause'), row.cause, normalizeCause);
+      if (row.latitude != null && row.longitude != null) {
+        set('latitude', Number(row.latitude).toFixed(6));
+        set('longitude', Number(row.longitude).toFixed(6));
+        set('coordinates', Number(row.latitude).toFixed(6) + ', ' + Number(row.longitude).toFixed(6));
+      }
+      set('details', row.details);
+      document.getElementById('detailCount').textContent = String((row.details || '').length);
+      state.preparedImages = normalizeImageUrls(Array.isArray(row.images) ? row.images : [])
+        .map(u => ({ existingUrl: u, preview: u }));
+      renderImagePreviews();
+
+      document.getElementById('cancelEditCaseBtn').style.display = 'inline-flex';
+      document.getElementById('accidentSubmitBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกการแก้ไข';
+      const editHead = document.querySelector('#page-accident .page-head h2');
+      if (editHead) editHead.textContent = 'แก้ไขเคส ' + (row.accident_code || ('#' + row.id));
+      window.scrollTo({ top: 0 });
+    }
+
+    async function deleteAccidentCase(rowId) {
+      const rows = await fetchAccidents();
+      const row = rows.find(r => r.id === rowId);
+      if (!row) return;
+      const confirm = await Swal.fire({
+        icon: 'warning', title: 'ลบเคส ' + (row.accident_code || ('#' + rowId)) + '?',
+        html: '<b>' + escapeHtml(row.place || '-') + '</b><br>' + escapeHtml(formatThaiDateTimeStr(row.incident_datetime)) +
+          '<br><br><span style="font-size:.85rem;color:#64748b">รายการผู้บาดเจ็บที่ระบบสร้างจากเคสนี้จะถูกลบตาม · ทะเบียนผู้เสียชีวิตไม่ถูกแตะ · ลบแล้วกู้คืนไม่ได้</span>',
+        showCancelButton: true, confirmButtonText: 'ลบเคสนี้', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#c1122f'
+      });
+      if (!confirm.isConfirmed) return;
+      try {
+        const result = await rpc('admin_delete_accident', { p_token: state.token, p_id: rowId });
+        if (!result.success) throw new Error(result.message || 'ลบไม่สำเร็จ');
+        await Swal.fire({ icon:'success', title:result.message, timer:1400, showConfirmButton:false });
+        state.accidentRows = null; state.injuryRows = null; state.dashboardLoaded = false; state.mapLoaded = false;
+        loadMapCumulative(); loadMapData();
+      } catch (error) {
+        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
+      }
     }
 
     function valueOf(id) {
@@ -2696,7 +2893,12 @@
             '<td>' + escapeHtml(item.road || '-') + '</td>' +
             '<td>' + markerBadge(item.markerType) + '</td>' +
             '<td><a href="https://www.google.com/maps?q=' + Number(item.latitude).toFixed(6) + ',' + Number(item.longitude).toFixed(6) + '" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:underline dotted" title="เปิดใน Google Maps">' + Number(item.latitude).toFixed(5) + ', ' + Number(item.longitude).toFixed(5) + '</a></td>' +
-            '<td><button class="btn btn-soft btn-sm" onclick="focusMapMarker(' + vi + ')"><i class="fa-solid fa-location-dot"></i> ดูหมุด</button></td></tr>';
+            '<td style="white-space:nowrap"><button class="btn btn-soft btn-sm" onclick="focusMapMarker(' + vi + ')"><i class="fa-solid fa-location-dot"></i> ดูหมุด</button>' +
+            (state.user && state.user.isAdmin && item.rowId
+              ? ' <button class="btn btn-soft btn-sm" onclick="editAccidentCase(' + item.rowId + ')"><i class="fa-solid fa-pen"></i> แก้ไขเคส</button>' +
+                ' <button class="btn btn-soft btn-sm" style="color:#c1122f" title="ลบเคส" onclick="deleteAccidentCase(' + item.rowId + ')"><i class="fa-solid fa-trash-can"></i></button>'
+              : '') +
+            '</td></tr>';
         }).join('') || '<tr><td colspan="6" style="text-align:center;color:#64748b;padding:18px">ไม่พบรายการที่ค้นหา</td></tr>') +
         '</tbody></table></div>' +
         '<div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap">' +
@@ -2782,6 +2984,54 @@
       return /^https:\/\//i.test(text) ? escapeHtml(text) : '';
     }
 
+    /* ============ ส่งออก Excel (CSV เปิดใน Excel ได้ ภาษาไทยไม่เพี้ยน) ============ */
+    function exportCsv(filename, headers, rows) {
+      const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+      const csv = '﻿' + [headers].concat(rows).map(r => r.map(esc).join(',')).join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    function stamp() { return bkkStamp(new Date(), 'day'); }
+
+    function exportMapCsv() {
+      const sevLabel = { red:'เสียชีวิต/หมดสติ/สาหัส', orange:'เสียชีวิต/หมดสติ/สาหัส', yellow:'บาดเจ็บเล็กน้อย', green:'ไม่บาดเจ็บ' };
+      const items = (state.mapView || []).slice().sort((a,b) => new Date(b.ts) - new Date(a.ts));
+      if (!items.length) { Swal.fire({ icon:'info', title:'ไม่มีข้อมูลให้ส่งออก' }); return; }
+      exportCsv('จุดเกิดเหตุ-' + stamp() + '.csv',
+        ['วันเวลาเกิดเหตุ','รหัสเคส','สถานที่','ถนน','ลักษณะทาง','ตำบล','อาการสูงสุด','สาเหตุ','ละติจูด','ลองจิจูด','รายละเอียด'],
+        items.map(i => [i.date, i.id, i.place, i.road, i.roadCharacter, i.subdistrict,
+          sevLabel[i.markerType] || 'ไม่ระบุ', i.cause, i.latitude, i.longitude, i.details]));
+    }
+    function exportRiskCsv() {
+      const rows = state.riskPoints || [];
+      if (!rows.length) { Swal.fire({ icon:'info', title:'ไม่มีข้อมูลให้ส่งออก' }); return; }
+      exportCsv('จุดเสี่ยง-' + stamp() + '.csv',
+        ['เลขที่','วันที่แจ้ง','สถานที่','ถนน','หมู่','ตำบล','อำเภอ','จังหวัด','พิกัด','รายละเอียด','สถานะ'],
+        rows.map(r => [r.id, formatThaiDateTimeStr(r.registration_date), r.location, r.road, r.village,
+          r.subdistrict, r.district, r.province, r.coordinates, r.additional_details, r.status]));
+    }
+    function exportDeathCsv() {
+      const rows = state.deathAllRows || [];
+      if (!rows.length) { Swal.fire({ icon:'info', title:'ไม่มีข้อมูลให้ส่งออก' }); return; }
+      exportCsv('ผู้เสียชีวิต-' + stamp() + '.csv',
+        ['วันเวลาเกิดเหตุ','อายุ','เพศ','สถานะ','ประเภทรถ','อุปกรณ์นิรภัย','อาการ','อวัยวะ','ใบอนุญาต','ลักษณะทาง','สาเหตุ','ประเภททางหลวง','ถนน','ตำบล','พิกัด','ภูมิลำเนา'],
+        rows.map(r => [formatThaiDateTimeStr(r.incident_datetime), r.age, r.gender, r.status, r.vehicle_type,
+          r.safety_equipment, r.col_g, r.col_h, r.license, r.road_type, r.cause, r.col_l,
+          r.road_name, r.subdistrict, r.coordinates, r.domicile]));
+    }
+    function exportOfficerCsv() {
+      const rows = Object.values(state.officerRows || {});
+      if (!rows.length) { Swal.fire({ icon:'info', title:'ไม่มีข้อมูลให้ส่งออก — กดรีเฟรชรายชื่อก่อน' }); return; }
+      exportCsv('เจ้าหน้าที่-' + stamp() + '.csv',
+        ['วันที่ลงทะเบียน','ยศ','ชื่อ','นามสกุล','โทรศัพท์','เลขบัตรประชาชน','ปนพ.','สถานะ','ผู้ดูแลระบบ'],
+        rows.map(r => [formatThaiDateTimeStr(r.registeredAt), r.rank, r.firstName, r.lastName, r.phone,
+          r.nationalId, r.policeCode, r.status, r.isAdmin ? 'ใช่' : '']));
+    }
+
     Object.assign(window, {
       showRegister, showLogin, logout, toggleDrawer, openPage,
       openLocationPicker, closeLocationPicker, useCurrentLocation, confirmLocation,
@@ -2793,7 +3043,8 @@
       saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation,
       renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo,
       renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail, toggleDeathOverlay,
-      editOfficer, delOfficer
+      editOfficer, delOfficer, editAccidentCase, deleteAccidentCase, editRiskReport,
+      updateAdminBadges, exportMapCsv, exportRiskCsv, exportDeathCsv, exportOfficerCsv
     });
   </script>
 
