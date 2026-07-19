@@ -909,8 +909,33 @@
         });
       } catch (e) { deathItems = []; }
 
+      // จับคู่เพื่อการแสดงผลเท่านั้น (ไม่แก้ข้อมูล): ผู้เสียชีวิต ↔ เคสอุบัติเหตุ ระยะ ≤500 ม. เวลา ≤24 ชม.
+      deathItems.forEach(d => {
+        let best = null;
+        items.forEach(a => {
+          const gapH = Math.abs(new Date(a.ts) - new Date(d.ts)) / 3600000;
+          if (gapH > 24) return;
+          const m = distanceMeters(d.latitude, d.longitude, a.latitude, a.longitude);
+          if (m > 500) return;
+          const score = gapH + m / 500;
+          if (!best || score < best.score) best = { score, a, m, gapH };
+        });
+        if (best) {
+          const sevLabel = { red:'เสียชีวิต', orange:'หมดสติ/สาหัส', yellow:'บาดเจ็บเล็กน้อย', green:'ไม่บาดเจ็บ' }[best.a.markerType] || 'ไม่ระบุ';
+          d.pairNote = 'น่าจะเป็นเหตุการณ์เดียวกับเคสอุบัติเหตุ "' + (best.a.place || '-') + '" ' + best.a.date +
+            ' (ในฟอร์มบันทึกไว้เป็น ' + sevLabel + ' · ห่าง ' + Math.round(best.m) + ' ม. / ' + Math.round(best.gapH * 60) + ' นาที)';
+          best.a.pairNote = 'มีผู้เสียชีวิตจากเหตุการณ์นี้ (ทะเบียนผู้เสียชีวิต ' + d.date + ') — อาการในฟอร์มคือสถานะ ณ ที่เกิดเหตุ';
+        }
+      });
+
       // total นับทุกแถวในช่วงวันที่ (รวมที่ไม่มีพิกัด) + ผู้เสียชีวิตในช่วงเดียวกัน
       return { success:true, total: inRange.length + deathItems.length, data: items.concat(deathItems) };
+    }
+
+    function distanceMeters(lat1, lng1, lat2, lng2) {
+      const dx = (lat1 - lat2) * 111320;
+      const dy = (lng1 - lng2) * 111320 * Math.cos(lat1 * Math.PI / 180);
+      return Math.sqrt(dx * dx + dy * dy);
     }
 
     /* ============ Session ============ */
@@ -1491,6 +1516,40 @@
       const coords = values.p_coordinates;
       if (coords && !/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(coords)) {
         Swal.fire({ icon:'warning', title:'รูปแบบพิกัดไม่ถูกต้อง', text:'กรอกเป็น ละติจูด, ลองจิจูด เช่น 15.7051, 100.1372' }); return;
+      }
+      // เช็คเคสอุบัติเหตุใกล้เคียงเพื่อแจ้งให้ทราบเท่านั้น — ไม่แก้ไขข้อมูลใดๆ ทั้งสิ้น
+      if (!state.deathEditId && coords) {
+        try {
+          const parts = coords.split(',');
+          const dLat = parseFloat(parts[0]), dLng = parseFloat(parts[1]);
+          const dTime = new Date(values.p_datetime).getTime();
+          const accRows = await fetchAccidents();
+          let best = null;
+          accRows.forEach(a => {
+            if (!a.latitude || !a.longitude || !a.incident_datetime) return;
+            const gapH = Math.abs(new Date(a.incident_datetime).getTime() - dTime) / 3600000;
+            if (gapH > 24) return;
+            const m = distanceMeters(dLat, dLng, Number(a.latitude), Number(a.longitude));
+            if (m > 500) return;
+            const score = gapH + m / 500;
+            if (!best || score < best.score) best = { score, a, m, gapH };
+          });
+          if (best) {
+            const sev = worstSeverityOf(best.a) || 'ไม่ระบุ';
+            const goOn = await Swal.fire({
+              icon: 'info',
+              title: 'พบเคสอุบัติเหตุที่น่าจะเป็นเหตุการณ์เดียวกัน',
+              html: '<div style="text-align:left;font-size:.9rem">' +
+                '<div style="background:#f1f5f9;border-radius:12px;padding:10px 12px;margin-bottom:8px">' +
+                '<b>' + escapeHtml(best.a.place || '-') + '</b><br>' +
+                escapeHtml(formatThaiDateTimeStr(best.a.incident_datetime)) + ' · อาการในฟอร์ม: <b>' + escapeHtml(sev) + '</b><br>' +
+                'ห่างจากจุดที่กรอก ' + Math.round(best.m) + ' เมตร / ' + Math.round(best.gapH * 60) + ' นาที</div>' +
+                'ระบบจะบันทึกลงทะเบียนผู้เสียชีวิตตามปกติ <b>โดยไม่แก้ไขเคสอุบัติเหตุเดิม</b> และแผนที่จะแสดงป้ายเชื่อมโยงสองรายการนี้ให้เอง</div>',
+              showCancelButton: true, confirmButtonText: 'บันทึกต่อ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#16834b'
+            });
+            if (!goOn.isConfirmed) return;
+          }
+        } catch (e) { /* เช็คไม่ได้ก็บันทึกตามปกติ */ }
       }
       Swal.fire({ title:'กำลังบันทึก...', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
       try {
@@ -2470,7 +2529,9 @@
           row('อุปกรณ์นิรภัย', r.safety_equipment) + row('อาการ', r.col_g) +
           row('ลักษณะทาง', r.road_type) + row('สาเหตุ', r.cause) +
           row('ถนน', r.road_name) + row('ตำบล', r.subdistrict) + row('ภูมิลำเนา', r.domicile) +
-          '</div></div>';
+          '</div>' +
+          (item.pairNote ? '<div style="margin-top:8px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;font-size:.75rem;color:#9a3412"><i class="fa-solid fa-link"></i> ' + escapeHtml(item.pairNote) + '</div>' : '') +
+          '</div>';
       }
       const party = function(p) {
         return '<div class="popup-party"><strong>' + escapeHtml(p.label) + '</strong>' +
@@ -2495,6 +2556,7 @@
         '<br><b>ตำบล:</b> ' + escapeHtml(item.subdistrict || '-') +
         '<br><b>พิกัด:</b> ' + Number(item.latitude).toFixed(6) + ', ' + Number(item.longitude).toFixed(6) +
         '<br><b>สาเหตุเบื้องต้น:</b> ' + escapeHtml(item.cause || '-') + '</div>' +
+        (item.pairNote ? '<div style="margin-top:8px;padding:8px 10px;background:#fee2e2;border:1px solid #fecaca;border-radius:10px;font-size:.75rem;color:#991b1b;font-weight:700"><i class="fa-solid fa-skull-crossbones"></i> ' + escapeHtml(item.pairNote) + '</div>' : '') +
         (images ? '<div class="popup-images">' + images + '</div>' : '') + '</div>';
     }
     // ตารางจุดเกิดเหตุ: ค้นหา + เรียงตามวันเวลา + แบ่งหน้า หน้าละ 20 รายการ
