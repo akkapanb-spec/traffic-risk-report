@@ -856,6 +856,8 @@ async function refreshData() {
     const { data, error } = await sb.from('risk_points').select('*').order('registration_date', { ascending: true });
     if (error) throw new Error(error.message);
 
+    window.__riskRows = data || []; // เก็บข้อมูลดิบไว้ให้ popup รายละเอียด
+
     // แปลงเป็นรูปแบบแถวแบบชีตเดิม เพื่อให้โค้ดแสดงผลเดิมทำงานได้ 100%
     const records = (data || []).map(r => [
       formatThaiDateTimeStr(r.registration_date), r.location || '', r.road || '', r.village || '',
@@ -950,6 +952,47 @@ function showImageModal(imageUrl) {
     customClass: {
       image: 'max-h-[85vh] object-contain rounded-lg shadow-xl'
     }
+  });
+}
+
+// popup รายละเอียดจุดเสี่ยงที่แจ้ง (คลิกจากชื่อสถานที่)
+function showRiskDetails(riskId) {
+  const r = (window.__riskRows || []).find(x => x.id === riskId);
+  if (!r) return;
+  const esc = v6EscapeHTML;
+  const row = (label, value) => value ? '<tr><td class="py-1 pr-3 font-semibold text-gray-600 align-top whitespace-nowrap">' + label + '</td><td class="py-1 text-gray-800">' + esc(value) + '</td></tr>' : '';
+  const coords = (r.coordinates || '').trim();
+  const mapLink = coords && coords.includes(',')
+    ? '<a href="https://www.google.com/maps?q=' + encodeURIComponent(coords) + '" target="_blank" class="text-blue-600 underline"><i class="fas fa-map-marked-alt mr-1"></i>' + esc(coords) + '</a>'
+    : '';
+  const imgs = [r.image1_url, r.image2_url].filter(Boolean)
+    .map(u => '<img src="' + esc(u) + '" class="w-32 h-32 object-cover rounded-lg shadow img-clickable" onclick="showImageModal(\'' + esc(u) + '\')" title="คลิกเพื่อขยาย">').join(' ');
+  const status = r.status || 'ยังไม่ได้ดำเนินการ';
+  Swal.fire({
+    title: 'รายละเอียดการแจ้ง เลขที่ #' + r.id,
+    html: '<div class="text-left text-sm">' +
+      '<table class="w-full">' +
+      row('วันที่แจ้ง', formatThaiDateTimeStr(r.registration_date)) +
+      row('สถานที่', r.location) +
+      row('ถนน', r.road) +
+      row('หมู่', r.village) +
+      row('ตำบล', r.subdistrict) +
+      row('อำเภอ', r.district) +
+      row('จังหวัด', r.province) +
+      (mapLink ? '<tr><td class="py-1 pr-3 font-semibold text-gray-600 whitespace-nowrap">พิกัด</td><td class="py-1">' + mapLink + '</td></tr>' : '') +
+      '<tr><td class="py-1 pr-3 font-semibold text-gray-600 whitespace-nowrap">สถานะ</td><td class="py-1"><span class="px-3 py-1 rounded-full text-xs font-semibold ' + getStatusColor(status) + '">' + esc(status) + '</span></td></tr>' +
+      '</table>' +
+      (r.additional_details ? '<div class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100"><div class="font-semibold text-gray-700 mb-1"><i class="fas fa-info-circle mr-1 text-blue-500"></i>รายละเอียดที่แจ้ง</div>' + esc(r.additional_details) + '</div>' : '') +
+      (imgs ? '<div class="mt-3 flex gap-2 flex-wrap">' + imgs + '</div>' : '') +
+      '</div>',
+    width: 560,
+    showConfirmButton: true,
+    confirmButtonText: 'ปิด',
+    showDenyButton: true,
+    denyButtonText: 'ดูการดำเนินการ',
+    customClass: { denyButton: 'bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold' }
+  }).then(result => {
+    if (result.isDenied) showStatusDetails(r.location || '', r.road || '', r.id);
   });
 }
 
@@ -1579,7 +1622,7 @@ function displayRiskData(data) {
   tableBody.innerHTML = rows.map(r => `
     <tr class="border-b hover:bg-gray-50 transition-colors duration-200">
       <td class="px-4 py-3 whitespace-nowrap">${v6EscapeHTML(formatThaiDateTimeStr(r.dDate))}</td>
-      <td class="px-4 py-3">${v6EscapeHTML(r.dLoc)}</td>
+      <td class="px-4 py-3"><a href="javascript:void(0)" onclick="showRiskDetails(${r.dId})" class="text-blue-700 font-semibold hover:underline" title="คลิกดูรายละเอียดที่แจ้ง"><i class="fas fa-circle-info mr-1 text-blue-400"></i>${v6EscapeHTML(r.dLoc)}</a></td>
       <td class="px-4 py-3">${v6EscapeHTML(r.dRoad)}</td>
       <td class="px-4 py-3">${v6EscapeHTML(r.dVillage)}</td>
       <td class="px-4 py-3">${v6EscapeHTML(r.dSub)}</td>
@@ -1597,7 +1640,7 @@ function displayRiskData(data) {
   mobileWrap.innerHTML = rows.map(r => `
     <article class="v6-risk-card">
       <div class="v6-risk-card__top">
-        <div class="v6-risk-card__title">${v6EscapeHTML(r.dLoc)}</div>
+        <div class="v6-risk-card__title" onclick="showRiskDetails(${r.dId})" style="cursor:pointer;color:#1d4ed8" title="คลิกดูรายละเอียดที่แจ้ง"><i class="fas fa-circle-info mr-1"></i>${v6EscapeHTML(r.dLoc)}</div>
         <div class="v6-risk-card__date">${v6EscapeHTML(formatThaiDateTimeStr(r.dDate))}</div>
       </div>
       <div class="v6-risk-card__grid">

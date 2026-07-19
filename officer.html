@@ -1038,7 +1038,7 @@
               .map(u => '<a href="' + escapeHtml(u) + '" target="_blank"><img src="' + escapeHtml(u) + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px"></a>').join(' ') || '-';
             return '<tr><td><b>#' + r.id + '</b></td>' +
               '<td>' + escapeHtml(formatThaiDateTimeStr(r.registration_date)) + '</td>' +
-              '<td style="max-width:220px">' + escapeHtml(r.location || '-') + '</td>' +
+              '<td style="max-width:220px"><a href="javascript:void(0)" onclick="viewRiskDetail(' + r.id + ')" style="color:var(--blue);font-weight:700;text-decoration:underline dotted" title="ดูรายละเอียดที่ประชาชนแจ้ง">' + escapeHtml(r.location || '-') + '</a></td>' +
               '<td>' + escapeHtml(r.road || '-') + '</td>' +
               '<td>' + escapeHtml(r.subdistrict || '-') + '</td>' +
               '<td>' + imgs + '</td>' +
@@ -1056,7 +1056,7 @@
             return '<article class="risk-card">' +
               '<div class="risk-card-head"><div>' +
                 '<span class="risk-card-no">เลขที่ #' + r.id + '</span>' +
-                '<div class="risk-card-title">' + escapeHtml(r.location || '-') + '</div>' +
+                '<div class="risk-card-title" onclick="viewRiskDetail(' + r.id + ')" style="cursor:pointer;color:var(--blue)" title="ดูรายละเอียดที่ประชาชนแจ้ง"><i class="fa-solid fa-circle-info"></i> ' + escapeHtml(r.location || '-') + '</div>' +
                 '<div class="risk-card-meta"><i class="fa-solid fa-road"></i> ' + escapeHtml(r.road || '-') + ' · ต.' + escapeHtml(r.subdistrict || '-') +
                 '<br><i class="fa-regular fa-calendar"></i> ' + escapeHtml(formatThaiDateTimeStr(r.registration_date)) + '</div>' +
               '</div><div>' + riskStatusBadge(r.status) + '</div></div>' +
@@ -1128,6 +1128,42 @@
         urls.push(db.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl);
       }
       return urls.slice(0, 2);
+    }
+
+    // popup รายละเอียดที่ประชาชนแจ้ง (คลิกจากชื่อสถานที่)
+    function viewRiskDetail(riskId) {
+      const r = (state.riskPoints || []).find(x => x.id === riskId);
+      if (!r) return;
+      const row = (label, value) => value ? '<tr><td style="padding:4px 12px 4px 0;font-weight:700;color:#475569;white-space:nowrap;vertical-align:top">' + label + '</td><td style="padding:4px 0;color:#1f2a3d">' + escapeHtml(value) + '</td></tr>' : '';
+      const coords = (r.coordinates || '').trim();
+      const mapLink = coords && coords.includes(',')
+        ? '<a href="https://www.google.com/maps?q=' + encodeURIComponent(coords) + '" target="_blank" style="color:var(--blue);text-decoration:underline"><i class="fa-solid fa-map-location-dot"></i> ' + escapeHtml(coords) + '</a>'
+        : '';
+      const imgs = [r.image1_url, r.image2_url].filter(Boolean)
+        .map(u => '<a href="' + escapeHtml(u) + '" target="_blank"><img src="' + escapeHtml(u) + '" style="width:130px;height:130px;object-fit:cover;border-radius:12px;border:1px solid var(--line)"></a>').join(' ');
+      Swal.fire({
+        title: 'รายละเอียดการแจ้ง เลขที่ #' + r.id,
+        html: '<div style="text-align:left;font-size:.9rem">' +
+          '<table style="width:100%;border-collapse:collapse">' +
+          row('วันที่แจ้ง', formatThaiDateTimeStr(r.registration_date)) +
+          row('สถานที่', r.location) +
+          row('ถนน', r.road) +
+          row('หมู่', r.village) +
+          row('ตำบล', r.subdistrict) +
+          row('อำเภอ', r.district) +
+          row('จังหวัด', r.province) +
+          (mapLink ? '<tr><td style="padding:4px 12px 4px 0;font-weight:700;color:#475569;white-space:nowrap">พิกัด</td><td style="padding:4px 0">' + mapLink + '</td></tr>' : '') +
+          '<tr><td style="padding:4px 12px 4px 0;font-weight:700;color:#475569;white-space:nowrap">สถานะ</td><td style="padding:4px 0">' + riskStatusBadge(r.status) + '</td></tr>' +
+          '</table>' +
+          (r.additional_details ? '<div style="margin-top:10px;padding:10px 12px;background:#eff6ff;border:1px solid #dbeafe;border-radius:12px"><div style="font-weight:800;color:#334155;margin-bottom:4px"><i class="fa-solid fa-circle-info" style="color:var(--blue)"></i> รายละเอียดที่ประชาชนแจ้ง</div>' + escapeHtml(r.additional_details) + '</div>' : '') +
+          (imgs ? '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' + imgs + '</div>' : '') +
+          '</div>',
+        width: 580,
+        showConfirmButton: true, confirmButtonText: 'ปิด',
+        showDenyButton: true, denyButtonText: 'ตอบรับ/บันทึกผล', denyButtonColor: '#1d4ed8'
+      }).then(result => {
+        if (result.isDenied) openRiskActionDialog(riskId);
+      });
     }
 
     async function openRiskActionDialog(riskId) {
@@ -2187,7 +2223,7 @@
       setMapFilter, loadAdminList, setApproval,
       loadRiskManage, openRiskActionDialog, viewRiskActions,
       editRiskAction, deleteRiskAction, deleteRiskPoint,
-      eaRemove, eaAddFiles
+      eaRemove, eaAddFiles, viewRiskDetail
     });
   </script>
 
