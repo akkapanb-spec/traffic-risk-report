@@ -443,7 +443,9 @@
           </div>
           <div id="accidentMap" class="map-main"></div>
         </div>
-        <div class="card"><h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการจุดเกิดเหตุ</h3><div id="mapTable"></div></div>
+        <div class="card"><h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการจุดเกิดเหตุ</h3>
+          <input id="mapTableSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: สถานที่, ถนน, ตำบล, สาเหตุ, อาการ, วันที่..." oninput="state.mapTablePage=1;renderMapTable()">
+          <div id="mapTable"></div></div>
       </section>
 
       <!-- ADMIN: อนุมัติสิทธิ์ผู้ลงทะเบียน -->
@@ -857,6 +859,7 @@
         const p1 = row.party1 || {}; const p2 = row.party2 || {};
         return {
           id: row.accident_code || ('#'+row.id), date: formatThaiDateTimeStr(row.incident_datetime),
+          ts: row.incident_datetime,
           latitude: Number(row.latitude), longitude: Number(row.longitude), markerType,
           place: row.place || '', road: row.road || '', roadCharacter: row.road_character || '',
           roadCharacterOther: row.road_character_other || '', localAuthority: row.local_authority || '',
@@ -2427,19 +2430,83 @@
         '<br><b>สาเหตุเบื้องต้น:</b> ' + escapeHtml(item.cause || '-') + '</div>' +
         (images ? '<div class="popup-images">' + images + '</div>' : '') + '</div>';
     }
-    function renderMapTable(items) {
+    // ตารางจุดเกิดเหตุ: ค้นหา + เรียงตามวันเวลา + แบ่งหน้า หน้าละ 20 รายการ
+    function renderMapTable() {
       const container = document.getElementById('mapTable');
-      if (!items.length) {
-        container.innerHTML = '<div class="empty"><i class="fa-solid fa-map-pin"></i>ไม่พบข้อมูลในช่วงวันที่ที่เลือก</div>'; return;
-      }
-      container.innerHTML = '<div class="table-wrap"><table class="data-table"><thead><tr><th>วันเวลา</th><th>สถานที่</th><th>ถนน</th><th>อาการสูงสุด</th><th>พิกัด</th><th></th></tr></thead><tbody>' + items.map((item,index)=>'<tr><td>' + escapeHtml(item.date||'-') + '</td><td>' + escapeHtml(item.place||'-') + '</td><td>' + escapeHtml(item.road||'-') + '</td><td>' + markerBadge(item.markerType) + '</td><td>' + Number(item.latitude).toFixed(5) + ', ' + Number(item.longitude).toFixed(5) + '</td><td><button class="btn btn-soft btn-sm" onclick="focusMapMarker(' + index + ')"><i class="fa-solid fa-location-dot"></i> ดูหมุด</button></td></tr>').join('') + '</tbody></table></div>';
+      const all = state.mapView || [];
+      if (state.mapTableSort !== 'asc' && state.mapTableSort !== 'desc') state.mapTableSort = 'desc';
+      if (!state.mapTablePage) state.mapTablePage = 1;
+      if (!all.length) { container.innerHTML = '<div class="empty"><i class="fa-solid fa-map-pin"></i>ไม่พบข้อมูลในช่วงวันที่ที่เลือก</div>'; return; }
+
+      const searchEl = document.getElementById('mapTableSearch');
+      const query = ((searchEl && searchEl.value) || '').trim().toLowerCase();
+      let items = !query ? all.slice() : all.filter(item => {
+        const badge = { red:'เสียชีวิต', orange:'หมดสติ สาหัส', yellow:'บาดเจ็บเล็กน้อย', green:'ไม่บาดเจ็บ' }[item.markerType] || '';
+        const hay = [item.date, item.place, item.road, item.roadCharacter, item.localAuthority,
+          item.subdistrict, item.cause, item.details, badge,
+          item.party1 && item.party1.vehicle, item.party2 && item.party2.vehicle].join(' ').toLowerCase();
+        return query.split(/\s+/).every(term => hay.includes(term));
+      });
+      const dir = state.mapTableSort === 'asc' ? 1 : -1;
+      items.sort((a, b) => (new Date(a.ts) - new Date(b.ts)) * dir);
+
+      const perPage = 20;
+      const pages = Math.max(1, Math.ceil(items.length / perPage));
+      if (state.mapTablePage > pages) state.mapTablePage = pages;
+      const page = state.mapTablePage;
+      const slice = items.slice((page - 1) * perPage, page * perPage);
+      const sortArrow = state.mapTableSort === 'asc' ? ' ▲' : ' ▼';
+
+      container.innerHTML =
+        (query ? '<p class="hint" style="margin-top:0">พบ ' + items.length + ' จากทั้งหมด ' + all.length + ' รายการ</p>' : '') +
+        '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+        '<th style="cursor:pointer;white-space:nowrap;user-select:none" title="กดเพื่อสลับเรียงเก่า-ใหม่" onclick="toggleMapTableSort()">วันเวลา' + sortArrow + '</th>' +
+        '<th>สถานที่</th><th>ถนน</th><th>อาการสูงสุด</th><th>พิกัด</th><th></th></tr></thead><tbody>' +
+        (slice.map(item => {
+          const vi = all.indexOf(item);
+          return '<tr><td style="white-space:nowrap">' + escapeHtml(item.date || '-') + '</td>' +
+            '<td><a href="javascript:void(0)" onclick="viewMapItemDetail(' + vi + ')" style="color:var(--blue);font-weight:700;text-decoration:underline dotted" title="ดูรายละเอียดเหตุการณ์">' + escapeHtml(item.place || '-') + '</a></td>' +
+            '<td>' + escapeHtml(item.road || '-') + '</td>' +
+            '<td>' + markerBadge(item.markerType) + '</td>' +
+            '<td>' + Number(item.latitude).toFixed(5) + ', ' + Number(item.longitude).toFixed(5) + '</td>' +
+            '<td><button class="btn btn-soft btn-sm" onclick="focusMapMarker(' + vi + ')"><i class="fa-solid fa-location-dot"></i> ดูหมุด</button></td></tr>';
+        }).join('') || '<tr><td colspan="6" style="text-align:center;color:#64748b;padding:18px">ไม่พบรายการที่ค้นหา</td></tr>') +
+        '</tbody></table></div>' +
+        '<div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap">' +
+        '<span class="hint" style="margin:0">หน้า ' + page + '/' + pages + ' · ' + items.length + ' รายการ</span>' +
+        '<button class="btn btn-soft btn-sm" ' + (page <= 1 ? 'disabled style="opacity:.45"' : '') + ' onclick="mapTableGo(-1)"><i class="fa-solid fa-chevron-left"></i> ก่อนหน้า</button>' +
+        '<button class="btn btn-soft btn-sm" ' + (page >= pages ? 'disabled style="opacity:.45"' : '') + ' onclick="mapTableGo(1)">ถัดไป <i class="fa-solid fa-chevron-right"></i></button>' +
+        '</div>';
+    }
+
+    function toggleMapTableSort() {
+      state.mapTableSort = state.mapTableSort === 'asc' ? 'desc' : 'asc';
+      state.mapTablePage = 1;
+      renderMapTable();
+    }
+    function mapTableGo(delta) {
+      state.mapTablePage = Math.max(1, (state.mapTablePage || 1) + delta);
+      renderMapTable();
+    }
+    function viewMapItemDetail(viewIndex) {
+      const item = (state.mapView || [])[viewIndex];
+      if (!item) return;
+      Swal.fire({
+        title: 'รายละเอียดเหตุการณ์',
+        html: '<div style="text-align:left">' + buildPopup(item) + '</div>',
+        width: 560, confirmButtonText: 'ปิด',
+        showDenyButton: true, denyButtonText: '<i class="fa-solid fa-location-dot"></i> ดูหมุดบนแผนที่', denyButtonColor: '#1d4ed8'
+      }).then(result => {
+        if (result.isDenied) focusMapMarker(viewIndex);
+      });
     }
     // กรองจุดตามสีอาการ: all / red / yellow / green / gray
     function applyMapFilter() {
       const filter = state.mapFilter || 'all';
       state.mapView = filter === 'all' ? state.mapItems : state.mapItems.filter(item => item.markerType === filter);
+      state.mapTablePage = 1;
       renderAccidentMap(state.mapView);
-      renderMapTable(state.mapView);
+      renderMapTable();
       document.getElementById('mapTotal').textContent = filter === 'all'
         ? state.mapTotalAll + ' จุด'
         : state.mapView.length + '/' + state.mapTotalAll + ' จุด';
@@ -2497,7 +2564,8 @@
       editRiskAction, deleteRiskAction, deleteRiskPoint,
       eaRemove, eaAddFiles, viewRiskDetail,
       saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation,
-      renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo
+      renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo,
+      renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail
     });
   </script>
 
