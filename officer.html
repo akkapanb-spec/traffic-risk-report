@@ -324,6 +324,7 @@
         <div class="drawer-section" id="adminSection" style="display:none"><i class="fa-solid fa-shield-halved"></i> เมนูผู้ดูแลระบบ</div>
         <button class="nav-btn admin-item" data-page="admin" id="adminNavBtn" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน</button>
         <button class="nav-btn admin-item" data-page="riskmanage" id="riskNavBtn" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง</button>
+        <button class="nav-btn admin-item" data-page="deaths" id="deathsNavBtn" style="display:none" onclick="openPage('deaths',this)"><i class="fa-solid fa-skull-crossbones"></i> บันทึกข้อมูลผู้เสียชีวิต</button>
       </nav>
     </aside>
 
@@ -465,6 +466,42 @@
           <div id="riskManageTable"><div class="loading-skeleton"></div></div>
         </div>
       </section>
+
+      <!-- ADMIN: บันทึกข้อมูลผู้เสียชีวิต -->
+      <section id="page-deaths" class="page">
+        <div class="page-head"><div class="page-icon"><i class="fa-solid fa-skull-crossbones"></i></div><div><h2>บันทึกข้อมูลผู้เสียชีวิต</h2><p>สำหรับผู้ดูแลระบบ · ข้อมูลแสดงในสถิติและแผนที่หน้าประชาชนทันที</p></div></div>
+        <div class="card">
+          <h3 class="card-title" id="deathFormTitle"><i class="fa-solid fa-file-circle-plus"></i> เพิ่มข้อมูลผู้เสียชีวิต</h3>
+          <form id="deathForm" class="form-grid" onsubmit="return false">
+            <div class="field span-6"><label>วันที่และเวลาเกิดเหตุ <span class="req">*</span></label><input id="dfDatetime" class="input" type="datetime-local" required></div>
+            <div class="field span-6"><label>อายุ (ปี) <span class="req">*</span></label><input id="dfAge" class="input" type="number" min="0" max="120" inputmode="numeric"></div>
+            <div class="field span-6"><label>เพศ</label><select id="dfGender" class="select"><option value="">เลือกเพศ</option><option>ชาย</option><option>หญิง</option></select></div>
+            <div class="field span-6"><label>สถานะ</label><select id="dfStatus" class="select"><option value="">เลือกสถานะ</option><option>ผู้ขับขี่</option><option>ผู้โดยสาร</option><option>คนเดินเท้า</option></select></div>
+            <div class="field span-6"><label>ประเภทรถ</label><select id="dfVehicle" class="select"><option value="">เลือกประเภทรถ</option><option>จักรยานยนต์</option><option>รถยนต์เก๋ง</option><option>รถยนต์กระบะ</option><option>รถตู้</option><option>รถบรรทุก 6 ล้อขึ้นไป</option><option>รถบรรทุกพ่วง/เทรลเลอร์</option><option>อื่นๆ ให้ระบุ</option></select></div>
+            <div class="field span-6"><label>อุปกรณ์นิรภัย</label><select id="dfSafety" class="select"><option value="">เลือกอุปกรณ์นิรภัย</option><option>สวมหมวกนิรภัย</option><option>ไม่สวมหมวกนิรภัย</option><option>คาดเข็มขัดนิรภัย</option><option>ไม่คาดเข็มขัดนิรภัย</option><option>อื่นๆ</option></select></div>
+            <div class="field span-6"><label>อาการบาดเจ็บ</label><select id="dfInjury" class="select"><option value="">เลือกอาการ</option><option>เสียชีวิตที่เกิดเหตุ</option><option>เสียชีวิตโรงพยาบาล</option></select></div>
+            <div class="field span-6"><label>อวัยวะบาดเจ็บ</label><select id="dfBody" class="select"><option value="">เลือกอวัยวะ</option><option>ลำคอ-ศีรษะ</option><option>ลำตัว</option><option>แขน-ขา</option><option>หลายส่วน</option><option>อื่นๆ</option></select></div>
+            <div class="field span-6"><label>ใบอนุญาตขับขี่</label><select id="dfLicense" class="select"><option value="">เลือก</option><option>มีใบอนุญาต</option><option>ไม่มีใบอนุญาต</option><option>ผู้โดยสาร</option><option>เดินเท้า</option></select></div>
+            <div class="field span-6"><label>ลักษณะทาง</label><select id="dfRoadType" class="select"><option value="">เลือกลักษณะทาง</option><option>ทางตรง</option><option>ทางโค้ง</option><option>ทางร่วมทางแยก</option><option>จุดกลับรถ</option><option>ทางแยกมีสัญญาณไฟ</option><option>สะพาน</option><option>อื่นๆ</option></select></div>
+            <div class="field span-6"><label>สาเหตุ</label><select id="dfCause" class="select"><option value="">เลือกสาเหตุ</option><option>เมา</option><option>เร็ว</option><option>ฝ่าฝืนสัญญาณไฟ</option><option>เปลี่ยนช่องทางเดินรถ/ตัดหน้ากระชั้นชิด</option><option>แซงในที่คับขัน</option><option>หลับใน</option><option>ทัศนวิสัยไม่ดี</option><option>ย้อนศร</option><option>ขาดความระมัดระวัง</option><option>อื่นๆ</option></select></div>
+            <div class="field span-6"><label>ประเภททางหลวง</label><select id="dfHighway" class="select"><option value="">เลือกประเภท</option><option>ทล.แผ่นดิน</option><option>ทล.ชนบท</option><option>ทล.อปท.</option></select></div>
+            <div class="field span-6"><label>ถนน</label><input id="dfRoadName" class="input" list="dfRoadList" placeholder="เช่น ทล.1 /ในเขตเทศบาลนคร">
+              <datalist id="dfRoadList"><option value="ทล.1 /ในเขตเทศบาลนคร"></option><option value="ทล.1 /ในเขตเทศบาลหนองเบน"></option><option value="ทล.1 /นอกเขตเทศบาล"></option><option value="ทล.117/ในเขตเทศบาลนคร"></option><option value="ทล.122"></option><option value="ทล.1072 /นอกเขตเทศบาล"></option><option value="ทล.1182 /นอกเขตเทศบาล"></option><option value="ทล.1182 /ในเขตเทศบาล"></option><option value="ทล.3005 /ในเขตเทศบาล"></option><option value="ทล.3005 /นอกเขตเทศบาล"></option><option value="นว..1120 /ในเขตเทศบาลนคร"></option><option value="อปท.เทศบาลนคร"></option><option value="อปท.นอกเขตเทศบาล"></option></datalist></div>
+            <div class="field span-6"><label>ตำบล</label><select id="dfSubdistrict" class="select"><option value="">เลือกตำบล</option></select></div>
+            <div class="field span-6"><label>พิกัด (ละติจูด, ลองจิจูด)</label><div style="display:flex;gap:8px"><input id="dfCoords" class="input" style="flex:1" placeholder="15.7051, 100.1372"><button class="btn btn-soft" type="button" onclick="dfUseCurrentLocation()" title="ใช้ตำแหน่งปัจจุบัน"><i class="fa-solid fa-crosshairs"></i></button></div></div>
+            <div class="field span-6"><label>ภูมิลำเนา</label><select id="dfDomicile" class="select"><option value="">เลือก</option><option>ในพื้นที่/จว.</option><option>นอกพื้นที่</option><option>อยู่ระหว่างตรวจสอบ</option><option>ไม่ระบุ</option></select></div>
+            <div class="field span-12" style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-primary" type="button" id="deathSaveBtn" onclick="saveDeath()"><i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล</button>
+              <button class="btn btn-soft" type="button" id="deathCancelBtn" style="display:none" onclick="resetDeathForm()"><i class="fa-solid fa-xmark"></i> ยกเลิกการแก้ไข</button>
+            </div>
+          </form>
+        </div>
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการล่าสุด <span id="deathTotal" class="pill">0 ราย</span>
+            <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="loadDeathList()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+          <div id="deathListTable"><div class="loading-skeleton"></div></div>
+        </div>
+      </section>
     </main>
   </section>
 
@@ -511,6 +548,8 @@
     const vehicles = ['รถจักรยานยนต์','รถยนต์เก๋ง','รถยนต์กระบะ','รถบรรทุก 6 ล้อ','รถบรรทุก 10 ล้อ','รถบรรทุกพ่วง','อื่นๆ'];
     const roadCharacters = ['ทางตรง','ทางโค้ง','ทางแยก','ทางร่วม','จุดกลับรถ','ทางคู่ขนาน','ทางแคบ (กว้างไม่ถึง 7 ม.)','สะพาน','ทางม้าลาย','อื่นๆ'];
     const subdistricts = ['ปากน้ำโพ','นครสวรรค์ตก','วัดไทรย์','ตะเคียนเลื่อน','หนองกรด','หนองกระโดน','บ้านแก่ง'];
+    // ตำบลครบทั้งอำเภอเมืองนครสวรรค์ (ใช้ในหน้าบันทึกผู้เสียชีวิต)
+    const subdistrictsFull = ['ปากน้ำโพ','นครสวรรค์ตก','นครสวรรค์ออก','วัดไทรย์','ตะเคียนเลื่อน','หนองกรด','หนองกระโดน','บ้านแก่ง','หนองปลิง','กลางแดด','เกรียงไกร','แควใหญ่','บางพระหลวง','พระนอน','บางม่วง','บ้านมะเกลือ','บึงเสนาท'];
     const causes = ['เมาสุรา','ชนท้าย','ตัดหน้า','เปลี่ยนช่องทาง','กลับรถ','ย้อนศร','ฝ่าฝืนสัญญาณไฟ','แซงในที่คับขัน','ทัศนวิสัยแย่','ใช้โทรศัพท์','ขาดความระมัดระวัง','อ่อนล้า/หลับใน','รถขัดข้อง'];
     const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
@@ -866,6 +905,7 @@
       document.getElementById('adminSection').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('riskNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
+      document.getElementById('deathsNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminTabBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('riskTabBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.querySelector('.mobile-tabbar').classList.toggle('admin-mode', !!state.user.isAdmin);
@@ -971,6 +1011,7 @@
       if (page === 'map' && state.accidentMap) setTimeout(() => state.accidentMap.invalidateSize(), 250);
       if (page === 'admin') loadAdminList();
       if (page === 'riskmanage') loadRiskManage();
+      if (page === 'deaths') initDeathPage();
     }
 
     /* ============ ADMIN: อนุมัติสิทธิ์ ============ */
@@ -1335,6 +1376,155 @@
       } catch (error) {
         Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message });
       }
+    }
+
+    /* ============ ADMIN: บันทึกข้อมูลผู้เสียชีวิต ============ */
+    const DEATH_FIELDS = ['dfDatetime','dfAge','dfGender','dfStatus','dfVehicle','dfSafety','dfInjury','dfBody','dfLicense','dfRoadType','dfCause','dfHighway','dfRoadName','dfSubdistrict','dfCoords','dfDomicile'];
+
+    function initDeathPage() {
+      const subSelect = document.getElementById('dfSubdistrict');
+      if (subSelect.options.length <= 1) fillSelect(subSelect, subdistrictsFull, 'เลือกตำบล');
+      if (!document.getElementById('dfDatetime').value) {
+        document.getElementById('dfDatetime').value = datetimeLocalNow();
+      }
+      loadDeathList();
+    }
+
+    function bkkDatetimeLocal(value) {
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleString('sv-SE', { timeZone:'Asia/Bangkok' }).slice(0, 16).replace(' ', 'T');
+    }
+
+    function deathFormValues() {
+      const dt = document.getElementById('dfDatetime').value;
+      return {
+        p_datetime: dt ? dt + ':00+07:00' : null,
+        p_age: document.getElementById('dfAge').value ? Number(document.getElementById('dfAge').value) : null,
+        p_gender: valueOf('dfGender'), p_status: valueOf('dfStatus'),
+        p_vehicle: valueOf('dfVehicle'), p_safety: valueOf('dfSafety'),
+        p_injury: valueOf('dfInjury'), p_body: valueOf('dfBody'),
+        p_license: valueOf('dfLicense'), p_road_type: valueOf('dfRoadType'),
+        p_cause: valueOf('dfCause'), p_highway_type: valueOf('dfHighway'),
+        p_road_name: valueOf('dfRoadName'), p_subdistrict: valueOf('dfSubdistrict'),
+        p_coordinates: valueOf('dfCoords'), p_domicile: valueOf('dfDomicile')
+      };
+    }
+
+    function resetDeathForm() {
+      state.deathEditId = null;
+      DEATH_FIELDS.forEach(id => document.getElementById(id).value = '');
+      document.getElementById('dfDatetime').value = datetimeLocalNow();
+      document.getElementById('deathFormTitle').innerHTML = '<i class="fa-solid fa-file-circle-plus"></i> เพิ่มข้อมูลผู้เสียชีวิต';
+      document.getElementById('deathSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล';
+      document.getElementById('deathCancelBtn').style.display = 'none';
+    }
+
+    async function saveDeath() {
+      const values = deathFormValues();
+      if (!values.p_datetime) { Swal.fire({ icon:'warning', title:'กรุณาระบุวันที่และเวลาเกิดเหตุ' }); return; }
+      const coords = values.p_coordinates;
+      if (coords && !/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(coords)) {
+        Swal.fire({ icon:'warning', title:'รูปแบบพิกัดไม่ถูกต้อง', text:'กรอกเป็น ละติจูด, ลองจิจูด เช่น 15.7051, 100.1372' }); return;
+      }
+      Swal.fire({ title:'กำลังบันทึก...', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+      try {
+        let result;
+        if (state.deathEditId) {
+          result = await rpc('admin_update_death', Object.assign({ p_token: state.token, p_id: state.deathEditId }, values));
+        } else {
+          result = await rpc('admin_add_death', Object.assign({ p_token: state.token }, values));
+        }
+        if (!result.success) {
+          if (result.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
+          throw new Error(result.message || 'บันทึกไม่สำเร็จ');
+        }
+        await Swal.fire({ icon:'success', title:result.message, timer:1400, showConfirmButton:false });
+        resetDeathForm();
+        state.deathDates = null; // ให้สถิติหน้า HOME โหลดใหม่
+        loadDeathList();
+      } catch (error) {
+        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
+      }
+    }
+
+    async function loadDeathList() {
+      const container = document.getElementById('deathListTable');
+      container.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const { count } = await db.from('deaths').select('*', { count:'exact', head:true });
+        const { data, error } = await db.from('deaths').select('*').order('incident_datetime', { ascending:false }).limit(15);
+        if (error) throw new Error(error.message);
+        state.deathRows = {};
+        (data || []).forEach(r => state.deathRows[r.id] = r);
+        document.getElementById('deathTotal').textContent = (count || 0) + ' ราย';
+        container.innerHTML =
+          '<p class="hint" style="margin-top:0">แสดง 15 รายการล่าสุด จากทั้งหมด ' + (count || 0) + ' ราย</p>' +
+          '<div class="table-wrap"><table class="data-table"><thead><tr><th>วันเวลาเกิดเหตุ</th><th>อายุ/เพศ</th><th>สถานะ</th><th>ประเภทรถ</th><th>สาเหตุ</th><th>ตำบล</th><th></th></tr></thead><tbody>' +
+          (data || []).map(r =>
+            '<tr><td>' + escapeHtml(formatThaiDateTimeStr(r.incident_datetime)) + '</td>' +
+            '<td>' + escapeHtml((r.age ?? '-') + ' / ' + (r.gender || '-')) + '</td>' +
+            '<td>' + escapeHtml(r.status || '-') + '</td>' +
+            '<td>' + escapeHtml(r.vehicle_type || '-') + '</td>' +
+            '<td>' + escapeHtml(r.cause || '-') + '</td>' +
+            '<td>' + escapeHtml(r.subdistrict || '-') + '</td>' +
+            '<td style="white-space:nowrap"><button class="btn btn-soft btn-sm" onclick="editDeath(' + r.id + ')"><i class="fa-solid fa-pen"></i> แก้ไข</button> ' +
+            '<button class="btn btn-soft btn-sm" style="color:#c1122f" onclick="deleteDeath(' + r.id + ')"><i class="fa-solid fa-trash-can"></i></button></td></tr>'
+          ).join('') +
+          '</tbody></table></div>';
+      } catch (error) {
+        container.innerHTML = errorBlock(error.message, 'loadDeathList()');
+      }
+    }
+
+    function editDeath(id) {
+      const r = (state.deathRows || {})[id];
+      if (!r) return;
+      state.deathEditId = id;
+      document.getElementById('dfDatetime').value = bkkDatetimeLocal(r.incident_datetime);
+      document.getElementById('dfAge').value = r.age ?? '';
+      document.getElementById('dfGender').value = r.gender || '';
+      document.getElementById('dfStatus').value = r.status || '';
+      document.getElementById('dfVehicle').value = r.vehicle_type || '';
+      document.getElementById('dfSafety').value = r.safety_equipment || '';
+      document.getElementById('dfInjury').value = r.col_g || '';
+      document.getElementById('dfBody').value = r.col_h || '';
+      document.getElementById('dfLicense').value = r.license || '';
+      document.getElementById('dfRoadType').value = r.road_type || '';
+      document.getElementById('dfCause').value = r.cause || '';
+      document.getElementById('dfHighway').value = r.col_l || '';
+      document.getElementById('dfRoadName').value = r.road_name || '';
+      document.getElementById('dfSubdistrict').value = r.subdistrict || '';
+      document.getElementById('dfCoords').value = r.coordinates || '';
+      document.getElementById('dfDomicile').value = r.domicile || '';
+      document.getElementById('deathFormTitle').innerHTML = '<i class="fa-solid fa-pen"></i> แก้ไขข้อมูลผู้เสียชีวิต (รายการ #' + id + ')';
+      document.getElementById('deathSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกการแก้ไข';
+      document.getElementById('deathCancelBtn').style.display = 'inline-flex';
+      document.getElementById('deathForm').scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+
+    async function deleteDeath(id) {
+      const confirm = await Swal.fire({ icon:'warning', title:'ลบข้อมูลรายการ #' + id + '?', text:'ลบแล้วไม่สามารถกู้คืนได้',
+        showCancelButton:true, confirmButtonText:'ลบ', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c1122f' });
+      if (!confirm.isConfirmed) return;
+      try {
+        const result = await rpc('admin_delete_death', { p_token: state.token, p_id: id });
+        if (!result.success) throw new Error(result.message || 'ลบไม่สำเร็จ');
+        await Swal.fire({ icon:'success', title:result.message, timer:1200, showConfirmButton:false });
+        if (state.deathEditId === id) resetDeathForm();
+        state.deathDates = null;
+        loadDeathList();
+      } catch (error) {
+        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
+      }
+    }
+
+    function dfUseCurrentLocation() {
+      if (!navigator.geolocation) { Swal.fire({ icon:'error', title:'เบราว์เซอร์ไม่รองรับ GPS' }); return; }
+      navigator.geolocation.getCurrentPosition(
+        pos => { document.getElementById('dfCoords').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6); },
+        () => Swal.fire({ icon:'error', title:'ไม่สามารถดึงตำแหน่งได้', text:'โปรดอนุญาตการเข้าถึงตำแหน่ง หรือกรอกพิกัดเอง' })
+      );
     }
 
     async function setApproval(nationalId, approve) {
@@ -2225,7 +2415,8 @@
       setMapFilter, loadAdminList, setApproval,
       loadRiskManage, openRiskActionDialog, viewRiskActions,
       editRiskAction, deleteRiskAction, deleteRiskPoint,
-      eaRemove, eaAddFiles, viewRiskDetail
+      eaRemove, eaAddFiles, viewRiskDetail,
+      saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation
     });
   </script>
 
