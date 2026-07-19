@@ -941,6 +941,7 @@ function initRiskMap(data) {
             <strong>สถานที่:</strong> ${locPopup || 'ไม่ระบุ'}<br>
             <strong>ถนน:</strong> ${roadPopup || 'ไม่ระบุ'}<br>
             <strong>สถานะ:</strong> <span style="color:${pinColor};font-weight:700">${statusPopup}</span><br>
+            <strong>พิกัด:</strong> <a href="https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:underline" title="เปิดใน Google Maps">${lat.toFixed(6)}, ${lng.toFixed(6)}</a><br>
             ${imgHtml}
           </div>
         `);
@@ -1574,6 +1575,7 @@ function initDashboardDeathMap(mapData) {
               <p><strong class="text-gray-700">🚗 ประเภทรถ:</strong> ${item.vehicle}</p>
               <p><strong class="text-gray-700">🛡️ อุปกรณ์นิรภัย:</strong> ${item.safety}</p>
               <p><strong class="text-gray-700">📍 ตำบล:</strong> ${item.subdistrict || 'ไม่ระบุ'}</p>
+              <p><strong class="text-gray-700">🗺️ พิกัด:</strong> <a href="https://www.google.com/maps?q=${encodeURIComponent(item.coords)}" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:underline" title="เปิดใน Google Maps">${lat.toFixed(6)}, ${lng.toFixed(6)}</a></p>
             </div>
           </div>
         `);
@@ -1658,7 +1660,7 @@ function displayRiskData(data) {
       <td class="px-4 py-3">${v6EscapeHTML(r.dVillage)}</td>
       <td class="px-4 py-3">${v6EscapeHTML(r.dSub)}</td>
       <td class="px-4 py-3">${v6EscapeHTML(r.dProv)}</td>
-      <td class="px-4 py-3 text-xs text-gray-500">${v6EscapeHTML(r.dCoords)}</td>
+      <td class="px-4 py-3 text-xs">${r.dCoords && r.dCoords.includes(',') ? `<a href="https://www.google.com/maps?q=${encodeURIComponent(r.dCoords)}" target="_blank" rel="noopener" class="text-blue-600 underline" title="เปิดใน Google Maps">${v6EscapeHTML(r.dCoords)}</a>` : `<span class="text-gray-500">${v6EscapeHTML(r.dCoords)}</span>`}</td>
       <td class="px-4 py-3"><div class="flex gap-2 justify-center">${r.imageHtml}</div></td>
       <td class="px-4 py-3 text-center" style="min-width:190px">
         <button onclick="showStatusDetails('${r.safeLoc}', '${r.safeRoad}', ${r.dId})" class="px-4 py-2 rounded-full text-sm font-semibold shadow-md transition-transform transform hover:scale-105 hover:shadow-lg focus:outline-none whitespace-nowrap ${r.statusColorClass}">
@@ -1678,7 +1680,7 @@ function displayRiskData(data) {
         <div><span class="v6-risk-card__label">ถนน:</span> ${v6EscapeHTML(r.dRoad)}</div>
         <div><span class="v6-risk-card__label">หมู่/ตำบล:</span> ${v6EscapeHTML(r.dVillage)} / ${v6EscapeHTML(r.dSub)}</div>
         <div><span class="v6-risk-card__label">จังหวัด:</span> ${v6EscapeHTML(r.dProv)}</div>
-        <div><span class="v6-risk-card__label">พิกัด:</span> ${v6EscapeHTML(r.dCoords)}</div>
+        <div><span class="v6-risk-card__label">พิกัด:</span> ${r.dCoords && r.dCoords.includes(',') ? `<a href="https://www.google.com/maps?q=${encodeURIComponent(r.dCoords)}" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:underline" title="เปิดใน Google Maps">${v6EscapeHTML(r.dCoords)}</a>` : v6EscapeHTML(r.dCoords)}</div>
       </div>
       <div class="v6-risk-images">${r.imageHtml || '<span class="text-sm text-gray-400">ไม่มีรูปภาพ</span>'}</div>
       <button onclick="showStatusDetails('${r.safeLoc}', '${r.safeRoad}', ${r.dId})" class="v6-risk-status ${r.statusColorClass} font-semibold shadow-md">
