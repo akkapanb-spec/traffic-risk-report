@@ -150,6 +150,10 @@ th{font-size:.9rem;white-space:nowrap;}
 td{vertical-align:top;font-size:.92rem;}
 #riskMap{height:420px!important;}
 #dashboardDeathMap{height:min(62vh,620px)!important;min-height:320px;}
+/* ปุ่มเลือกปีในหน้าสถิติผู้เสียชีวิต */
+.death-year-chip{padding:6px 18px;border-radius:9999px;border:2px solid #cbd5e1;background:#fff;color:#475569;font-weight:600;font-size:.875rem;cursor:pointer;transition:all .15s ease;}
+.death-year-chip:hover{border-color:#3b82f6;color:#1d4ed8;}
+.death-year-chip.active{background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-color:#1d4ed8;color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.35);}
 /* dashboard cards */
 #dashboardTab .glass-effect,#deathStatsTab .glass-effect{
   transition:transform .22s ease,box-shadow .22s ease;
@@ -235,6 +239,9 @@ canvas{max-width:100%!important;}
   #riskMap{height:320px!important;margin-top:14px!important;}
   #dashboardDeathMap{height:340px!important;}
   #deathStatsTab .h-\[300px\],#deathStatsTab .h-\[250px\]{height:280px!important;}
+  #deathStartDate,#deathEndDate{flex:1 1 38%;min-width:120px;}
+  #deathYearChips .death-year-chip{padding:6px 13px;}
+  #deathStatsTab .glass-effect button.btn-primary{width:100%;}
   #deathStatsTab .glass-effect{padding:14px!important;}
   #deathStatsTab h3{font-size:1rem!important;line-height:1.35;}
   .swal2-popup{width:96vw!important;margin:0!important;}
@@ -564,14 +571,31 @@ canvas{max-width:100%!important;}
 
     <!-- Death Statistics Tab -->
     <div id="deathStatsTab" style="display: none;">
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
         <h2 class="text-2xl font-bold text-gray-800"><img src="https://img.icons8.com/color/48/000000/death.png" class="w-8 h-8 inline mr-3">สถิติผู้เสียชีวิต</h2>
-        <div class="flex gap-4 items-center">
-          <input type="date" id="deathStartDate" class="form-input px-4 py-2 rounded-lg">
-          <input type="date" id="deathEndDate" class="form-input px-4 py-2 rounded-lg">
-          <button onclick="refreshDeathStatistics()" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold"><img src="https://img.icons8.com/color/48/000000/refresh.png" class="w-5 h-5 inline mr-2">อัปเดต</button>
-          <button onclick="showTab('dashboard', null)" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold"><img src="https://img.icons8.com/color/48/000000/back.png" class="w-5 h-5 inline mr-2">กลับ</button>
+        <button onclick="showTab('dashboard', null)" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold"><img src="https://img.icons8.com/color/48/000000/back.png" class="w-5 h-5 inline mr-2">กลับ</button>
+      </div>
+
+      <!-- ตัวกรองข้อมูล: เลือกปีด่วน หรือกำหนดช่วงวันที่เอง -->
+      <div class="glass-effect rounded-xl p-4 mb-6">
+        <div class="flex flex-wrap items-center gap-2 mb-3" id="deathYearChips">
+          <span class="text-sm font-semibold text-gray-700 mr-1">ดูตามปี:</span>
+          <button class="death-year-chip" data-year="all" onclick="setDeathYear('all')">ทั้งหมด</button>
+          <button class="death-year-chip" data-year="2023" onclick="setDeathYear(2023)">2023</button>
+          <button class="death-year-chip" data-year="2024" onclick="setDeathYear(2024)">2024</button>
+          <button class="death-year-chip" data-year="2025" onclick="setDeathYear(2025)">2025</button>
+          <button class="death-year-chip" data-year="2026" onclick="setDeathYear(2026)">2026</button>
+          <button class="death-year-chip" data-year="2027" onclick="setDeathYear(2027)">2027</button>
         </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-sm font-semibold text-gray-700 mr-1">หรือกำหนดเอง:</span>
+          <label class="text-sm text-gray-600">ตั้งแต่</label>
+          <input type="date" id="deathStartDate" class="form-input px-3 py-2 rounded-lg">
+          <label class="text-sm text-gray-600">ถึง</label>
+          <input type="date" id="deathEndDate" class="form-input px-3 py-2 rounded-lg">
+          <button onclick="refreshDeathStatistics()" class="btn-primary text-white px-5 py-2 rounded-lg font-semibold"><img src="https://img.icons8.com/color/48/000000/refresh.png" class="w-5 h-5 inline mr-1">แสดงข้อมูล</button>
+        </div>
+        <p id="deathRangeInfo" class="text-sm text-gray-600 mt-3 font-medium"></p>
       </div>
 
       <div class="space-y-6">
@@ -619,14 +643,9 @@ canvas{max-width:100%!important;}
         <div class="glass-effect rounded-xl p-6 w-full">
             <h3 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-map-marker-alt text-red-500 mr-2"></i>แผนที่พิกัดผู้เสียชีวิต</h3>
             <div id="dashboardDeathMap" class="w-full h-[600px] rounded-lg shadow-inner border-2 border-gray-200 z-0"></div>
-            <!-- คำอธิบายสีตามปี -->
-            <div class="mt-4 p-4 bg-white rounded-lg shadow-sm text-sm border flex items-center flex-wrap gap-4">
+            <!-- คำอธิบายสีตามปี: แสดงเฉพาะปีที่มีข้อมูลในช่วงที่เลือก พร้อมจำนวนจุด -->
+            <div class="mt-4 p-4 bg-white rounded-lg shadow-sm text-sm border flex items-center flex-wrap gap-4" id="deathMapLegend">
               <p class="font-bold text-gray-800 mr-2">คำอธิบายสี (ปีเกิดเหตุ):</p>
-              <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #ef4444;"></span> 2023</div>
-              <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #3b82f6;"></span> 2024</div>
-              <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #10b981;"></span> 2025</div>
-              <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #f59e0b;"></span> 2026</div>
-              <div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color: #8b5cf6;"></span> 2027</div>
             </div>
         </div>
       </div>
@@ -1252,13 +1271,45 @@ function showDeathStatistics() {
 }
 
 function initializeDeathStatistics() {
-  const currentYear = new Date().getFullYear();
-  document.getElementById('deathStartDate').value = new Date(currentYear, 0, 1).toISOString().split('T')[0];
-  document.getElementById('deathEndDate').value = new Date(currentYear, 11, 31).toISOString().split('T')[0];
+  setDeathYear(new Date().getFullYear());
+}
+
+// เลือกปีด่วน: ตั้งช่วงวันที่ 1 ม.ค. - 31 ธ.ค. ของปีนั้น แล้วโหลดกราฟ+แผนที่ใหม่ทั้งหมด
+function setDeathYear(y) {
+  const s = document.getElementById('deathStartDate');
+  const e = document.getElementById('deathEndDate');
+  if (y === 'all') {
+    s.value = '2023-01-01';
+    e.value = '2027-12-31';
+  } else {
+    s.value = `${y}-01-01`;
+    e.value = `${y}-12-31`;
+    // ให้กราฟสะสมเทียบปีที่เลือกกับปีก่อนหน้าโดยอัตโนมัติ
+    const y1 = document.getElementById('year1'), y2 = document.getElementById('year2');
+    if (y1 && y2) {
+      y1.value = String(y);
+      const prev = String(y - 1);
+      if ([...y2.options].some(o => o.value === prev)) y2.value = prev;
+    }
+  }
+  markDeathYearChip(y);
   loadDeathStatistics();
 }
 
-async function refreshDeathStatistics() { loadDeathStatistics(); }
+function markDeathYearChip(y) {
+  document.querySelectorAll('#deathYearChips .death-year-chip').forEach(b =>
+    b.classList.toggle('active', b.dataset.year === String(y)));
+}
+
+// กดปุ่มแสดงข้อมูลด้วยช่วงวันที่กำหนดเอง → ยกเลิกไฮไลต์ปุ่มปี
+async function refreshDeathStatistics() { markDeathYearChip('custom'); loadDeathStatistics(); }
+
+function thaiDateLabel(iso) {
+  if (!iso) return '-';
+  const [y, m, d] = iso.split('-').map(Number);
+  const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  return `${d} ${months[m - 1]} ${y + 543}`;
+}
 
 async function fetchDeathRows(force) {
   if (cachedDeathRows && !force) return cachedDeathRows;
@@ -1401,7 +1452,10 @@ function processDeathRowStatistics(row, data, deathCount = 1) {
 }
 
 async function loadDeathStatistics() {
-  Swal.fire({ title: 'กำลังโหลดข้อมูลสถิติ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  // ไม่ใส่ animation เปิด/ปิด — กัน dialog ค้างเมื่อข้อมูลโหลดเสร็จก่อน animation จบ
+  Swal.fire({ title: 'กำลังโหลดข้อมูลสถิติ...', allowOutsideClick: false,
+    showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' },
+    didOpen: () => Swal.showLoading() });
   const sDate = document.getElementById('deathStartDate').value;
   const eDate = document.getElementById('deathEndDate').value;
 
@@ -1441,7 +1495,10 @@ async function loadDeathStatistics() {
       }
     });
 
-    createDeathCharts(data);
+    const info = document.getElementById('deathRangeInfo');
+    if (info) info.textContent = `แสดงข้อมูลช่วง ${thaiDateLabel(sDate)} ถึง ${thaiDateLabel(eDate)} — ผู้เสียชีวิต ${data.total} ราย (ปักหมุดบนแผนที่ ${data.mapData.length} จุดที่มีพิกัด)`;
+
+    await createDeathCharts(data);
     Swal.close();
   } catch (error) { Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่สามารถโหลดสถิติได้' }); }
 }
@@ -1593,6 +1650,23 @@ function initDashboardDeathMap(mapData) {
       }
     }
   });
+
+  // คำอธิบายสี: แสดงเฉพาะปีที่มีหมุดจริงในช่วงที่เลือก พร้อมจำนวนจุด
+  const legend = document.getElementById('deathMapLegend');
+  if (legend) {
+    const counts = {};
+    mapData.forEach(it => { if (it.year) counts[it.year] = (counts[it.year] || 0) + 1; });
+    let html = '<p class="font-bold text-gray-800 mr-2">คำอธิบายสี (ปีเกิดเหตุ):</p>';
+    const years = Object.keys(counts).sort();
+    if (!years.length) {
+      html += '<span class="text-gray-500">ไม่มีหมุดในช่วงวันที่ที่เลือก</span>';
+    } else {
+      years.forEach(y => {
+        html += `<div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color:${yearColors[y] || '#6b7280'};"></span> ${y} (${counts[y]} จุด)</div>`;
+      });
+    }
+    legend.innerHTML = html;
+  }
 
   setTimeout(() => dashboardDeathMap.invalidateSize(), 500);
 }
