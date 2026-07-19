@@ -661,6 +661,21 @@
       return state.deathDates;
     }
 
+    // ทะเบียนผู้เสียชีวิตแบบเต็ม (ใช้ปักหมุดแดงบนแผนที่)
+    async function fetchDeathsFull(force) {
+      if (state.deathFull && !force) return state.deathFull;
+      const rows = [];
+      const pageSize = 1000;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await db.from('deaths').select('*').range(from, from + pageSize - 1);
+        if (error) throw new Error(error.message);
+        rows.push(...(data || []));
+        if (!data || data.length < pageSize) break;
+      }
+      state.deathFull = rows;
+      return rows;
+    }
+
     /* ============ ตัวช่วยเวลาไทย ============ */
     function bkkStamp(value, format) {
       const d = value instanceof Date ? value : new Date(value);
@@ -869,8 +884,33 @@
           images: Array.isArray(row.images) ? row.images.filter(Boolean) : []
         };
       }).sort((a,b) => String(b.date).localeCompare(String(a.date)));
-      // total นับทุกแถวในช่วงวันที่ (รวมที่ไม่มีพิกัด) เหมือนระบบเดิม
-      return { success:true, total:inRange.length, data:items };
+
+      // หมุดแดง "เสียชีวิต" จากทะเบียนผู้เสียชีวิต (หน่วยบันทึกเคสตายแยกทะเบียน ไม่ได้ลงในฟอร์มอุบัติเหตุ)
+      let deathItems = [];
+      try {
+        const deaths = await fetchDeathsFull();
+        deathItems = deaths.filter(r => {
+          if (!r.incident_datetime) return false;
+          const local = bkkStamp(r.incident_datetime, 'day');
+          if (startDate && local < startDate) return false;
+          if (endDate && local > endDate) return false;
+          const c = (r.coordinates || '').trim();
+          return c.includes(',') && !isNaN(parseFloat(c.split(',')[0])) && !isNaN(parseFloat(c.split(',')[1]));
+        }).map(r => {
+          const parts = (r.coordinates || '').split(',');
+          return {
+            isDeath: true, death: r, markerType: 'red',
+            id: 'D#' + r.id, ts: r.incident_datetime, date: formatThaiDateTimeStr(r.incident_datetime),
+            latitude: parseFloat(parts[0]), longitude: parseFloat(parts[1]),
+            place: 'ผู้เสียชีวิต · ' + (r.status || '-') + ' ' + (r.vehicle_type || ''),
+            road: r.road_name || '', roadCharacter: r.road_type || '', localAuthority: r.col_l || '',
+            subdistrict: r.subdistrict || '', cause: r.cause || '', details: '', party1: {}, party2: {}, images: []
+          };
+        });
+      } catch (e) { deathItems = []; }
+
+      // total นับทุกแถวในช่วงวันที่ (รวมที่ไม่มีพิกัด) + ผู้เสียชีวิตในช่วงเดียวกัน
+      return { success:true, total: inRange.length + deathItems.length, data: items.concat(deathItems) };
     }
 
     /* ============ Session ============ */
@@ -993,7 +1033,7 @@
       if (!confirm.isConfirmed) return;
       try { await api('logout'); } catch (error) {}
       clearSession(); state.dashboardLoaded = false; state.mapLoaded = false;
-      state.accidentRows = null; state.injuryRows = null; state.deathDates = null;
+      state.accidentRows = null; state.injuryRows = null; state.deathDates = null; state.deathFull = null;
       showAuthPage();
     }
 
@@ -1473,7 +1513,7 @@
             text:'ฟอร์มยังเก็บค่าเดิมไว้ — แก้เฉพาะช่องที่ต่าง (เช่น อายุ/เพศ/สถานะ) แล้วบันทึกรายถัดไปได้เลย หรือกดล้างฟอร์มเพื่อเริ่มใหม่',
             timer:2600, showConfirmButton:false });
         }
-        state.deathDates = null; // ให้สถิติหน้า HOME โหลดใหม่
+        state.deathDates = null; state.deathFull = null; // ให้สถิติ/แผนที่โหลดใหม่
         loadDeathList();
       } catch (error) {
         Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
@@ -1565,7 +1605,7 @@
         if (!result.success) throw new Error(result.message || 'ลบไม่สำเร็จ');
         await Swal.fire({ icon:'success', title:result.message, timer:1200, showConfirmButton:false });
         if (state.deathEditId === id) resetDeathForm();
-        state.deathDates = null;
+        state.deathDates = null; state.deathFull = null;
         loadDeathList();
       } catch (error) {
         Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
@@ -1957,7 +1997,7 @@
         await Swal.fire({ icon:'success', title:'บันทึกสำเร็จ', html:'รหัสอุบัติเหตุ<br><strong>' + escapeHtml(result.accidentId) + '</strong>', confirmButtonColor:'#16834b' });
         resetAccidentForm();
         state.dashboardLoaded = false; state.mapLoaded = false;
-        state.accidentRows = null; state.injuryRows = null; state.deathDates = null;
+        state.accidentRows = null; state.injuryRows = null; state.deathDates = null; state.deathFull = null;
       } catch (error) {
         await Swal.fire({ icon:'error', title:'บันทึกข้อมูลไม่สำเร็จ', text:error.message });
       }
@@ -2405,6 +2445,20 @@
       setTimeout(()=>state.accidentMap.invalidateSize(),100);
     }
     function buildPopup(item) {
+      // popup เฉพาะหมุดผู้เสียชีวิต (จากทะเบียนผู้เสียชีวิต)
+      if (item.isDeath) {
+        const r = item.death || {};
+        const row = (label, value) => value ? '<div class="popup-row"><strong>' + label + ':</strong> ' + escapeHtml(value) + '</div>' : '';
+        return '<div class="popup"><h3 style="color:#c1122f"><i class="fa-solid fa-skull-crossbones"></i> ผู้เสียชีวิต</h3>' +
+          '<div class="popup-date"><i class="fa-regular fa-calendar"></i> ' + escapeHtml(item.date || '-') + '</div>' +
+          '<div class="popup-info">' +
+          row('อายุ/เพศ', (r.age != null ? r.age + ' ปี' : '-') + ' / ' + (r.gender || '-')) +
+          row('สถานะ', r.status) + row('ประเภทรถ', r.vehicle_type) +
+          row('อุปกรณ์นิรภัย', r.safety_equipment) + row('อาการ', r.col_g) +
+          row('ลักษณะทาง', r.road_type) + row('สาเหตุ', r.cause) +
+          row('ถนน', r.road_name) + row('ตำบล', r.subdistrict) + row('ภูมิลำเนา', r.domicile) +
+          '</div></div>';
+      }
       const party = function(p) {
         return '<div class="popup-party"><strong>' + escapeHtml(p.label) + '</strong>' +
           '<div class="popup-row">สถานะ: ' + escapeHtml(p.status || '-') + '</div>' +
