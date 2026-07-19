@@ -1707,7 +1707,7 @@
         (query ? '<p class="hint" style="margin-top:0">พบ ' + matched.length + ' จากทั้งหมด ' + rows.length + ' ราย</p>' : '') +
         '<div class="table-wrap" style="max-height:60vh;overflow:auto"><table class="data-table"><thead><tr><th>วันเวลาเกิดเหตุ</th><th>อายุ/เพศ</th><th>สถานะ</th><th>ประเภทรถ</th><th>สาเหตุ</th><th>ตำบล</th><th></th></tr></thead><tbody>' +
         (matched.map(r =>
-          '<tr><td>' + escapeHtml(formatThaiDateTimeStr(r.incident_datetime)) + '</td>' +
+          '<tr><td><a href="javascript:void(0)" onclick="viewDeathDetail(' + r.id + ')" style="color:var(--blue);font-weight:700;text-decoration:underline dotted" title="ดูรายละเอียดทั้งหมด">' + escapeHtml(formatThaiDateTimeStr(r.incident_datetime)) + '</a></td>' +
           '<td>' + escapeHtml((r.age ?? '-') + ' / ' + (r.gender || '-')) + '</td>' +
           '<td>' + escapeHtml(r.status || '-') + '</td>' +
           '<td>' + escapeHtml(r.vehicle_type || '-') + '</td>' +
@@ -1717,6 +1717,37 @@
           '<button class="btn btn-soft btn-sm" style="color:#c1122f" onclick="deleteDeath(' + r.id + ')"><i class="fa-solid fa-trash-can"></i></button></td></tr>'
         ).join('') || '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:18px">ไม่พบรายการที่ค้นหา</td></tr>') +
         '</tbody></table></div>';
+    }
+
+    // popup รายละเอียดผู้เสียชีวิต ครบทุกช่อง
+    function viewDeathDetail(id) {
+      const r = (state.deathRows || {})[id];
+      if (!r) return;
+      const row = (label, value) => value ? '<tr><td style="padding:4px 12px 4px 0;font-weight:700;color:#475569;white-space:nowrap;vertical-align:top">' + label + '</td><td style="padding:4px 0;color:#1f2a3d">' + escapeHtml(String(value)) + '</td></tr>' : '';
+      const coords = (r.coordinates || '').trim();
+      const mapLink = coords.includes(',')
+        ? '<a href="https://www.google.com/maps?q=' + encodeURIComponent(coords) + '" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:underline;word-break:break-all"><i class="fa-solid fa-map-location-dot"></i> ' + escapeHtml(coords.split(',').map(x => { const n = parseFloat(x); return isNaN(n) ? x : n.toFixed(6); }).join(', ')) + '</a>'
+        : '';
+      Swal.fire({
+        title: '<i class="fa-solid fa-skull-crossbones" style="color:#c1122f"></i> รายละเอียดผู้เสียชีวิต #' + r.id,
+        html: '<div style="text-align:left;font-size:.9rem;max-width:100%;overflow-x:hidden;word-break:break-word">' +
+          '<table style="width:100%;border-collapse:collapse;table-layout:fixed"><colgroup><col style="width:118px"><col></colgroup>' +
+          row('วันเวลาเกิดเหตุ', formatThaiDateTimeStr(r.incident_datetime)) +
+          row('อายุ', r.age != null ? r.age + ' ปี' : '') +
+          row('เพศ', r.gender) + row('สถานะ', r.status) +
+          row('ประเภทรถ', r.vehicle_type) + row('อุปกรณ์นิรภัย', r.safety_equipment) +
+          row('อาการ', r.col_g) + row('อวัยวะบาดเจ็บ', r.col_h) +
+          row('ใบอนุญาตขับขี่', r.license) + row('ลักษณะทาง', r.road_type) +
+          row('สาเหตุ', r.cause) + row('ประเภททางหลวง', r.col_l) +
+          row('ถนน', r.road_name) + row('ตำบล', r.subdistrict) +
+          (mapLink ? '<tr><td style="padding:4px 12px 4px 0;font-weight:700;color:#475569;white-space:nowrap">พิกัด</td><td style="padding:4px 0">' + mapLink + '</td></tr>' : '') +
+          row('ภูมิลำเนา', r.domicile) +
+          '</table></div>',
+        width: 540, confirmButtonText: 'ปิด',
+        showDenyButton: true, denyButtonText: '<i class="fa-solid fa-pen"></i> แก้ไขรายการนี้', denyButtonColor: '#1d4ed8'
+      }).then(result => {
+        if (result.isDenied) editDeath(id);
+      });
     }
 
     function editDeath(id) {
@@ -3044,7 +3075,8 @@
       renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo,
       renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail, toggleDeathOverlay,
       editOfficer, delOfficer, editAccidentCase, deleteAccidentCase, editRiskReport,
-      updateAdminBadges, exportMapCsv, exportRiskCsv, exportDeathCsv, exportOfficerCsv
+      updateAdminBadges, exportMapCsv, exportRiskCsv, exportDeathCsv, exportOfficerCsv,
+      viewDeathDetail
     });
   </script>
 
