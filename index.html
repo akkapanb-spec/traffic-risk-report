@@ -1803,11 +1803,13 @@ function showMapPicker() {
       mapMarker = L.marker([startLat, startLng], {draggable: true}).addTo(mapInstance);
       mapInstance.on('click', function(e) { mapMarker.setLatLng(e.latlng); });
       setTimeout(() => { mapInstance.invalidateSize(); }, 180);
-    }
+    },
+    // อ่านพิกัดตอนกดยืนยัน ก่อน dialog ปิด (willClose ล้างแผนที่ทิ้งแล้ว อ่านทีหลังไม่ได้)
+    preConfirm: () => mapMarker ? mapMarker.getLatLng() : null,
+    willClose: () => { if (mapInstance) { mapInstance.remove(); mapInstance = null; mapMarker = null; } }
   }).then((result) => {
-    if (result.isConfirmed) {
-      const position = mapMarker.getLatLng();
-      document.getElementById('coordinates').value = `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
+    if (result.isConfirmed && result.value) {
+      document.getElementById('coordinates').value = `${result.value.lat.toFixed(6)}, ${result.value.lng.toFixed(6)}`;
       Swal.fire({ icon: 'success', title: 'ระบุพิกัดสำเร็จ', timer: 1500, showConfirmButton: false });
     }
   });
