@@ -110,6 +110,8 @@
     .legend-filter:hover{border-color:var(--blue);box-shadow:0 4px 12px rgba(29,78,216,.14)}
     .legend-filter.active{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(29,78,216,.25)}
     .legend-filter.active .dot{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+    .death-pin{width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid #dc2626;display:grid;place-items:center;color:#dc2626;font-size:12px;box-shadow:0 3px 10px rgba(220,38,38,.45)}
+    #deathOverlayBtn.on{background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fff!important;border-color:transparent;box-shadow:0 6px 16px rgba(220,38,38,.3)}
     .ea-strip{display:flex;flex-wrap:wrap;gap:10px;align-items:center;min-height:74px;padding:8px;border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc}
     .ea-thumb{position:relative;display:inline-block}
     .ea-thumb img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block}
@@ -436,10 +438,10 @@
           <h3 class="card-title"><i class="fa-solid fa-map"></i> แผนที่และพิกัด <span id="mapTotal" class="pill">0 จุด</span></h3>
           <div class="legend" id="mapLegend">
             <button type="button" class="legend-item legend-filter active" data-filter="all" onclick="setMapFilter('all')"><i class="fa-solid fa-layer-group" style="font-size:.75rem"></i> ทั้งหมด</button>
-            <button type="button" class="legend-item legend-filter" data-filter="red" onclick="setMapFilter('red')"><span class="dot red"></span> เสียชีวิต</button>
-            <button type="button" class="legend-item legend-filter" data-filter="orange" onclick="setMapFilter('orange')"><span class="dot orange"></span> หมดสติ/สาหัส</button>
+            <button type="button" class="legend-item legend-filter" data-filter="red" onclick="setMapFilter('red')"><span class="dot red"></span> เสียชีวิต / หมดสติ / สาหัส</button>
             <button type="button" class="legend-item legend-filter" data-filter="yellow" onclick="setMapFilter('yellow')"><span class="dot yellow"></span> บาดเจ็บเล็กน้อย</button>
             <button type="button" class="legend-item legend-filter" data-filter="green" onclick="setMapFilter('green')"><span class="dot green"></span> ไม่บาดเจ็บ</button>
+            <button type="button" class="legend-item legend-filter" id="deathOverlayBtn" style="margin-left:auto;border-color:#e9d5ff;color:#6d28d9" onclick="toggleDeathOverlay()"><i class="fa-solid fa-skull-crossbones"></i> เทียบจุดเสียชีวิต</button>
           </div>
           <div id="accidentMap" class="map-main"></div>
         </div>
@@ -867,8 +869,7 @@
       ).map(row => {
         const severity = worstSeverityOf(row);
         let markerType = 'gray';
-        if (severity === 'เสียชีวิต') markerType = 'red';
-        else if (['หมดสติ','สาหัส'].includes(severity)) markerType = 'orange';
+        if (['เสียชีวิต','หมดสติ','สาหัส'].includes(severity)) markerType = 'red';
         else if (severity === 'เล็กน้อย') markerType = 'yellow';
         else if (severity === 'ไม่บาดเจ็บ') markerType = 'green';
         const p1 = row.party1 || {}; const p2 = row.party2 || {};
@@ -884,58 +885,56 @@
           images: normalizeImageUrls(Array.isArray(row.images) ? row.images : [])
         };
       }).sort((a,b) => String(b.date).localeCompare(String(a.date)));
-
-      // หมุดแดง "เสียชีวิต" จากทะเบียนผู้เสียชีวิต (หน่วยบันทึกเคสตายแยกทะเบียน ไม่ได้ลงในฟอร์มอุบัติเหตุ)
-      let deathItems = [];
-      try {
-        const deaths = await fetchDeathsFull();
-        deathItems = deaths.filter(r => {
-          if (!r.incident_datetime) return false;
-          const local = bkkStamp(r.incident_datetime, 'day');
-          if (startDate && local < startDate) return false;
-          if (endDate && local > endDate) return false;
-          const c = (r.coordinates || '').trim();
-          return c.includes(',') && !isNaN(parseFloat(c.split(',')[0])) && !isNaN(parseFloat(c.split(',')[1]));
-        }).map(r => {
-          const parts = (r.coordinates || '').split(',');
-          return {
-            isDeath: true, death: r, markerType: 'red',
-            id: 'D#' + r.id, ts: r.incident_datetime, date: formatThaiDateTimeStr(r.incident_datetime),
-            latitude: parseFloat(parts[0]), longitude: parseFloat(parts[1]),
-            place: 'ผู้เสียชีวิต · ' + (r.status || '-') + ' ' + (r.vehicle_type || ''),
-            road: r.road_name || '', roadCharacter: r.road_type || '', localAuthority: r.col_l || '',
-            subdistrict: r.subdistrict || '', cause: r.cause || '', details: '', party1: {}, party2: {}, images: []
-          };
-        });
-      } catch (e) { deathItems = []; }
-
-      // จับคู่เพื่อการแสดงผลเท่านั้น (ไม่แก้ข้อมูล): ผู้เสียชีวิต ↔ เคสอุบัติเหตุ ระยะ ≤500 ม. เวลา ≤24 ชม.
-      deathItems.forEach(d => {
-        let best = null;
-        items.forEach(a => {
-          const gapH = Math.abs(new Date(a.ts) - new Date(d.ts)) / 3600000;
-          if (gapH > 24) return;
-          const m = distanceMeters(d.latitude, d.longitude, a.latitude, a.longitude);
-          if (m > 500) return;
-          const score = gapH + m / 500;
-          if (!best || score < best.score) best = { score, a, m, gapH };
-        });
-        if (best) {
-          const sevLabel = { red:'เสียชีวิต', orange:'หมดสติ/สาหัส', yellow:'บาดเจ็บเล็กน้อย', green:'ไม่บาดเจ็บ' }[best.a.markerType] || 'ไม่ระบุ';
-          d.pairNote = 'น่าจะเป็นเหตุการณ์เดียวกับเคสอุบัติเหตุ "' + (best.a.place || '-') + '" ' + best.a.date +
-            ' (ในฟอร์มบันทึกไว้เป็น ' + sevLabel + ' · ห่าง ' + Math.round(best.m) + ' ม. / ' + Math.round(best.gapH * 60) + ' นาที)';
-          best.a.pairNote = 'มีผู้เสียชีวิตจากเหตุการณ์นี้ (ทะเบียนผู้เสียชีวิต ' + d.date + ') — อาการในฟอร์มคือสถานะ ณ ที่เกิดเหตุ';
-        }
-      });
-
-      // total นับทุกแถวในช่วงวันที่ (รวมที่ไม่มีพิกัด) + ผู้เสียชีวิตในช่วงเดียวกัน
-      return { success:true, total: inRange.length + deathItems.length, data: items.concat(deathItems) };
+      // total นับทุกแถวในช่วงวันที่ (รวมที่ไม่มีพิกัด) เหมือนระบบเดิม
+      return { success:true, total: inRange.length, data: items };
     }
 
     function distanceMeters(lat1, lng1, lat2, lng2) {
       const dx = (lat1 - lat2) * 111320;
       const dy = (lng1 - lng2) * 111320 * Math.cos(lat1 * Math.PI / 180);
       return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    /* ============ Overlay เทียบจุดเสียชีวิต (แยกชั้นจากข้อมูลอุบัติเหตุ ไม่ปนตาราง/ตัวเลข) ============ */
+    async function buildDeathOverlay() {
+      initAccidentMap();
+      if (state.deathOverlayLayer) { state.accidentMap.removeLayer(state.deathOverlayLayer); state.deathOverlayLayer = null; }
+      const startDate = valueOf('mapStartDate'), endDate = valueOf('mapEndDate');
+      const deaths = await fetchDeathsFull();
+      const layer = L.layerGroup();
+      let count = 0;
+      deaths.forEach(r => {
+        if (!r.incident_datetime) return;
+        const local = bkkStamp(r.incident_datetime, 'day');
+        if (startDate && local < startDate) return;
+        if (endDate && local > endDate) return;
+        const parts = (r.coordinates || '').split(',');
+        const lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
+        if (isNaN(lat) || isNaN(lng)) return;
+        const icon = L.divIcon({ className:'', html:'<div class="death-pin"><i class="fa-solid fa-skull-crossbones"></i></div>', iconSize:[26,26], iconAnchor:[13,13], popupAnchor:[0,-14] });
+        L.marker([lat, lng], { icon, zIndexOffset: 1000 })
+          .bindPopup(buildPopup({ isDeath:true, death:r, date: formatThaiDateTimeStr(r.incident_datetime) }), { maxWidth: 340 })
+          .addTo(layer);
+        count++;
+      });
+      layer.addTo(state.accidentMap);
+      state.deathOverlayLayer = layer;
+      const btn = document.getElementById('deathOverlayBtn');
+      btn.classList.add('on');
+      btn.innerHTML = '<i class="fa-solid fa-skull-crossbones"></i> เทียบจุดเสียชีวิต (' + count + ')';
+    }
+    function removeDeathOverlay() {
+      if (state.deathOverlayLayer && state.accidentMap) state.accidentMap.removeLayer(state.deathOverlayLayer);
+      state.deathOverlayLayer = null;
+      state.deathOverlayOn = false;
+      const btn = document.getElementById('deathOverlayBtn');
+      if (btn) { btn.classList.remove('on'); btn.innerHTML = '<i class="fa-solid fa-skull-crossbones"></i> เทียบจุดเสียชีวิต'; }
+    }
+    async function toggleDeathOverlay() {
+      if (state.deathOverlayOn) { removeDeathOverlay(); return; }
+      state.deathOverlayOn = true;
+      try { await buildDeathOverlay(); }
+      catch (e) { state.deathOverlayOn = false; Swal.fire({ icon:'error', title:'โหลดข้อมูลผู้เสียชีวิตไม่สำเร็จ', text:e.message }); }
     }
 
     /* ============ Session ============ */
@@ -2484,6 +2483,7 @@
         state.mapTotalAll = result.total || 0;
         state.mapLoaded = true;
         applyMapFilter();
+        if (state.deathOverlayOn) buildDeathOverlay(); // อัปเดต overlay ตามช่วงวันที่ใหม่
       } catch (error) {
         document.getElementById('mapTable').innerHTML = errorBlock(error.message,'loadMapData()');
       }
@@ -2570,7 +2570,7 @@
       const searchEl = document.getElementById('mapTableSearch');
       const query = ((searchEl && searchEl.value) || '').trim().toLowerCase();
       let items = !query ? all.slice() : all.filter(item => {
-        const badge = { red:'เสียชีวิต', orange:'หมดสติ สาหัส', yellow:'บาดเจ็บเล็กน้อย', green:'ไม่บาดเจ็บ' }[item.markerType] || '';
+        const badge = { red:'เสียชีวิต หมดสติ สาหัส รุนแรง', yellow:'บาดเจ็บเล็กน้อย', green:'ไม่บาดเจ็บ' }[item.markerType] || '';
         const hay = [item.date, item.place, item.road, item.roadCharacter, item.localAuthority,
           item.subdistrict, item.cause, item.details, badge,
           item.party1 && item.party1.vehicle, item.party2 && item.party2.vehicle].join(' ').toLowerCase();
@@ -2660,7 +2660,7 @@
       document.getElementById('accidentMap').scrollIntoView({behavior:'smooth',block:'center'});
     }
     function markerBadge(type) {
-      const map = {red:['เสียชีวิต','red'],orange:['หมดสติ/สาหัส','orange'],yellow:['บาดเจ็บเล็กน้อย','yellow'],green:['ไม่บาดเจ็บ','green'],gray:['ไม่ระบุ','']};
+      const map = {red:['รุนแรง','red'],yellow:['เล็กน้อย','yellow'],green:['ไม่บาดเจ็บ','green'],gray:['ไม่ระบุ','']};
       const item = map[type] || map.gray;
       return '<span class="severity-badge ' + item[1] + '">' + item[0] + '</span>';
     }
@@ -2694,7 +2694,7 @@
       eaRemove, eaAddFiles, viewRiskDetail,
       saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation,
       renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo,
-      renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail
+      renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail, toggleDeathOverlay
     });
   </script>
 
