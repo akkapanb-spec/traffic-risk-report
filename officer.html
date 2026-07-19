@@ -107,6 +107,21 @@
     .ea-thumb img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block}
     .ea-thumb button{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;background:#c1122f;color:#fff;border:2px solid #fff;cursor:pointer;font-size:12px;line-height:1;font-weight:900;padding:0}
     .ea-thumb .ea-new{position:absolute;left:2px;bottom:2px;background:#16834b;color:#fff;font-size:.58rem;font-weight:800;padding:1px 6px;border-radius:999px}
+    /* มือถือ: หน้าจัดการจุดเสี่ยงแสดงเป็นการ์ด แทนตารางกว้าง */
+    .risk-cards{display:none}
+    .risk-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 10px 26px rgba(15,23,42,.07)}
+    .risk-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:6px}
+    .risk-card-no{display:inline-flex;align-items:center;background:#eef5ff;color:var(--navy);font-weight:900;font-size:.72rem;border-radius:999px;padding:3px 10px;margin-bottom:4px}
+    .risk-card-title{font-weight:800;color:#132238;line-height:1.4;font-size:.95rem}
+    .risk-card-meta{font-size:.76rem;color:var(--muted);margin-top:3px;line-height:1.5}
+    .risk-card-imgs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+    .risk-card-imgs img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+    .risk-card-actions{display:grid;grid-template-columns:1.4fr 1fr auto;gap:8px;margin-top:10px}
+    .risk-card-actions .btn{padding-left:8px;padding-right:8px;white-space:nowrap}
+    @media(max-width:780px){
+      #riskManageTable .table-wrap{display:none}
+      .risk-cards{display:grid;gap:12px}
+    }
     #accidentMap,#pickerMap{width:100%;border-radius:18px;background:#dce7ef}.map-main{height:560px}.map-picker{height:430px}.marker-dot{width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}.marker-red{background:#dc2626}.marker-yellow{background:#facc15}.marker-green{background:#22c55e}.marker-gray{background:#64748b}
     .popup{min-width:270px;max-width:380px;font-family:'Sarabun',sans-serif}.popup h3{margin:0 0 5px;color:var(--navy)}.popup-date{font-size:.78rem;color:var(--muted);margin-bottom:10px}.popup-parties{display:grid;grid-template-columns:1fr 1fr;gap:8px}.popup-party{background:#f5f8fc;border-radius:10px;padding:8px}.popup-party strong{display:block;color:var(--navy);margin-bottom:5px}.popup-row{font-size:.75rem;margin:2px 0}.popup-images{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:9px}.popup-images img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}.popup-info{font-size:.78rem;margin-top:8px;line-height:1.5}
 
@@ -1010,7 +1025,27 @@
               '<button class="btn btn-soft btn-sm" onclick="viewRiskActions(' + r.id + ')"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติ</button> ' +
               '<button class="btn btn-soft btn-sm" style="color:#c1122f" title="ลบจุดเสี่ยงที่แจ้งผิด" onclick="deleteRiskPoint(' + r.id + ')"><i class="fa-solid fa-trash-can"></i></button></td></tr>';
           }).join('') +
-          '</tbody></table></div>';
+          '</tbody></table></div>' +
+          // มุมมองการ์ดสำหรับมือถือ
+          '<div class="risk-cards">' +
+          state.riskPoints.map(r => {
+            const imgs = [r.image1_url, r.image2_url].filter(Boolean)
+              .map(u => '<a href="' + escapeHtml(u) + '" target="_blank"><img src="' + escapeHtml(u) + '"></a>').join('');
+            return '<article class="risk-card">' +
+              '<div class="risk-card-head"><div>' +
+                '<span class="risk-card-no">เลขที่ #' + r.id + '</span>' +
+                '<div class="risk-card-title">' + escapeHtml(r.location || '-') + '</div>' +
+                '<div class="risk-card-meta"><i class="fa-solid fa-road"></i> ' + escapeHtml(r.road || '-') + ' · ต.' + escapeHtml(r.subdistrict || '-') +
+                '<br><i class="fa-regular fa-calendar"></i> ' + escapeHtml(formatThaiDateTimeStr(r.registration_date)) + '</div>' +
+              '</div><div>' + riskStatusBadge(r.status) + '</div></div>' +
+              (imgs ? '<div class="risk-card-imgs">' + imgs + '</div>' : '') +
+              '<div class="risk-card-actions">' +
+                '<button class="btn btn-primary btn-sm" onclick="openRiskActionDialog(' + r.id + ')"><i class="fa-solid fa-reply"></i> ตอบรับ/บันทึกผล</button>' +
+                '<button class="btn btn-soft btn-sm" onclick="viewRiskActions(' + r.id + ')"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติ</button>' +
+                '<button class="btn btn-soft btn-sm" style="color:#c1122f" onclick="deleteRiskPoint(' + r.id + ')"><i class="fa-solid fa-trash-can"></i></button>' +
+              '</div></article>';
+          }).join('') +
+          '</div>';
       } catch (error) {
         container.innerHTML = errorBlock(error.message, 'loadRiskManage()');
       }
