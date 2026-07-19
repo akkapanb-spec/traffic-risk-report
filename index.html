@@ -1657,8 +1657,8 @@ function displayRiskData(data) {
       <td class="px-4 py-3">${v6EscapeHTML(r.dProv)}</td>
       <td class="px-4 py-3 text-xs text-gray-500">${v6EscapeHTML(r.dCoords)}</td>
       <td class="px-4 py-3"><div class="flex gap-2 justify-center">${r.imageHtml}</div></td>
-      <td class="px-4 py-3 text-center">
-        <button onclick="showStatusDetails('${r.safeLoc}', '${r.safeRoad}', ${r.dId})" class="px-4 py-2 rounded-full text-sm font-semibold shadow-md transition-transform transform hover:scale-105 hover:shadow-lg focus:outline-none ${r.statusColorClass}">
+      <td class="px-4 py-3 text-center" style="min-width:190px">
+        <button onclick="showStatusDetails('${r.safeLoc}', '${r.safeRoad}', ${r.dId})" class="px-4 py-2 rounded-full text-sm font-semibold shadow-md transition-transform transform hover:scale-105 hover:shadow-lg focus:outline-none whitespace-nowrap ${r.statusColorClass}">
           <i class="fas fa-search-plus mr-1 opacity-75"></i> ${v6EscapeHTML(r.dStatus)}
         </button>
       </td>
