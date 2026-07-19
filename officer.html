@@ -282,6 +282,7 @@
         <button class="nav-btn" data-page="accident" onclick="openPage('accident',this)"><i class="fa-solid fa-file-pen"></i> บันทึกข้อมูลอุบัติเหตุ</button>
         <button class="nav-btn" data-page="dashboard" onclick="openPage('dashboard',this)"><i class="fa-solid fa-chart-line"></i> สถิติอุบัติเหตุ สภ.เมืองนครสวรรค์</button>
         <button class="nav-btn" data-page="map" onclick="openPage('map',this)"><i class="fa-solid fa-map-location-dot"></i> แผนที่พิกัดจุดเกิดอุบัติเหตุ</button>
+        <button class="nav-btn" data-page="admin" id="adminNavBtn" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน</button>
       </nav>
     </aside>
 
@@ -400,6 +401,16 @@
           <div id="accidentMap" class="map-main"></div>
         </div>
         <div class="card"><h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการจุดเกิดเหตุ</h3><div id="mapTable"></div></div>
+      </section>
+
+      <!-- ADMIN: อนุมัติสิทธิ์ผู้ลงทะเบียน -->
+      <section id="page-admin" class="page">
+        <div class="page-head"><div class="page-icon"><i class="fa-solid fa-user-check"></i></div><div><h2>อนุมัติสิทธิ์ผู้ลงทะเบียน</h2><p>สำหรับผู้ดูแลระบบ · กดอนุมัติ/ระงับสิทธิ์การใช้งานของเจ้าหน้าที่</p></div></div>
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-users"></i> รายชื่อผู้ลงทะเบียน <span id="adminTotal" class="pill">0 นาย</span>
+            <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="loadAdminList()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+          <div id="adminTable"><div class="loading-skeleton"></div></div>
+        </div>
       </section>
     </main>
   </section>
@@ -799,6 +810,7 @@
       document.getElementById('userDisplay').textContent = fullName;
       document.getElementById('drawerUser').textContent = fullName;
       document.getElementById('officerDisplay').value = fullName + ' · ปนพ. ' + state.user.policeCode;
+      document.getElementById('adminNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       openPage('home', document.querySelector('[data-page="home"]'));
     }
 
@@ -899,6 +911,68 @@
       if (page === 'dashboard') loadDashboard();
       if (page === 'map') { loadMapCumulative(); loadMapData(); }
       if (page === 'map' && state.accidentMap) setTimeout(() => state.accidentMap.invalidateSize(), 250);
+      if (page === 'admin') loadAdminList();
+    }
+
+    /* ============ ADMIN: อนุมัติสิทธิ์ ============ */
+    async function loadAdminList() {
+      const container = document.getElementById('adminTable');
+      container.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const result = await rpc('officer_list_registrations', { p_token: state.token });
+        if (!result.success) {
+          if (result.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
+          throw new Error(result.message || 'ดึงข้อมูลไม่สำเร็จ');
+        }
+        const rows = result.data || [];
+        document.getElementById('adminTotal').textContent = rows.length + ' นาย';
+        const pending = rows.filter(r => r.status !== 'อนุมัติสิทธิ์').length;
+        container.innerHTML =
+          (pending ? '<p class="hint" style="margin-top:0"><i class="fa-solid fa-circle-exclamation" style="color:#d97706"></i> รออนุมัติสิทธิ์ ' + pending + ' นาย</p>' : '') +
+          '<div class="table-wrap"><table class="data-table"><thead><tr><th>วันที่ลงทะเบียน</th><th>ยศ ชื่อ-สกุล</th><th>โทรศัพท์</th><th>เลขบัตรประชาชน</th><th>ปนพ.</th><th>สถานะ</th><th></th></tr></thead><tbody>' +
+          rows.map(r => {
+            const approved = r.status === 'อนุมัติสิทธิ์';
+            const statusBadge = approved
+              ? '<span class="severity-badge green">อนุมัติสิทธิ์</span>' + (r.isAdmin ? ' <span class="severity-badge" style="background:#ede9fe;color:#6d28d9">ผู้ดูแล</span>' : '')
+              : '<span class="severity-badge yellow">รออนุมัติสิทธิ์</span>';
+            const action = approved
+              ? '<button class="btn btn-soft btn-sm" onclick="setApproval(\'' + r.nationalId + '\', false)"><i class="fa-solid fa-user-slash"></i> ระงับสิทธิ์</button>'
+              : '<button class="btn btn-primary btn-sm" onclick="setApproval(\'' + r.nationalId + '\', true)"><i class="fa-solid fa-user-check"></i> อนุมัติ</button>';
+            return '<tr><td>' + escapeHtml(formatThaiDateTimeStr(r.registeredAt)) + '</td>' +
+              '<td>' + escapeHtml((r.rank || '') + ' ' + (r.firstName || '') + ' ' + (r.lastName || '')) + '</td>' +
+              '<td>' + escapeHtml(r.phone || '-') + '</td>' +
+              '<td>' + escapeHtml(r.nationalId || '-') + '</td>' +
+              '<td>' + escapeHtml(r.policeCode || '-') + '</td>' +
+              '<td>' + statusBadge + '</td><td>' + action + '</td></tr>';
+          }).join('') +
+          '</tbody></table></div>';
+      } catch (error) {
+        container.innerHTML = errorBlock(error.message, 'loadAdminList()');
+      }
+    }
+
+    async function setApproval(nationalId, approve) {
+      const confirm = await Swal.fire({
+        icon: 'question',
+        title: approve ? 'อนุมัติสิทธิ์?' : 'ระงับสิทธิ์?',
+        text: 'เลขบัตรประชาชน ' + nationalId,
+        showCancelButton: true,
+        confirmButtonText: approve ? 'อนุมัติ' : 'ระงับสิทธิ์',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: approve ? '#16834b' : '#c1122f'
+      });
+      if (!confirm.isConfirmed) return;
+      try {
+        const result = await rpc('officer_set_approval', { p_token: state.token, p_national_id: nationalId, p_approve: approve });
+        if (!result.success) {
+          if (result.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
+          throw new Error(result.message || 'บันทึกไม่สำเร็จ');
+        }
+        await Swal.fire({ icon:'success', title: result.message, timer: 1400, showConfirmButton: false });
+        loadAdminList();
+      } catch (error) {
+        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text: error.message });
+      }
     }
 
     let homeStatsTimer = null;
@@ -1762,7 +1836,7 @@
       showRegister, showLogin, logout, toggleDrawer, openPage,
       openLocationPicker, closeLocationPicker, useCurrentLocation, confirmLocation,
       resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard,
-      setMapFilter
+      setMapFilter, loadAdminList, setApproval
     });
   </script>
 
