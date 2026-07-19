@@ -137,8 +137,9 @@
 
     body{padding-bottom:env(safe-area-inset-bottom);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
     .mobile-tabbar{display:none}
-    .mobile-tabbar.admin-mode{grid-template-columns:repeat(5,1fr)!important}
-    .mobile-tabbar.admin-mode .tab-btn{font-size:.62rem}
+    .mobile-tabbar.admin-mode{grid-template-columns:repeat(6,1fr)!important;gap:4px!important;padding:7px!important}
+    .mobile-tabbar.admin-mode .tab-btn{font-size:.56rem;min-height:50px;border-radius:14px}
+    .mobile-tabbar.admin-mode .tab-btn i{font-size:.95rem}
     .input:focus,.select:focus,.textarea:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(29,78,216,.12);outline:none}
     .btn,.card,.stat-card,.nav-btn,.tab-btn{-webkit-tap-highlight-color:transparent}
     .card{transition:transform .18s ease,box-shadow .18s ease}.card:focus-within{box-shadow:0 16px 36px rgba(29,78,216,.13)}
@@ -300,6 +301,7 @@
       <button class="tab-btn" data-page="dashboard" type="button" onclick="openPage('dashboard',this)"><i class="fa-solid fa-chart-line"></i><span>สถิติ</span></button>
       <button class="tab-btn" data-page="map" type="button" onclick="openPage('map',this)"><i class="fa-solid fa-map-location-dot"></i><span>แผนที่</span></button>
       <button class="tab-btn" data-page="admin" id="adminTabBtn" type="button" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i><span>อนุมัติ</span></button>
+      <button class="tab-btn" data-page="riskmanage" id="riskTabBtn" type="button" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i><span>จุดเสี่ยง</span></button>
     </nav>
 
     <main class="main">
@@ -832,6 +834,7 @@
       document.getElementById('adminNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('riskNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminTabBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
+      document.getElementById('riskTabBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.querySelector('.mobile-tabbar').classList.toggle('admin-mode', !!state.user.isAdmin);
       openPage('home', document.querySelector('[data-page="home"]'));
     }
