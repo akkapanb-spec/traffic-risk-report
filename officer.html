@@ -488,17 +488,20 @@
             <div class="field span-6"><label>ถนน</label><input id="dfRoadName" class="input" list="dfRoadList" placeholder="เช่น ทล.1 /ในเขตเทศบาลนคร">
               <datalist id="dfRoadList"><option value="ทล.1 /ในเขตเทศบาลนคร"></option><option value="ทล.1 /ในเขตเทศบาลหนองเบน"></option><option value="ทล.1 /นอกเขตเทศบาล"></option><option value="ทล.117/ในเขตเทศบาลนคร"></option><option value="ทล.122"></option><option value="ทล.1072 /นอกเขตเทศบาล"></option><option value="ทล.1182 /นอกเขตเทศบาล"></option><option value="ทล.1182 /ในเขตเทศบาล"></option><option value="ทล.3005 /ในเขตเทศบาล"></option><option value="ทล.3005 /นอกเขตเทศบาล"></option><option value="นว..1120 /ในเขตเทศบาลนคร"></option><option value="อปท.เทศบาลนคร"></option><option value="อปท.นอกเขตเทศบาล"></option></datalist></div>
             <div class="field span-6"><label>ตำบล</label><select id="dfSubdistrict" class="select"><option value="">เลือกตำบล</option></select></div>
-            <div class="field span-6"><label>พิกัด (ละติจูด, ลองจิจูด)</label><div style="display:flex;gap:8px"><input id="dfCoords" class="input" style="flex:1" placeholder="15.7051, 100.1372"><button class="btn btn-soft" type="button" onclick="dfUseCurrentLocation()" title="ใช้ตำแหน่งปัจจุบัน"><i class="fa-solid fa-crosshairs"></i></button></div></div>
+            <div class="field span-6"><label>พิกัด (ละติจูด, ลองจิจูด)</label><div style="display:flex;gap:8px"><input id="dfCoords" class="input" style="flex:1;min-width:0" placeholder="15.7051, 100.1372"><button class="btn btn-soft" type="button" onclick="dfOpenMapPicker()" title="จิ้มเลือกบนแผนที่"><i class="fa-solid fa-map-location-dot"></i></button><button class="btn btn-soft" type="button" onclick="dfUseCurrentLocation()" title="ใช้ตำแหน่งปัจจุบัน"><i class="fa-solid fa-crosshairs"></i></button></div></div>
             <div class="field span-6"><label>ภูมิลำเนา</label><select id="dfDomicile" class="select"><option value="">เลือก</option><option>ในพื้นที่/จว.</option><option>นอกพื้นที่</option><option>อยู่ระหว่างตรวจสอบ</option><option>ไม่ระบุ</option></select></div>
-            <div class="field span-12" style="display:flex;gap:10px;flex-wrap:wrap">
+            <div class="field span-12" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
               <button class="btn btn-primary" type="button" id="deathSaveBtn" onclick="saveDeath()"><i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล</button>
               <button class="btn btn-soft" type="button" id="deathCancelBtn" style="display:none" onclick="resetDeathForm()"><i class="fa-solid fa-xmark"></i> ยกเลิกการแก้ไข</button>
+              <button class="btn btn-soft" type="button" onclick="resetDeathForm()"><i class="fa-solid fa-broom"></i> ล้างฟอร์ม</button>
+              <span class="hint" style="margin:0">หลังบันทึก ฟอร์มจะเก็บค่าไว้ให้ — เคสเดียวกันตายหลายราย แก้แค่ อายุ/เพศ/สถานะ แล้วบันทึกต่อได้เลย</span>
             </div>
           </form>
         </div>
         <div class="card">
-          <h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการล่าสุด <span id="deathTotal" class="pill">0 ราย</span>
+          <h3 class="card-title"><i class="fa-solid fa-table-list"></i> ข้อมูลทั้งหมด <span id="deathTotal" class="pill">0 ราย</span>
             <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="loadDeathList()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+          <input id="deathSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ปี, เดือน, ตำบล, สาเหตุ, เพศ, อายุ, ประเภทรถ..." oninput="renderDeathList()">
           <div id="deathListTable"><div class="loading-skeleton"></div></div>
         </div>
       </section>
@@ -1439,8 +1442,15 @@
           if (result.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
           throw new Error(result.message || 'บันทึกไม่สำเร็จ');
         }
-        await Swal.fire({ icon:'success', title:result.message, timer:1400, showConfirmButton:false });
-        resetDeathForm();
+        if (state.deathEditId) {
+          await Swal.fire({ icon:'success', title:result.message, timer:1400, showConfirmButton:false });
+          resetDeathForm();
+        } else {
+          // โหมดเพิ่ม: เก็บค่าฟอร์มไว้ กรอกผู้เสียชีวิตรายถัดไปของเคสเดียวกันได้ทันที
+          await Swal.fire({ icon:'success', title:result.message,
+            text:'ฟอร์มยังเก็บค่าเดิมไว้ — แก้เฉพาะช่องที่ต่าง (เช่น อายุ/เพศ/สถานะ) แล้วบันทึกรายถัดไปได้เลย หรือกดล้างฟอร์มเพื่อเริ่มใหม่',
+            timer:2600, showConfirmButton:false });
+        }
         state.deathDates = null; // ให้สถิติหน้า HOME โหลดใหม่
         loadDeathList();
       } catch (error) {
@@ -1452,29 +1462,50 @@
       const container = document.getElementById('deathListTable');
       container.innerHTML = '<div class="loading-skeleton"></div>';
       try {
-        const { count } = await db.from('deaths').select('*', { count:'exact', head:true });
-        const { data, error } = await db.from('deaths').select('*').order('incident_datetime', { ascending:false }).limit(15);
-        if (error) throw new Error(error.message);
+        // โหลดทุกแถวเหมือนเห็นทั้งชีท (ค้นหา/แก้ไข/ลบได้ทุกรายการ)
+        const rows = [];
+        for (let from = 0; ; from += 1000) {
+          const { data, error } = await db.from('deaths').select('*')
+            .order('incident_datetime', { ascending:false }).range(from, from + 999);
+          if (error) throw new Error(error.message);
+          rows.push(...(data || []));
+          if (!data || data.length < 1000) break;
+        }
+        state.deathAllRows = rows;
         state.deathRows = {};
-        (data || []).forEach(r => state.deathRows[r.id] = r);
-        document.getElementById('deathTotal').textContent = (count || 0) + ' ราย';
-        container.innerHTML =
-          '<p class="hint" style="margin-top:0">แสดง 15 รายการล่าสุด จากทั้งหมด ' + (count || 0) + ' ราย</p>' +
-          '<div class="table-wrap"><table class="data-table"><thead><tr><th>วันเวลาเกิดเหตุ</th><th>อายุ/เพศ</th><th>สถานะ</th><th>ประเภทรถ</th><th>สาเหตุ</th><th>ตำบล</th><th></th></tr></thead><tbody>' +
-          (data || []).map(r =>
-            '<tr><td>' + escapeHtml(formatThaiDateTimeStr(r.incident_datetime)) + '</td>' +
-            '<td>' + escapeHtml((r.age ?? '-') + ' / ' + (r.gender || '-')) + '</td>' +
-            '<td>' + escapeHtml(r.status || '-') + '</td>' +
-            '<td>' + escapeHtml(r.vehicle_type || '-') + '</td>' +
-            '<td>' + escapeHtml(r.cause || '-') + '</td>' +
-            '<td>' + escapeHtml(r.subdistrict || '-') + '</td>' +
-            '<td style="white-space:nowrap"><button class="btn btn-soft btn-sm" onclick="editDeath(' + r.id + ')"><i class="fa-solid fa-pen"></i> แก้ไข</button> ' +
-            '<button class="btn btn-soft btn-sm" style="color:#c1122f" onclick="deleteDeath(' + r.id + ')"><i class="fa-solid fa-trash-can"></i></button></td></tr>'
-          ).join('') +
-          '</tbody></table></div>';
+        rows.forEach(r => state.deathRows[r.id] = r);
+        document.getElementById('deathTotal').textContent = rows.length + ' ราย';
+        renderDeathList();
       } catch (error) {
         container.innerHTML = errorBlock(error.message, 'loadDeathList()');
       }
+    }
+
+    function renderDeathList() {
+      const container = document.getElementById('deathListTable');
+      const rows = state.deathAllRows || [];
+      const query = (document.getElementById('deathSearch').value || '').trim().toLowerCase();
+      const matched = !query ? rows : rows.filter(r => {
+        const thaiDate = formatThaiDateTimeStr(r.incident_datetime);
+        const haystack = [thaiDate, String(r.incident_datetime || ''), r.age, r.gender, r.status,
+          r.vehicle_type, r.safety_equipment, r.col_g, r.col_h, r.license, r.road_type,
+          r.cause, r.col_l, r.road_name, r.subdistrict, r.domicile].join(' ').toLowerCase();
+        return query.split(/\s+/).every(term => haystack.includes(term));
+      });
+      container.innerHTML =
+        (query ? '<p class="hint" style="margin-top:0">พบ ' + matched.length + ' จากทั้งหมด ' + rows.length + ' ราย</p>' : '') +
+        '<div class="table-wrap" style="max-height:60vh;overflow:auto"><table class="data-table"><thead><tr><th>วันเวลาเกิดเหตุ</th><th>อายุ/เพศ</th><th>สถานะ</th><th>ประเภทรถ</th><th>สาเหตุ</th><th>ตำบล</th><th></th></tr></thead><tbody>' +
+        (matched.map(r =>
+          '<tr><td>' + escapeHtml(formatThaiDateTimeStr(r.incident_datetime)) + '</td>' +
+          '<td>' + escapeHtml((r.age ?? '-') + ' / ' + (r.gender || '-')) + '</td>' +
+          '<td>' + escapeHtml(r.status || '-') + '</td>' +
+          '<td>' + escapeHtml(r.vehicle_type || '-') + '</td>' +
+          '<td>' + escapeHtml(r.cause || '-') + '</td>' +
+          '<td>' + escapeHtml(r.subdistrict || '-') + '</td>' +
+          '<td style="white-space:nowrap"><button class="btn btn-soft btn-sm" onclick="editDeath(' + r.id + ')"><i class="fa-solid fa-pen"></i> แก้ไข</button> ' +
+          '<button class="btn btn-soft btn-sm" style="color:#c1122f" onclick="deleteDeath(' + r.id + ')"><i class="fa-solid fa-trash-can"></i></button></td></tr>'
+        ).join('') || '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:18px">ไม่พบรายการที่ค้นหา</td></tr>') +
+        '</tbody></table></div>';
     }
 
     function editDeath(id) {
@@ -1517,6 +1548,36 @@
       } catch (error) {
         Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
       }
+    }
+
+    let dfPickerMap = null, dfPickerMarker = null;
+    function dfOpenMapPicker() {
+      Swal.fire({
+        title: 'จิ้มหรือลากหมุดเพื่อเลือกตำแหน่ง',
+        html: '<div id="dfMapPicker" style="height:380px;width:100%;border-radius:14px"></div>',
+        width: Math.min(720, window.innerWidth - 20),
+        showCancelButton: true, confirmButtonText: 'ยืนยันตำแหน่งนี้', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#1d4ed8',
+        didOpen: () => {
+          let startLat = 15.705, startLng = 100.140;
+          const current = document.getElementById('dfCoords').value;
+          if (current && current.includes(',')) {
+            const parts = current.split(',');
+            const lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
+            if (!isNaN(lat) && !isNaN(lng)) { startLat = lat; startLng = lng; }
+          }
+          dfPickerMap = L.map('dfMapPicker').setView([startLat, startLng], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap' }).addTo(dfPickerMap);
+          dfPickerMarker = L.marker([startLat, startLng], { draggable:true }).addTo(dfPickerMap);
+          dfPickerMap.on('click', e => dfPickerMarker.setLatLng(e.latlng));
+          setTimeout(() => dfPickerMap.invalidateSize(), 150);
+        },
+        willClose: () => { if (dfPickerMap) { dfPickerMap.remove(); dfPickerMap = null; dfPickerMarker = null; } }
+      }).then(result => {
+        if (result.isConfirmed && dfPickerMarker) {
+          const p = dfPickerMarker.getLatLng();
+          document.getElementById('dfCoords').value = p.lat.toFixed(6) + ', ' + p.lng.toFixed(6);
+        }
+      });
     }
 
     function dfUseCurrentLocation() {
@@ -2416,7 +2477,8 @@
       loadRiskManage, openRiskActionDialog, viewRiskActions,
       editRiskAction, deleteRiskAction, deleteRiskPoint,
       eaRemove, eaAddFiles, viewRiskDetail,
-      saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation
+      saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation,
+      renderDeathList, dfOpenMapPicker
     });
   </script>
 
