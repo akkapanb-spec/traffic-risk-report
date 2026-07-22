@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -175,6 +175,30 @@ td{vertical-align:top;font-size:.92rem;}
 .dt-title i.i-green{background:#e9f9ef;color:#16834b}
 .dt-title i.i-purple{background:#f3edff;color:#7c3aed}
 .dt-title i.i-cyan{background:#e5f7fb;color:#0891b2}
+/* กราฟ visual พิเศษ ยกชุดจาก dashboard เจ้าหน้าที่ (พีระมิดอายุ / การ์ดเพศ-ใบขับขี่ / แท่ง 3 มิติ) */
+.dt-visual{height:250px;overflow:auto}
+.pyramid-list{display:flex;flex-direction:column;gap:10px;padding:8px 2px}
+.pyramid-row{display:grid;grid-template-columns:55px 1fr 42px;align-items:center;gap:8px;font-size:.82rem;font-weight:700;color:#34445a}
+.pyramid-track{height:20px;border-radius:999px;background:#edf3fa;overflow:hidden;display:flex;justify-content:center}
+.pyramid-fill{height:100%;min-width:4px;border-radius:999px;background:linear-gradient(90deg,#c1122f,#1d4ed8);box-shadow:0 5px 12px rgba(29,78,216,.22)}
+.bar3d-list{display:grid;gap:11px;padding:8px 0}
+.bar3d-label{display:flex;justify-content:space-between;gap:8px;font-size:.8rem;font-weight:700;color:#34445a}
+.bar3d-track{height:18px;border-radius:6px;background:#eef4fb;position:relative;overflow:visible;box-shadow:inset 0 3px 5px rgba(15,23,42,.08)}
+.bar3d-fill{height:18px;border-radius:6px;background:linear-gradient(90deg,#123b7a,#f59e0b,#c1122f);box-shadow:6px 6px 0 rgba(15,23,42,.13);position:relative}
+.bar3d-fill:after{content:"";position:absolute;right:-12px;top:2px;border-left:13px solid #1d4ed8;border-top:7px solid transparent;border-bottom:7px solid transparent}
+.gender-cards,.license-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;height:250px;align-content:center}
+.gender-card,.license-card{border:1px solid #d8e5f2;border-radius:18px;padding:18px 12px;text-align:center;background:linear-gradient(180deg,#fff,#f7fbff);box-shadow:0 12px 25px rgba(22,44,77,.08)}
+.gender-card i{font-size:3rem}.gender-card.male i{color:#1d4ed8}.gender-card.female i{color:#db2777}
+.gender-card .num,.license-card .num{font-size:2rem;font-weight:900;color:#0f2a4a}
+.gender-card .label,.license-card .label{font-size:.82rem;color:#64748b;font-weight:700}
+.license-icon{width:66px;height:44px;margin:0 auto 10px;border-radius:9px;background:linear-gradient(135deg,#e0f2fe,#dbeafe);border:2px solid #93c5fd;display:grid;place-items:center;color:#1d4ed8;font-size:1.5rem;box-shadow:4px 6px 0 rgba(29,78,216,.12)}
+.license-card.no .license-icon{background:linear-gradient(135deg,#fee2e2,#fff1f2);border-color:#fca5a5;color:#c1122f}
+.vehicle-vertical-visual{height:250px;display:flex;align-items:flex-end;gap:12px;padding:16px 6px 28px;border-radius:16px;background:linear-gradient(180deg,#f8fbff,#eef5ff);overflow:auto;position:relative}
+.vehicle-vertical-bar{min-width:62px;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:198px;position:relative}
+.vehicle-vertical-fill{width:38px;min-height:4px;border-radius:10px 10px 4px 4px;box-shadow:6px 6px 0 rgba(15,23,42,.14);position:relative;transform:skewY(-2deg)}
+.vehicle-vertical-fill:after{content:"";position:absolute;left:5px;top:-12px;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:13px solid currentColor;filter:drop-shadow(3px 3px 0 rgba(15,23,42,.12))}
+.vehicle-vertical-value{font-weight:900;font-size:.85rem;color:#0f2a4a;margin-bottom:8px}
+.vehicle-vertical-label{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);width:84px;text-align:center;font-size:.66rem;font-weight:800;color:#334155;line-height:1.15}
 /* ปุ่มเลือกปีในหน้าสถิติผู้เสียชีวิต */
 .death-year-chip{padding:6px 18px;border-radius:9999px;border:2px solid #cbd5e1;background:#fff;color:#475569;font-weight:600;font-size:.875rem;cursor:pointer;transition:all .15s ease;}
 .death-year-chip:hover{border-color:#3b82f6;color:#1d4ed8;}
@@ -588,21 +612,21 @@ canvas{max-width:100%!important;}
 
         <!-- แถวที่ 1: Age, Gender, Domicile -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-people-arrows"></i> แยกตามช่วงอายุ</h3><div class="h-[250px]"><canvas id="ageChart"></canvas></div></div>
-          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-venus-mars i-purple"></i> แยกตามเพศ</h3><div class="h-[250px]"><canvas id="genderChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-people-arrows"></i> แยกตามช่วงอายุ</h3><div class="dt-visual" id="ageVisual"></div><p class="text-xs text-gray-500 mt-2">นับตามตัวเลขอายุจริง: 1-14, 15-18, 19-24, 25-35, 36-60, 60+</p></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-venus-mars i-purple"></i> แยกตามเพศ</h3><div class="dt-visual" id="genderVisual"></div></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-house-user i-green"></i> แยกตามภูมิลำเนา</h3><div class="h-[250px]"><canvas id="domicileChart"></canvas></div></div>
         </div>
 
         <!-- แถวที่ 2: Vehicle, Status, License -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-car-side"></i> แยกตามประเภทรถ</h3><div class="h-[250px]"><canvas id="vehicleChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-car-side"></i> แยกตามประเภทรถ</h3><div class="dt-visual" id="vehicleVisual"></div><p class="text-xs text-gray-500 mt-2">แผนภูมิแท่งสามมิติแนวตั้ง แบบเดียวกับหน้าสถิติอุบัติเหตุ</p></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-users i-cyan"></i> แยกตามสถานะ</h3><div class="h-[250px]"><canvas id="statusChart"></canvas></div></div>
-          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-id-card i-green"></i> แยกตามใบอนุญาตขับขี่</h3><div class="h-[250px]"><canvas id="licenseChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-id-card i-green"></i> แยกตามใบอนุญาตขับขี่</h3><div class="dt-visual" id="licenseVisual"></div></div>
         </div>
 
         <!-- แถวที่ 3: Safety, Time, Cause -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-helmet-safety i-green"></i> การใช้เครื่องป้องกัน</h3><div class="h-[250px]"><canvas id="safetyChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-helmet-safety i-green"></i> การใช้เครื่องป้องกัน</h3><div class="dt-visual" id="safetyVisual"></div><p class="text-xs text-gray-500 mt-2">แท่งเชิงเดี่ยว 3 มิติ แนวนอน</p></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-clock i-purple"></i> แยกตามเวลา</h3><div class="h-[250px]"><canvas id="timeChart"></canvas></div></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-triangle-exclamation i-red"></i> สาเหตุที่ทำให้เกิดอุบัติเหตุ</h3><div class="h-[250px]"><canvas id="causeChart"></canvas></div></div>
         </div>
@@ -1584,6 +1608,50 @@ async function createDeathCharts(data) {
         options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
       });
     }
+    // ===== visual พิเศษ ยกแบบจาก dashboard เจ้าหน้าที่ =====
+    function renderDtPyramid(id, labels, values) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const max = Math.max(...values.map(v => Number(v) || 0), 1);
+      el.innerHTML = '<div class="pyramid-list">' + labels.map((lb, i) => {
+        const n = Number(values[i] || 0);
+        const w = Math.max(4, Math.round((n / max) * 100));
+        return '<div class="pyramid-row"><b>' + lb + '</b><div class="pyramid-track"><div class="pyramid-fill" style="width:' + w + '%"></div></div><b>' + n + '</b></div>';
+      }).join('') + '</div>';
+    }
+    function renderDtGenderCards(id, g) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = '<div class="gender-cards"><div class="gender-card male"><i class="fa-solid fa-person"></i><div class="num">' + (Number(g[0]) || 0) + '</div><div class="label">ชาย</div></div><div class="gender-card female"><i class="fa-solid fa-person-dress"></i><div class="num">' + (Number(g[1]) || 0) + '</div><div class="label">หญิง</div></div></div>';
+    }
+    function renderDtLicenseCards(id, lc) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = '<div class="license-cards"><div class="license-card"><div class="license-icon"><i class="fa-solid fa-id-card"></i></div><div class="num">' + (Number(lc[0]) || 0) + '</div><div class="label">มีใบอนุญาต</div></div><div class="license-card no"><div class="license-icon"><i class="fa-solid fa-id-card-clip"></i></div><div class="num">' + (Number(lc[1]) || 0) + '</div><div class="label">ไม่มีใบอนุญาต</div></div></div>';
+    }
+    function renderDtVehicleBars(id, labels, values) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const colors = ['#c1122f', '#1d4ed8', '#f59e0b', '#16a34a', '#7c3aed', '#475569'];
+      const max = Math.max(...values.map(v => Number(v) || 0), 1);
+      el.innerHTML = '<div class="vehicle-vertical-visual">' + labels.map((lb, i) => {
+        const n = Number(values[i] || 0);
+        const h = Math.max(n ? 12 : 0, Math.round((n / max) * 145));
+        const color = colors[i % colors.length];
+        return '<div class="vehicle-vertical-bar"><div class="vehicle-vertical-value">' + n + '</div><div class="vehicle-vertical-fill" style="height:' + h + 'px;background:linear-gradient(180deg,' + color + ',#0f2a4a);color:' + color + '"></div><div class="vehicle-vertical-label">' + lb + '</div></div>';
+      }).join('') + '</div>';
+    }
+    function renderDtBar3d(id, labels, values) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const entries = labels.map((lb, i) => [lb, Number(values[i] || 0)]).sort((a, b) => b[1] - a[1]);
+      const max = Math.max(...entries.map(x => x[1]), 1);
+      el.innerHTML = '<div class="bar3d-list">' + entries.map(item => {
+        const w = Math.max(item[1] ? 8 : 0, Math.round((item[1] / max) * 90));
+        return '<div><div class="bar3d-label"><span>' + item[0] + '</span><b>' + item[1] + '</b></div><div class="bar3d-track"><div class="bar3d-fill" style="width:' + w + '%"></div></div></div>';
+      }).join('') + '</div>';
+    }
+
     const generateChart = (id, type, labels, chartData, colors, title, horizontal) => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -1606,16 +1674,16 @@ async function createDeathCharts(data) {
       });
     };
 
-    // แผนภูมิตามแถว
-    generateChart('ageChart', 'bar', ['1-14', '15-18', '19-24', '25-35', '36-60', '60+'], data.ageGroups || Array(6).fill(0), '#3b82f6', 'ช่วงอายุ');
-    generateChart('genderChart', 'pie', ['ชาย', 'หญิง'], data.gender || [0,0], ['#3b82f6', '#ec4899'], 'เพศ');
+    // แผนภูมิตามแถว — 5 ตัวใช้ visual พิเศษแบบเดียวกับหน้าสถิติอุบัติเหตุ
+    renderDtPyramid('ageVisual', ['1-14', '15-18', '19-24', '25-35', '36-60', '60+'], data.ageGroups || Array(6).fill(0));
+    renderDtGenderCards('genderVisual', data.gender || [0, 0]);
     generateChart('domicileChart', 'doughnut', ['ในพื้นที่/จว.', 'นอกพื้นที่', 'ไม่ระบุ'], data.domicileGroups || [0,0,0], ['#10b981', '#f59e0b', '#9ca3af'], 'ภูมิลำเนา');
 
-    generateChart('vehicleChart', 'pie', data.vehicleLabels, data.vehicleTypes, ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#64748b'], 'ประเภทรถ');
-    generateChart('statusChart', 'pie', ['ขับขี่', 'โดยสาร', 'เดินเท้า'], data.statusGroups, ['#3b82f6', '#10b981', '#f59e0b'], 'สถานะ');
-    generateChart('licenseChart', 'pie', ['มี', 'ไม่มี'], data.licenseGroups, ['#10b981', '#ef4444'], 'ใบอนุญาตขับขี่');
+    renderDtVehicleBars('vehicleVisual', data.vehicleLabels || [], data.vehicleTypes || []);
+    generateChart('statusChart', 'doughnut', ['ขับขี่', 'โดยสาร', 'เดินเท้า'], data.statusGroups, ['#3b82f6', '#10b981', '#f59e0b'], 'สถานะ');
+    renderDtLicenseCards('licenseVisual', data.licenseGroups || [0, 0]);
 
-    generateChart('safetyChart', 'bar', ['สวมหมวก', 'ไม่สวมหมวก', 'คาดเข็มขัด', 'ไม่คาดเข็มขัด'], data.safetyEquipment, '#10b981', 'เครื่องป้องกัน');
+    renderDtBar3d('safetyVisual', ['สวมหมวกนิรภัย', 'ไม่สวมหมวกนิรภัย', 'คาดเข็มขัดนิรภัย', 'ไม่คาดเข็มขัดนิรภัย'], data.safetyEquipment || [0,0,0,0]);
     generateChart('timeChart', 'bar', data.timeLabels, data.timeGroups, '#8b5cf6', 'ช่วงเวลา');
     // ป้ายชื่อยาว → แท่งแนวนอนอ่านง่าย แบบเดียวกับหน้าสถิติอุบัติเหตุ
     generateChart('causeChart', 'bar', data.causeLabels, data.causes, '#ef4444', 'สาเหตุอุบัติเหตุ', true);
