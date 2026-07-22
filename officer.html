@@ -427,7 +427,24 @@
 
       <section id="page-dashboard" class="page">
         <div class="page-head"><div class="page-icon"><i class="fa-solid fa-chart-line"></i></div><div><h2>DASHBOARD</h2><p>สถิติอุบัติเหตุ สภ.เมืองนครสวรรค์</p></div></div>
-        <div id="dashboardContent"><div class="loading-skeleton"></div></div>
+        <div class="card">
+          <div class="legend" id="dashYearChips" style="margin-bottom:10px">
+            <span class="hint" style="align-self:center;margin-right:2px">ดูตามปี:</span>
+            <button type="button" class="legend-item legend-filter" data-year="all" onclick="setDashYear('all')"><i class="fa-solid fa-layer-group" style="font-size:.75rem"></i> ทั้งหมด</button>
+            <button type="button" class="legend-item legend-filter" data-year="2023" onclick="setDashYear(2023)">2566</button>
+            <button type="button" class="legend-item legend-filter" data-year="2024" onclick="setDashYear(2024)">2567</button>
+            <button type="button" class="legend-item legend-filter" data-year="2025" onclick="setDashYear(2025)">2568</button>
+            <button type="button" class="legend-item legend-filter" data-year="2026" onclick="setDashYear(2026)">2569</button>
+            <button type="button" class="legend-item legend-filter" data-year="2027" onclick="setDashYear(2027)">2570</button>
+          </div>
+          <div class="filter-bar">
+            <div class="field"><label for="dashStartDate">วันที่เริ่มต้น</label><input id="dashStartDate" class="input" type="date"></div>
+            <div class="field"><label for="dashEndDate">วันที่สิ้นสุด</label><input id="dashEndDate" class="input" type="date"></div>
+            <button class="btn btn-primary" type="button" onclick="dashCustomRange()"><i class="fa-solid fa-filter"></i> แสดงข้อมูล</button>
+          </div>
+          <p class="hint" id="dashRangeInfo" style="margin:10px 0 0"></p>
+        </div>
+        <div id="dashboardContent" style="margin-top:14px"><div class="loading-skeleton"></div></div>
       </section>
 
       <section id="page-map" class="page">
@@ -787,11 +804,16 @@
     function increment(object, key){ const k = clean(key); if (!k || k === 'ไม่มี') return; object[k] = (object[k] || 0) + 1; }
     function topCounts(object, limit){ const result = {}; Object.keys(object||{}).filter(k => clean(k) !== '').sort((a,b) => Number(object[b]||0)-Number(object[a]||0)).slice(0, limit||7).forEach(k => result[k] = Number(object[k]||0)); return result; }
 
-    async function computeDashboardData() {
+    async function computeDashboardData(startDate, endDate) {
       const rows = await fetchAccidents(true);
       const dashboardYear = Number(bkkStamp(new Date(), 'year'));
+      // ไม่ระบุช่วง = ปีปัจจุบันทั้งปี (พฤติกรรมเดิมของหน้า dashboard)
+      if (!startDate && !endDate) { startDate = dashboardYear + '-01-01'; endDate = dashboardYear + '-12-31'; }
       const monthly = Array(12).fill(0);
       const yearMonthCounts = {};
+      let rangeTotal = 0;
+      // การสวมหมวกนิรภัยแยกตามช่วงเวลาเกิดเหตุ ช่วงละ 2 ชั่วโมง (00.00.01-02.00.00 ... 22.00.01-00.00.00)
+      const helmetTime = { wear: Array(12).fill(0), noWear: Array(12).fill(0) };
 
       const distributions = {
         status: zeroCounts(['ผู้ขับขี่','ผู้โดยสาร','คนเดินเท้า']),
@@ -816,8 +838,20 @@
         if (!ym) return;
         if (!yearMonthCounts[ym.year]) yearMonthCounts[ym.year] = Array(12).fill(0);
         yearMonthCounts[ym.year][ym.month - 1]++;
-        if (ym.year !== dashboardYear) return;
+        // กรองตามช่วงวันที่ที่เลือก (นับจากวันที่บันทึก เหมือนหน้าแผนที่/ระบบเดิม)
+        const day = bkkStamp(row.recorded_at || row.incident_datetime, 'day');
+        if (startDate && day < startDate) return;
+        if (endDate && day > endDate) return;
+        rangeTotal++;
         monthly[ym.month - 1]++;
+
+        // ช่วงเวลาเกิดเหตุ (ตามเวลาเกิดเหตุจริง ไม่ใช่เวลาบันทึก)
+        let timeIdx = -1;
+        const stamp = bkkStamp(row.incident_datetime);
+        if (stamp) {
+          const secs = Number(stamp.slice(11,13))*3600 + Number(stamp.slice(14,16))*60 + Number(stamp.slice(17,19));
+          timeIdx = Math.floor(((secs - 1 + 86400) % 86400) / 7200);
+        }
 
         increment(distributions.vehicles, normalizeVehicle(displayVehicleOf(row.party1)));
         increment(distributions.vehicles, normalizeVehicle(displayVehicleOf(row.party2)));
@@ -838,6 +872,10 @@
           const sKey = normalizeSafety(person.safety);
           const iKey = normalizeInjury(person.injury);
           if (safetyInjuryMatrix[sKey] && Object.prototype.hasOwnProperty.call(safetyInjuryMatrix[sKey], iKey)) safetyInjuryMatrix[sKey][iKey]++;
+          if (timeIdx >= 0) {
+            if (sKey === 'สวมหมวกนิรภัย') helmetTime.wear[timeIdx]++;
+            else if (sKey === 'ไม่สวมหมวกนิรภัย') helmetTime.noWear[timeIdx]++;
+          }
         });
       });
 
@@ -857,8 +895,9 @@
       return {
         success:true, currentYear:dashboardYear, dashboardYear:dashboardYear,
         total: rows.length,
-        yearlyTotal: monthly.reduce((a,b)=>a+b,0),
-        monthly, cumulativeByYear, distributions, safetyInjuryMatrix, recent
+        yearlyTotal: rangeTotal,
+        rangeStart: startDate, rangeEnd: endDate,
+        monthly, cumulativeByYear, distributions, safetyInjuryMatrix, helmetTime, recent
       };
     }
 
@@ -2550,25 +2589,57 @@
     }
 
     /* ============ DASHBOARD ============ */
+    // เลือกปีด่วนบนหน้า dashboard (ค่าปุ่มเป็น ค.ศ. ป้ายเป็น พ.ศ.)
+    function setDashYear(y) {
+      const s = document.getElementById('dashStartDate'), e = document.getElementById('dashEndDate');
+      if (y === 'all') { s.value = '2023-01-01'; e.value = '2027-12-31'; }
+      else { s.value = y + '-01-01'; e.value = y + '-12-31'; }
+      markDashYearChip(y);
+      loadDashboard();
+    }
+    function markDashYearChip(y) {
+      document.querySelectorAll('#dashYearChips .legend-filter').forEach(b =>
+        b.classList.toggle('active', b.dataset.year === String(y)));
+    }
+    function dashCustomRange() { markDashYearChip('custom'); loadDashboard(); }
+    function thaiDayLabel(iso) {
+      if (!iso) return '-';
+      const p = iso.split('-').map(Number);
+      return p[2] + ' ' + months[p[1] - 1] + ' ' + (p[0] + 543);
+    }
+
     async function loadDashboard() {
       const container = document.getElementById('dashboardContent');
       if (!state.dashboardLoaded) container.innerHTML = '<div class="loading-skeleton"></div>';
       try {
-        const result = await api('getDashboardData');
+        // เปิดครั้งแรกยังไม่มีช่วงวันที่ → ตั้งเป็นปีปัจจุบันทั้งปี และไฮไลต์ปุ่มปีนั้น
+        const sEl = document.getElementById('dashStartDate'), eEl = document.getElementById('dashEndDate');
+        if (!sEl.value && !eEl.value) {
+          const y = Number(bkkStamp(new Date(), 'year'));
+          sEl.value = y + '-01-01'; eEl.value = y + '-12-31';
+          markDashYearChip(y);
+        }
+        const result = await computeDashboardData(sEl.value, eEl.value);
         if (!result.success) throw new Error(result.message);
         state.dashboardData = result;
         state.dashboardLoaded = true;
-        const yearLabel = String(Number(result.dashboardYear || result.currentYear) + 543);
+        // ช่วงที่เลือกเป็นปีปฏิทินพอดี → ใช้ป้าย "ปี พ.ศ." เหมือนเดิม, อื่นๆ → "ช่วงที่เลือก"
+        const sYear = (result.rangeStart || '').slice(0,4);
+        const isOneYear = result.rangeStart === sYear + '-01-01' && result.rangeEnd === sYear + '-12-31';
+        const rangeLabel = isOneYear ? 'ปี ' + (Number(sYear) + 543) : 'ช่วงที่เลือก';
+        const info = document.getElementById('dashRangeInfo');
+        if (info) info.textContent = 'แสดงข้อมูลช่วง ' + thaiDayLabel(result.rangeStart) + ' ถึง ' + thaiDayLabel(result.rangeEnd) + ' — อุบัติเหตุ ' + result.yearlyTotal + ' ครั้ง (นับตามวันที่บันทึกข้อมูล)';
         container.innerHTML =
           '<div class="stats-grid dashboard-summary-grid" style="margin-bottom:18px">' +
             statCard('อุบัติเหตุทั้งหมด', result.total, 'ครั้ง', 'fa-car-burst') +
-            statCard('อุบัติเหตุปี ' + yearLabel, result.yearlyTotal || result.monthly.reduce(function(a,b){return a+b;},0), 'ครั้ง', 'fa-calendar-check') +
+            statCard('อุบัติเหตุ' + rangeLabel, result.yearlyTotal, 'ครั้ง', 'fa-calendar-check') +
             statCard('เดือนที่เกิดเหตุสูงสุด', maxMonthLabel(result.monthly), '', 'fa-arrow-trend-up', 'orange') +
           '</div>' +
           '<div class="monthly-grid">' +
-            '<div class="card chart-card monthly-half"><h3 class="card-title"><i class="fa-solid fa-chart-column"></i> อุบัติเหตุรายเดือน ปี ' + yearLabel + '</h3><div class="chart-wrap"><canvas id="monthlyChart"></canvas></div><div class="dashboard-note">แผนภูมิแท่ง 3 มิติ พร้อมเส้นจำนวนด้านบน ขนาดครึ่งแถว ชิดซ้าย</div></div>' +
-            '<div class="card chart-card cumulative-half"><h3 class="card-title"><i class="fa-solid fa-chart-area"></i> อุบัติเหตุสะสมรายปี</h3><div class="chart-wrap"><canvas id="cumulativeChart"></canvas></div><div class="dashboard-note">ย้ายมาอยู่แถวเดียวกับอุบัติเหตุรายเดือน และลดขนาดลงครึ่งหนึ่ง</div></div>' +
+            '<div class="card chart-card monthly-half"><h3 class="card-title"><i class="fa-solid fa-chart-column"></i> อุบัติเหตุรายเดือน ' + rangeLabel + '</h3><div class="chart-wrap"><canvas id="monthlyChart"></canvas></div><div class="dashboard-note">แผนภูมิแท่ง 3 มิติ พร้อมเส้นจำนวนด้านบน ขนาดครึ่งแถว ชิดซ้าย</div></div>' +
+            '<div class="card chart-card cumulative-half"><h3 class="card-title"><i class="fa-solid fa-chart-area"></i> อุบัติเหตุสะสมรายปี</h3><div class="chart-wrap"><canvas id="cumulativeChart"></canvas></div><div class="dashboard-note">ทุกปีในระบบ ไม่ถูกกรองตามช่วงวันที่</div></div>' +
           '</div>' +
+          '<div class="card chart-card" style="margin-top:16px"><h3 class="card-title"><i class="fa-solid fa-helmet-safety"></i> การสวมหมวกนิรภัย แยกตามช่วงเวลา</h3><div class="chart-wrap" style="min-height:300px"><canvas id="helmetTimeChart"></canvas></div><div class="dashboard-note">นับผู้ใช้รถที่ระบุการสวม/ไม่สวมหมวกนิรภัย ตามเวลาเกิดเหตุ ช่วงละ 2 ชั่วโมง</div></div>' +
           '<div class="dashboard-detail-grid" style="margin-top:16px">' +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-venus-mars"></i> เพศ</h3><div id="genderCards" class="custom-visual"></div></div>' +
             chartCardHtml('statusChart', 'สถานะ', 'fa-users', 'แผนภูมิวงกลมโดนัท ผู้ขับขี่/ผู้โดยสาร/คนเดินเท้า') +
@@ -2612,15 +2683,18 @@
     }
 
     function renderDashboardCharts(data) {
-      const yearLabel = String(Number(data.dashboardYear || data.currentYear) + 543);
+      const sYear = (data.rangeStart || '').slice(0,4);
+      const isOneYear = data.rangeStart === sYear + '-01-01' && data.rangeEnd === sYear + '-12-31';
+      const yearLabel = isOneYear ? 'ปี ' + (Number(sYear) + 543) : 'ช่วงที่เลือก';
       createChart('monthlyChart', 'bar', {
         labels:months,
         datasets:[
-          {type:'bar',label:'จำนวนอุบัติเหตุ ปี ' + yearLabel,data:data.monthly,backgroundColor:chartGradient('monthlyChart','#123b7a','#c1122f'),borderRadius:10,borderSkipped:false,borderWidth:1,borderColor:'rgba(255,255,255,.78)'},
+          {type:'bar',label:'จำนวนอุบัติเหตุ ' + yearLabel,data:data.monthly,backgroundColor:chartGradient('monthlyChart','#123b7a','#c1122f'),borderRadius:10,borderSkipped:false,borderWidth:1,borderColor:'rgba(255,255,255,.78)'},
           {type:'line',label:'เส้นจำนวน',data:data.monthly,borderColor:'#f59e0b',backgroundColor:'#f59e0b',tension:.35,pointRadius:4,pointHoverRadius:6,borderWidth:3,fill:false}
         ]
       }, {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{precision:0}},x:{grid:{display:false}}}});
       renderCumulativeChart('cumulativeChart',data.cumulativeByYear);
+      renderHelmetTimeChart('helmetTimeChart', data.helmetTime);
       renderGenderCards('genderCards', data.distributions.genders);
       createDistributionChart('statusChart','doughnut',data.distributions.status);
       renderAgePyramid('agePyramid', data.distributions.ageGroups);
@@ -2721,6 +2795,22 @@
         responsive:true,maintainAspectRatio:false,indexAxis:horizontal?'y':'x',
         plugins:{legend:{display:type==='doughnut',position:'bottom'}},
         scales:type==='bar'?{x:{beginAtZero:true,ticks:{precision:0}},y:{ticks:{autoSkip:false}}}:{}
+      });
+    }
+    function renderHelmetTimeChart(id, helmetTime) {
+      const timeLabels = ['00.00.01-02.00.00','02.00.01-04.00.00','04.00.01-06.00.00','06.00.01-08.00.00','08.00.01-10.00.00','10.00.01-12.00.00','12.00.01-14.00.00','14.00.01-16.00.00','16.00.01-18.00.00','18.00.01-20.00.00','20.00.01-22.00.00','22.00.01-00.00.00'];
+      const data = helmetTime || { wear: Array(12).fill(0), noWear: Array(12).fill(0) };
+      createChart(id, 'bar', {
+        labels: timeLabels,
+        datasets: [
+          { label:'สวมหมวกนิรภัย', data:data.wear, backgroundColor:'#16a34a', borderRadius:6 },
+          { label:'ไม่สวมหมวกนิรภัย', data:data.noWear, backgroundColor:'#c1122f', borderRadius:6 }
+        ]
+      }, {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ position:'bottom' } },
+        scales:{ x:{ ticks:{ autoSkip:false, maxRotation:60, minRotation:45, font:{ size:10, family:'Sarabun' } }, grid:{ display:false } },
+                 y:{ beginAtZero:true, ticks:{ precision:0 } } }
       });
     }
     function renderCumulativeChart(id,series) {
@@ -3074,7 +3164,7 @@
       editRiskAction, deleteRiskAction, deleteRiskPoint,
       eaRemove, eaAddFiles, viewRiskDetail,
       saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation,
-      renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo,
+      renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo, setDashYear, dashCustomRange,
       renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail, toggleDeathOverlay,
       editOfficer, delOfficer, editAccidentCase, deleteAccidentCase, editRiskReport,
       updateAdminBadges, exportMapCsv, exportRiskCsv, exportDeathCsv, exportOfficerCsv,
