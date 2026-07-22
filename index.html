@@ -304,36 +304,36 @@ canvas{max-width:100%!important;}
 @media (min-width: 768px){
   #dataTableMobile{display:none!important;}
 }
+/* เมนูหลักแบบ icon style: ไอคอนใหญ่ไล่สี + ป้ายสั้นใต้ไอคอน */
 .nav-menu-v6 {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(6, 1fr);
   gap: 12px;
   margin-bottom: 28px;
 }
 
 .nav-tab-v6 {
-  min-height: 68px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.72);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255,255,255,0.55);
-  box-shadow: 0 10px 25px rgba(15,23,42,0.12);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 12px;
+  gap: 9px;
+  padding: 16px 8px 13px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(209,222,237,.9);
+  box-shadow: 0 10px 25px rgba(15,23,42,0.1);
   font-weight: 700;
   color: #1f2937;
-  text-align: left;
-  line-height: 1.25;
-  transition: all 0.25s ease;
+  text-align: center;
+  line-height: 1.3;
+  font-size: .8rem;
+  transition: all 0.2s ease;
   touch-action: manipulation;
 }
 
 .nav-tab-v6:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 32px rgba(15,23,42,0.18);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px rgba(29,78,216,0.16);
 }
 
 .nav-tab-v6.active {
@@ -343,33 +343,23 @@ canvas{max-width:100%!important;}
   box-shadow: 0 12px 30px rgba(29,78,216,.32);
 }
 
-/* ไอคอนเมนูแบบกล่องสี (สไตล์เดียวกับ dashboard เจ้าหน้าที่) */
-.nav-ico{width:38px;height:38px;min-width:38px;border-radius:12px;display:grid;place-items:center;font-size:1rem}
-.ni-navy{background:#edf4ff;color:#1d4ed8}
-.ni-red{background:#fdeef1;color:#c1122f}
-.ni-blue{background:#e3edff;color:#2563eb}
-.ni-cyan{background:#e5f7fb;color:#0891b2}
-.ni-purple{background:#f3edff;color:#7c3aed}
-.ni-amber{background:#fff6e6;color:#d97706}
-.nav-tab-v6.active .nav-ico{background:rgba(255,255,255,.18);color:#fff}
+.big-ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:1.45rem;color:#fff;box-shadow:0 8px 16px rgba(15,23,42,.18)}
+.bi-navy{background:linear-gradient(135deg,#3b82f6,#123b7a)}
+.bi-red{background:linear-gradient(135deg,#f87171,#b91c1c)}
+.bi-blue{background:linear-gradient(135deg,#60a5fa,#1d4ed8)}
+.bi-cyan{background:linear-gradient(135deg,#22d3ee,#0e7490)}
+.bi-purple{background:linear-gradient(135deg,#a78bfa,#6d28d9)}
+.bi-amber{background:linear-gradient(135deg,#fbbf24,#c2410c)}
+.nav-tab-v6.active .big-ic{background:rgba(255,255,255,.2);box-shadow:none}
 
-@media (max-width: 640px) {
-  .nav-menu-v6 {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .nav-tab-v6 {
-    min-height: 62px;
-    font-size: 15px;
-    border-radius: 16px;
-  }
+@media (max-width: 1023px) {
+  .nav-menu-v6 { grid-template-columns: repeat(3, 1fr); }
 }
 
-@media (min-width: 1024px) {
-  .nav-menu-v6 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+@media (max-width: 640px) {
+  .nav-menu-v6 { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .nav-tab-v6 { padding: 12px 4px 10px; font-size: .7rem; border-radius: 16px; }
+  .big-ic { width: 44px; height: 44px; font-size: 1.2rem; border-radius: 13px; }
 }
 
 /* สถิติสไตล์หน้าเจ้าหน้าที่ (แทนการ์ดอุบัติเหตุ/บาดเจ็บ/เสียชีวิตเดิม) */
@@ -433,17 +423,17 @@ canvas{max-width:100%!important;}
   <!-- Navigation Tabs V6 Professional SVG -->
 <div class="nav-menu-v6">
 
-  <button class="nav-tab-v6 active" onclick="showTab('dashboard', this)"><span class="nav-ico ni-navy"><i class="fa-solid fa-chart-line"></i></span><span>DASHBOARD วิเคราะห์สถิติอุบัติเหตุเสียชีวิต แผนที่พร้อมพิกัด</span></button>
+  <button class="nav-tab-v6 active" onclick="showTab('dashboard', this)"><span class="big-ic bi-navy"><i class="fa-solid fa-chart-line"></i></span><span>DASHBOARD<br>สถิติ + แผนที่</span></button>
 
-  <button class="nav-tab-v6" onclick="showTab('report', this)"><span class="nav-ico ni-red"><i class="fa-solid fa-triangle-exclamation"></i></span><span>แจ้งข้อมูลจุดเสี่ยง</span></button>
+  <button class="nav-tab-v6" onclick="showTab('report', this)"><span class="big-ic bi-red"><i class="fa-solid fa-triangle-exclamation"></i></span><span>แจ้งข้อมูล<br>จุดเสี่ยง</span></button>
 
-  <button class="nav-tab-v6" onclick="openAccidentRecord()"><span class="nav-ico ni-blue"><i class="fa-solid fa-user-shield"></i></span><span>บันทึกข้อมูลอุบัติเหตุ สำหรับเจ้าหน้าที่ตำรวจ</span></button>
+  <button class="nav-tab-v6" onclick="openAccidentRecord()"><span class="big-ic bi-blue"><i class="fa-solid fa-user-shield"></i></span><span>บันทึกอุบัติเหตุ<br>(เจ้าหน้าที่)</span></button>
 
-  <button class="nav-tab-v6" onclick="showTab('data', this)"><span class="nav-ico ni-cyan"><i class="fa-solid fa-table-list"></i></span><span>ข้อมูลจุดเสี่ยง สถานะ และแผนที่พร้อมพิกัด</span></button>
+  <button class="nav-tab-v6" onclick="showTab('data', this)"><span class="big-ic bi-cyan"><i class="fa-solid fa-table-list"></i></span><span>ข้อมูลจุดเสี่ยง<br>+ สถานะ</span></button>
 
-  <button class="nav-tab-v6" onclick="openVideoCampaign()"><span class="nav-ico ni-purple"><i class="fa-solid fa-circle-play"></i></span><span>Clip Video ประชาสัมพันธ์และรณรงค์ลดอุบัติเหตุ</span></button>
+  <button class="nav-tab-v6" onclick="openVideoCampaign()"><span class="big-ic bi-purple"><i class="fa-solid fa-circle-play"></i></span><span>Clip Video<br>รณรงค์</span></button>
 
-  <button class="nav-tab-v6" onclick="openHelmetProject()"><span class="nav-ico ni-amber"><i class="fa-solid fa-helmet-safety"></i></span><span>โครงการสวมหมวกนิรภัยปลอดภัย ได้ส่วนลด</span></button>
+  <button class="nav-tab-v6" onclick="openHelmetProject()"><span class="big-ic bi-amber"><i class="fa-solid fa-helmet-safety"></i></span><span>หมวกนิรภัย<br>ได้ส่วนลด</span></button>
 
 </div>
 
