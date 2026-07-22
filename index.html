@@ -150,6 +150,16 @@ th{font-size:.9rem;white-space:nowrap;}
 td{vertical-align:top;font-size:.92rem;}
 #riskMap{height:420px!important;}
 #dashboardDeathMap{height:min(62vh,620px)!important;min-height:320px;}
+/* หน้าสถิติผู้เสียชีวิต: การ์ด+หัวข้อสไตล์เดียวกับ dashboard เจ้าหน้าที่ */
+#deathStatsTab .glass-effect{background:rgba(255,255,255,.94);border:1px solid rgba(209,222,237,.9);border-radius:20px;box-shadow:0 10px 28px rgba(23,52,88,.08);}
+#deathStatsTab .glass-effect canvas{filter:drop-shadow(0 7px 11px rgba(15,23,42,.08));}
+.dt-title{display:flex;align-items:center;gap:11px;margin:0 0 16px;font-size:1.08rem;font-weight:800;color:#132238;}
+.dt-title i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#edf4ff;color:#1d4ed8;font-size:.95rem;flex:0 0 34px;}
+.dt-title i.i-red{background:#fdeef1;color:#c1122f}
+.dt-title i.i-amber{background:#fff6e6;color:#d97706}
+.dt-title i.i-green{background:#e9f9ef;color:#16834b}
+.dt-title i.i-purple{background:#f3edff;color:#7c3aed}
+.dt-title i.i-cyan{background:#e5f7fb;color:#0891b2}
 /* ปุ่มเลือกปีในหน้าสถิติผู้เสียชีวิต */
 .death-year-chip{padding:6px 18px;border-radius:9999px;border:2px solid #cbd5e1;background:#fff;color:#475569;font-weight:600;font-size:.875rem;cursor:pointer;transition:all .15s ease;}
 .death-year-chip:hover{border-color:#3b82f6;color:#1d4ed8;}
@@ -602,7 +612,7 @@ canvas{max-width:100%!important;}
 
         <!-- สถิติจำนวนผู้เสียชีวิตสะสม (บนสุด) -->
         <div class="glass-effect rounded-xl p-6">
-          <h3 class="text-xl font-bold text-gray-800 mb-4"><img src="https://img.icons8.com/color/48/000000/line-chart.png" class="w-6 h-6 inline mr-2">สถิติจำนวนผู้เสียชีวิตสะสม แยกตามเดือน</h3>
+          <h3 class="dt-title"><i class="fa-solid fa-chart-line"></i> สถิติจำนวนผู้เสียชีวิตสะสม แยกตามเดือน</h3>
           <div class="flex gap-4 mb-4">
             <select id="year1" class="form-input px-4 py-2 rounded-lg"><option value="2023">ค.ศ. 2023</option><option value="2024" selected>ค.ศ. 2024</option><option value="2025">ค.ศ. 2025</option><option value="2026">ค.ศ. 2026</option><option value="2027">ค.ศ. 2027</option></select>
             <select id="year2" class="form-input px-4 py-2 rounded-lg"><option value="2023" selected>ค.ศ. 2023</option><option value="2024">ค.ศ. 2024</option><option value="2025">ค.ศ. 2025</option><option value="2026">ค.ศ. 2026</option><option value="2027">ค.ศ. 2027</option></select>
@@ -613,35 +623,35 @@ canvas{max-width:100%!important;}
 
         <!-- แถวที่ 1: Age, Gender, Domicile -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามช่วงอายุ</h3><div class="h-[250px]"><canvas id="ageChart"></canvas></div></div>
-          <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามเพศ</h3><div class="h-[250px]"><canvas id="genderChart"></canvas></div></div>
-          <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามภูมิลำเนา</h3><div class="h-[250px]"><canvas id="domicileChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-people-arrows"></i> แยกตามช่วงอายุ</h3><div class="h-[250px]"><canvas id="ageChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-venus-mars i-purple"></i> แยกตามเพศ</h3><div class="h-[250px]"><canvas id="genderChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-house-user i-green"></i> แยกตามภูมิลำเนา</h3><div class="h-[250px]"><canvas id="domicileChart"></canvas></div></div>
         </div>
 
         <!-- แถวที่ 2: Vehicle, Status, License -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามประเภทรถ</h3><div class="h-[250px]"><canvas id="vehicleChart"></canvas></div></div>
-          <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามสถานะ</h3><div class="h-[250px]"><canvas id="statusChart"></canvas></div></div>
-          <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามใบอนุญาตขับขี่</h3><div class="h-[250px]"><canvas id="licenseChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-car-side"></i> แยกตามประเภทรถ</h3><div class="h-[250px]"><canvas id="vehicleChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-users i-cyan"></i> แยกตามสถานะ</h3><div class="h-[250px]"><canvas id="statusChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-id-card i-green"></i> แยกตามใบอนุญาตขับขี่</h3><div class="h-[250px]"><canvas id="licenseChart"></canvas></div></div>
         </div>
 
         <!-- แถวที่ 3: Safety, Time, Cause -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">การใช้เครื่องป้องกัน</h3><div class="h-[250px]"><canvas id="safetyChart"></canvas></div></div>
-          <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามเวลา</h3><div class="h-[250px]"><canvas id="timeChart"></canvas></div></div>
-          <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">สาเหตุที่ทำให้เกิดอุบัติเหตุ</h3><div class="h-[250px]"><canvas id="causeChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-helmet-safety i-green"></i> การใช้เครื่องป้องกัน</h3><div class="h-[250px]"><canvas id="safetyChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-clock i-purple"></i> แยกตามเวลา</h3><div class="h-[250px]"><canvas id="timeChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-triangle-exclamation i-red"></i> สาเหตุที่ทำให้เกิดอุบัติเหตุ</h3><div class="h-[250px]"><canvas id="causeChart"></canvas></div></div>
         </div>
 
         <!-- แถวที่ 4: RoadType, RoadName, District -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามลักษณะถนน</h3><div class="h-[250px]"><canvas id="roadTypeChart"></canvas></div></div>
-          <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามถนน</h3><div class="h-[250px]"><canvas id="roadNameChart"></canvas></div></div>
-          <div class="glass-effect rounded-xl p-6"><h3 class="text-xl font-bold mb-4">แยกตามตำบล</h3><div class="h-[250px]"><canvas id="districtChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-route i-cyan"></i> แยกตามลักษณะถนน</h3><div class="h-[250px]"><canvas id="roadTypeChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-road i-amber"></i> แยกตามถนน</h3><div class="h-[250px]"><canvas id="roadNameChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-location-dot"></i> แยกตามตำบล</h3><div class="h-[250px]"><canvas id="districtChart"></canvas></div></div>
         </div>
 
         <!-- แผนที่พิกัด (ย้ายมาอยู่ด้านล่างสุด ใต้กราฟทั้งหมด) -->
         <div class="glass-effect rounded-xl p-6 w-full">
-            <h3 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-map-marker-alt text-red-500 mr-2"></i>แผนที่พิกัดผู้เสียชีวิต</h3>
+            <h3 class="dt-title"><i class="fa-solid fa-map-location-dot i-red"></i> แผนที่พิกัดผู้เสียชีวิต</h3>
             <div id="dashboardDeathMap" class="w-full h-[600px] rounded-lg shadow-inner border-2 border-gray-200 z-0"></div>
             <!-- คำอธิบายสีตามปี: แสดงเฉพาะปีที่มีข้อมูลในช่วงที่เลือก พร้อมจำนวนจุด -->
             <div class="mt-4 p-4 bg-white rounded-lg shadow-sm text-sm border flex items-center flex-wrap gap-4" id="deathMapLegend">
@@ -1566,10 +1576,8 @@ async function createDeathCharts(data) {
     const md1 = await getMonthlyDeathDataFromSheet(y1);
     const md2 = await getMonthlyDeathDataFromSheet(y2);
 
-    const chartOptions = (title) => ({
-      maintainAspectRatio: false,
-      plugins: { title: { display: true, text: title, font: { size: 14 } } }
-    });
+    // ชุดสีเดียวกับ dashboard เจ้าหน้าที่ — การ์ดหัวข้อบอกชื่อกราฟแล้ว จึงไม่ใส่ชื่อซ้ำในภาพ
+    const dtPalette = ['#1d4ed8','#c1122f','#f59e0b','#16a34a','#7c3aed','#0891b2','#ea580c','#475569','#db2777','#65a30d','#0f766e','#9333ea'];
     const ctxMonthly = document.getElementById('monthlyChart');
     if (ctxMonthly) {
       charts.monthly = new Chart(ctxMonthly.getContext('2d'), {
@@ -1577,22 +1585,33 @@ async function createDeathCharts(data) {
         data: {
           labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
           datasets: [
-            { label: `ค.ศ. ${y1}`, data: calculateCumulative(md1), borderColor: 'rgba(255, 99, 132, 1)', fill: false, tension: 0.1, borderWidth: 3 },
-            { label: `ค.ศ. ${y2}`, data: calculateCumulative(md2), borderColor: 'rgba(54, 162, 235, 1)', fill: false, tension: 0.1, borderWidth: 3 }
+            { label: `ค.ศ. ${y1}`, data: calculateCumulative(md1), borderColor: '#c1122f', backgroundColor: '#c1122f', fill: false, tension: 0.25, pointRadius: 3, borderWidth: 3 },
+            { label: `ค.ศ. ${y2}`, data: calculateCumulative(md2), borderColor: '#1d4ed8', backgroundColor: '#1d4ed8', fill: false, tension: 0.25, pointRadius: 3, borderWidth: 3 }
           ]
         },
-        options: { maintainAspectRatio: false }
+        options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
       });
     }
-    const generateChart = (id, type, labels, chartData, colors, title) => {
+    const generateChart = (id, type, labels, chartData, colors, title, horizontal) => {
       const el = document.getElementById(id);
-      if (el) {
-        charts[id] = new Chart(el.getContext('2d'), {
-          type: type,
-          data: { labels: labels, datasets: [{ label: 'จำนวน', data: chartData, backgroundColor: colors }] },
-          options: chartOptions(title)
-        });
-      }
+      if (!el) return;
+      const isPie = type === 'pie' || type === 'doughnut';
+      // pie ใช้สีที่กำหนดมา (สื่อความหมาย เช่น ชาย/หญิง) — bar ไล่สีตามชุดเดียวกับหน้าอุบัติเหตุ
+      const bg = isPie && Array.isArray(colors) ? colors : labels.map((_, i) => dtPalette[i % dtPalette.length]);
+      charts[id] = new Chart(el.getContext('2d'), {
+        type: type,
+        data: { labels: labels, datasets: [{ label: 'จำนวน', data: chartData, backgroundColor: bg,
+          borderWidth: isPie ? 2 : 0, borderColor: '#fff', borderRadius: type === 'bar' ? 7 : 0 }] },
+        options: {
+          maintainAspectRatio: false, indexAxis: horizontal ? 'y' : 'x',
+          plugins: { legend: { display: isPie, position: 'bottom' } },
+          scales: type === 'bar'
+            ? (horizontal
+                ? { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { ticks: { autoSkip: false } } }
+                : { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } })
+            : {}
+        }
+      });
     };
 
     // แผนภูมิตามแถว
@@ -1606,12 +1625,13 @@ async function createDeathCharts(data) {
 
     generateChart('safetyChart', 'bar', ['สวมหมวก', 'ไม่สวมหมวก', 'คาดเข็มขัด', 'ไม่คาดเข็มขัด'], data.safetyEquipment, '#10b981', 'เครื่องป้องกัน');
     generateChart('timeChart', 'bar', data.timeLabels, data.timeGroups, '#8b5cf6', 'ช่วงเวลา');
-    generateChart('causeChart', 'bar', data.causeLabels, data.causes, '#ef4444', 'สาเหตุอุบัติเหตุ');
+    // ป้ายชื่อยาว → แท่งแนวนอนอ่านง่าย แบบเดียวกับหน้าสถิติอุบัติเหตุ
+    generateChart('causeChart', 'bar', data.causeLabels, data.causes, '#ef4444', 'สาเหตุอุบัติเหตุ', true);
 
-    generateChart('roadTypeChart', 'bar', ['ทางตรง', 'ทางโค้ง', 'ทางแยก', 'กลับรถ', 'แยกไฟแดง', 'สะพาน', 'อื่นๆ'], data.roadTypeGroups, '#8b5cf6', 'ลักษณะถนน');
-    generateChart('roadNameChart', 'bar', ['ทล.1 ในเขต', 'ทล.1 นอกเขต', 'ทล.117', 'ทล.122', 'เทศบาลนคร', 'หนองเบน', 'อื่นๆ'], data.roadNameGroups, '#f59e0b', 'ชื่อถนน');
+    generateChart('roadTypeChart', 'bar', ['ทางตรง', 'ทางโค้ง', 'ทางแยก', 'กลับรถ', 'แยกไฟแดง', 'สะพาน', 'อื่นๆ'], data.roadTypeGroups, '#8b5cf6', 'ลักษณะถนน', true);
+    generateChart('roadNameChart', 'bar', ['ทล.1 ในเขต', 'ทล.1 นอกเขต', 'ทล.117', 'ทล.122', 'เทศบาลนคร', 'หนองเบน', 'อื่นๆ'], data.roadNameGroups, '#f59e0b', 'ชื่อถนน', true);
     // เพิ่ม "อื่นๆ" เข้าไปใน Label เพื่อให้สอดคล้องกับ DistrictGroups ตัวใหม่
-    generateChart('districtChart', 'bar', ['ปากน้ำโพ', 'นครสวรรค์ตก', 'วัดไทรย์', 'ตะเคียนเลื่อน', 'บ้านแก่ง', 'หนองกรด', 'หนองกระโดน', 'อื่นๆ'], data.districtGroups || Array(7).fill(0), '#3b82f6', 'ตำบล');;
+    generateChart('districtChart', 'bar', ['ปากน้ำโพ', 'นครสวรรค์ตก', 'วัดไทรย์', 'ตะเคียนเลื่อน', 'บ้านแก่ง', 'หนองกรด', 'หนองกระโดน', 'อื่นๆ'], data.districtGroups || Array(7).fill(0), '#3b82f6', 'ตำบล', true);
 
     if(data.mapData) {
        initDashboardDeathMap(data.mapData);
