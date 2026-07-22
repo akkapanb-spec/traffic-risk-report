@@ -1271,7 +1271,29 @@ function showDeathStatistics() {
 }
 
 function initializeDeathStatistics() {
+  buildDeathYearControls();
   setDeathYear(new Date().getFullYear());
+}
+
+// สร้างปุ่มปีและตัวเลือกปีอัตโนมัติ 2023..ปีปัจจุบัน — ขึ้นปีใหม่แล้วปุ่มปีใหม่โผล่เอง ไม่ต้องแก้โค้ด
+function buildDeathYearControls() {
+  const nowYear = Math.max(new Date().getFullYear(), 2023);
+  const chips = document.getElementById('deathYearChips');
+  if (chips) {
+    let html = '<span class="text-sm font-semibold text-gray-700 mr-1">ดูตามปี:</span>' +
+      '<button class="death-year-chip" data-year="all" onclick="setDeathYear(\'all\')">ทั้งหมด</button>';
+    for (let y = 2023; y <= nowYear; y++) html += '<button class="death-year-chip" data-year="' + y + '" onclick="setDeathYear(' + y + ')">' + y + '</button>';
+    chips.innerHTML = html;
+  }
+  ['year1', 'year2'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const kept = sel.value;
+    let opts = '';
+    for (let y = 2023; y <= nowYear; y++) opts += '<option value="' + y + '">ค.ศ. ' + y + '</option>';
+    sel.innerHTML = opts;
+    if ([...sel.options].some(o => o.value === kept)) sel.value = kept;
+  });
 }
 
 // เลือกปีด่วน: ตั้งช่วงวันที่ 1 ม.ค. - 31 ธ.ค. ของปีนั้น แล้วโหลดกราฟ+แผนที่ใหม่ทั้งหมด
@@ -1280,7 +1302,7 @@ function setDeathYear(y) {
   const e = document.getElementById('deathEndDate');
   if (y === 'all') {
     s.value = '2023-01-01';
-    e.value = '2027-12-31';
+    e.value = Math.max(new Date().getFullYear(), 2027) + '-12-31';
   } else {
     s.value = `${y}-01-01`;
     e.value = `${y}-12-31`;
@@ -1472,8 +1494,10 @@ async function loadDeathStatistics() {
 
       const deaths = 1;
       const parts = bkkParts(row.incident_datetime);
-      if (parts && parts.y >= 2023 && parts.y <= 2027) {
-        data[`monthly${parts.y}`][parts.m] += deaths;
+      if (parts && parts.y >= 2023) {
+        const mKey = `monthly${parts.y}`;
+        if (!data[mKey]) data[mKey] = Array(12).fill(0);
+        data[mKey][parts.m] += deaths;
         data.total += deaths;
       }
       processDeathRowStatistics(row, data, deaths);
@@ -1608,8 +1632,11 @@ function initDashboardDeathMap(mapData) {
 
   deathMarkersLayer.clearLayers();
 
-  const yearColors = {
-    2023: '#ef4444', 2024: '#3b82f6', 2025: '#10b981', 2026: '#f59e0b', 2027: '#8b5cf6'
+  // สีประจำปี: 5 ปีแรกคงสีเดิม ปีถัดๆ ไปวนใช้ชุดสีอัตโนมัติ (รองรับ 2028+)
+  const yearPalette = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#0891b2', '#65a30d'];
+  const colorOfYear = y => {
+    const idx = Number(y) - 2023;
+    return Number.isInteger(idx) && idx >= 0 ? yearPalette[idx % yearPalette.length] : undefined;
   };
 
   mapData.forEach(item => {
@@ -1619,7 +1646,7 @@ function initDashboardDeathMap(mapData) {
       const lng = parseFloat(parts[1].trim());
 
       if (!isNaN(lat) && !isNaN(lng)) {
-        const markerColor = yearColors[item.year] || '#6b7280';
+        const markerColor = colorOfYear(item.year) || '#6b7280';
 
         const marker = L.circleMarker([lat, lng], {
           radius: 8,
@@ -1662,7 +1689,7 @@ function initDashboardDeathMap(mapData) {
       html += '<span class="text-gray-500">ไม่มีหมุดในช่วงวันที่ที่เลือก</span>';
     } else {
       years.forEach(y => {
-        html += `<div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color:${yearColors[y] || '#6b7280'};"></span> ${y} (${counts[y]} จุด)</div>`;
+        html += `<div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color:${colorOfYear(y) || '#6b7280'};"></span> ${y} (${counts[y]} จุด)</div>`;
       });
     }
     legend.innerHTML = html;

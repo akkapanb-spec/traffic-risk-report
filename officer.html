@@ -601,6 +601,7 @@
         document.getElementById('registerButton').addEventListener('click', showRegister);
         document.getElementById('loginButton').addEventListener('click', showLogin);
         initializeFormOptions();
+        buildDashYearChips();
         buildPassengerCards('p1');
         buildPassengerCards('p2');
         bindFormEvents();
@@ -2599,10 +2600,23 @@
     }
 
     /* ============ DASHBOARD ============ */
+    // สร้างปุ่มปีอัตโนมัติ 2566..ปีปัจจุบัน — ขึ้นปีใหม่แล้วปุ่มโผล่เองไม่ต้องแก้โค้ด
+    function buildDashYearChips() {
+      const wrap = document.getElementById('dashYearChips');
+      if (!wrap) return;
+      const nowYear = Math.max(Number(bkkStamp(new Date(), 'year')), 2023);
+      let html = '<span class="dash-filter-label">ดูตามปี:</span>' +
+        '<button type="button" class="dash-year-chip" data-year="all" onclick="setDashYear(\'all\')">ทั้งหมด</button>';
+      for (let y = 2023; y <= nowYear; y++) {
+        html += '<button type="button" class="dash-year-chip" data-year="' + y + '" onclick="setDashYear(' + y + ')">' + (y + 543) + '</button>';
+      }
+      wrap.innerHTML = html;
+    }
+
     // เลือกปีด่วนบนหน้า dashboard (ค่าปุ่มเป็น ค.ศ. ป้ายเป็น พ.ศ.)
     function setDashYear(y) {
       const s = document.getElementById('dashStartDate'), e = document.getElementById('dashEndDate');
-      if (y === 'all') { s.value = '2023-01-01'; e.value = '2027-12-31'; }
+      if (y === 'all') { s.value = '2023-01-01'; e.value = Math.max(Number(bkkStamp(new Date(), 'year')), 2027) + '-12-31'; }
       else { s.value = y + '-01-01'; e.value = y + '-12-31'; }
       markDashYearChip(y);
       loadDashboard();
