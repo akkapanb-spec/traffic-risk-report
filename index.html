@@ -167,7 +167,7 @@ td{vertical-align:top;font-size:.92rem;}
 #riskMap{height:420px!important;}
 #dashboardDeathMap{height:min(62vh,620px)!important;min-height:320px;}
 /* หน้าสถิติผู้เสียชีวิต: การ์ด+หัวข้อสไตล์เดียวกับ dashboard เจ้าหน้าที่ */
-#deathStatsTab .glass-effect{background:rgba(255,255,255,.94);border:1px solid rgba(209,222,237,.9);border-radius:20px;box-shadow:0 10px 28px rgba(23,52,88,.08);}
+#deathStatsTab .glass-effect{background:rgba(255,255,255,.94);border:1px solid rgba(209,222,237,.9);border-radius:20px;box-shadow:0 10px 28px rgba(23,52,88,.08);min-width:0;}
 #deathStatsTab .glass-effect canvas{filter:drop-shadow(0 7px 11px rgba(15,23,42,.08));}
 .dt-title{display:flex;align-items:center;gap:11px;margin:0 0 16px;font-size:1.08rem;font-weight:800;color:#132238;}
 .dt-title i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#edf4ff;color:#1d4ed8;font-size:.95rem;flex:0 0 34px;}
@@ -200,6 +200,16 @@ td{vertical-align:top;font-size:.92rem;}
 .vehicle-vertical-fill:after{content:"";position:absolute;left:5px;top:-12px;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:13px solid currentColor;filter:drop-shadow(3px 3px 0 rgba(15,23,42,.12))}
 .vehicle-vertical-value{font-weight:900;font-size:.85rem;color:#0f2a4a;margin-bottom:8px}
 .vehicle-vertical-label{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);width:84px;text-align:center;font-size:.66rem;font-weight:800;color:#334155;line-height:1.15}
+@media(max-width:640px){
+  .vehicle-vertical-visual{gap:5px;padding:12px 3px 24px}
+  .vehicle-vertical-bar{min-width:0}
+  .vehicle-vertical-fill{width:26px}
+  .vehicle-vertical-fill:after{left:2px;top:-10px;border-left-width:11px;border-right-width:11px;border-bottom-width:10px}
+  .vehicle-vertical-label{width:50px;font-size:.56rem}
+  .vehicle-vertical-value{font-size:.72rem}
+  .gender-card i{font-size:2.2rem}
+  .gender-card .num,.license-card .num{font-size:1.5rem}
+}
 /* ปุ่มเลือกปีในหน้าสถิติผู้เสียชีวิต */
 .death-year-chip{padding:6px 18px;border-radius:9999px;border:2px solid #cbd5e1;background:#fff;color:#475569;font-weight:600;font-size:.875rem;cursor:pointer;transition:all .15s ease;}
 .death-year-chip:hover{border-color:#3b82f6;color:#1d4ed8;}
@@ -282,8 +292,9 @@ canvas{max-width:100%!important;}
   #dataTab>.flex,#dashboardTab>.flex,#deathStatsTab>.flex{flex-direction:column!important;align-items:stretch!important;gap:12px!important;}
   #dashboardTab .flex.gap-4,#deathStatsTab .flex.gap-4,#deathStatsTab .flex.gap-4.items-center{flex-direction:column!important;align-items:stretch!important;gap:10px!important;}
   #dashboardTab h2,#dataTab h2,#deathStatsTab h2{font-size:1.25rem!important;line-height:1.3;}
-  #dashboardTab .grid.grid-cols-2{grid-template-columns:1fr!important;gap:12px!important;}
-  #dashboardTab .grid,#deathStatsTab .grid{grid-template-columns:1fr!important;gap:14px!important;}
+  /* ต้องเป็น minmax(0,1fr) — 1fr เฉยๆ ปล่อยให้การ์ดที่มีเนื้อหากว้าง (แท่งประเภทรถ) ดันคอลัมน์ล้นจอ */
+  #dashboardTab .grid.grid-cols-2{grid-template-columns:minmax(0,1fr)!important;gap:12px!important;}
+  #dashboardTab .grid,#deathStatsTab .grid{grid-template-columns:minmax(0,1fr)!important;gap:14px!important;}
   #dataTab table{display:none!important;}
   #dataTableMobile{display:block!important;}
   #riskMap{height:320px!important;margin-top:14px!important;}
