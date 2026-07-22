@@ -14,7 +14,22 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    body { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
+      radial-gradient(circle at 8% 5%, rgba(255,255,255,.92), transparent 26%),
+      linear-gradient(145deg, #d9f1ff 0%, #eef7ff 42%, #fde5ef 100%); }
+    /* ส่วนหัวแบบหน้าเจ้าหน้าที่: แถบธงชาติ + แบนเนอร์ไล่สี */
+    .thai-stripe{height:8px;background:linear-gradient(to right,#a51931 0 16%,#fff 16% 32%,#2d2a4a 32% 68%,#fff 68% 84%,#a51931 84%)}
+    .home-hero{position:relative;overflow:hidden;padding:28px 16px 62px;text-align:center;color:#fff;background:
+      linear-gradient(135deg,rgba(18,59,122,.97),rgba(29,78,216,.9) 56%,rgba(193,18,47,.88))}
+    .home-hero:before,.home-hero:after{content:"";position:absolute;border-radius:50%;opacity:.16;background:#fff}
+    .home-hero:before{width:250px;height:250px;left:-100px;top:-120px}
+    .home-hero:after{width:210px;height:210px;right:-70px;bottom:-110px}
+    .home-hero-inner{position:relative;z-index:1;max-width:920px;margin:auto}
+    .home-hero img{width:96px;height:auto;filter:drop-shadow(0 10px 20px rgba(0,0,0,.28));margin:0 auto 8px}
+    .home-hero h1{margin:0 0 6px;font-size:clamp(1.35rem,4.4vw,2.1rem);font-weight:800;line-height:1.3}
+    .home-hero p{margin:0;opacity:.92;font-size:clamp(.88rem,2.4vw,1.02rem)}
+    .home-clock{display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 16px;font-size:.85rem}
+    .home-wrap{margin-top:-34px;position:relative;z-index:2}
     .glass-effect { background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.18); }
     .nav-tab { transition: all 0.3s ease; cursor: pointer; }
     .nav-tab:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); }
@@ -297,25 +312,21 @@ canvas{max-width:100%!important;}
 }
 
 .nav-tab-v6.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #123b7a, #1d4ed8);
   color: white;
+  border-color: transparent;
+  box-shadow: 0 12px 30px rgba(29,78,216,.32);
 }
 
-.nav-icon-v6 {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-icon-v6 svg {
-  width: 32px;
-  height: 32px;
-}
+/* ไอคอนเมนูแบบกล่องสี (สไตล์เดียวกับ dashboard เจ้าหน้าที่) */
+.nav-ico{width:38px;height:38px;min-width:38px;border-radius:12px;display:grid;place-items:center;font-size:1rem}
+.ni-navy{background:#edf4ff;color:#1d4ed8}
+.ni-red{background:#fdeef1;color:#c1122f}
+.ni-blue{background:#e3edff;color:#2563eb}
+.ni-cyan{background:#e5f7fb;color:#0891b2}
+.ni-purple{background:#f3edff;color:#7c3aed}
+.ni-amber{background:#fff6e6;color:#d97706}
+.nav-tab-v6.active .nav-ico{background:rgba(255,255,255,.18);color:#fff}
 
 @media (max-width: 640px) {
   .nav-menu-v6 {
@@ -337,8 +348,15 @@ canvas{max-width:100%!important;}
 }
 
 /* สถิติสไตล์หน้าเจ้าหน้าที่ (แทนการ์ดอุบัติเหตุ/บาดเจ็บ/เสียชีวิตเดิม) */
-.stats-zone{margin-bottom:18px}
-.zone-title{font-weight:800;color:#16324f;margin:0 0 10px;font-size:1.05rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stats-zone{margin-bottom:16px;background:rgba(255,255,255,.94);border:1px solid rgba(209,222,237,.9);border-radius:20px;box-shadow:0 10px 28px rgba(23,52,88,.08);padding:18px}
+.zone-title{font-weight:800;color:#16324f;margin:0 0 12px;font-size:1.05rem;display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.zone-title>i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#edf4ff;font-size:.95rem;flex:0 0 34px}
+#riskStatCards{grid-template-columns:repeat(4,1fr)}
+@media(max-width:860px){#riskStatCards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){#riskStatCards{grid-template-columns:repeat(2,1fr)}}
+.risk-year-chip{padding:7px 18px;border-radius:9999px;border:2px solid #cbd5e1;background:#fff;color:#475569;font-weight:700;font-size:.88rem;transition:all .15s ease;cursor:pointer}
+.risk-year-chip:hover{border-color:#3b82f6;color:#1d4ed8}
+.risk-year-chip.active{background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-color:#1d4ed8;color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.35)}
 .zone-title .zone-hint{
   font-size:.72rem;font-weight:800;color:#fff;
   background:linear-gradient(135deg,#c1122f,#e11d48);
@@ -353,7 +371,10 @@ canvas{max-width:100%!important;}
   100%{box-shadow:0 0 0 0 rgba(193,18,47,0);opacity:1}
 }
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.stat-card{background:rgba(255,255,255,.94);border:1px solid rgba(15,23,42,.08);border-radius:18px;padding:16px;min-height:112px;box-shadow:0 12px 30px rgba(15,23,42,.08);text-align:left}
+.stat-card{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:18px;padding:16px;min-height:112px;box-shadow:0 12px 30px rgba(15,23,42,.08);text-align:left;position:relative;overflow:hidden}
+.stat-card:after{content:"";position:absolute;width:72px;height:72px;border-radius:50%;right:-20px;top:-20px;background:rgba(59,130,246,.09)}
+.stat-card.red:after{background:rgba(193,18,47,.09)}
+.stat-card.orange:after{background:rgba(217,119,6,.11)}
 .stat-card .label{font-size:.8rem;font-weight:700;color:#5b6b7f;display:flex;gap:6px;align-items:center}
 .stat-card .value{font-size:2rem;font-weight:900;color:#123b7a;margin-top:6px;line-height:1.1}
 .stat-card.red .value{color:#c1122f}
@@ -373,92 +394,31 @@ canvas{max-width:100%!important;}
 </style>
 </head>
 <body>
-<div class="container mx-auto px-4 py-8 max-w-4xl">
-  <!-- Header -->
-  <div class="text-center mb-8">
-    <img src="logo.png" alt="Logo" class="mx-auto mb-4 h-32 w-auto" style="filter:drop-shadow(0 6px 14px rgba(15,23,42,.28));">
-    <h1 class="text-3xl md:text-4xl font-bold text-blue-800 mb-2">แจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ สภ.เมืองนครสวรรค์</h1>
-    <p class="text-lg text-gray-600">Report information on accident risk points</p>
-    <div class="mt-4 text-sm text-gray-500"><i class="fas fa-clock mr-2"></i><span id="currentDateTime"></span></div>
+<div class="thai-stripe"></div>
+<header class="home-hero">
+  <div class="home-hero-inner">
+    <img src="logo.png" alt="Logo">
+    <h1>แจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ สภ.เมืองนครสวรรค์</h1>
+    <p>Report information on accident risk points</p>
+    <div class="home-clock"><i class="fas fa-clock"></i> <span id="currentDateTime"></span></div>
   </div>
+</header>
+<div class="container mx-auto px-4 pb-8 max-w-4xl home-wrap">
 
   <!-- Navigation Tabs V6 Professional SVG -->
 <div class="nav-menu-v6">
 
-  <button class="nav-tab-v6 active" onclick="showTab('dashboard', this)">
-    <span class="nav-icon-v6">
-      <svg viewBox="0 0 64 64">
-        <rect x="10" y="12" width="44" height="40" rx="6" fill="#7c3aed"/>
-        <rect x="16" y="18" width="12" height="12" rx="3" fill="#ddd6fe"/>
-        <rect x="36" y="18" width="12" height="20" rx="3" fill="#c4b5fd"/>
-        <rect x="16" y="36" width="12" height="10" rx="3" fill="#a78bfa"/>
-        <rect x="32" y="44" width="16" height="4" rx="2" fill="#ede9fe"/>
-      </svg>
-    </span>
-    <span>DASHBOARD วิเคราะห์สถิติอุบัติเหตุเสียชีวิต แผนที่พร้อมพิกัด</span>
-  </button>
+  <button class="nav-tab-v6 active" onclick="showTab('dashboard', this)"><span class="nav-ico ni-navy"><i class="fa-solid fa-chart-line"></i></span><span>DASHBOARD วิเคราะห์สถิติอุบัติเหตุเสียชีวิต แผนที่พร้อมพิกัด</span></button>
 
-  <button class="nav-tab-v6" onclick="showTab('report', this)">
-    <span class="nav-icon-v6">
-      <svg viewBox="0 0 64 64">
-        <path d="M32 6 L60 56 H4 Z" fill="#ef4444"/>
-        <path d="M32 14 L51 50 H13 Z" fill="#fee2e2"/>
-        <rect x="29" y="24" width="6" height="16" rx="3" fill="#b91c1c"/>
-        <circle cx="32" cy="46" r="3" fill="#b91c1c"/>
-      </svg>
-    </span>
-    <span>แจ้งข้อมูลจุดเสี่ยง</span>
-  </button>
+  <button class="nav-tab-v6" onclick="showTab('report', this)"><span class="nav-ico ni-red"><i class="fa-solid fa-triangle-exclamation"></i></span><span>แจ้งข้อมูลจุดเสี่ยง</span></button>
 
-  <button class="nav-tab-v6" onclick="openAccidentRecord()">
-    <span class="nav-icon-v6">
-      <svg viewBox="0 0 64 64">
-        <circle cx="32" cy="20" r="10" fill="#2563eb"/>
-        <path d="M16 56 C18 42 46 42 48 56 Z" fill="#1e40af"/>
-        <path d="M22 14 L32 8 L42 14 V20 C42 27 37 32 32 34 C27 32 22 27 22 20 Z" fill="#60a5fa"/>
-        <circle cx="32" cy="20" r="4" fill="#facc15"/>
-      </svg>
-    </span>
-    <span>บันทึกข้อมูลอุบัติเหตุ สำหรับเจ้าหน้าที่ตำรวจ</span>
-  </button>
+  <button class="nav-tab-v6" onclick="openAccidentRecord()"><span class="nav-ico ni-blue"><i class="fa-solid fa-user-shield"></i></span><span>บันทึกข้อมูลอุบัติเหตุ สำหรับเจ้าหน้าที่ตำรวจ</span></button>
 
-  <button class="nav-tab-v6" onclick="showTab('data', this)">
-    <span class="nav-icon-v6">
-      <svg viewBox="0 0 64 64">
-        <rect x="16" y="10" width="32" height="46" rx="5" fill="#0ea5e9"/>
-        <rect x="22" y="18" width="20" height="4" rx="2" fill="#e0f2fe"/>
-        <rect x="22" y="28" width="20" height="4" rx="2" fill="#e0f2fe"/>
-        <rect x="22" y="38" width="15" height="4" rx="2" fill="#e0f2fe"/>
-        <rect x="24" y="6" width="16" height="8" rx="3" fill="#0369a1"/>
-      </svg>
-    </span>
-    <span>ข้อมูลจุดเสี่ยง สถานะ และแผนที่พร้อมพิกัด</span>
-  </button>
+  <button class="nav-tab-v6" onclick="showTab('data', this)"><span class="nav-ico ni-cyan"><i class="fa-solid fa-table-list"></i></span><span>ข้อมูลจุดเสี่ยง สถานะ และแผนที่พร้อมพิกัด</span></button>
 
-  <button class="nav-tab-v6" onclick="openVideoCampaign()">
-    <span class="nav-icon-v6">
-      <svg viewBox="0 0 64 64">
-        <rect x="10" y="16" width="44" height="32" rx="6" fill="#dc2626"/>
-        <polygon points="28,24 44,32 28,40" fill="#fff"/>
-        <circle cx="18" cy="22" r="3" fill="#fecaca"/>
-        <circle cx="46" cy="22" r="3" fill="#fecaca"/>
-      </svg>
-    </span>
-    <span>Clip Video ประชาสัมพันธ์และรณรงค์ลดอุบัติเหตุ</span>
-  </button>
+  <button class="nav-tab-v6" onclick="openVideoCampaign()"><span class="nav-ico ni-purple"><i class="fa-solid fa-circle-play"></i></span><span>Clip Video ประชาสัมพันธ์และรณรงค์ลดอุบัติเหตุ</span></button>
 
-  <button class="nav-tab-v6" onclick="openHelmetProject()">
-    <span class="nav-icon-v6">
-      <svg viewBox="0 0 64 64">
-        <path d="M32 8 C18 8 8 20 8 34 V42 H56 V34 C56 20 46 8 32 8Z" fill="#ff7a00"/>
-        <path d="M32 8 C22 8 13 15 10 26 C17 18 25 14 34 14 C43 14 50 18 54 26 C51 15 42 8 32 8Z" fill="#ffb347"/>
-        <rect x="8" y="40" width="48" height="6" rx="3" fill="#374151"/>
-        <rect x="29" y="45" width="6" height="10" rx="2" fill="#111827"/>
-        <ellipse cx="24" cy="20" rx="7" ry="4" fill="#fff7ed" opacity="0.65"/>
-      </svg>
-    </span>
-    <span>โครงการสวมหมวกนิรภัย<br>ปลอดภัย ได้ส่วนลด</span>
-  </button>
+  <button class="nav-tab-v6" onclick="openHelmetProject()"><span class="nav-ico ni-amber"><i class="fa-solid fa-helmet-safety"></i></span><span>โครงการสวมหมวกนิรภัยปลอดภัย ได้ส่วนลด</span></button>
 
 </div>
 
@@ -529,19 +489,24 @@ canvas{max-width:100%!important;}
 
     <!-- Dashboard Tab (หน้าเริ่มต้น) -->
     <div id="dashboardTab">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-800"><img src="https://img.icons8.com/color/48/000000/dashboard.png" class="w-8 h-8 inline mr-3">DASHBOARD สถิติข้อมูล</h2>
-        <div class="flex gap-4">
-          <input type="date" id="startDate" class="form-input px-4 py-2 rounded-lg">
-          <input type="date" id="endDate" class="form-input px-4 py-2 rounded-lg">
-          <button onclick="refreshDashboard()" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold"><img src="https://img.icons8.com/color/48/000000/refresh.png" class="w-5 h-5 inline mr-2">อัปเดต</button>
+      <div class="stats-zone" style="margin-bottom:16px">
+        <h3 class="zone-title"><i class="fa-solid fa-gauge-high" style="color:#1d4ed8"></i> DASHBOARD สถิติข้อมูลจุดเสี่ยง</h3>
+        <div class="flex flex-wrap items-center gap-2 mb-3" id="riskYearChips"></div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-sm font-semibold text-gray-700 mr-1">หรือกำหนดเอง:</span>
+          <label class="text-sm text-gray-600">ตั้งแต่</label>
+          <input type="date" id="startDate" class="form-input px-3 py-2 rounded-lg">
+          <label class="text-sm text-gray-600">ถึง</label>
+          <input type="date" id="endDate" class="form-input px-3 py-2 rounded-lg">
+          <button onclick="riskCustomRange()" class="btn-primary text-white px-5 py-2 rounded-lg font-semibold"><i class="fa-solid fa-filter mr-1"></i> แสดงข้อมูล</button>
         </div>
+        <p id="riskRangeInfo" class="text-sm text-gray-600 mt-3 font-medium"></p>
       </div>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-        <div class="glass-effect rounded-xl p-6 text-center"><img src="https://img.icons8.com/color/48/000000/warning-shield.png" class="w-12 h-12 mx-auto mb-3"><h3 class="text-lg font-semibold text-gray-700 mb-2">จุดเสี่ยงทั้งหมด</h3><p class="text-3xl font-bold text-blue-600" id="totalRisks">0</p></div>
-        <div class="glass-effect rounded-xl p-6 text-center"><img src="https://img.icons8.com/color/48/000000/checkmark.png" class="w-12 h-12 mx-auto mb-3"><h3 class="text-lg font-semibold text-gray-700 mb-2">แก้ไขแล้ว</h3><p class="text-3xl font-bold text-green-600" id="completedRisks">0</p></div>
-        <div class="glass-effect rounded-xl p-6 text-center"><img src="https://img.icons8.com/color/48/000000/in-progress.png" class="w-12 h-12 mx-auto mb-3"><h3 class="text-lg font-semibold text-gray-700 mb-2">กำลังดำเนินการ</h3><p class="text-3xl font-bold text-yellow-600" id="inProgressRisks">0</p></div>
-        <div class="glass-effect rounded-xl p-6 text-center"><img src="https://img.icons8.com/color/48/000000/cancel.png" class="w-12 h-12 mx-auto mb-3"><h3 class="text-lg font-semibold text-gray-700 mb-2">ยังไม่ดำเนินการ</h3><p class="text-3xl font-bold text-red-600" id="notStartedRisks">0</p></div>
+      <div class="stats-grid mb-8" id="riskStatCards">
+        <div class="stat-card"><div class="label"><i class="fa-solid fa-shield-halved" style="color:#1d4ed8"></i> จุดเสี่ยงทั้งหมด</div><div class="value" style="color:#1d4ed8" id="totalRisks">0</div><div class="unit">จุด</div></div>
+        <div class="stat-card"><div class="label"><i class="fa-solid fa-circle-check" style="color:#16834b"></i> แก้ไขแล้ว</div><div class="value" style="color:#16834b" id="completedRisks">0</div><div class="unit">จุด</div></div>
+        <div class="stat-card"><div class="label"><i class="fa-solid fa-person-digging" style="color:#d97706"></i> กำลังดำเนินการ</div><div class="value" style="color:#d97706" id="inProgressRisks">0</div><div class="unit">จุด</div></div>
+        <div class="stat-card"><div class="label"><i class="fa-solid fa-circle-xmark" style="color:#c1122f"></i> ยังไม่ดำเนินการ</div><div class="value" style="color:#c1122f" id="notStartedRisks">0</div><div class="unit">จุด</div></div>
       </div>
       <!-- สถิติแบบเรียลไทม์ สไตล์หน้าเจ้าหน้าที่ -->
       <div id="officerStyleStats" class="mb-8">
@@ -554,7 +519,7 @@ canvas{max-width:100%!important;}
           </div>
         </div>
         <div class="stats-zone clickable" onclick="showDeathStatistics()" title="คลิกเพื่อดูรายละเอียด">
-          <h3 class="zone-title"><i class="fa-solid fa-skull-crossbones" style="color:#c1122f"></i> สถิติข้อมูลอุบัติเหตุ (เสียชีวิต) สภ.เมืองนครสวรรค์ <span class="zone-hint"><i class="fas fa-mouse-pointer"></i> คลิกเพื่อดูรายละเอียด</span></h3>
+          <h3 class="zone-title"><i class="fa-solid fa-skull-crossbones" style="color:#c1122f;background:#fdeef1"></i> สถิติข้อมูลอุบัติเหตุ (เสียชีวิต) สภ.เมืองนครสวรรค์ <span class="zone-hint"><i class="fas fa-mouse-pointer"></i> คลิกเพื่อดูรายละเอียด</span></h3>
           <div class="stats-grid">
             <div class="stat-card red"><div class="label"><i class="fa-solid fa-user-xmark"></i> ปีปัจจุบัน</div><div class="value" id="deathStatYear">-</div><div class="unit">ราย</div></div>
             <div class="stat-card red"><div class="label"><i class="fa-solid fa-user-xmark"></i> เดือนปัจจุบัน</div><div class="value" id="deathStatMonth">-</div><div class="unit">ราย</div></div>
@@ -565,7 +530,7 @@ canvas{max-width:100%!important;}
           </div>
         </div>
         <div class="stats-zone">
-          <h3 class="zone-title"><i class="fa-solid fa-user-injured" style="color:#d97706"></i> สถิติข้อมูลอุบัติเหตุ (บาดเจ็บ) สภ.เมืองนครสวรรค์</h3>
+          <h3 class="zone-title"><i class="fa-solid fa-user-injured" style="color:#d97706;background:#fff6e6"></i> สถิติข้อมูลอุบัติเหตุ (บาดเจ็บ) สภ.เมืองนครสวรรค์</h3>
           <div class="stats-grid">
             <div class="stat-card orange"><div class="label"><i class="fa-solid fa-kit-medical"></i> ปีปัจจุบัน</div><div class="value" id="injStatYear">-</div><div class="unit">ราย</div><div class="injury-mini" id="injPillsYear"></div></div>
             <div class="stat-card orange"><div class="label"><i class="fa-solid fa-kit-medical"></i> เดือนปัจจุบัน</div><div class="value" id="injStatMonth">-</div><div class="unit">ราย</div><div class="injury-mini" id="injPillsMonth"></div></div>
@@ -1136,12 +1101,32 @@ let charts = {};
 
 
 function initializeDashboard() {
-  const endDate = new Date();
-  const startDate = new Date(); startDate.setDate(startDate.getDate() - 30);
-  document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
-  document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+  buildRiskYearChips();
+  setRiskYear(new Date().getFullYear());
+}
+
+// ปุ่มปีของ dashboard จุดเสี่ยง: สร้างอัตโนมัติ 2023..ปีปัจจุบัน (ขึ้นปีใหม่ปุ่มโผล่เอง)
+function buildRiskYearChips() {
+  const wrap = document.getElementById('riskYearChips');
+  if (!wrap) return;
+  const nowYear = Math.max(new Date().getFullYear(), 2023);
+  let html = '<span class="text-sm font-semibold text-gray-700 mr-1">ดูตามปี:</span>' +
+    '<button class="risk-year-chip" data-year="all" onclick="setRiskYear(\'all\')">ทั้งหมด</button>';
+  for (let y = 2023; y <= nowYear; y++) html += '<button class="risk-year-chip" data-year="' + y + '" onclick="setRiskYear(' + y + ')">' + y + '</button>';
+  wrap.innerHTML = html;
+}
+function markRiskYearChip(y) {
+  document.querySelectorAll('#riskYearChips .risk-year-chip').forEach(b =>
+    b.classList.toggle('active', b.dataset.year === String(y)));
+}
+function setRiskYear(y) {
+  const s = document.getElementById('startDate'), e = document.getElementById('endDate');
+  if (y === 'all') { s.value = ''; e.value = ''; }
+  else { s.value = y + '-01-01'; e.value = y + '-12-31'; }
+  markRiskYearChip(y);
   refreshDashboard();
 }
+function riskCustomRange() { markRiskYearChip('custom'); refreshDashboard(); }
 
 function rangeToIso(startDate, endDate) {
   const result = {};
@@ -1161,7 +1146,9 @@ async function countTable(table, column, startDate, endDate) {
 }
 
 async function refreshDashboard() {
-  Swal.fire({ title: 'กำลังโหลดข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  Swal.fire({ title: 'กำลังโหลดข้อมูล...', allowOutsideClick: false,
+    showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' },
+    didOpen: () => Swal.showLoading() });
   const startDate = document.getElementById('startDate').value;
   const endDate = document.getElementById('endDate').value;
 
@@ -1186,6 +1173,11 @@ async function refreshDashboard() {
     document.getElementById('completedRisks').textContent = riskStats.completed || 0;
     document.getElementById('inProgressRisks').textContent = riskStats.inProgress || 0;
     document.getElementById('notStartedRisks').textContent = riskStats.notStarted || 0;
+
+    const rInfo = document.getElementById('riskRangeInfo');
+    if (rInfo) rInfo.textContent = (startDate || endDate)
+      ? 'แสดงข้อมูลช่วง ' + thaiDateLabel(startDate) + ' ถึง ' + thaiDateLabel(endDate) + ' — จุดเสี่ยง ' + (riskStats.totalRisks || 0) + ' รายการ'
+      : 'แสดงข้อมูลทั้งหมด — จุดเสี่ยง ' + (riskStats.totalRisks || 0) + ' รายการ';
 
     await loadOfficerStyleStats();
 
