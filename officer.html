@@ -94,6 +94,13 @@
     .stats-zone{margin-bottom:24px}.zone-title{display:flex;align-items:center;gap:9px;margin:0 0 12px;font-size:1.05rem}.zone-title i{color:var(--blue)}
     .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat-card{background:#fff;border-radius:18px;border:1px solid var(--line);padding:16px;min-height:130px;position:relative;overflow:hidden}.stat-card:after{content:"";position:absolute;width:76px;height:76px;border-radius:50%;right:-20px;top:-20px;background:rgba(59,130,246,.09)}
     .stat-card .label{color:var(--muted);font-size:.84rem}.stat-card .value{font-size:2rem;font-weight:800;color:var(--navy);line-height:1.2;margin-top:8px}.stat-card .unit{font-size:.77rem;color:var(--muted)}
+    /* ตัวกรองปี/ช่วงวันที่บนหน้า dashboard (สไตล์เดียวกับหน้าสถิติผู้เสียชีวิตฝั่งประชาชน) */
+    .dash-filter-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+    .dash-filter-label{font-weight:700;font-size:.92rem;margin-right:2px}
+    .dash-year-chip{padding:8px 20px;border-radius:9999px;border:2px solid #cbd5e1;background:#fff;color:#475569;font-weight:700;font-size:.9rem;transition:all .15s ease}
+    .dash-year-chip:hover{border-color:var(--blue2);color:var(--blue)}
+    .dash-year-chip.active{background:linear-gradient(135deg,var(--blue2),var(--blue));border-color:var(--blue);color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.35)}
+    @media(max-width:640px){.dash-year-chip{padding:7px 14px;font-size:.84rem}.dash-filter-row .input[type=date]{flex:1 1 38%;min-width:120px;max-width:none!important}.dash-filter-row .btn{width:100%}}
     .stat-card.red .value{color:var(--red)}.stat-card.orange .value{color:#b45309}.injury-mini{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.pill{border-radius:999px;padding:5px 8px;font-size:.74rem;font-weight:700;background:#f2f6fb}.pill.red{background:#fee2e2;color:#991b1b}.pill.orange{background:#ffedd5;color:#9a3412}.pill.yellow{background:#fef9c3;color:#854d0e}
 
     .form-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}.field{grid-column:span 4}.field.span-6{grid-column:span 6}.field.span-8{grid-column:span 8}.field.span-12{grid-column:1/-1}.field label{display:block;font-size:.86rem;font-weight:700;margin:0 0 7px;color:#263b55}.req{color:var(--red)}
@@ -428,21 +435,24 @@
       <section id="page-dashboard" class="page">
         <div class="page-head"><div class="page-icon"><i class="fa-solid fa-chart-line"></i></div><div><h2>DASHBOARD</h2><p>สถิติอุบัติเหตุ สภ.เมืองนครสวรรค์</p></div></div>
         <div class="card">
-          <div class="legend" id="dashYearChips" style="margin-bottom:10px">
-            <span class="hint" style="align-self:center;margin-right:2px">ดูตามปี:</span>
-            <button type="button" class="legend-item legend-filter" data-year="all" onclick="setDashYear('all')"><i class="fa-solid fa-layer-group" style="font-size:.75rem"></i> ทั้งหมด</button>
-            <button type="button" class="legend-item legend-filter" data-year="2023" onclick="setDashYear(2023)">2566</button>
-            <button type="button" class="legend-item legend-filter" data-year="2024" onclick="setDashYear(2024)">2567</button>
-            <button type="button" class="legend-item legend-filter" data-year="2025" onclick="setDashYear(2025)">2568</button>
-            <button type="button" class="legend-item legend-filter" data-year="2026" onclick="setDashYear(2026)">2569</button>
-            <button type="button" class="legend-item legend-filter" data-year="2027" onclick="setDashYear(2027)">2570</button>
+          <div class="dash-filter-row" id="dashYearChips" style="margin-bottom:12px">
+            <span class="dash-filter-label">ดูตามปี:</span>
+            <button type="button" class="dash-year-chip" data-year="all" onclick="setDashYear('all')">ทั้งหมด</button>
+            <button type="button" class="dash-year-chip" data-year="2023" onclick="setDashYear(2023)">2566</button>
+            <button type="button" class="dash-year-chip" data-year="2024" onclick="setDashYear(2024)">2567</button>
+            <button type="button" class="dash-year-chip" data-year="2025" onclick="setDashYear(2025)">2568</button>
+            <button type="button" class="dash-year-chip" data-year="2026" onclick="setDashYear(2026)">2569</button>
+            <button type="button" class="dash-year-chip" data-year="2027" onclick="setDashYear(2027)">2570</button>
           </div>
-          <div class="filter-bar">
-            <div class="field"><label for="dashStartDate">วันที่เริ่มต้น</label><input id="dashStartDate" class="input" type="date"></div>
-            <div class="field"><label for="dashEndDate">วันที่สิ้นสุด</label><input id="dashEndDate" class="input" type="date"></div>
+          <div class="dash-filter-row">
+            <span class="dash-filter-label">หรือกำหนดเอง:</span>
+            <label class="hint" for="dashStartDate" style="margin:0">ตั้งแต่</label>
+            <input id="dashStartDate" class="input" type="date" style="max-width:175px">
+            <label class="hint" for="dashEndDate" style="margin:0">ถึง</label>
+            <input id="dashEndDate" class="input" type="date" style="max-width:175px">
             <button class="btn btn-primary" type="button" onclick="dashCustomRange()"><i class="fa-solid fa-filter"></i> แสดงข้อมูล</button>
           </div>
-          <p class="hint" id="dashRangeInfo" style="margin:10px 0 0"></p>
+          <p class="hint" id="dashRangeInfo" style="margin:12px 0 0;font-weight:600"></p>
         </div>
         <div id="dashboardContent" style="margin-top:14px"><div class="loading-skeleton"></div></div>
       </section>
@@ -2598,7 +2608,7 @@
       loadDashboard();
     }
     function markDashYearChip(y) {
-      document.querySelectorAll('#dashYearChips .legend-filter').forEach(b =>
+      document.querySelectorAll('#dashYearChips .dash-year-chip').forEach(b =>
         b.classList.toggle('active', b.dataset.year === String(y)));
     }
     function dashCustomRange() { markDashYearChip('custom'); loadDashboard(); }
