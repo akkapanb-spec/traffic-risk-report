@@ -572,6 +572,9 @@
     const STORAGE_BUCKET = 'risk-images';
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // กันหน้าวูบ/เด้งขึ้นบนสุดตอนเปิด-ปิด popup บนมือถือ (SweetAlert2 ใส่ height:auto ให้ body แล้ว scroll หลุด)
+    if (window.Swal) window.Swal = Swal.mixin({ heightAuto: false, scrollbarPadding: false });
+
     const NAKHON_SAWAN_CENTER = [15.7047, 100.1372];
     const SESSION_KEY = 'accidentTrafficPoliceSession';
     const state = {
@@ -1117,7 +1120,7 @@
       const confirm = await Swal.fire({ icon:'question', title:'ออกจากระบบ?', showCancelButton:true, confirmButtonText:'ออกจากระบบ', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c1122f' });
       if (!confirm.isConfirmed) return;
       try { await api('logout'); } catch (error) {}
-      clearSession(); state.dashboardLoaded = false; state.mapLoaded = false;
+      clearSession(); state.dashboardLoaded = false; state.mapLoaded = false; state.dashboardData = null;
       state.accidentRows = null; state.injuryRows = null; state.deathDates = null; state.deathFull = null;
       showAuthPage();
     }
@@ -2310,7 +2313,7 @@
         const wasEditing = !!state.editingAccident;
         await Swal.fire({ icon:'success', title: wasEditing ? 'แก้ไขเคสเรียบร้อย' : 'บันทึกสำเร็จ', html:'รหัสอุบัติเหตุ<br><strong>' + escapeHtml(result.accidentId) + '</strong>', confirmButtonColor:'#16834b' });
         resetAccidentForm();
-        state.dashboardLoaded = false; state.mapLoaded = false;
+        state.dashboardLoaded = false; state.mapLoaded = false; state.dashboardData = null;
         state.accidentRows = null; state.injuryRows = null; state.deathDates = null; state.deathFull = null;
         if (wasEditing) openPage('map', document.querySelector('[data-page="map"]'));
       } catch (error) {
@@ -2433,7 +2436,7 @@
         const result = await rpc('admin_delete_accident', { p_token: state.token, p_id: rowId });
         if (!result.success) throw new Error(result.message || 'ลบไม่สำเร็จ');
         await Swal.fire({ icon:'success', title:result.message, timer:1400, showConfirmButton:false });
-        state.accidentRows = null; state.injuryRows = null; state.dashboardLoaded = false; state.mapLoaded = false;
+        state.accidentRows = null; state.injuryRows = null; state.dashboardLoaded = false; state.mapLoaded = false; state.dashboardData = null;
         loadMapCumulative(); loadMapData();
       } catch (error) {
         Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });

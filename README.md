@@ -35,3 +35,5 @@
 1. รัน `sql/schema.sql` ใน Supabase SQL Editor (สร้างตาราง)
 2. รัน `sql/storage.sql` ใน Supabase SQL Editor (สร้างที่เก็บรูป)
 3. ค่าเชื่อมต่อ (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) อยู่ใน `APP_CONFIG` ของ `index.html`
+
+> ⚠️ **ถ้าต้องรันไฟล์ SQL เก่าซ้ำ**: บางฟังก์ชันถูกนิยามซ้ำในหลายไฟล์ (เวอร์ชันใหม่ทับเวอร์ชันเก่า) — หลังรันไฟล์เก่าใดๆ ให้รันไฟล์เหล่านี้ปิดท้ายเสมอเพื่อให้ได้เวอร์ชันที่ถูกต้อง: `admin.sql` (officer_login แบบมี isAdmin) และ `actions_cleanup.sql` (admin_add_risk_action แบบบันทึก risk_id + status)

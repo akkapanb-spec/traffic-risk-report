@@ -661,6 +661,10 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const STORAGE_BUCKET = 'risk-images';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// กันหน้าวูบ/เด้งขึ้นบนสุดตอนเปิด-ปิด popup บนมือถือ:
+// ค่าเริ่มต้นของ SweetAlert2 จะใส่ height:auto ให้ body ทำให้ layout ยุบและ scroll หลุดทุกครั้งที่เปิด/ปิด
+if (window.Swal) window.Swal = Swal.mixin({ heightAuto: false, scrollbarPadding: false });
+
 let cachedDeathRows = null;
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1477,9 +1481,9 @@ function processDeathRowStatistics(row, data, deathCount = 1) {
     else if (district.includes('บ้านแก่ง')) data.districtGroups[4] += deathCount;
     else if (district.includes('หนองกรด')) data.districtGroups[5] += deathCount;
     else if (district.includes('หนองกระโดน')) data.districtGroups[6] += deathCount;
-    else data.districtGroups[6] += deathCount;
+    else data.districtGroups[7] += deathCount;   // ตำบลอื่นนอก 7 ตำบล → ช่อง "อื่นๆ" (เดิมไปบวกที่หนองกระโดนผิดช่อง)
   } else {
-    data.districtGroups[6] += deathCount;
+    data.districtGroups[7] += deathCount;        // ไม่ระบุตำบล → "อื่นๆ" เช่นกัน
   }
 
   if (row.incident_datetime) {
@@ -1936,7 +1940,7 @@ showTab = function(tabName, element) {
 };
 
 window.addEventListener('resize', () => {
-  if (typeof riskMap !== 'undefined' && riskMap) setTimeout(() => riskMap.invalidateSize(), 150);
+  if (typeof mapRisk !== 'undefined' && mapRisk) setTimeout(() => mapRisk.invalidateSize(), 150);
   if (typeof dashboardDeathMap !== 'undefined' && dashboardDeathMap) setTimeout(() => dashboardDeathMap.invalidateSize(), 150);
 });
 
