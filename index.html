@@ -8,13 +8,14 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    body { min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
+    body { min-height: 100vh; font-family: 'Sarabun', 'Segoe UI', Tahoma, sans-serif; background:
       radial-gradient(circle at 8% 5%, rgba(255,255,255,.92), transparent 26%),
       linear-gradient(145deg, #d9f1ff 0%, #eef7ff 42%, #fde5ef 100%); }
     /* ส่วนหัวแบบหน้าเจ้าหน้าที่: แถบธงชาติ + แบนเนอร์ไล่สี */
@@ -30,6 +31,40 @@
     .home-hero p{margin:0;opacity:.92;font-size:clamp(.88rem,2.4vw,1.02rem)}
     .home-clock{display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 16px;font-size:.85rem}
     .home-wrap{margin-top:-34px;position:relative;z-index:2}
+    /* hamburger + drawer เมนูข้าง (แบบเดียวกับแอปเจ้าหน้าที่) */
+    .home-menu-toggle{display:none;width:42px;height:42px;border:0;border-radius:13px;color:#fff;cursor:pointer;
+      background:linear-gradient(135deg,#123b7a,#1d4ed8);font-size:1.05rem;flex:0 0 auto}
+    .home-drawer-backdrop{position:fixed;inset:0;background:rgba(9,25,48,.55);z-index:890;opacity:0;pointer-events:none;transition:opacity .2s}
+    .home-drawer-backdrop.open{opacity:1;pointer-events:auto}
+    .home-drawer{position:fixed;top:0;left:0;bottom:0;width:min(300px,85vw);background:#fff;z-index:900;
+      transform:translateX(-105%);transition:transform .22s ease;box-shadow:14px 0 40px rgba(0,0,0,.2);display:flex;flex-direction:column}
+    .home-drawer.open{transform:translateX(0)}
+    .home-drawer-head{position:relative;background:linear-gradient(135deg,#123b7a,#1d4ed8);color:#fff;padding:18px 16px;text-align:center}
+    .home-drawer-head img{width:64px;height:auto;margin:0 auto 6px;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.3))}
+    .home-drawer-head h3{margin:0;font-size:1.05rem}
+    .home-drawer-head p{margin:3px 0 0;font-size:.72rem;opacity:.85;line-height:1.4}
+    .home-drawer-close{position:absolute;top:10px;right:10px;width:34px;height:34px;border:0;border-radius:10px;background:rgba(255,255,255,.18);color:#fff;cursor:pointer}
+    .home-drawer-menu{padding:12px;display:grid;gap:6px;overflow:auto;align-content:start}
+    .home-drawer-menu button{display:flex;align-items:center;gap:11px;padding:12px 13px;border:0;border-radius:13px;background:transparent;
+      font-weight:700;color:#132238;text-align:left;font-size:.92rem;cursor:pointer;transition:background .15s}
+    .home-drawer-menu button:hover{background:#eef4ff}
+    .home-drawer-menu button i{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#edf4ff;color:#1d4ed8;flex:0 0 34px;font-size:.95rem}
+    /* tablet/มือถือ: ย่อแบนเนอร์ใหญ่เป็น topbar กะทัดรัดแบบหน้าเจ้าหน้าที่ */
+    @media(max-width:1023px){
+      .home-hero{position:sticky;top:0;z-index:700;padding:9px 14px;text-align:left;color:#132238;
+        background:rgba(255,255,255,.97);border-bottom:1px solid rgba(190,207,226,.75)}
+      .home-hero:before,.home-hero:after{display:none}
+      .home-hero-inner{display:flex;align-items:center;gap:11px;max-width:100%}
+      .home-hero img{width:44px;height:auto;margin:0;filter:drop-shadow(0 3px 7px rgba(0,0,0,.25));flex:0 0 auto}
+      .home-hero-text{min-width:0;text-align:left}
+      .home-hero .home-hero-text h1{font-size:.98rem!important;color:#132238!important;margin:0;line-height:1.3;
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .home-hero p{font-size:.68rem;color:#64748b;opacity:1;margin:1px 0 0;
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .home-clock{display:none}
+      .home-wrap{margin-top:14px}
+      .home-menu-toggle{display:grid;place-items:center}
+    }
     /* ไม่ใช้ backdrop-filter — GPU มือถือวาดเบลอเรียลไทม์ไม่ไหว ทำให้จอกระพริบตอนเลื่อน */
     .glass-effect { background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(255, 255, 255, 0.18); }
     .nav-tab { transition: all 0.3s ease; cursor: pointer; }
@@ -86,7 +121,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html{scroll-behavior:smooth;}
 body{
-  font-family:'Segoe UI','Noto Sans Thai',Tahoma,sans-serif;
+  font-family:'Sarabun','Segoe UI','Noto Sans Thai',Tahoma,sans-serif; /* ฟอนต์เดียวกับหน้าเจ้าหน้าที่ */
   background:
     radial-gradient(circle at top left,rgba(59,130,246,.25),transparent 32%),
     radial-gradient(circle at top right,rgba(124,58,237,.22),transparent 34%),
@@ -367,9 +402,18 @@ canvas{max-width:100%!important;}
 .nav-tab-v6.active .big-ic{background:rgba(255,255,255,.2);box-shadow:none}
 
 @media (max-width: 640px) {
-  .nav-menu-v6 { width: 100%; gap: 0; padding: 6px 4px; border-radius: 17px; }
-  .nav-tab-v6 { flex: 1; min-width: 0; padding: 7px 2px; font-size: .58rem; border-radius: 11px; }
-  .big-ic { width: 32px; height: 32px; font-size: .9rem; border-radius: 9px; }
+  /* มือถือ: เมนูเป็น bottom bar ตรึงขอบล่าง แบบเดียวกับแอปเจ้าหน้าที่ */
+  .nav-menu-v6 {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 800;
+    width: 100%; margin: 0; gap: 0;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0; border: 0; border-top: 1px solid rgba(190,207,226,.75);
+    box-shadow: 0 -8px 24px rgba(15,23,42,.14);
+    background: rgba(255,255,255,.97);
+  }
+  .nav-tab-v6 { flex: 1; min-width: 0; padding: 5px 2px; font-size: .56rem; border-radius: 11px; gap: 3px; }
+  .big-ic { width: 30px; height: 30px; font-size: .85rem; border-radius: 9px; }
+  body { padding-bottom: 92px; } /* กันเนื้อหาท้ายหน้าโดนแถบล่างบัง */
 }
 
 /* สถิติสไตล์หน้าเจ้าหน้าที่ (แทนการ์ดอุบัติเหตุ/บาดเจ็บ/เสียชีวิตเดิม) */
@@ -422,12 +466,34 @@ canvas{max-width:100%!important;}
 <div class="thai-stripe"></div>
 <header class="home-hero">
   <div class="home-hero-inner">
+    <button class="home-menu-toggle" type="button" onclick="toggleHomeDrawer(true)" aria-label="เปิดเมนู"><i class="fa-solid fa-bars"></i></button>
     <img src="logo.png" alt="Logo">
-    <h1>แจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ สภ.เมืองนครสวรรค์</h1>
-    <p>Report information on accident risk points</p>
-    <div class="home-clock"><i class="fas fa-clock"></i> <span id="currentDateTime"></span></div>
+    <div class="home-hero-text">
+      <h1>แจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ สภ.เมืองนครสวรรค์</h1>
+      <p>Report information on accident risk points</p>
+      <div class="home-clock"><i class="fas fa-clock"></i> <span id="currentDateTime"></span></div>
+    </div>
   </div>
 </header>
+
+<!-- drawer เมนูข้าง (เปิดจาก hamburger บน topbar มือถือ/แท็บเล็ต) -->
+<div id="homeDrawerBackdrop" class="home-drawer-backdrop" onclick="toggleHomeDrawer(false)"></div>
+<aside id="homeDrawer" class="home-drawer" aria-hidden="true">
+  <div class="home-drawer-head">
+    <button class="home-drawer-close" type="button" onclick="toggleHomeDrawer(false)" aria-label="ปิดเมนู"><i class="fa-solid fa-xmark"></i></button>
+    <img src="logo.png" alt="">
+    <h3>เมนูหลัก</h3><p>แจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ สภ.เมืองนครสวรรค์</p>
+  </div>
+  <nav class="home-drawer-menu">
+    <button onclick="homeDrawerGo('dashboard')"><i class="fa-solid fa-house"></i> HOME หน้าหลัก</button>
+    <button onclick="homeDrawerGo('report')"><i class="fa-solid fa-triangle-exclamation" style="background:#fdeef1;color:#c1122f"></i> แจ้งข้อมูลจุดเสี่ยง</button>
+    <button onclick="homeDrawerGo('data')"><i class="fa-solid fa-table-list" style="background:#e5f7fb;color:#0891b2"></i> ข้อมูลจุดเสี่ยง + สถานะ</button>
+    <button onclick="toggleHomeDrawer(false);openAccidentRecord()"><i class="fa-solid fa-user-shield" style="background:#e3edff;color:#2563eb"></i> บันทึกอุบัติเหตุ (เจ้าหน้าที่)</button>
+    <button onclick="toggleHomeDrawer(false);openVideoCampaign()"><i class="fa-solid fa-circle-play" style="background:#f3edff;color:#7c3aed"></i> Clip Video รณรงค์</button>
+    <button onclick="toggleHomeDrawer(false);openHelmetProject()"><i class="fa-solid fa-helmet-safety" style="background:#fff6e6;color:#d97706"></i> โครงการหมวกนิรภัย ได้ส่วนลด</button>
+  </nav>
+</aside>
+
 <div class="container mx-auto px-4 pb-8 max-w-4xl home-wrap">
 
   <!-- Navigation Tabs V6 Professional SVG -->
@@ -1132,6 +1198,18 @@ let charts = {};
 
 function initializeDashboard() {
   refreshDashboard();
+}
+
+/* drawer เมนูข้างของหน้าประชาชน (hamburger บน topbar มือถือ/แท็บเล็ต) */
+function toggleHomeDrawer(open) {
+  document.getElementById('homeDrawer').classList.toggle('open', open);
+  document.getElementById('homeDrawerBackdrop').classList.toggle('open', open);
+  document.getElementById('homeDrawer').setAttribute('aria-hidden', open ? 'false' : 'true');
+}
+function homeDrawerGo(tab) {
+  toggleHomeDrawer(false);
+  const btn = [...document.querySelectorAll('.nav-tab-v6')].find(b => (b.getAttribute('onclick') || '').includes("'" + tab + "'"));
+  showTab(tab, btn || null);
 }
 
 function rangeToIso(startDate, endDate) {
