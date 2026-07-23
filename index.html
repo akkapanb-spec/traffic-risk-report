@@ -30,7 +30,8 @@
     .home-hero p{margin:0;opacity:.92;font-size:clamp(.88rem,2.4vw,1.02rem)}
     .home-clock{display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 16px;font-size:.85rem}
     .home-wrap{margin-top:-34px;position:relative;z-index:2}
-    .glass-effect { background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.18); }
+    /* ไม่ใช้ backdrop-filter — GPU มือถือวาดเบลอเรียลไทม์ไม่ไหว ทำให้จอกระพริบตอนเลื่อน */
+    .glass-effect { background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(255, 255, 255, 0.18); }
     .nav-tab { transition: all 0.3s ease; cursor: pointer; }
     .nav-tab:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); }
     .nav-tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
@@ -95,9 +96,7 @@ body{
 }
 .container{max-width:1180px!important;padding-left:clamp(12px,3vw,28px)!important;padding-right:clamp(12px,3vw,28px)!important;}
 .glass-effect{
-  background:var(--v6-surface)!important;
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
+  background:rgba(255,255,255,.94)!important; /* พื้นทึบแทนกระจกเบลอ — แก้จอกระพริบบนมือถือ */
   border:1px solid var(--v6-border)!important;
   box-shadow:var(--v6-shadow);
 }
