@@ -314,46 +314,50 @@ canvas{max-width:100%!important;}
 @media (min-width: 768px){
   #dataTableMobile{display:none!important;}
 }
-/* เมนูหลักแบบ icon style: ไอคอนใหญ่ไล่สี + ป้ายสั้นใต้ไอคอน */
+/* เมนูหลักแบบ Windows taskbar: แถบเดียว ไอคอนกะทัดรัด ป้ายเล็กใต้ไอคอน */
 .nav-menu-v6 {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
-  margin-bottom: 28px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 24px;
+  padding: 8px 10px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(209,222,237,.9);
+  box-shadow: 0 10px 28px rgba(23,52,88,.10);
 }
 
 .nav-tab-v6 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 9px;
-  padding: 16px 8px 13px;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(209,222,237,.9);
-  box-shadow: 0 10px 25px rgba(15,23,42,0.1);
-  font-weight: 700;
-  color: #1f2937;
+  gap: 5px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: transparent;
+  border: 0;
+  font-weight: 600;
+  color: #334155;
   text-align: center;
-  line-height: 1.3;
-  font-size: .8rem;
-  transition: all 0.2s ease;
+  line-height: 1.15;
+  font-size: .68rem;
+  min-width: 72px;
+  transition: all .18s ease;
   touch-action: manipulation;
 }
 
-.nav-tab-v6:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 32px rgba(29,78,216,0.16);
-}
+.nav-tab-v6:hover { background: #eef4ff; }
 
 .nav-tab-v6.active {
   background: linear-gradient(135deg, #123b7a, #1d4ed8);
   color: white;
-  border-color: transparent;
-  box-shadow: 0 12px 30px rgba(29,78,216,.32);
+  box-shadow: 0 8px 20px rgba(29,78,216,.28);
 }
 
-.big-ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:1.45rem;color:#fff;box-shadow:0 8px 16px rgba(15,23,42,.18)}
+.big-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:1.05rem;color:#fff;box-shadow:0 4px 10px rgba(15,23,42,.16)}
 .bi-navy{background:linear-gradient(135deg,#3b82f6,#123b7a)}
 .bi-red{background:linear-gradient(135deg,#f87171,#b91c1c)}
 .bi-blue{background:linear-gradient(135deg,#60a5fa,#1d4ed8)}
@@ -362,14 +366,10 @@ canvas{max-width:100%!important;}
 .bi-amber{background:linear-gradient(135deg,#fbbf24,#c2410c)}
 .nav-tab-v6.active .big-ic{background:rgba(255,255,255,.2);box-shadow:none}
 
-@media (max-width: 1023px) {
-  .nav-menu-v6 { grid-template-columns: repeat(3, 1fr); }
-}
-
 @media (max-width: 640px) {
-  .nav-menu-v6 { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .nav-tab-v6 { padding: 12px 4px 10px; font-size: .7rem; border-radius: 16px; }
-  .big-ic { width: 44px; height: 44px; font-size: 1.2rem; border-radius: 13px; }
+  .nav-menu-v6 { width: 100%; gap: 0; padding: 6px 4px; border-radius: 17px; }
+  .nav-tab-v6 { flex: 1; min-width: 0; padding: 7px 2px; font-size: .58rem; border-radius: 11px; }
+  .big-ic { width: 32px; height: 32px; font-size: .9rem; border-radius: 9px; }
 }
 
 /* สถิติสไตล์หน้าเจ้าหน้าที่ (แทนการ์ดอุบัติเหตุ/บาดเจ็บ/เสียชีวิตเดิม) */
@@ -433,17 +433,17 @@ canvas{max-width:100%!important;}
   <!-- Navigation Tabs V6 Professional SVG -->
 <div class="nav-menu-v6">
 
-  <button class="nav-tab-v6 active" onclick="showTab('dashboard', this)"><span class="big-ic bi-navy"><i class="fa-solid fa-chart-line"></i></span><span>DASHBOARD<br>สถิติ + แผนที่</span></button>
+  <button class="nav-tab-v6 active" onclick="showTab('dashboard', this)"><span class="big-ic bi-navy"><i class="fa-solid fa-house"></i></span><span>HOME</span></button>
 
-  <button class="nav-tab-v6" onclick="showTab('report', this)"><span class="big-ic bi-red"><i class="fa-solid fa-triangle-exclamation"></i></span><span>แจ้งข้อมูล<br>จุดเสี่ยง</span></button>
+  <button class="nav-tab-v6" onclick="showTab('report', this)"><span class="big-ic bi-red"><i class="fa-solid fa-triangle-exclamation"></i></span><span>แจ้งจุดเสี่ยง</span></button>
 
-  <button class="nav-tab-v6" onclick="openAccidentRecord()"><span class="big-ic bi-blue"><i class="fa-solid fa-user-shield"></i></span><span>บันทึกอุบัติเหตุ<br>(เจ้าหน้าที่)</span></button>
+  <button class="nav-tab-v6" onclick="showTab('data', this)"><span class="big-ic bi-cyan"><i class="fa-solid fa-table-list"></i></span><span>ข้อมูลจุดเสี่ยง</span></button>
 
-  <button class="nav-tab-v6" onclick="showTab('data', this)"><span class="big-ic bi-cyan"><i class="fa-solid fa-table-list"></i></span><span>ข้อมูลจุดเสี่ยง<br>+ สถานะ</span></button>
+  <button class="nav-tab-v6" onclick="openAccidentRecord()"><span class="big-ic bi-blue"><i class="fa-solid fa-user-shield"></i></span><span>บันทึก (จนท.)</span></button>
 
-  <button class="nav-tab-v6" onclick="openVideoCampaign()"><span class="big-ic bi-purple"><i class="fa-solid fa-circle-play"></i></span><span>Clip Video<br>รณรงค์</span></button>
+  <button class="nav-tab-v6" onclick="openVideoCampaign()"><span class="big-ic bi-purple"><i class="fa-solid fa-circle-play"></i></span><span>Clip Video</span></button>
 
-  <button class="nav-tab-v6" onclick="openHelmetProject()"><span class="big-ic bi-amber"><i class="fa-solid fa-helmet-safety"></i></span><span>หมวกนิรภัย<br>ได้ส่วนลด</span></button>
+  <button class="nav-tab-v6" onclick="openHelmetProject()"><span class="big-ic bi-amber"><i class="fa-solid fa-helmet-safety"></i></span><span>หมวกนิรภัย</span></button>
 
 </div>
 
@@ -526,25 +526,8 @@ canvas{max-width:100%!important;}
 
     <!-- Dashboard Tab (หน้าเริ่มต้น) -->
     <div id="dashboardTab">
-      <div class="stats-zone" style="margin-bottom:16px">
-        <h3 class="zone-title"><i class="fa-solid fa-gauge-high" style="color:#1d4ed8"></i> DASHBOARD สถิติข้อมูลจุดเสี่ยง</h3>
-        <div class="flex flex-wrap items-center gap-2 mb-3" id="riskYearChips"></div>
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-sm font-semibold text-gray-700 mr-1">หรือกำหนดเอง:</span>
-          <label class="text-sm text-gray-600">ตั้งแต่</label>
-          <input type="date" id="startDate" class="form-input px-3 py-2 rounded-lg">
-          <label class="text-sm text-gray-600">ถึง</label>
-          <input type="date" id="endDate" class="form-input px-3 py-2 rounded-lg">
-          <button onclick="riskCustomRange()" class="btn-primary text-white px-5 py-2 rounded-lg font-semibold"><i class="fa-solid fa-filter mr-1"></i> แสดงข้อมูล</button>
-        </div>
-        <p id="riskRangeInfo" class="text-sm text-gray-600 mt-3 font-medium"></p>
-      </div>
-      <div class="stats-grid mb-8" id="riskStatCards">
-        <div class="stat-card"><div class="label"><i class="fa-solid fa-shield-halved" style="color:#1d4ed8"></i> จุดเสี่ยงทั้งหมด</div><div class="value" style="color:#1d4ed8" id="totalRisks">0</div><div class="unit">จุด</div></div>
-        <div class="stat-card"><div class="label"><i class="fa-solid fa-circle-check" style="color:#16834b"></i> แก้ไขแล้ว</div><div class="value" style="color:#16834b" id="completedRisks">0</div><div class="unit">จุด</div></div>
-        <div class="stat-card"><div class="label"><i class="fa-solid fa-person-digging" style="color:#d97706"></i> กำลังดำเนินการ</div><div class="value" style="color:#d97706" id="inProgressRisks">0</div><div class="unit">จุด</div></div>
-        <div class="stat-card"><div class="label"><i class="fa-solid fa-circle-xmark" style="color:#c1122f"></i> ยังไม่ดำเนินการ</div><div class="value" style="color:#c1122f" id="notStartedRisks">0</div><div class="unit">จุด</div></div>
-      </div>
+      <!-- สถิติจุดเสี่ยง (ตัวกรอง + การ์ดสถานะ) ย้ายไปหน้า "ข้อมูลจุดเสี่ยง + สถานะ" แล้ว -->
+
       <!-- สถิติแบบเรียลไทม์ สไตล์หน้าเจ้าหน้าที่ -->
       <div id="officerStyleStats" class="mb-8">
         <div class="stats-zone">
@@ -560,10 +543,7 @@ canvas{max-width:100%!important;}
           <div class="stats-grid">
             <div class="stat-card red"><div class="label"><i class="fa-solid fa-user-xmark"></i> ปีปัจจุบัน</div><div class="value" id="deathStatYear">-</div><div class="unit">ราย</div></div>
             <div class="stat-card red"><div class="label"><i class="fa-solid fa-user-xmark"></i> เดือนปัจจุบัน</div><div class="value" id="deathStatMonth">-</div><div class="unit">ราย</div></div>
-            <div class="stat-card red"><div class="split-grid">
-              <div><div class="label"><i class="fa-solid fa-calendar-day"></i> วันนี้</div><div class="value" id="deathStatToday">-</div><div class="unit">ราย</div></div>
-              <div><div class="label"><i class="fa-solid fa-clock-rotate-left"></i> ย้อนหลัง 1 วัน</div><div class="value" id="deathStatYesterday">-</div><div class="unit">ราย</div></div>
-            </div></div>
+            <div class="stat-card red"><div class="label"><i class="fa-solid fa-calendar-day"></i> วันนี้</div><div class="value" id="deathStatToday">-</div><div class="unit">ราย</div></div>
           </div>
         </div>
         <div class="stats-zone">
@@ -571,10 +551,7 @@ canvas{max-width:100%!important;}
           <div class="stats-grid">
             <div class="stat-card orange"><div class="label"><i class="fa-solid fa-kit-medical"></i> ปีปัจจุบัน</div><div class="value" id="injStatYear">-</div><div class="unit">ราย</div><div class="injury-mini" id="injPillsYear"></div></div>
             <div class="stat-card orange"><div class="label"><i class="fa-solid fa-kit-medical"></i> เดือนปัจจุบัน</div><div class="value" id="injStatMonth">-</div><div class="unit">ราย</div><div class="injury-mini" id="injPillsMonth"></div></div>
-            <div class="stat-card orange"><div class="split-grid">
-              <div><div class="label"><i class="fa-solid fa-calendar-day"></i> วันนี้</div><div class="value" id="injStatToday">-</div><div class="unit">ราย</div><div class="injury-mini" id="injPillsToday"></div></div>
-              <div><div class="label"><i class="fa-solid fa-clock-rotate-left"></i> ย้อนหลัง 1 วัน</div><div class="value" id="injStatYesterday">-</div><div class="unit">ราย</div><div class="injury-mini" id="injPillsYesterday"></div></div>
-            </div></div>
+            <div class="stat-card orange"><div class="label"><i class="fa-solid fa-calendar-day"></i> วันนี้</div><div class="value" id="injStatToday">-</div><div class="unit">ราย</div><div class="injury-mini" id="injPillsToday"></div></div>
           </div>
         </div>
         <p class="stats-hint" id="officerStatsHint"></p>
@@ -1154,32 +1131,8 @@ let charts = {};
 
 
 function initializeDashboard() {
-  buildRiskYearChips();
-  setRiskYear(new Date().getFullYear());
-}
-
-// ปุ่มปีของ dashboard จุดเสี่ยง: สร้างอัตโนมัติ 2023..ปีปัจจุบัน (ขึ้นปีใหม่ปุ่มโผล่เอง)
-function buildRiskYearChips() {
-  const wrap = document.getElementById('riskYearChips');
-  if (!wrap) return;
-  const nowYear = Math.max(new Date().getFullYear(), 2023);
-  let html = '<span class="text-sm font-semibold text-gray-700 mr-1">ดูตามปี:</span>' +
-    '<button class="risk-year-chip" data-year="all" onclick="setRiskYear(\'all\')">ทั้งหมด</button>';
-  for (let y = 2023; y <= nowYear; y++) html += '<button class="risk-year-chip" data-year="' + y + '" onclick="setRiskYear(' + y + ')">' + (y + 543) + '</button>';
-  wrap.innerHTML = html;
-}
-function markRiskYearChip(y) {
-  document.querySelectorAll('#riskYearChips .risk-year-chip').forEach(b =>
-    b.classList.toggle('active', b.dataset.year === String(y)));
-}
-function setRiskYear(y) {
-  const s = document.getElementById('startDate'), e = document.getElementById('endDate');
-  if (y === 'all') { s.value = ''; e.value = ''; }
-  else { s.value = y + '-01-01'; e.value = y + '-12-31'; }
-  markRiskYearChip(y);
   refreshDashboard();
 }
-function riskCustomRange() { markRiskYearChip('custom'); refreshDashboard(); }
 
 function rangeToIso(startDate, endDate) {
   const result = {};
@@ -1199,41 +1152,12 @@ async function countTable(table, column, startDate, endDate) {
 }
 
 async function refreshDashboard() {
+  // หน้า HOME เหลือเฉพาะสถิติอุบัติเหตุ/เสียชีวิต/บาดเจ็บ — สถิติจุดเสี่ยงย้ายไปหน้าข้อมูลจุดเสี่ยงแล้ว
   Swal.fire({ title: 'กำลังโหลดข้อมูล...', allowOutsideClick: false,
     showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' },
     didOpen: () => Swal.showLoading() });
-  const startDate = document.getElementById('startDate').value;
-  const endDate = document.getElementById('endDate').value;
-
   try {
-    // สถิติจุดเสี่ยง (แยกตามสถานะ)
-    let riskQuery = sb.from('risk_points').select('status');
-    const range = rangeToIso(startDate, endDate);
-    if (range.gte) riskQuery = riskQuery.gte('registration_date', range.gte);
-    if (range.lte) riskQuery = riskQuery.lte('registration_date', range.lte);
-    const { data: riskRows, error: riskError } = await riskQuery;
-    if (riskError) throw new Error(riskError.message);
-
-    const riskStats = { totalRisks: (riskRows||[]).length, completed: 0, inProgress: 0, notStarted: 0 };
-    (riskRows||[]).forEach(r => {
-      const status = (r.status || 'ยังไม่ได้ดำเนินการ').trim();
-      if (status === 'ดำเนินการแก้ไขแล้ว') riskStats.completed++;
-      else if (status === 'อยู่ระหว่างดำเนินการ') riskStats.inProgress++;
-      else riskStats.notStarted++;
-    });
-
-    document.getElementById('totalRisks').textContent = riskStats.totalRisks || 0;
-    document.getElementById('completedRisks').textContent = riskStats.completed || 0;
-    document.getElementById('inProgressRisks').textContent = riskStats.inProgress || 0;
-    document.getElementById('notStartedRisks').textContent = riskStats.notStarted || 0;
-
-    const rInfo = document.getElementById('riskRangeInfo');
-    if (rInfo) rInfo.textContent = (startDate || endDate)
-      ? 'แสดงข้อมูลช่วง ' + thaiDateLabel(startDate) + ' ถึง ' + thaiDateLabel(endDate) + ' — จุดเสี่ยง ' + (riskStats.totalRisks || 0) + ' รายการ'
-      : 'แสดงข้อมูลทั้งหมด — จุดเสี่ยง ' + (riskStats.totalRisks || 0) + ' รายการ';
-
     await loadOfficerStyleStats();
-
     Swal.close();
   } catch (error) {
     Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message });
@@ -1310,12 +1234,11 @@ async function loadOfficerStyleStats() {
   const setNum = (id, v) => document.getElementById(id).textContent = Number(v || 0).toLocaleString('th-TH');
   setNum('accStatYear', accYear); setNum('accStatMonth', accMonth); setNum('accStatToday', accToday);
   setNum('deathStatYear', deathYear); setNum('deathStatMonth', deathMonth);
-  setNum('deathStatToday', deathToday); setNum('deathStatYesterday', deathYesterday);
+  setNum('deathStatToday', deathToday);
   const pills = t => '<span class="pill red">สาหัส ' + t['สาหัส'] + '</span><span class="pill orange">หมดสติ ' + t['หมดสติ'] + '</span><span class="pill yellow">เล็กน้อย ' + t['เล็กน้อย'] + '</span>';
   setNum('injStatYear', injYear.total); document.getElementById('injPillsYear').innerHTML = pills(injYear);
   setNum('injStatMonth', injMonth.total); document.getElementById('injPillsMonth').innerHTML = pills(injMonth);
   setNum('injStatToday', injToday.total); document.getElementById('injPillsToday').innerHTML = pills(injToday);
-  setNum('injStatYesterday', injYesterday.total); document.getElementById('injPillsYesterday').innerHTML = pills(injYesterday);
   document.getElementById('officerStatsHint').innerHTML = '<i class="fa-regular fa-clock"></i> อัปเดตล่าสุด ' + now.toLocaleString('th-TH', { timeZone:'Asia/Bangkok', hour12:false });
 }
 

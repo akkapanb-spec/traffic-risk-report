@@ -2565,18 +2565,12 @@
           '<div class="stats-zone"><h3 class="zone-title"><i class="fa-solid fa-skull-crossbones" style="color:#c1122f"></i> สถิติข้อมูลอุบัติเหตุ (เสียชีวิต) สภ.เมืองนครสวรรค์</h3><div class="stats-grid">' +
             statCard('ปีปัจจุบัน',result.deaths.year,'ราย','fa-user-xmark','red') +
             statCard('เดือนปัจจุบัน',result.deaths.month,'ราย','fa-user-xmark','red') +
-            '<div class="stat-card red"><div class="split-grid">' +
-              '<div><div class="label"><i class="fa-solid fa-calendar-day"></i> วันนี้</div><div class="value">' + Number(result.deaths.today||0).toLocaleString('th-TH') + '</div><div class="unit">ราย</div></div>' +
-              '<div><div class="label"><i class="fa-solid fa-clock-rotate-left"></i> ย้อนหลัง 1 วัน</div><div class="value">' + Number(result.deaths.yesterday||0).toLocaleString('th-TH') + '</div><div class="unit">ราย</div></div>' +
-            '</div></div>' +
+            statCard('วันนี้',result.deaths.today,'ราย','fa-calendar-day','red') +
           '</div></div>' +
           '<div class="stats-zone"><h3 class="zone-title"><i class="fa-solid fa-user-injured" style="color:#d97706"></i> สถิติข้อมูลอุบัติเหตุ (บาดเจ็บ) สภ.เมืองนครสวรรค์</h3><div class="stats-grid">' +
             injuryStatCard('ปีปัจจุบัน',result.injuries.year) +
             injuryStatCard('เดือนปัจจุบัน',result.injuries.month) +
-            '<div class="stat-card orange"><div class="split-grid">' +
-              injuryHalf('วันนี้', 'fa-calendar-day', result.injuries.today) +
-              injuryHalf('ย้อนหลัง 1 วัน', 'fa-clock-rotate-left', result.injuries.yesterday) +
-            '</div></div>' +
+            injuryStatCard('วันนี้',result.injuries.today) +
           '</div></div>' +
           '<p class="hint" style="text-align:right"><i class="fa-regular fa-clock"></i> Real-time · รีเฟรชอัตโนมัติทุก 30 วินาที · อัปเดตล่าสุด ' + escapeHtml(result.generatedAt) + '</p>';
       } catch (error) {
