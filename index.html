@@ -604,8 +604,8 @@ canvas{max-width:100%!important;}
         <div class="glass-effect rounded-xl p-6">
           <h3 class="dt-title"><i class="fa-solid fa-chart-line"></i> สถิติจำนวนผู้เสียชีวิตสะสม แยกตามเดือน</h3>
           <div class="flex gap-4 mb-4">
-            <select id="year1" class="form-input px-4 py-2 rounded-lg"><option value="2023">ค.ศ. 2023</option><option value="2024" selected>ค.ศ. 2024</option><option value="2025">ค.ศ. 2025</option><option value="2026">ค.ศ. 2026</option><option value="2027">ค.ศ. 2027</option></select>
-            <select id="year2" class="form-input px-4 py-2 rounded-lg"><option value="2023" selected>ค.ศ. 2023</option><option value="2024">ค.ศ. 2024</option><option value="2025">ค.ศ. 2025</option><option value="2026">ค.ศ. 2026</option><option value="2027">ค.ศ. 2027</option></select>
+            <select id="year1" class="form-input px-4 py-2 rounded-lg"><option value="2023">พ.ศ. 2566</option><option value="2024" selected>พ.ศ. 2567</option><option value="2025">พ.ศ. 2568</option><option value="2026">พ.ศ. 2569</option><option value="2027">พ.ศ. 2570</option></select>
+            <select id="year2" class="form-input px-4 py-2 rounded-lg"><option value="2023" selected>พ.ศ. 2566</option><option value="2024">พ.ศ. 2567</option><option value="2025">พ.ศ. 2568</option><option value="2026">พ.ศ. 2569</option><option value="2027">พ.ศ. 2570</option></select>
             <button onclick="updateMonthlyChart()" class="btn-primary text-white px-4 py-2 rounded-lg">อัปเดต</button>
           </div>
           <div class="h-[300px] w-full"><canvas id="monthlyChart"></canvas></div>
@@ -1141,7 +1141,7 @@ function buildRiskYearChips() {
   const nowYear = Math.max(new Date().getFullYear(), 2023);
   let html = '<span class="text-sm font-semibold text-gray-700 mr-1">ดูตามปี:</span>' +
     '<button class="risk-year-chip" data-year="all" onclick="setRiskYear(\'all\')">ทั้งหมด</button>';
-  for (let y = 2023; y <= nowYear; y++) html += '<button class="risk-year-chip" data-year="' + y + '" onclick="setRiskYear(' + y + ')">' + y + '</button>';
+  for (let y = 2023; y <= nowYear; y++) html += '<button class="risk-year-chip" data-year="' + y + '" onclick="setRiskYear(' + y + ')">' + (y + 543) + '</button>';
   wrap.innerHTML = html;
 }
 function markRiskYearChip(y) {
@@ -1313,7 +1313,7 @@ function buildDeathYearControls() {
   if (chips) {
     let html = '<span class="text-sm font-semibold text-gray-700 mr-1">ดูตามปี:</span>' +
       '<button class="death-year-chip" data-year="all" onclick="setDeathYear(\'all\')">ทั้งหมด</button>';
-    for (let y = 2023; y <= nowYear; y++) html += '<button class="death-year-chip" data-year="' + y + '" onclick="setDeathYear(' + y + ')">' + y + '</button>';
+    for (let y = 2023; y <= nowYear; y++) html += '<button class="death-year-chip" data-year="' + y + '" onclick="setDeathYear(' + y + ')">' + (y + 543) + '</button>';
     chips.innerHTML = html;
   }
   ['year1', 'year2'].forEach(id => {
@@ -1321,7 +1321,7 @@ function buildDeathYearControls() {
     if (!sel) return;
     const kept = sel.value;
     let opts = '';
-    for (let y = 2023; y <= nowYear; y++) opts += '<option value="' + y + '">ค.ศ. ' + y + '</option>';
+    for (let y = 2023; y <= nowYear; y++) opts += '<option value="' + y + '">พ.ศ. ' + (y + 543) + '</option>';
     sel.innerHTML = opts;
     if ([...sel.options].some(o => o.value === kept)) sel.value = kept;
   });
@@ -1606,8 +1606,8 @@ async function createDeathCharts(data) {
         data: {
           labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
           datasets: [
-            { label: `ค.ศ. ${y1}`, data: calculateCumulative(md1), borderColor: '#c1122f', backgroundColor: '#c1122f', fill: false, tension: 0.25, pointRadius: 3, borderWidth: 3 },
-            { label: `ค.ศ. ${y2}`, data: calculateCumulative(md2), borderColor: '#1d4ed8', backgroundColor: '#1d4ed8', fill: false, tension: 0.25, pointRadius: 3, borderWidth: 3 }
+            { label: `พ.ศ. ${Number(y1) + 543}`, data: calculateCumulative(md1), borderColor: '#c1122f', backgroundColor: '#c1122f', fill: false, tension: 0.25, pointRadius: 3, borderWidth: 3 },
+            { label: `พ.ศ. ${Number(y2) + 543}`, data: calculateCumulative(md2), borderColor: '#1d4ed8', backgroundColor: '#1d4ed8', fill: false, tension: 0.25, pointRadius: 3, borderWidth: 3 }
           ]
         },
         options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
@@ -1774,7 +1774,7 @@ function initDashboardDeathMap(mapData) {
       html += '<span class="text-gray-500">ไม่มีหมุดในช่วงวันที่ที่เลือก</span>';
     } else {
       years.forEach(y => {
-        html += `<div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color:${colorOfYear(y) || '#6b7280'};"></span> ${y} (${counts[y]} จุด)</div>`;
+        html += `<div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color:${colorOfYear(y) || '#6b7280'};"></span> พ.ศ. ${Number(y) + 543} (${counts[y]} จุด)</div>`;
       });
     }
     legend.innerHTML = html;
@@ -1792,8 +1792,8 @@ async function updateMonthlyChart() {
   const md2 = await getMonthlyDeathDataFromSheet(y2);
 
   if (charts.monthly) {
-    charts.monthly.data.datasets[0].label = `ค.ศ. ${y1}`; charts.monthly.data.datasets[0].data = calculateCumulative(md1);
-    charts.monthly.data.datasets[1].label = `ค.ศ. ${y2}`; charts.monthly.data.datasets[1].data = calculateCumulative(md2);
+    charts.monthly.data.datasets[0].label = `พ.ศ. ${Number(y1) + 543}`; charts.monthly.data.datasets[0].data = calculateCumulative(md1);
+    charts.monthly.data.datasets[1].label = `พ.ศ. ${Number(y2) + 543}`; charts.monthly.data.datasets[1].data = calculateCumulative(md2);
     charts.monthly.update();
   }
   Swal.close();
