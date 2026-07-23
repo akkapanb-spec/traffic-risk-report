@@ -365,6 +365,21 @@
     <main class="main">
       <section id="page-home" class="page active">
         <div class="page-head"><div class="page-icon"><i class="fa-solid fa-house"></i></div><div><h2>HOME</h2><p>ภาพรวมข้อมูลอุบัติเหตุล่าสุด</p></div></div>
+        <div class="card">
+          <button type="button" id="homeFilterToggle" class="df-toggle" onclick="toggleHomeFilter()"><i class="fa-solid fa-filter"></i> กรองข้อมูล (ปี / ช่วงวันที่) <i class="fa-solid fa-chevron-down df-chev"></i></button>
+          <div id="homeFilterBody" class="df-body"><div class="df-inner">
+            <div class="dash-filter-row" id="homeYearChips" style="margin-bottom:12px"></div>
+            <div class="dash-filter-row">
+              <span class="dash-filter-label">หรือกำหนดเอง:</span>
+              <label class="hint" style="margin:0">ตั้งแต่</label>
+              <input id="homeStartDate" class="input" type="date" style="max-width:175px">
+              <label class="hint" style="margin:0">ถึง</label>
+              <input id="homeEndDate" class="input" type="date" style="max-width:175px">
+              <button class="btn btn-primary" type="button" onclick="homeCustomRange()"><i class="fa-solid fa-filter"></i> แสดงข้อมูล</button>
+            </div>
+          </div></div>
+          <p class="hint" id="homeRangeInfo" style="margin:12px 0 0;font-weight:600"></p>
+        </div>
         <div id="homeStats"><div class="loading-skeleton"></div></div>
       </section>
 
@@ -611,6 +626,7 @@
         document.getElementById('loginButton').addEventListener('click', showLogin);
         initializeFormOptions();
         buildDashYearChips();
+        buildHomeYearChips();
         buildPassengerCards('p1');
         buildPassengerCards('p2');
         bindFormEvents();
@@ -810,8 +826,21 @@
         });
         return result;
       };
+      // โหมดตัวกรองหน้า HOME: นับยอดตามช่วงวันที่ที่เลือก (แทนการ์ด "ปีปัจจุบัน")
+      let range = null;
+      const hr = state.homeRange;
+      if (hr) {
+        const inR = d => { const day = bkkStamp(d, 'day'); return day && day >= hr.s && day <= hr.e; };
+        const rInj = { 'สาหัส':0, 'หมดสติ':0, 'เล็กน้อย':0, total:0 };
+        injuryRows.forEach(row => {
+          if (!row.incident_datetime || !inR(row.incident_datetime)) return;
+          const sev = normalizeInjury((row.raw || {}).severity || '');
+          if (Object.prototype.hasOwnProperty.call(rInj, sev)) { rInj[sev]++; rInj.total++; }
+        });
+        range = { label: hr.label, accidents: accDates.filter(inR).length, deaths: deathDates.filter(inR).length, injuries: rInj };
+      }
       return {
-        success:true,
+        success:true, range,
         generatedAt: now.toLocaleString('th-TH', { timeZone:'Asia/Bangkok', hour12:false }),
         accidents: { year:countBy(accDates,'year',now), month:countBy(accDates,'month',now), today:countBy(accDates,'day',now) },
         deaths: { year:countBy(deathDates,'year',now), month:countBy(deathDates,'month',now), today:countBy(deathDates,'day',now), yesterday:countBy(deathDates,'day',yesterday) },
@@ -2562,23 +2591,28 @@
       try {
         const result = await api('getHomeStats');
         if (!result.success) throw new Error(result.message);
+        const rg = result.range;
         container.innerHTML =
           '<div class="stats-zone"><h3 class="zone-title"><i class="fa-solid fa-car-burst"></i> สถิติข้อมูลอุบัติเหตุ สภ.เมืองนครสวรรค์</h3><div class="stats-grid">' +
-            statCard('ปีปัจจุบัน',result.accidents.year,'ครั้ง','fa-calendar') +
+            statCard(rg ? rg.label : 'ปีปัจจุบัน', rg ? rg.accidents : result.accidents.year,'ครั้ง','fa-calendar') +
             statCard('เดือนปัจจุบัน',result.accidents.month,'ครั้ง','fa-calendar-days') +
             statCard('วันนี้',result.accidents.today,'ครั้ง','fa-calendar-day') +
           '</div></div>' +
           '<div class="stats-zone"><h3 class="zone-title"><i class="fa-solid fa-skull-crossbones" style="color:#c1122f"></i> สถิติข้อมูลอุบัติเหตุ (เสียชีวิต) สภ.เมืองนครสวรรค์</h3><div class="stats-grid">' +
-            statCard('ปีปัจจุบัน',result.deaths.year,'ราย','fa-user-xmark','red') +
+            statCard(rg ? rg.label : 'ปีปัจจุบัน', rg ? rg.deaths : result.deaths.year,'ราย','fa-user-xmark','red') +
             statCard('เดือนปัจจุบัน',result.deaths.month,'ราย','fa-user-xmark','red') +
             statCard('วันนี้',result.deaths.today,'ราย','fa-calendar-day','red') +
           '</div></div>' +
           '<div class="stats-zone"><h3 class="zone-title"><i class="fa-solid fa-user-injured" style="color:#d97706"></i> สถิติข้อมูลอุบัติเหตุ (บาดเจ็บ) สภ.เมืองนครสวรรค์</h3><div class="stats-grid">' +
-            injuryStatCard('ปีปัจจุบัน',result.injuries.year) +
+            injuryStatCard(rg ? rg.label : 'ปีปัจจุบัน', rg ? rg.injuries : result.injuries.year) +
             injuryStatCard('เดือนปัจจุบัน',result.injuries.month) +
             injuryStatCard('วันนี้',result.injuries.today) +
           '</div></div>' +
           '<p class="hint" style="text-align:right"><i class="fa-regular fa-clock"></i> Real-time · รีเฟรชอัตโนมัติทุก 30 วินาที · อัปเดตล่าสุด ' + escapeHtml(result.generatedAt) + '</p>';
+        const hInfo = document.getElementById('homeRangeInfo');
+        if (hInfo) hInfo.textContent = rg
+          ? 'แสดงข้อมูลช่วง ' + thaiDayLabel(state.homeRange.s) + ' ถึง ' + thaiDayLabel(state.homeRange.e) + ' — การ์ดเดือน/วันนี้ยังเป็นค่าเรียลไทม์'
+          : 'แสดงข้อมูลปีปัจจุบัน (ค่าเริ่มต้น)';
       } catch (error) {
         if (!silent) container.innerHTML = errorBlock(error.message, 'loadHomeStats()');
       }
@@ -2633,6 +2667,47 @@
     function toggleDashFilter() {
       document.getElementById('dashFilterBody').classList.toggle('open');
       document.getElementById('dashFilterToggle').classList.toggle('open');
+    }
+
+    /* ตัวกรองหน้า HOME (default = ปีปัจจุบันเรียลไทม์, เลือกปี/ช่วง = การ์ดใบแรกเป็นยอดช่วงนั้น) */
+    function toggleHomeFilter() {
+      document.getElementById('homeFilterBody').classList.toggle('open');
+      document.getElementById('homeFilterToggle').classList.toggle('open');
+    }
+    function buildHomeYearChips() {
+      const wrap = document.getElementById('homeYearChips');
+      if (!wrap) return;
+      const nowYear = Math.max(Number(bkkStamp(new Date(), 'year')), 2023);
+      let html = '<span class="dash-filter-label">ดูตามปี:</span>' +
+        '<button type="button" class="dash-year-chip active" data-year="default" onclick="setHomeYear(\'default\')">ปีปัจจุบัน</button>' +
+        '<button type="button" class="dash-year-chip" data-year="all" onclick="setHomeYear(\'all\')">ทั้งหมด</button>';
+      for (let y = 2023; y <= nowYear; y++) html += '<button type="button" class="dash-year-chip" data-year="' + y + '" onclick="setHomeYear(' + y + ')">' + (y + 543) + '</button>';
+      wrap.innerHTML = html;
+    }
+    function markHomeYearChip(y) {
+      document.querySelectorAll('#homeYearChips .dash-year-chip').forEach(b =>
+        b.classList.toggle('active', b.dataset.year === String(y)));
+    }
+    function setHomeYear(y) {
+      const s = document.getElementById('homeStartDate'), e = document.getElementById('homeEndDate');
+      if (y === 'default') { state.homeRange = null; s.value = ''; e.value = ''; }
+      else if (y === 'all') {
+        const ny = Math.max(Number(bkkStamp(new Date(), 'year')), 2027);
+        s.value = '2023-01-01'; e.value = ny + '-12-31';
+        state.homeRange = { s: s.value, e: e.value, label: 'ทั้งหมด' };
+      } else {
+        s.value = y + '-01-01'; e.value = y + '-12-31';
+        state.homeRange = { s: s.value, e: e.value, label: 'ปี ' + (y + 543) };
+      }
+      markHomeYearChip(y);
+      loadHomeStats();
+    }
+    function homeCustomRange() {
+      const s = document.getElementById('homeStartDate').value, e = document.getElementById('homeEndDate').value;
+      if (!s && !e) state.homeRange = null;
+      else state.homeRange = { s: s || '2023-01-01', e: e || bkkStamp(new Date(), 'day'), label: 'ช่วงที่เลือก' };
+      markHomeYearChip(s || e ? 'custom' : 'default');
+      loadHomeStats();
     }
     function thaiDayLabel(iso) {
       if (!iso) return '-';
