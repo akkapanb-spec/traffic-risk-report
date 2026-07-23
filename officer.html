@@ -100,6 +100,17 @@
     .dash-year-chip{padding:8px 20px;border-radius:9999px;border:2px solid #cbd5e1;background:#fff;color:#475569;font-weight:700;font-size:.9rem;transition:all .15s ease}
     .dash-year-chip:hover{border-color:var(--blue2);color:var(--blue)}
     .dash-year-chip.active{background:linear-gradient(135deg,var(--blue2),var(--blue));border-color:var(--blue);color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.35)}
+    /* ปุ่ม "กรองข้อมูล" แบบพับได้ (โผล่เฉพาะมือถือ) */
+    .df-toggle{display:none;width:100%;align-items:center;gap:9px;border:0;cursor:pointer;
+      background:#eef4ff;color:var(--navy);font-weight:700;font-size:.92rem;padding:11px 14px;border-radius:12px}
+    .df-toggle .df-chev{margin-left:auto;transition:transform .22s ease}
+    .df-toggle.open .df-chev{transform:rotate(180deg)}
+    @media(max-width:640px){
+      .df-toggle{display:flex}
+      .df-body{display:grid;grid-template-rows:0fr;overflow:hidden;transition:grid-template-rows .28s ease}
+      .df-body.open{grid-template-rows:1fr}
+      .df-inner{min-height:0;overflow:hidden;padding-top:12px}
+    }
     @media(max-width:640px){.dash-year-chip{padding:7px 14px;font-size:.84rem}.dash-filter-row .input[type=date]{flex:1 1 38%;min-width:120px;max-width:none!important}.dash-filter-row .btn{width:100%}}
     .stat-card.red .value{color:var(--red)}.stat-card.orange .value{color:#b45309}.injury-mini{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.pill{border-radius:999px;padding:5px 8px;font-size:.74rem;font-weight:700;background:#f2f6fb}.pill.red{background:#fee2e2;color:#991b1b}.pill.orange{background:#ffedd5;color:#9a3412}.pill.yellow{background:#fef9c3;color:#854d0e}
 
@@ -435,15 +446,9 @@
       <section id="page-dashboard" class="page">
         <div class="page-head"><div class="page-icon"><i class="fa-solid fa-chart-line"></i></div><div><h2>DASHBOARD</h2><p>สถิติอุบัติเหตุ สภ.เมืองนครสวรรค์</p></div></div>
         <div class="card">
-          <div class="dash-filter-row" id="dashYearChips" style="margin-bottom:12px">
-            <span class="dash-filter-label">ดูตามปี:</span>
-            <button type="button" class="dash-year-chip" data-year="all" onclick="setDashYear('all')">ทั้งหมด</button>
-            <button type="button" class="dash-year-chip" data-year="2023" onclick="setDashYear(2023)">2566</button>
-            <button type="button" class="dash-year-chip" data-year="2024" onclick="setDashYear(2024)">2567</button>
-            <button type="button" class="dash-year-chip" data-year="2025" onclick="setDashYear(2025)">2568</button>
-            <button type="button" class="dash-year-chip" data-year="2026" onclick="setDashYear(2026)">2569</button>
-            <button type="button" class="dash-year-chip" data-year="2027" onclick="setDashYear(2027)">2570</button>
-          </div>
+          <button type="button" id="dashFilterToggle" class="df-toggle" onclick="toggleDashFilter()"><i class="fa-solid fa-filter"></i> กรองข้อมูล (ปี / ช่วงวันที่) <i class="fa-solid fa-chevron-down df-chev"></i></button>
+          <div id="dashFilterBody" class="df-body"><div class="df-inner">
+          <div class="dash-filter-row" id="dashYearChips" style="margin-bottom:12px"></div>
           <div class="dash-filter-row">
             <span class="dash-filter-label">หรือกำหนดเอง:</span>
             <label class="hint" for="dashStartDate" style="margin:0">ตั้งแต่</label>
@@ -452,6 +457,7 @@
             <input id="dashEndDate" class="input" type="date" style="max-width:175px">
             <button class="btn btn-primary" type="button" onclick="dashCustomRange()"><i class="fa-solid fa-filter"></i> แสดงข้อมูล</button>
           </div>
+          </div></div>
           <p class="hint" id="dashRangeInfo" style="margin:12px 0 0;font-weight:600"></p>
         </div>
         <div id="dashboardContent" style="margin-top:14px"><div class="loading-skeleton"></div></div>
@@ -2623,6 +2629,11 @@
         b.classList.toggle('active', b.dataset.year === String(y)));
     }
     function dashCustomRange() { markDashYearChip('custom'); loadDashboard(); }
+    // ยืด/หุบแผงตัวกรองบนมือถือ
+    function toggleDashFilter() {
+      document.getElementById('dashFilterBody').classList.toggle('open');
+      document.getElementById('dashFilterToggle').classList.toggle('open');
+    }
     function thaiDayLabel(iso) {
       if (!iso) return '-';
       const p = iso.split('-').map(Number);

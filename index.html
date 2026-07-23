@@ -247,6 +247,17 @@ td{vertical-align:top;font-size:.92rem;}
 /* ปุ่มเลือกปีในหน้าสถิติผู้เสียชีวิต */
 .death-year-chip{padding:6px 18px;border-radius:9999px;border:2px solid #cbd5e1;background:#fff;color:#475569;font-weight:600;font-size:.875rem;cursor:pointer;transition:all .15s ease;}
 .death-year-chip:hover{border-color:#3b82f6;color:#1d4ed8;}
+/* ปุ่ม "กรองข้อมูล" แบบพับได้ (โผล่เฉพาะมือถือ) */
+.df-toggle{display:none;width:100%;align-items:center;gap:9px;border:0;cursor:pointer;
+  background:#eef4ff;color:#123b7a;font-weight:700;font-size:.92rem;padding:11px 14px;border-radius:12px;}
+.df-toggle .df-chev{margin-left:auto;transition:transform .22s ease;}
+.df-toggle.open .df-chev{transform:rotate(180deg);}
+@media(max-width:640px){
+  .df-toggle{display:flex;}
+  .df-body{display:grid;grid-template-rows:0fr;overflow:hidden;transition:grid-template-rows .28s ease;}
+  .df-body.open{grid-template-rows:1fr;}
+  .df-inner{min-height:0;overflow:hidden;padding-top:12px;}
+}
 .death-year-chip.active{background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-color:#1d4ed8;color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.35);}
 /* dashboard cards */
 #dashboardTab .glass-effect,#deathStatsTab .glass-effect{
@@ -458,7 +469,16 @@ canvas{max-width:100%!important;}
 .stats-zone.clickable .stat-card{transition:transform .18s ease,box-shadow .18s ease}
 .stats-zone.clickable:hover .stat-card{transform:translateY(-2px);box-shadow:0 16px 36px rgba(193,18,47,.16)}
 .stats-hint{text-align:right;font-size:.75rem;color:#8a97a8;margin-top:2px}
-@media(max-width:640px){.stats-grid{grid-template-columns:1fr;gap:10px}.stat-card{min-height:96px}}
+/* มือถือ: การ์ดสถิติย่อ 2 คอลัมน์ ขนาดกะทัดรัดแบบหน้าเจ้าหน้าที่ */
+@media(max-width:640px){
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat-card{min-height:92px;padding:12px 11px;border-radius:16px}
+  .stat-card .label{font-size:.7rem;line-height:1.2}
+  .stat-card .value{font-size:1.45rem;margin-top:4px}
+  .stat-card .unit{font-size:.66rem}
+  .stat-card:after{width:52px;height:52px;right:-16px;top:-16px}
+  .injury-mini .pill{font-size:.6rem;padding:2px 7px}
+}
 
 </style>
 </head>
@@ -631,16 +651,13 @@ canvas{max-width:100%!important;}
         <button onclick="showTab('dashboard', null)" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold"><img src="https://img.icons8.com/color/48/000000/back.png" class="w-5 h-5 inline mr-2">กลับ</button>
       </div>
 
-      <!-- ตัวกรองข้อมูล: เลือกปีด่วน หรือกำหนดช่วงวันที่เอง -->
+      <!-- ตัวกรองข้อมูล: มือถือหุบเป็นปุ่ม "กรองข้อมูล" กดเพื่อยืด/หุบ — จอใหญ่กางตลอด -->
       <div class="glass-effect rounded-xl p-4 mb-6">
+        <button type="button" id="deathFilterToggle" class="df-toggle" onclick="toggleDeathFilter()"><i class="fa-solid fa-filter"></i> กรองข้อมูล (ปี / ช่วงวันที่) <i class="fa-solid fa-chevron-down df-chev"></i></button>
+        <div id="deathFilterBody" class="df-body"><div class="df-inner">
         <div class="flex flex-wrap items-center gap-2 mb-3" id="deathYearChips">
           <span class="text-sm font-semibold text-gray-700 mr-1">ดูตามปี:</span>
           <button class="death-year-chip" data-year="all" onclick="setDeathYear('all')">ทั้งหมด</button>
-          <button class="death-year-chip" data-year="2023" onclick="setDeathYear(2023)">2023</button>
-          <button class="death-year-chip" data-year="2024" onclick="setDeathYear(2024)">2024</button>
-          <button class="death-year-chip" data-year="2025" onclick="setDeathYear(2025)">2025</button>
-          <button class="death-year-chip" data-year="2026" onclick="setDeathYear(2026)">2026</button>
-          <button class="death-year-chip" data-year="2027" onclick="setDeathYear(2027)">2027</button>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <span class="text-sm font-semibold text-gray-700 mr-1">หรือกำหนดเอง:</span>
@@ -650,6 +667,7 @@ canvas{max-width:100%!important;}
           <input type="date" id="deathEndDate" class="form-input px-3 py-2 rounded-lg">
           <button onclick="refreshDeathStatistics()" class="btn-primary text-white px-5 py-2 rounded-lg font-semibold"><img src="https://img.icons8.com/color/48/000000/refresh.png" class="w-5 h-5 inline mr-1">แสดงข้อมูล</button>
         </div>
+        </div></div>
         <p id="deathRangeInfo" class="text-sm text-gray-600 mt-3 font-medium"></p>
       </div>
 
@@ -1329,6 +1347,12 @@ function showDeathStatistics() {
 function initializeDeathStatistics() {
   buildDeathYearControls();
   setDeathYear(new Date().getFullYear());
+}
+
+// ยืด/หุบแผงตัวกรองบนมือถือ
+function toggleDeathFilter() {
+  document.getElementById('deathFilterBody').classList.toggle('open');
+  document.getElementById('deathFilterToggle').classList.toggle('open');
 }
 
 // สร้างปุ่มปีและตัวเลือกปีอัตโนมัติ 2023..ปีปัจจุบัน — ขึ้นปีใหม่แล้วปุ่มปีใหม่โผล่เอง ไม่ต้องแก้โค้ด
