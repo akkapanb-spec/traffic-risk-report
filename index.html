@@ -244,6 +244,13 @@ td{vertical-align:top;font-size:.92rem;}
   .gender-card i{font-size:2.2rem}
   .gender-card .num,.license-card .num{font-size:1.5rem}
 }
+/* หมุดรวมบนแผนที่ผู้เสียชีวิต: จุดเดียวมีหลายราย แสดงจำนวนบนหมุดแทนการวางทับกัน */
+.death-multi-pin{width:28px;height:28px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;
+  color:#fff;font-weight:900;font-size:.82rem;box-shadow:0 3px 10px rgba(15,23,42,.4)}
+.death-pop-list{max-height:230px;overflow:auto;padding-right:4px}
+.death-pop-item{padding:2px 0}
+.death-pop-item+.death-pop-item{border-top:1px dashed #e2e8f0;margin-top:8px;padding-top:8px}
+.death-pop-no{font-weight:800;color:#c1122f;font-size:.78rem;margin-bottom:2px}
 /* ปุ่มเลือกปีในหน้าสถิติผู้เสียชีวิต */
 .death-year-chip{padding:6px 18px;border-radius:9999px;border:2px solid #cbd5e1;background:#fff;color:#475569;font-weight:600;font-size:.875rem;cursor:pointer;transition:all .15s ease;}
 .death-year-chip:hover{border-color:#3b82f6;color:#1d4ed8;}
@@ -1697,7 +1704,11 @@ async function loadDeathStatistics() {
     });
 
     const info = document.getElementById('deathRangeInfo');
-    if (info) info.textContent = `แสดงข้อมูลช่วง ${thaiDateLabel(sDate)} ถึง ${thaiDateLabel(eDate)} — ผู้เสียชีวิต ${data.total} ราย (ปักหมุดบนแผนที่ ${data.mapData.length} จุดที่มีพิกัด)`;
+    const pinCount = new Set(data.mapData.map(it => {
+      const p = String(it.coords).split(',');
+      return parseFloat(p[0]).toFixed(6) + ',' + parseFloat(p[1]).toFixed(6);
+    })).size;
+    if (info) info.textContent = `แสดงข้อมูลช่วง ${thaiDateLabel(sDate)} ถึง ${thaiDateLabel(eDate)} — ผู้เสียชีวิต ${data.total} ราย (มีพิกัด ${data.mapData.length} ราย ปักหมุด ${pinCount} จุด)`;
 
     await createDeathCharts(data);
     Swal.close();
@@ -1870,57 +1881,87 @@ function initDashboardDeathMap(mapData) {
     return Number.isInteger(idx) && idx >= 0 ? yearPalette[idx % yearPalette.length] : undefined;
   };
 
+  // จับกลุ่มตามพิกัด: หลายรายที่เกิดเหตุจุดเดียวกันต้องรวมเป็นหมุดเดียว
+  // ถ้าปักหมุดแยกทีละราย หมุดจะทับกันสนิทจนคลิกได้แค่รายบนสุด (รายอื่นหายไปจากแผนที่)
+  const points = new Map();
   mapData.forEach(item => {
     const parts = item.coords.split(',');
-    if (parts.length >= 2) {
-      const lat = parseFloat(parts[0].trim());
-      const lng = parseFloat(parts[1].trim());
+    if (parts.length < 2) return;
+    const lat = parseFloat(parts[0].trim());
+    const lng = parseFloat(parts[1].trim());
+    if (isNaN(lat) || isNaN(lng)) return;
+    const key = lat.toFixed(6) + ',' + lng.toFixed(6);
+    if (!points.has(key)) points.set(key, { lat, lng, items: [] });
+    points.get(key).items.push(item);
+  });
 
-      if (!isNaN(lat) && !isNaN(lng)) {
-        const markerColor = colorOfYear(item.year) || '#6b7280';
+  const deathCard = (item, lat, lng, index) => `
+    <div class="death-pop-item">
+      ${index ? `<div class="death-pop-no">รายที่ ${index}</div>` : ''}
+      <p><strong class="text-gray-700">📅 วันที่-เวลา:</strong> ${formatThaiDateTimeStr(item.date)}</p>
+      <p><strong class="text-gray-700">👤 อายุ:</strong> ${item.age} ปี | <strong class="text-gray-700">เพศ:</strong> ${item.gender}</p>
+      <p><strong class="text-gray-700">📌 สถานะ:</strong> <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">${item.status}</span></p>
+      <p><strong class="text-gray-700">🚗 ประเภทรถ:</strong> ${item.vehicle}</p>
+      <p><strong class="text-gray-700">🛡️ อุปกรณ์นิรภัย:</strong> ${item.safety}</p>
+      <p><strong class="text-gray-700">📍 ตำบล:</strong> ${item.subdistrict || 'ไม่ระบุ'}</p>
+    </div>`;
 
-        const marker = L.circleMarker([lat, lng], {
-          radius: 8,
-          fillColor: markerColor,
-          color: '#ffffff',
-          weight: 2,
-          opacity: 1,
-          fillOpacity: 0.9
+  points.forEach(pt => {
+    const n = pt.items.length;
+    const years = [...new Set(pt.items.map(it => String(it.year)))];
+    // หมุดรวมที่มีหลายปี ใช้สีกลาง เพราะแทนสีปีใดปีหนึ่งไม่ได้
+    const markerColor = years.length === 1 ? (colorOfYear(years[0]) || '#6b7280') : '#475569';
+
+    const marker = n === 1
+      ? L.circleMarker([pt.lat, pt.lng], {
+          radius: 8, fillColor: markerColor, color: '#ffffff',
+          weight: 2, opacity: 1, fillOpacity: 0.9
+        })
+      : L.marker([pt.lat, pt.lng], {
+          icon: L.divIcon({
+            className: '',
+            html: `<div class="death-multi-pin" style="background:${markerColor}">${n}</div>`,
+            iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -14]
+          })
         });
 
-        const formattedDate = formatThaiDateTimeStr(item.date);
-        marker.bindPopup(`
-          <div class="text-sm p-1 min-w-[220px]">
-            <h4 class="font-bold text-blue-800 border-b pb-2 mb-2"><i class="fas fa-info-circle mr-1"></i> รายละเอียดอุบัติเหตุ</h4>
-            <div class="space-y-1">
-              <p><strong class="text-gray-700">📅 วันที่-เวลา:</strong> ${formattedDate}</p>
-              <p><strong class="text-gray-700">👤 อายุ:</strong> ${item.age} ปี | <strong class="text-gray-700">เพศ:</strong> ${item.gender}</p>
-              <p><strong class="text-gray-700">📌 สถานะ:</strong> <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">${item.status}</span></p>
-              <p><strong class="text-gray-700">🚗 ประเภทรถ:</strong> ${item.vehicle}</p>
-              <p><strong class="text-gray-700">🛡️ อุปกรณ์นิรภัย:</strong> ${item.safety}</p>
-              <p><strong class="text-gray-700">📍 ตำบล:</strong> ${item.subdistrict || 'ไม่ระบุ'}</p>
-              <p><strong class="text-gray-700">🗺️ พิกัด:</strong> <a href="https://www.google.com/maps?q=${encodeURIComponent(item.coords)}" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:underline" title="เปิดใน Google Maps">${lat.toFixed(6)}, ${lng.toFixed(6)}</a></p>
-            </div>
-          </div>
-        `);
+    const mapLink = `<p><strong class="text-gray-700">🗺️ พิกัด:</strong> <a href="https://www.google.com/maps?q=${encodeURIComponent(pt.lat + ', ' + pt.lng)}" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:underline" title="เปิดใน Google Maps">${pt.lat.toFixed(6)}, ${pt.lng.toFixed(6)}</a></p>`;
 
-        deathMarkersLayer.addLayer(marker);
-      }
-    }
+    marker.bindPopup(n === 1
+      ? `<div class="text-sm p-1 min-w-[220px]">
+           <h4 class="font-bold text-blue-800 border-b pb-2 mb-2"><i class="fas fa-info-circle mr-1"></i> รายละเอียดอุบัติเหตุ</h4>
+           <div class="space-y-1">${deathCard(pt.items[0])}${mapLink}</div>
+         </div>`
+      : `<div class="text-sm p-1 min-w-[240px]">
+           <h4 class="font-bold text-red-700 border-b pb-2 mb-2"><i class="fas fa-skull-crossbones mr-1"></i> จุดนี้มีผู้เสียชีวิต ${n} ราย</h4>
+           <div class="death-pop-list">${pt.items.map((it, i) => deathCard(it, pt.lat, pt.lng, i + 1)).join('')}</div>
+           <div class="border-t pt-2 mt-1">${mapLink}</div>
+         </div>`,
+      { maxWidth: 320 });
+
+    deathMarkersLayer.addLayer(marker);
   });
 
   // คำอธิบายสี: แสดงเฉพาะปีที่มีหมุดจริงในช่วงที่เลือก พร้อมจำนวนจุด
   const legend = document.getElementById('deathMapLegend');
   if (legend) {
+    // แยกนับ "จุด" (พิกัดไม่ซ้ำ) กับ "ราย" (จำนวนผู้เสียชีวิต) — หนึ่งหมุดมีได้หลายราย
     const counts = {};
-    mapData.forEach(it => { if (it.year) counts[it.year] = (counts[it.year] || 0) + 1; });
+    mapData.forEach(it => {
+      if (!it.year) return;
+      if (!counts[it.year]) counts[it.year] = { rows: 0, spots: new Set() };
+      counts[it.year].rows++;
+      const p = String(it.coords).split(',');
+      const la = parseFloat(p[0]), ln = parseFloat(p[1]);
+      if (!isNaN(la) && !isNaN(ln)) counts[it.year].spots.add(la.toFixed(6) + ',' + ln.toFixed(6));
+    });
     let html = '<p class="font-bold text-gray-800 mr-2">คำอธิบายสี (ปีเกิดเหตุ):</p>';
     const years = Object.keys(counts).sort();
     if (!years.length) {
       html += '<span class="text-gray-500">ไม่มีหมุดในช่วงวันที่ที่เลือก</span>';
     } else {
       years.forEach(y => {
-        html += `<div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color:${colorOfYear(y) || '#6b7280'};"></span> พ.ศ. ${Number(y) + 543} (${counts[y]} จุด)</div>`;
+        html += `<div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color:${colorOfYear(y) || '#6b7280'};"></span> พ.ศ. ${Number(y) + 543} (${counts[y].spots.size} จุด · ${counts[y].rows} ราย)</div>`;
       });
     }
     legend.innerHTML = html;

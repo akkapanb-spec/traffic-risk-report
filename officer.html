@@ -132,6 +132,13 @@
     .legend-filter.active{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(29,78,216,.25)}
     .legend-filter.active .dot{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
     .death-pin{width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid #dc2626;display:grid;place-items:center;color:#dc2626;font-size:12px;box-shadow:0 3px 10px rgba(220,38,38,.45)}
+    /* หมุดรวม: จุดเดียวมีผู้เสียชีวิตหลายราย แสดงจำนวนแทนการวางหมุดทับกัน */
+    .death-pin-multi{background:#dc2626;color:#fff;border-color:#fff;font-weight:900;font-size:13px;box-shadow:0 3px 12px rgba(220,38,38,.6)}
+    .death-stack{max-height:300px;overflow:auto;padding-right:4px}
+    .death-stack-item+.death-stack-item{border-top:1px dashed #e2e8f0;margin-top:10px;padding-top:8px}
+    .death-stack-no{font-weight:800;color:#c1122f;font-size:.76rem}
+    .death-stack .popup{padding:0}
+    .death-stack .popup-date{margin-top:2px}
     .split-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .split-grid>div+div{border-left:1px dashed rgba(15,23,42,.14);padding-left:12px}
     #deathOverlayBtn.on{background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fff!important;border-color:transparent;box-shadow:0 6px 16px rgba(220,38,38,.3)}
@@ -1001,6 +1008,9 @@
       const deaths = await fetchDeathsFull();
       const layer = L.layerGroup();
       let count = 0;
+      // จับกลุ่มตามพิกัดก่อนปักหมุด — จุดเดียวกันมีได้หลายราย ถ้าปักแยกหมุดจะทับกันสนิท
+      // (ชั้นนี้ไม่ได้ผ่าน markerCluster เหมือนหมุดอุบัติเหตุ จึงไม่มีอะไรกางหมุดที่ซ้อนกันให้)
+      const spots = new Map();
       deaths.forEach(r => {
         if (!r.incident_datetime) return;
         const local = bkkStamp(r.incident_datetime, 'day');
@@ -1009,11 +1019,30 @@
         const parts = (r.coordinates || '').split(',');
         const lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
         if (isNaN(lat) || isNaN(lng)) return;
-        const icon = L.divIcon({ className:'', html:'<div class="death-pin"><i class="fa-solid fa-skull-crossbones"></i></div>', iconSize:[26,26], iconAnchor:[13,13], popupAnchor:[0,-14] });
-        L.marker([lat, lng], { icon, zIndexOffset: 1000 })
-          .bindPopup(buildPopup({ isDeath:true, death:r, date: formatThaiDateTimeStr(r.incident_datetime) }), { maxWidth: 340 })
-          .addTo(layer);
+        const key = lat.toFixed(6) + ',' + lng.toFixed(6);
+        if (!spots.has(key)) spots.set(key, { lat, lng, rows: [] });
+        spots.get(key).rows.push(r);
         count++;
+      });
+      spots.forEach(spot => {
+        const n = spot.rows.length;
+        const icon = L.divIcon({
+          className: '',
+          html: n === 1
+            ? '<div class="death-pin"><i class="fa-solid fa-skull-crossbones"></i></div>'
+            : '<div class="death-pin death-pin-multi">' + n + '</div>',
+          iconSize:[26,26], iconAnchor:[13,13], popupAnchor:[0,-14]
+        });
+        const popup = n === 1
+          ? buildPopup({ isDeath:true, death:spot.rows[0], date: formatThaiDateTimeStr(spot.rows[0].incident_datetime) })
+          : '<div class="popup"><h3 style="color:#c1122f"><i class="fa-solid fa-skull-crossbones"></i> จุดนี้มีผู้เสียชีวิต ' + n + ' ราย</h3>' +
+            '<div class="death-stack">' + spot.rows.map(function(r, i) {
+              return '<div class="death-stack-item"><div class="death-stack-no">รายที่ ' + (i + 1) + '</div>' +
+                buildPopup({ isDeath:true, compact:true, death:r, date: formatThaiDateTimeStr(r.incident_datetime) }) + '</div>';
+            }).join('') + '</div></div>';
+        L.marker([spot.lat, spot.lng], { icon, zIndexOffset: 1000 })
+          .bindPopup(popup, { maxWidth: 360 })
+          .addTo(layer);
       });
       layer.addTo(state.accidentMap);
       state.deathOverlayLayer = layer;
@@ -3049,7 +3078,9 @@
       if (item.isDeath) {
         const r = item.death || {};
         const row = (label, value) => value ? '<div class="popup-row"><strong>' + label + ':</strong> ' + escapeHtml(value) + '</div>' : '';
-        return '<div class="popup"><h3 style="color:#c1122f"><i class="fa-solid fa-skull-crossbones"></i> ผู้เสียชีวิต</h3>' +
+        // compact = อยู่ในหมุดรวมหลายราย หัวข้ออยู่ด้านบนแล้ว ไม่ต้องซ้ำทุกราย
+        return '<div class="popup">' +
+          (item.compact ? '' : '<h3 style="color:#c1122f"><i class="fa-solid fa-skull-crossbones"></i> ผู้เสียชีวิต</h3>') +
           '<div class="popup-date"><i class="fa-regular fa-calendar"></i> ' + escapeHtml(item.date || '-') + '</div>' +
           '<div class="popup-info">' +
           row('อายุ/เพศ', (r.age != null ? r.age + ' ปี' : '-') + ' / ' + (r.gender || '-')) +
