@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>กล้องจราจรสด จ.นครสวรรค์ | สภ.เมืองนครสวรรค์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<style>
+:root{
+  --navy:#123b7a; --blue:#1d4ed8; --blue2:#3b82f6; --red:#c1122f;
+  --ink:#132238; --muted:#5b6b7f; --line:#dbe6f2;
+  --card:#fff; --shadow:0 12px 32px rgba(23,52,88,.10); --radius:20px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:'Sarabun',system-ui,sans-serif;color:var(--ink);min-height:100vh;
+  background:radial-gradient(circle at 8% 5%,rgba(255,255,255,.92),transparent 26%),
+    linear-gradient(145deg,#d9f1ff 0%,#eef7ff 42%,#fde5ef 100%)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+h1,h2,h3{margin:0}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:8px}
+
+.thai-stripe{height:8px;background:linear-gradient(to right,#a51931 0 16%,#fff 16% 32%,#2d2a4a 32% 68%,#fff 68% 84%,#a51931 84%)}
+.wrap{max-width:1240px;margin:0 auto;padding:16px clamp(12px,3vw,26px) 44px}
+
+.head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:rgba(255,255,255,.94);
+  border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:14px 18px;margin-bottom:16px}
+.head .page-icon{width:52px;height:52px;border-radius:16px;flex:0 0 52px;display:grid;place-items:center;color:#fff;
+  font-size:1.3rem;background:linear-gradient(135deg,var(--navy),var(--blue));box-shadow:0 10px 20px rgba(29,78,216,.22)}
+.head h1{font-size:clamp(1.1rem,3.2vw,1.55rem);font-weight:800;line-height:1.25}
+.head p{margin:4px 0 0;color:var(--muted);font-size:.84rem}
+.head .actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border-radius:14px;font-weight:700;font-size:.88rem;
+  text-decoration:none;min-height:46px;transition:.16s}
+.btn-primary{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;box-shadow:0 9px 20px rgba(29,78,216,.25)}
+.btn-soft{background:#fff;color:var(--navy);border:1px solid #cfe1fb}
+.btn:active{transform:scale(.98)}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 352px;gap:16px;align-items:start}
+@media(max-width:980px){.layout{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.card-pad{padding:16px 18px}
+.card-title{display:flex;align-items:center;gap:11px;font-size:1.02rem;font-weight:800;padding:14px 18px;border-bottom:1px solid var(--line)}
+.card-title i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#edf4ff;color:var(--blue);
+  font-size:.92rem;flex:0 0 34px}
+.card-title .count{margin-left:auto;font-size:.76rem;font-weight:700;color:var(--muted);background:#f1f6fc;
+  border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+
+/* ---------- player ---------- */
+.stage{position:relative;width:100%;aspect-ratio:16/9;background:#0b1220}
+.stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.stage-msg{position:absolute;inset:0;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;
+  color:#c3d2e4;text-align:center;padding:22px;font-size:.92rem;line-height:1.6}
+.stage-msg i{font-size:2.6rem;opacity:.75}
+.stage-msg.err i{color:#f87171}
+.stage-msg[hidden]{display:none}
+.live{position:absolute;top:12px;left:12px;z-index:4;display:inline-flex;align-items:center;gap:7px;
+  background:rgba(193,18,47,.94);color:#fff;font-size:.74rem;font-weight:800;letter-spacing:.05em;
+  padding:6px 11px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.live .dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:beat 1.6s infinite}
+@keyframes beat{0%,100%{opacity:1}50%{opacity:.25}}
+.stage-tools{position:absolute;top:12px;right:12px;z-index:4;display:flex;gap:7px}
+.stage-tools button{width:38px;height:38px;border-radius:11px;background:rgba(11,18,32,.62);color:#fff;font-size:.9rem;
+  display:grid;place-items:center}
+.stage-tools button:hover{background:rgba(11,18,32,.85)}
+
+.now{padding:14px 18px}
+.now h2{font-size:1.05rem;font-weight:800;line-height:1.35}
+.now .where{color:var(--muted);font-size:.83rem;margin-top:5px;line-height:1.6}
+.dirs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.dir{padding:9px 14px;border-radius:12px;background:#f1f6fc;border:1px solid var(--line);font-size:.83rem;
+  font-weight:700;color:#2a3d55;min-height:42px;display:inline-flex;align-items:center;gap:8px;transition:.15s}
+.dir[aria-pressed="true"]{background:linear-gradient(135deg,var(--navy),var(--blue));border-color:transparent;color:#fff;
+  box-shadow:0 7px 16px rgba(29,78,216,.28)}
+.dir i{font-size:.8rem;opacity:.85}
+
+/* ---------- camera list ---------- */
+.cams{max-height:560px;overflow:auto;padding:10px}
+@media(max-width:980px){.cams{max-height:none}}
+.cam{width:100%;display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:14px;text-align:left;
+  border:1px solid transparent;transition:.15s}
+.cam:hover{background:#f4f9ff;border-color:#dbe9fb}
+.cam[aria-current="true"]{background:#eef5ff;border-color:#bfd6f6;box-shadow:0 6px 16px rgba(29,78,216,.12)}
+.cam .no{width:36px;height:36px;border-radius:11px;flex:0 0 36px;display:grid;place-items:center;background:#edf4ff;
+  color:var(--blue);font-weight:800;font-size:.82rem}
+.cam[aria-current="true"] .no{background:var(--blue);color:#fff}
+.cam .txt{min-width:0;flex:1}
+.cam .txt strong{display:block;font-size:.9rem;font-weight:700;line-height:1.35}
+.cam .txt span{display:block;font-size:.75rem;color:var(--muted);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{font-size:.74rem;font-weight:800;padding:4px 9px;border-radius:999px;white-space:nowrap}
+.tag.own{background:#e9f9ef;color:#0f7a47}
+.tag.two{background:#f3edff;color:#6d28d9}
+
+/* ---------- map ---------- */
+#camMap{height:clamp(300px,52vh,480px)}
+.cam-pin{width:30px;height:30px;border-radius:50%;background:#fff;border:3px solid var(--blue);display:grid;
+  place-items:center;color:var(--blue);font-size:13px;box-shadow:0 3px 10px rgba(29,78,216,.4)}
+.cam-pin.on{background:var(--blue);color:#fff;border-color:#fff;transform:scale(1.15)}
+.cam-pin.own{border-color:#0f7a47;color:#0f7a47}
+.cam-pin.own.on{background:#0f7a47;color:#fff;border-color:#fff}
+
+.note{margin-top:16px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:16px;padding:14px 16px;
+  font-size:.8rem;color:var(--muted);line-height:1.75}
+.note strong{color:var(--ink)}
+.note a{color:var(--blue)}
+
+/* แถบที่มาข้อมูล + ตราสัญลักษณ์กรมทางหลวง
+   ตราถูกครอบมาจากแบนเนอร์ของกรมทางหลวงโดยตรง (ไม่ได้คัดลอกไฟล์มาเก็บไว้เอง)
+   หน้านี้พึ่งเซิร์ฟเวอร์กรมทางหลวงอยู่แล้วเพราะภาพสดมาจากที่นั่น */
+.source{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:16px;padding:16px 18px;
+  background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);text-decoration:none;color:inherit;
+  transition:.16s}
+.source:hover{border-color:#b9d3f3;box-shadow:0 14px 34px rgba(23,52,88,.14)}
+.source-mark{width:64px;height:64px;flex:0 0 64px;overflow:hidden;position:relative;border-radius:12px;background:#fff}
+/* ตราในแบนเนอร์ต้นฉบับ (1000x106) อยู่ที่ x24-108, y13-93 — ย่อ 0.72 แล้วเลื่อนให้ตราอยู่กลางกรอบ 64px */
+.source-mark img{position:absolute;width:720px;max-width:none;left:-16px;top:-6px}
+.source-txt{min-width:0;flex:1}
+.source-txt .kicker{font-size:.7rem;font-weight:800;letter-spacing:.09em;color:var(--muted);text-transform:uppercase}
+.source-txt strong{display:block;font-size:1rem;font-weight:800;color:var(--navy);margin-top:2px}
+.source-txt span{display:block;font-size:.8rem;color:var(--muted);margin-top:3px;word-break:break-all}
+.source-go{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border-radius:13px;
+  background:#eef4ff;color:var(--navy);font-weight:700;font-size:.85rem;white-space:nowrap;min-height:44px}
+.source:hover .source-go{background:var(--blue);color:#fff}
+@media(max-width:560px){.source-go{margin-left:0;width:100%;justify-content:center}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="thai-stripe"></div>
+<div class="wrap">
+
+  <header class="head">
+    <div class="page-icon"><i class="fa-solid fa-video"></i></div>
+    <div>
+      <h1>กล้องจราจรสด จ.นครสวรรค์</h1>
+      <p>ภาพสดจากกล้องสำรวจปริมาณจราจร กรมทางหลวง · <span id="camCount">8</span> จุดในจังหวัด</p>
+    </div>
+    <div class="actions">
+      <a class="btn btn-soft" href="index.html"><i class="fa-solid fa-arrow-left"></i> กลับหน้าหลัก</a>
+      <a class="btn btn-primary" href="https://highwaytraffic.go.th/DOHWeb/Home.aspx" target="_blank" rel="noopener">
+        <i class="fa-solid fa-up-right-from-square"></i> เว็บกรมทางหลวง</a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="card">
+      <div class="stage">
+        <video id="player" muted playsinline preload="none"></video>
+        <span class="live" id="liveBadge" hidden><span class="dot"></span> LIVE</span>
+        <div class="stage-tools">
+          <button type="button" id="btnSound" title="เปิดเสียง" aria-label="เปิดเสียง"><i class="fa-solid fa-volume-xmark"></i></button>
+          <button type="button" id="btnReload" title="โหลดภาพใหม่" aria-label="โหลดภาพใหม่"><i class="fa-solid fa-rotate"></i></button>
+          <button type="button" id="btnFull" title="เต็มจอ" aria-label="เต็มจอ"><i class="fa-solid fa-expand"></i></button>
+        </div>
+        <div class="stage-msg" id="stageMsg">
+          <i class="fa-solid fa-satellite-dish"></i>
+          <span>กำลังเชื่อมต่อกล้อง…</span>
+        </div>
+      </div>
+      <div class="now">
+        <h2 id="nowTitle">—</h2>
+        <p class="where" id="nowWhere"></p>
+        <div class="dirs" id="nowDirs"></div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <h3 class="card-title"><i class="fa-solid fa-list-ul"></i> เลือกกล้อง <span class="count" id="listCount"></span></h3>
+      <div class="cams" id="camList"></div>
+    </aside>
+  </div>
+
+  <section class="card" style="margin-top:16px">
+    <h3 class="card-title"><i class="fa-solid fa-map-location-dot"></i> ตำแหน่งกล้องบนแผนที่
+      <span class="count">เขียว = อยู่ในพื้นที่ สภ.เมืองนครสวรรค์</span></h3>
+    <div id="camMap"></div>
+  </section>
+
+  <a class="source" href="https://highwaytraffic.go.th/DOHWeb/Home.aspx" target="_blank" rel="noopener">
+    <span class="source-mark"><img src="https://highwaytraffic.go.th/DOHWeb/images/banner.jpg" alt="ตราสัญลักษณ์กรมทางหลวง"></span>
+    <span class="source-txt">
+      <span class="kicker">ที่มาข้อมูลและภาพ</span>
+      <strong>กรมทางหลวง · Department of Highways</strong>
+      <span>ระบบรายงานสภาพจราจรบนโครงข่ายทางหลวง — highwaytraffic.go.th/DOHWeb/Home.aspx</span>
+    </span>
+    <span class="source-go">เปิดเว็บต้นทาง <i class="fa-solid fa-up-right-from-square"></i></span>
+  </a>
+
+  <p class="note">
+    <strong>ที่มาของภาพ:</strong> กล้องสำรวจปริมาณจราจร กรมทางหลวง (Department of Highways) เผยแพร่ผ่าน
+    <a href="https://highwaytraffic.go.th/DOHWeb/Home.aspx" target="_blank" rel="noopener">highwaytraffic.go.th</a>
+    — หน้านี้เพียงดึงสตรีมสาธารณะมาแสดง ไม่ได้จัดเก็บหรือดัดแปลงภาพ<br>
+    <strong>ข้อจำกัด:</strong> เล่นครั้งละ 1 กล้องเพื่อไม่ให้กินแบนด์วิดท์และไม่รบกวนเซิร์ฟเวอร์ต้นทาง ·
+    ถ้ากล้องใดดับหรือกรมทางหลวงปิดปรับปรุง หน้านี้จะแจ้งบนจอภาพ ·
+    รายชื่อกล้องเป็นข้อมูลคงที่ ถ้ากรมทางหลวงเพิ่ม/ย้ายกล้องต้องมาปรับรายการในไฟล์นี้
+  </p>
+</div>
+
+<script>
+/* ============================================================
+   รายการกล้องในจังหวัดนครสวรรค์ (ดึงจากระบบกรมทางหลวง 27 ก.ค. 2569)
+   ที่มา: highwaytraffic.go.th → PageMethods GetSiteInfo / GetCameraInfo
+   กล้องเป็นโครงสร้างพื้นฐานถาวร รายการจึงเก็บเป็นค่าคงที่ ไม่ต้องยิง API ทุกครั้ง
+   ถ้าต้องอัปเดต: เข้าเว็บกรมทางหลวง เลือกจังหวัดนครสวรรค์ แล้วคัดลอกพิกัด/URL มาแทน
+   inArea = อยู่ในเขตรับผิดชอบ สภ.เมืองนครสวรรค์
+============================================================ */
+const CAMS = [
+  { code:'PER-4-015',  lat:15.6601,    lng:100.0699,    inArea:true,
+    name:'ทล.122 ทางเลี่ยงเมืองนครสวรรค์ กม.7+350',
+    where:'ต.นครสวรรค์ตก อ.เมือง จ.นครสวรรค์ · ทางหลวงหมายเลข 122 ระหว่าง กม.7–8',
+    views:[{ label:'ภาพจากกล้อง', url:'https://streaming1.highwaytraffic.go.th/Phase4/PER_4_015.stream/playlist.m3u8' }] },
+
+  { code:'PER-16-011', lat:15.6511469, lng:100.0804965, inArea:true,
+    name:'ทล.122 ทางเลี่ยงเมืองฯ ด้านตะวันตก กม.5+850',
+    where:'ต.ตะเคียนเลื่อน – ต.บางม่วง อ.เมือง จ.นครสวรรค์ · ทางหลวงหมายเลข 122 ระหว่าง กม.5–6',
+    views:[
+      { label:'มุ่งหน้า ต.ตะเคียนเลื่อน', url:'https://streaming2.highwaytraffic.go.th/P16/PER_16_011_IN.stream/playlist.m3u8' },
+      { label:'มุ่งหน้า ต.บางม่วง',      url:'https://streaming2.highwaytraffic.go.th/P16/PER_16_011_OUT.stream/playlist.m3u8' }] },
+
+  { code:'PER-15-015', lat:15.6368,    lng:100.1314,    inArea:false,
+    name:'ทล.1 บ้านหว้า – วังไผ่ กม.333+970',
+    where:'อ.โกรกพระ / อ.บรรพตพิสัย จ.นครสวรรค์ · ทางหลวงหมายเลข 1 ระหว่าง กม.333–334',
+    views:[
+      { label:'มุ่งหน้า อ.โกรกพระ',    url:'https://streaming2.highwaytraffic.go.th/Phase15/PER_15_015_IN.stream/playlist.m3u8' },
+      { label:'มุ่งหน้า อ.บรรพตพิสัย', url:'https://streaming2.highwaytraffic.go.th/Phase15/PER_15_015_OUT.stream/playlist.m3u8' }] },
+
+  { code:'PER-6-002',  lat:15.4122,    lng:100.1473,    inArea:false,
+    name:'ทล.1 อ.พยุหะคีรี กม.308+540',
+    where:'ต.ท่าน้ำอ้อย อ.พยุหะคีรี จ.นครสวรรค์ · ทางหลวงหมายเลข 1 ระหว่าง กม.308–309',
+    views:[
+      { label:'มุ่งหน้า จ.ชัยนาท',     url:'https://streaming1.highwaytraffic.go.th/Phase6/PER_6_002_IN.stream/playlist.m3u8' },
+      { label:'มุ่งหน้า จ.นครสวรรค์',  url:'https://streaming1.highwaytraffic.go.th/Phase6/PER_6_002_OUT.stream/playlist.m3u8' }] },
+
+  { code:'PER-10-013', lat:15.955757,  lng:99.846883,   inArea:false,
+    name:'ทล.1 อ.บรรพตพิสัย กม.384+155',
+    where:'ต.บางแก้ว อ.บรรพตพิสัย จ.นครสวรรค์ · ทางหลวงหมายเลข 1 ระหว่าง กม.384–385',
+    views:[{ label:'ภาพจากกล้อง', url:'https://streaming1.highwaytraffic.go.th/Phase10/PER_10_013.stream/playlist.m3u8' }] },
+
+  { code:'PER-8-122',  lat:15.8712,    lng:100.4528,    inArea:false,
+    name:'ทล.225 อ.ชุมแสง กม.53+750',
+    where:'ต.หนองกระเจา อ.ชุมแสง จ.นครสวรรค์ · ทางหลวงหมายเลข 225 ระหว่าง กม.49–50',
+    views:[{ label:'ภาพจากกล้อง', url:'https://streaming1.highwaytraffic.go.th/Phase8/PER_8_022.stream/playlist.m3u8' }] },
+
+  { code:'PER-10-014', lat:15.448759,  lng:100.525521,  inArea:false,
+    name:'ทล.11 อ.ท่าตะโก กม.51+940',
+    where:'ต.หนองหลวง อ.ท่าตะโก จ.นครสวรรค์ · ทางหลวงหมายเลข 11 ระหว่าง กม.51–52',
+    views:[{ label:'ภาพจากกล้อง', url:'https://streaming1.highwaytraffic.go.th/Phase10/PER_10_014.stream/playlist.m3u8' }] },
+
+  { code:'PER-15-016', lat:15.2802,    lng:100.3761,    inArea:false,
+    name:'ทล.1 เกษตรชัย – ตาคลี กม.251+115',
+    where:'อ.ตากฟ้า จ.นครสวรรค์ – อ.เมืองชัยนาท จ.ชัยนาท · ทางหลวงหมายเลข 1 ระหว่าง กม.251–252',
+    views:[{ label:'ภาพจากกล้อง', url:'https://streaming2.highwaytraffic.go.th/Phase15/PER_15_016.stream/playlist.m3u8' }] }
+];
+
+const video   = document.getElementById('player');
+const msgBox  = document.getElementById('stageMsg');
+const badge   = document.getElementById('liveBadge');
+let hls = null, current = 0, currentView = 0, markers = [];
+
+function say(text, icon, isError){
+  msgBox.hidden = false;
+  msgBox.classList.toggle('err', !!isError);
+  msgBox.innerHTML = '<i class="fa-solid ' + icon + '"></i><span>' + text + '</span>';
+  badge.hidden = true;
+}
+function clearSay(){ msgBox.hidden = true; badge.hidden = false; }
+
+/* ---------- เล่นสตรีม: hls.js สำหรับเบราว์เซอร์ทั่วไป, native HLS สำหรับ Safari/iOS ---------- */
+function play(url){
+  if (hls) { hls.destroy(); hls = null; }
+  video.removeAttribute('src'); video.load();
+  say('กำลังเชื่อมต่อกล้อง…', 'fa-satellite-dish');
+
+  if (window.Hls && Hls.isSupported()) {
+    hls = new Hls({ liveSyncDurationCount: 3, maxBufferLength: 10, manifestLoadingMaxRetry: 2 });
+    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+    hls.on(Hls.Events.FRAG_BUFFERED, clearSay);
+    hls.on(Hls.Events.ERROR, (evt, data) => {
+      if (!data.fatal) return;
+      // network/media error กู้คืนได้ ลองต่อก่อนค่อยยอมแพ้
+      if (data.type === Hls.ErrorTypes.NETWORK_ERROR) { hls.startLoad(); return; }
+      if (data.type === Hls.ErrorTypes.MEDIA_ERROR)   { hls.recoverMediaError(); return; }
+      say('กล้องนี้ไม่ส่งภาพอยู่ตอนนี้<br>อาจปิดปรับปรุงจากกรมทางหลวง — กดปุ่มโหลดใหม่เพื่อลองอีกครั้ง',
+          'fa-video-slash', true);
+    });
+    hls.loadSource(url);
+    hls.attachMedia(video);
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = url;
+    video.addEventListener('loadeddata', clearSay, { once: true });
+    video.addEventListener('error', () => say('กล้องนี้ไม่ส่งภาพอยู่ตอนนี้', 'fa-video-slash', true), { once: true });
+    video.play().catch(() => {});
+  } else {
+    say('เบราว์เซอร์นี้เล่นสตรีม HLS ไม่ได้<br>ลองเปิดด้วย Chrome, Edge หรือ Safari รุ่นใหม่', 'fa-triangle-exclamation', true);
+  }
+}
+
+/* ---------- เลือกกล้อง ---------- */
+function selectCam(i, view){
+  current = i; currentView = view || 0;
+  const cam = CAMS[i];
+
+  document.getElementById('nowTitle').textContent = cam.name;
+  document.getElementById('nowWhere').innerHTML =
+    cam.where + '<br><span style="font-size:.76rem">รหัสจุดสำรวจ ' + cam.code + ' · ' +
+    cam.lat.toFixed(6) + ', ' + cam.lng.toFixed(6) + '</span>';
+
+  // ปุ่มทิศทาง: โผล่เฉพาะกล้องที่มีภาพสองทิศจริง
+  const dirBox = document.getElementById('nowDirs');
+  dirBox.innerHTML = '';
+  if (cam.views.length > 1) {
+    cam.views.forEach((v, vi) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'dir';
+      b.setAttribute('aria-pressed', String(vi === currentView));
+      b.innerHTML = '<i class="fa-solid fa-arrow-right-long"></i> ' + v.label;
+      b.addEventListener('click', () => selectCam(i, vi));
+      dirBox.appendChild(b);
+    });
+  }
+
+  document.querySelectorAll('#camList .cam').forEach((el, idx) =>
+    el.setAttribute('aria-current', String(idx === i)));
+  markers.forEach((m, idx) => {
+    const el = m.getElement() && m.getElement().querySelector('.cam-pin');
+    if (el) el.classList.toggle('on', idx === i);
+  });
+
+  play(cam.views[currentView].url);
+}
+
+/* ---------- รายการกล้อง ---------- */
+const list = document.getElementById('camList');
+CAMS.forEach((cam, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'cam'; b.setAttribute('aria-current', 'false');
+  b.innerHTML =
+    '<span class="no">' + (i + 1) + '</span>' +
+    '<span class="txt"><strong>' + cam.name + '</strong><span>' + cam.where.split(' · ')[0] + '</span></span>' +
+    (cam.inArea ? '<span class="tag own">ในพื้นที่</span>' : '') +
+    (cam.views.length > 1 ? '<span class="tag two">2 ทิศ</span>' : '');
+  b.addEventListener('click', () => selectCam(i, 0));
+  list.appendChild(b);
+});
+document.getElementById('camCount').textContent = CAMS.length;
+document.getElementById('listCount').textContent = CAMS.length + ' กล้อง';
+
+/* ---------- แผนที่ ---------- */
+const map = L.map('camMap').setView([15.66, 100.14], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+CAMS.forEach((cam, i) => {
+  const m = L.marker([cam.lat, cam.lng], {
+    icon: L.divIcon({
+      className: '',
+      html: '<div class="cam-pin' + (cam.inArea ? ' own' : '') + '"><i class="fa-solid fa-video"></i></div>',
+      iconSize: [30, 30], iconAnchor: [15, 15]
+    })
+  }).addTo(map).bindTooltip(cam.name, { direction: 'top' });
+  m.on('click', () => {
+    selectCam(i, 0);
+    document.querySelector('.stage').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  markers.push(m);
+});
+map.fitBounds(L.latLngBounds(CAMS.map(c => [c.lat, c.lng])).pad(0.18));
+
+/* ---------- ปุ่มควบคุม ---------- */
+document.getElementById('btnReload').addEventListener('click', () => selectCam(current, currentView));
+document.getElementById('btnSound').addEventListener('click', e => {
+  video.muted = !video.muted;
+  e.currentTarget.innerHTML = '<i class="fa-solid fa-volume-' + (video.muted ? 'xmark' : 'high') + '"></i>';
+  e.currentTarget.title = video.muted ? 'เปิดเสียง' : 'ปิดเสียง';
+});
+document.getElementById('btnFull').addEventListener('click', () => {
+  const box = document.querySelector('.stage');
+  if (document.fullscreenElement) document.exitFullscreen();
+  else if (box.requestFullscreen) box.requestFullscreen();
+  else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen(); // iOS เล่นเต็มจอได้เฉพาะตัว video
+});
+
+/* หยุดสตรีมเมื่อสลับแท็บไปทำอย่างอื่น — ไม่ดูดเน็ตทิ้งไว้เบื้องหลัง */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (hls) hls.stopLoad(); video.pause(); }
+  else { if (hls) hls.startLoad(); video.play().catch(() => {}); }
+});
+
+selectCam(0, 0);
+</script>
+</body>
+</html>

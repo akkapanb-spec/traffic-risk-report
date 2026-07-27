@@ -417,6 +417,7 @@ canvas{max-width:100%!important;}
 .bi-cyan{background:linear-gradient(135deg,#22d3ee,#0e7490)}
 .bi-purple{background:linear-gradient(135deg,#a78bfa,#6d28d9)}
 .bi-amber{background:linear-gradient(135deg,#fbbf24,#c2410c)}
+.bi-green{background:linear-gradient(135deg,#34d399,#0f7a47)}
 .nav-tab-v6.active .big-ic{background:rgba(255,255,255,.2);box-shadow:none}
 
 @media (max-width: 640px) {
@@ -527,6 +528,7 @@ canvas{max-width:100%!important;}
     <button onclick="homeDrawerGo('report')"><i class="fa-solid fa-triangle-exclamation" style="background:#fdeef1;color:#c1122f"></i> แจ้งข้อมูลจุดเสี่ยง</button>
     <button onclick="homeDrawerGo('data')"><i class="fa-solid fa-table-list" style="background:#e5f7fb;color:#0891b2"></i> ข้อมูลจุดเสี่ยง + สถานะ</button>
     <button onclick="toggleHomeDrawer(false);openAccidentRecord()"><i class="fa-solid fa-user-shield" style="background:#e3edff;color:#2563eb"></i> บันทึกอุบัติเหตุ (เจ้าหน้าที่)</button>
+    <button onclick="toggleHomeDrawer(false);openTrafficCams()"><i class="fa-solid fa-video" style="background:#e9f9ef;color:#0f7a47"></i> กล้องจราจรสด กรมทางหลวง</button>
     <button onclick="toggleHomeDrawer(false);openVideoCampaign()"><i class="fa-solid fa-circle-play" style="background:#f3edff;color:#7c3aed"></i> Clip Video รณรงค์</button>
     <button onclick="toggleHomeDrawer(false);openHelmetProject()"><i class="fa-solid fa-helmet-safety" style="background:#fff6e6;color:#d97706"></i> โครงการหมวกนิรภัย ได้ส่วนลด</button>
   </nav>
@@ -544,6 +546,8 @@ canvas{max-width:100%!important;}
   <button class="nav-tab-v6" onclick="showTab('data', this)"><span class="big-ic bi-cyan"><i class="fa-solid fa-table-list"></i></span><span>ข้อมูลจุดเสี่ยง</span></button>
 
   <button class="nav-tab-v6" onclick="openAccidentRecord()"><span class="big-ic bi-blue"><i class="fa-solid fa-user-shield"></i></span><span>บันทึก (จนท.)</span></button>
+
+  <button class="nav-tab-v6" onclick="openTrafficCams()"><span class="big-ic bi-green"><i class="fa-solid fa-video"></i></span><span>กล้องจราจร</span></button>
 
   <button class="nav-tab-v6" onclick="openVideoCampaign()"><span class="big-ic bi-purple"><i class="fa-solid fa-circle-play"></i></span><span>Clip Video</span></button>
 
@@ -2132,6 +2136,7 @@ window.addEventListener('resize', () => {
 });
 
 function openVideoCampaign() { window.open('videos.html', '_blank'); }
+function openTrafficCams() { window.open('cctv.html', '_blank'); }
 
 </script>
 </body>
