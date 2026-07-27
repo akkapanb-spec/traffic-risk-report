@@ -49,6 +49,12 @@
       font-weight:700;color:#132238;text-align:left;font-size:.92rem;cursor:pointer;transition:background .15s}
     .home-drawer-menu button:hover{background:#eef4ff}
     .home-drawer-menu button i{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#edf4ff;color:#1d4ed8;flex:0 0 34px;font-size:.95rem}
+    /* หัวข้อแบ่งกลุ่มในเมนูข้าง + ลูกศรบอกว่าเปิดหน้าใหม่ */
+    .drawer-sec{font-size:.68rem;font-weight:800;letter-spacing:.04em;color:#64748b;padding:10px 8px 2px;display:flex;align-items:center;gap:8px}
+    .drawer-sec:after{content:"";flex:1;height:1px;background:#e2e8f0}
+    .drawer-sec.ext{color:#7c3aed}
+    .drawer-sec.ext:after{background:#e6dcfb}
+    .home-drawer-menu button i.drawer-arrow{width:auto;height:auto;background:transparent;color:#7c3aed;font-size:.68rem;margin-left:auto;flex:0 0 auto;border-radius:0}
     /* tablet/มือถือ: ย่อแบนเนอร์ใหญ่เป็น topbar กะทัดรัดแบบหน้าเจ้าหน้าที่ */
     @media(max-width:1023px){
       .home-hero{position:sticky;top:0;z-index:700;padding:9px 14px;text-align:left;color:#132238;
@@ -418,7 +424,41 @@ canvas{max-width:100%!important;}
 .bi-purple{background:linear-gradient(135deg,#a78bfa,#6d28d9)}
 .bi-amber{background:linear-gradient(135deg,#fbbf24,#c2410c)}
 .bi-green{background:linear-gradient(135deg,#34d399,#0f7a47)}
+.bi-slate{background:linear-gradient(135deg,#94a3b8,#475569)}
 .nav-tab-v6.active .big-ic{background:rgba(255,255,255,.2);box-shadow:none}
+
+/* แยกปุ่ม 2 ชนิดให้เห็นด้วยตา: เส้นคั่น + ลูกศร ↗ บนปุ่มที่เปิดหน้าใหม่ + ป้ายกำกับใต้แถบ */
+.nav-tab-v6{position:relative}
+.nav-sep{width:1px;align-self:stretch;margin:6px 9px;background:linear-gradient(180deg,transparent,#c8d7e6,transparent)}
+.ext-arrow{position:absolute;top:5px;right:6px;font-size:.58rem;color:#7c3aed}
+.nav-tab-v6.active .ext-arrow{color:#fff}
+.nav-menu-v6{margin-bottom:10px}
+.nav-labels{display:flex;justify-content:center;gap:10px;margin:0 auto 22px;font-size:.72rem;font-weight:800;flex-wrap:wrap}
+.nav-labels span{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:999px}
+.nav-labels .gl-tab{background:#e8effd;color:#1d4ed8}
+.nav-labels .gl-ext{background:#f2ecfe;color:#7c3aed}
+.nav-more{display:none}
+.more-backdrop,.more-sheet{display:none}
+
+@media (max-width: 640px){
+  /* มือถือ: แถบล่างเก็บเฉพาะแท็บจริง 3 อัน + ปุ่มเพิ่มเติม — ลิงก์เปิดหน้าใหม่ย้ายไปเมนูไอคอนของตัวเอง */
+  .nav-tab-v6.ext,.nav-sep,.nav-labels{display:none!important}
+  .nav-more{display:flex}
+  .ext-arrow{position:static;margin:0}
+  .more-backdrop{display:block;position:fixed;inset:0;background:rgba(9,25,48,.45);z-index:810;opacity:0;pointer-events:none;transition:opacity .2s}
+  .more-backdrop.open{opacity:1;pointer-events:auto}
+  .more-sheet{display:block;position:fixed;left:12px;right:12px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:820;
+    background:rgba(255,255,255,.98);border:1px solid rgba(209,222,237,.9);border-radius:20px;
+    box-shadow:0 18px 44px rgba(15,23,42,.28);padding:12px;
+    transform:translateY(14px) scale(.97);opacity:0;pointer-events:none;transition:transform .2s ease,opacity .2s ease;transform-origin:bottom center}
+  .more-sheet.open{transform:none;opacity:1;pointer-events:auto}
+  .more-head{font-size:.72rem;font-weight:800;color:#7c3aed;display:flex;align-items:center;gap:7px;padding:2px 6px 10px}
+  .more-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .more-grid button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border:0;cursor:pointer;
+    background:#f6f9fd;border-radius:14px;font-weight:700;font-size:.68rem;line-height:1.25;color:#334155;text-align:center;touch-action:manipulation}
+  .more-grid button:active{transform:scale(.96)}
+  .nav-more[aria-expanded="true"]{background:#eef4ff}
+}
 
 @media (max-width: 640px) {
   /* มือถือ: เมนูเป็น bottom bar ตรึงขอบล่าง แบบเดียวกับแอปเจ้าหน้าที่ */
@@ -430,8 +470,9 @@ canvas{max-width:100%!important;}
     box-shadow: 0 -8px 24px rgba(15,23,42,.14);
     background: rgba(255,255,255,.97);
   }
-  .nav-tab-v6 { flex: 1; min-width: 0; padding: 5px 2px; font-size: .56rem; border-radius: 11px; gap: 3px; }
-  .big-ic { width: 30px; height: 30px; font-size: .85rem; border-radius: 9px; }
+  /* เหลือ 4 ปุ่ม (3 แท็บ + เพิ่มเติม) — ขยายตัวอักษรจาก .56rem ได้เพราะพื้นที่ต่อปุ่มกว้างขึ้น */
+  .nav-tab-v6 { flex: 1; min-width: 0; padding: 5px 2px; font-size: .68rem; border-radius: 11px; gap: 3px; }
+  .big-ic { width: 32px; height: 32px; font-size: .9rem; border-radius: 10px; }
   body { padding-bottom: 92px; } /* กันเนื้อหาท้ายหน้าโดนแถบล่างบัง */
 }
 
@@ -524,13 +565,15 @@ canvas{max-width:100%!important;}
     <h3>เมนูหลัก</h3><p>แจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ สภ.เมืองนครสวรรค์</p>
   </div>
   <nav class="home-drawer-menu">
+    <div class="drawer-sec">หน้าในเว็บนี้</div>
     <button onclick="homeDrawerGo('dashboard')"><i class="fa-solid fa-house"></i> HOME หน้าหลัก</button>
     <button onclick="homeDrawerGo('report')"><i class="fa-solid fa-triangle-exclamation" style="background:#fdeef1;color:#c1122f"></i> แจ้งข้อมูลจุดเสี่ยง</button>
     <button onclick="homeDrawerGo('data')"><i class="fa-solid fa-table-list" style="background:#e5f7fb;color:#0891b2"></i> ข้อมูลจุดเสี่ยง + สถานะ</button>
-    <button onclick="toggleHomeDrawer(false);openAccidentRecord()"><i class="fa-solid fa-user-shield" style="background:#e3edff;color:#2563eb"></i> บันทึกอุบัติเหตุ (เจ้าหน้าที่)</button>
-    <button onclick="toggleHomeDrawer(false);openTrafficCams()"><i class="fa-solid fa-video" style="background:#e9f9ef;color:#0f7a47"></i> กล้องจราจรสด กรมทางหลวง</button>
-    <button onclick="toggleHomeDrawer(false);openVideoCampaign()"><i class="fa-solid fa-circle-play" style="background:#f3edff;color:#7c3aed"></i> Clip Video รณรงค์</button>
-    <button onclick="toggleHomeDrawer(false);openHelmetProject()"><i class="fa-solid fa-helmet-safety" style="background:#fff6e6;color:#d97706"></i> โครงการหมวกนิรภัย ได้ส่วนลด</button>
+    <div class="drawer-sec ext">ลิงก์อื่น · เปิดหน้าใหม่</div>
+    <button onclick="toggleHomeDrawer(false);openAccidentRecord()"><i class="fa-solid fa-user-shield" style="background:#e3edff;color:#2563eb"></i> บันทึกอุบัติเหตุ (เจ้าหน้าที่) <i class="fa-solid fa-arrow-up-right-from-square drawer-arrow"></i></button>
+    <button onclick="toggleHomeDrawer(false);openTrafficCams()"><i class="fa-solid fa-video" style="background:#e9f9ef;color:#0f7a47"></i> กล้องจราจรสด กรมทางหลวง <i class="fa-solid fa-arrow-up-right-from-square drawer-arrow"></i></button>
+    <button onclick="toggleHomeDrawer(false);openVideoCampaign()"><i class="fa-solid fa-circle-play" style="background:#f3edff;color:#7c3aed"></i> Clip Video รณรงค์ <i class="fa-solid fa-arrow-up-right-from-square drawer-arrow"></i></button>
+    <button onclick="toggleHomeDrawer(false);openHelmetProject()"><i class="fa-solid fa-helmet-safety" style="background:#fff6e6;color:#d97706"></i> โครงการหมวกนิรภัย ได้ส่วนลด <i class="fa-solid fa-arrow-up-right-from-square drawer-arrow"></i></button>
   </nav>
 </aside>
 
@@ -545,14 +588,38 @@ canvas{max-width:100%!important;}
 
   <button class="nav-tab-v6" onclick="showTab('data', this)"><span class="big-ic bi-cyan"><i class="fa-solid fa-table-list"></i></span><span>ข้อมูลจุดเสี่ยง</span></button>
 
-  <button class="nav-tab-v6" onclick="openAccidentRecord()"><span class="big-ic bi-blue"><i class="fa-solid fa-user-shield"></i></span><span>บันทึก (จนท.)</span></button>
+  <!-- เส้นคั่น 2 กลุ่ม: ซ้าย = แท็บในหน้านี้ / ขวา = เปิดหน้าใหม่ (มีลูกศร ↗ กำกับ) -->
+  <span class="nav-sep" aria-hidden="true"></span>
 
-  <button class="nav-tab-v6" onclick="openTrafficCams()"><span class="big-ic bi-green"><i class="fa-solid fa-video"></i></span><span>กล้องจราจร</span></button>
+  <button class="nav-tab-v6 ext" onclick="openAccidentRecord()"><i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i><span class="big-ic bi-blue"><i class="fa-solid fa-user-shield"></i></span><span>บันทึก (จนท.)</span></button>
 
-  <button class="nav-tab-v6" onclick="openVideoCampaign()"><span class="big-ic bi-purple"><i class="fa-solid fa-circle-play"></i></span><span>Clip Video</span></button>
+  <button class="nav-tab-v6 ext" onclick="openTrafficCams()"><i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i><span class="big-ic bi-green"><i class="fa-solid fa-video"></i></span><span>กล้องจราจร</span></button>
 
-  <button class="nav-tab-v6" onclick="openHelmetProject()"><span class="big-ic bi-amber"><i class="fa-solid fa-helmet-safety"></i></span><span>หมวกนิรภัย</span></button>
+  <button class="nav-tab-v6 ext" onclick="openVideoCampaign()"><i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i><span class="big-ic bi-purple"><i class="fa-solid fa-circle-play"></i></span><span>Clip Video</span></button>
 
+  <button class="nav-tab-v6 ext" onclick="openHelmetProject()"><i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i><span class="big-ic bi-amber"><i class="fa-solid fa-helmet-safety"></i></span><span>หมวกนิรภัย</span></button>
+
+  <!-- มือถือเท่านั้น: ปุ่มเพิ่มเติม เปิดเมนูไอคอนของตัวเอง (ลิงก์ 4 อันที่ซ่อนไว้บนจอเล็ก) -->
+  <button class="nav-tab-v6 nav-more" id="navMoreBtn" onclick="toggleMoreMenu()" aria-haspopup="menu" aria-expanded="false" aria-controls="moreSheet"><span class="big-ic bi-slate"><i class="fa-solid fa-ellipsis"></i></span><span>เพิ่มเติม</span></button>
+
+</div>
+
+<!-- ป้ายกำกับใต้แถบเมนู (จอใหญ่เท่านั้น) -->
+<div class="nav-labels" aria-hidden="true">
+  <span class="gl-tab"><i class="fa-solid fa-layer-group"></i> แท็บในหน้านี้</span>
+  <span class="gl-ext"><i class="fa-solid fa-arrow-up-right-from-square"></i> เปิดหน้าใหม่</span>
+</div>
+
+<!-- เมนูไอคอน "เพิ่มเติม" (มือถือ): โผล่เหนือแถบล่าง ไม่ใช่ drawer -->
+<div id="moreBackdrop" class="more-backdrop" onclick="toggleMoreMenu(false)"></div>
+<div id="moreSheet" class="more-sheet" role="menu" aria-label="ลิงก์อื่น เปิดหน้าใหม่">
+  <div class="more-head"><i class="fa-solid fa-arrow-up-right-from-square"></i> ลิงก์อื่น · เปิดหน้าใหม่</div>
+  <div class="more-grid">
+    <button role="menuitem" onclick="toggleMoreMenu(false);openAccidentRecord()"><span class="big-ic bi-blue"><i class="fa-solid fa-user-shield"></i></span><span>บันทึก<br>(จนท.)</span></button>
+    <button role="menuitem" onclick="toggleMoreMenu(false);openTrafficCams()"><span class="big-ic bi-green"><i class="fa-solid fa-video"></i></span><span>กล้อง<br>จราจร</span></button>
+    <button role="menuitem" onclick="toggleMoreMenu(false);openVideoCampaign()"><span class="big-ic bi-purple"><i class="fa-solid fa-circle-play"></i></span><span>Clip<br>Video</span></button>
+    <button role="menuitem" onclick="toggleMoreMenu(false);openHelmetProject()"><span class="big-ic bi-amber"><i class="fa-solid fa-helmet-safety"></i></span><span>หมวก<br>นิรภัย</span></button>
+  </div>
 </div>
 
   <!-- Main Content -->
@@ -977,6 +1044,7 @@ async function handleFormSubmit(event) {
 }
 
 function showTab(tabName, element) {
+  if (typeof toggleMoreMenu === 'function') toggleMoreMenu(false); // แตะแท็บแล้วเมนูเพิ่มเติมต้องหุบ
   document.querySelectorAll('.nav-tab, .nav-tab-v6').forEach(tab => tab.classList.remove('active'));
   if (element) element.classList.add('active');
 
@@ -2137,6 +2205,18 @@ window.addEventListener('resize', () => {
 
 function openVideoCampaign() { window.open('videos.html', '_blank'); }
 function openTrafficCams() { window.open('cctv.html', '_blank'); }
+
+// เมนูไอคอน "เพิ่มเติม" บนแถบล่างมือถือ — เปิดเมนูของตัวเอง ไม่ใช่ drawer
+function toggleMoreMenu(force) {
+  const sheet = document.getElementById('moreSheet');
+  const bd = document.getElementById('moreBackdrop');
+  const btn = document.getElementById('navMoreBtn');
+  if (!sheet || !bd) return;
+  const open = typeof force === 'boolean' ? force : !sheet.classList.contains('open');
+  sheet.classList.toggle('open', open);
+  bd.classList.toggle('open', open);
+  if (btn) btn.setAttribute('aria-expanded', String(open));
+}
 
 </script>
 </body>
