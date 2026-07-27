@@ -124,9 +124,9 @@
         <div class="sort-bar">
           <label for="sortSelect"><i class="fa-solid fa-arrow-down-wide-short"></i> เรียงตาม</label>
           <select id="sortSelect" onchange="applySort()">
-            <option value="date_asc" selected>วันที่เพิ่ม: เก่าสุด → ใหม่สุด</option>
+            <option value="date_asc">วันที่เพิ่ม: เก่าสุด → ใหม่สุด</option>
             <option value="date_desc">วันที่เพิ่ม: ใหม่สุด → เก่าสุด</option>
-            <option value="name_asc">ชื่อคลิป: แรก → หลัง (ก-ฮ, A-Z)</option>
+            <option value="name_asc" selected>ชื่อคลิป: แรก → หลัง (ก-ฮ, A-Z)</option>
             <option value="name_desc">ชื่อคลิป: หลัง → แรก (ฮ-ก, Z-A)</option>
           </select>
         </div>
@@ -183,7 +183,7 @@ async function loadPlaylist() {
       q: "'" + DRIVE_FOLDER_ID + "' in parents and mimeType contains 'video/' and trashed=false",
       key: GOOGLE_API_KEY,
       fields: 'files(id,name,createdTime,modifiedTime,thumbnailLink)',
-      orderBy: 'createdTime',
+      orderBy: 'name_natural',
       pageSize: '200',
       supportsAllDrives: 'true',
       includeItemsFromAllDrives: 'true'
