@@ -163,6 +163,7 @@
     .split-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .split-grid>div+div{border-left:1px dashed rgba(15,23,42,.14);padding-left:12px}
     #deathOverlayBtn.on{background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fff!important;border-color:transparent;box-shadow:0 6px 16px rgba(220,38,38,.3)}
+    #tambonBtn.on{background:linear-gradient(135deg,#123b7a,#1d4ed8);color:#fff!important;border-color:transparent;box-shadow:0 6px 16px rgba(29,78,216,.3)}
     .ea-strip{display:flex;flex-wrap:wrap;gap:10px;align-items:center;min-height:74px;padding:8px;border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc}
     .ea-thumb{position:relative;display:inline-block}
     .ea-thumb img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block}
@@ -531,7 +532,8 @@
             <button type="button" class="legend-item legend-filter" data-filter="orange" onclick="setMapFilter('orange')"><span class="dot orange"></span> เสียชีวิต / หมดสติ / สาหัส</button>
             <button type="button" class="legend-item legend-filter" data-filter="yellow" onclick="setMapFilter('yellow')"><span class="dot yellow"></span> บาดเจ็บเล็กน้อย</button>
             <button type="button" class="legend-item legend-filter" data-filter="green" onclick="setMapFilter('green')"><span class="dot green"></span> ไม่บาดเจ็บ</button>
-            <button type="button" class="legend-item legend-filter" id="deathOverlayBtn" style="margin-left:auto;border-color:#e9d5ff;color:#6d28d9" onclick="toggleDeathOverlay()"><i class="fa-solid fa-skull-crossbones"></i> เทียบจุดเสียชีวิต</button>
+            <button type="button" class="legend-item legend-filter" id="tambonBtn" style="margin-left:auto;border-color:#c7d8f5;color:#1d4ed8" onclick="toggleTambonOfficer()"><i class="fa-solid fa-draw-polygon"></i> เขตตำบล</button>
+            <button type="button" class="legend-item legend-filter" id="deathOverlayBtn" style="border-color:#e9d5ff;color:#6d28d9" onclick="toggleDeathOverlay()"><i class="fa-solid fa-skull-crossbones"></i> เทียบจุดเสียชีวิต</button>
           </div>
           <div id="accidentMap" class="map-main"></div>
         </div>
@@ -1079,6 +1081,53 @@
       const dx = (lat1 - lat2) * 111320;
       const dy = (lng1 - lng2) * 111320 * Math.cos(lat1 * Math.PI / 180);
       return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    /* ============ ชั้นเขตตำบล 7 ตำบลเขตรับผิดชอบ (RTSD) บนแผนที่อุบัติเหตุ ============
+       ระบายสีตามจำนวนอุบัติเหตุที่แสดงอยู่จริงบนแผนที่ (ตามช่วงวันที่+ตัวกรองสี ณ ขณะนั้น)
+       ช่วงสีคิดสัมพัทธ์กับค่าสูงสุด เพราะจำนวนแกว่งตามช่วงที่กรอง (วันเดียว vs ทั้งปี) */
+    async function renderTambonOfficer() {
+      if (!state.tbOn || !state.accidentMap) return;
+      if (!state.tbGeo) {
+        try { state.tbGeo = await (await fetch('data/tambon_muang.json')).json(); }
+        catch (e) { return; }
+      }
+      const pip = (pt, ring) => {
+        let inside = false; const x = pt[1], y = pt[0];
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+          const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+          if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+        }
+        return inside;
+      };
+      const inTambon = (pt, f) => {
+        const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+        return polys.some(rings => pip(pt, rings[0]) && !rings.slice(1).some(h => pip(pt, h)));
+      };
+      const counts = {};
+      (state.mapView || state.mapItems || []).forEach(it => {
+        if (it.latitude == null || it.longitude == null) return;
+        const f = state.tbGeo.features.find(f => inTambon([it.latitude, it.longitude], f));
+        if (f) counts[f.properties.tambon] = (counts[f.properties.tambon] || 0) + 1;
+      });
+      const max = Math.max(1, ...Object.values(counts));
+      // สเกลเรดาร์อากาศชุดเดียวกับหน้าประชาชน: ชมพู→ม่วง→ฟ้า→เหลือง→เขียว(0)
+      const colorOf = n => n === 0 ? '#30cf7f' : n >= max * .75 ? '#ec1fa8' : n >= max * .45 ? '#a855f7' : n >= max * .2 ? '#38a8ff' : '#e8d81e';
+      if (state.tbLayer) state.accidentMap.removeLayer(state.tbLayer);
+      state.tbLayer = L.geoJSON(state.tbGeo, {
+        style: f => ({ color:'#3a2b52', weight:1.6, fillColor:colorOf(counts[f.properties.tambon] || 0), fillOpacity:.32 }),
+        onEachFeature: (f, layer) => {
+          const name = f.properties.tambon;
+          layer.bindPopup(() => '<b style="font-size:1rem">ต.' + name + '</b><br>อุบัติเหตุที่แสดงอยู่: <b style="color:#1d4ed8">' + (counts[name] || 0) + ' จุด</b><br><span style="font-size:.72rem;color:#64748b">นับจากพิกัดหมุดตามช่วง/ตัวกรองปัจจุบัน</span>');
+        }
+      }).addTo(state.accidentMap);
+      state.tbLayer.bringToBack();
+    }
+    function toggleTambonOfficer() {
+      state.tbOn = !state.tbOn;
+      document.getElementById('tambonBtn').classList.toggle('on', state.tbOn);
+      if (state.tbOn) renderTambonOfficer();
+      else if (state.tbLayer) { state.accidentMap.removeLayer(state.tbLayer); state.tbLayer = null; }
     }
 
     /* ============ Overlay เทียบจุดเสียชีวิต (แยกชั้นจากข้อมูลอุบัติเหตุ ไม่ปนตาราง/ตัวเลข) ============ */
@@ -3294,6 +3343,7 @@
       state.mapView = filter === 'all' ? state.mapItems : state.mapItems.filter(item => item.markerType === filter);
       state.mapTablePage = 1;
       renderAccidentMap(state.mapView);
+      renderTambonOfficer(); // ชั้นตำบลนับใหม่ตามชุดที่แสดง (ไม่ทำอะไรถ้ายังไม่เปิด)
       renderMapTable();
       document.getElementById('mapTotal').textContent = filter === 'all'
         ? state.mapTotalAll + ' จุด'
@@ -3657,7 +3707,7 @@
       eaRemove, eaAddFiles, viewRiskDetail,
       saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation,
       renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo, setDashYear, dashCustomRange,
-      renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail, toggleDeathOverlay,
+      renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail, toggleDeathOverlay, toggleTambonOfficer,
       editOfficer, delOfficer, editAccidentCase, deleteAccidentCase, editRiskReport,
       updateAdminBadges, exportMapCsv, exportRiskCsv, exportDeathCsv, exportOfficerCsv,
       viewDeathDetail

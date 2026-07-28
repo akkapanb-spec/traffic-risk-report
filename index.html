@@ -324,6 +324,14 @@ a.promo-card:hover .promo-open{background:#1d4ed8;color:#fff}
   .store-btn i{font-size:1.05rem}
 }
 
+/* ปุ่มสลับชั้นบนแผนที่ผู้เสียชีวิต (เขตตำบล / จุดเสี่ยง) + หมุดจุดเสี่ยง */
+.tb-toggles{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.tb-toggle{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:1px solid #cbd5e1;border-radius:999px;
+  background:#fff;color:#475569;font-weight:700;font-size:.76rem;cursor:pointer;transition:all .15s}
+.tb-toggle[aria-pressed="true"]{background:linear-gradient(135deg,#123b7a,#1d4ed8);border-color:#1d4ed8;color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.3)}
+.risk-ov-pin{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:12px;
+  border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+
 /* ปุ่มประวัติ + modal ประวัติประกาศจุดหลีกเลี่ยง */
 .av-hist-link{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:1px solid #f3d3b8;
   border-radius:999px;background:#fff;color:#c24e00;font-weight:700;font-size:.76rem;cursor:pointer;transition:background .15s}
@@ -1027,7 +1035,11 @@ canvas{max-width:100%!important;}
 
         <!-- แผนที่พิกัด (ย้ายมาอยู่ด้านล่างสุด ใต้กราฟทั้งหมด) -->
         <div class="glass-effect rounded-xl p-6 w-full">
-            <h3 class="dt-title"><i class="fa-solid fa-map-location-dot i-red"></i> แผนที่พิกัดผู้เสียชีวิต</h3>
+            <h3 class="dt-title"><i class="fa-solid fa-map-location-dot i-red"></i> แผนที่พิกัดผู้เสียชีวิต
+              <span class="tb-toggles">
+                <button type="button" id="tgTambon" class="tb-toggle" aria-pressed="true" onclick="toggleTambonLayer()"><i class="fa-solid fa-draw-polygon"></i> เขตตำบล</button>
+                <button type="button" id="tgRiskOv" class="tb-toggle" aria-pressed="false" onclick="toggleRiskOverlay()"><i class="fa-solid fa-triangle-exclamation"></i> จุดเสี่ยงที่แจ้ง</button>
+              </span></h3>
             <div id="dashboardDeathMap" class="w-full h-[600px] rounded-lg shadow-inner border-2 border-gray-200 z-0"></div>
             <!-- คำอธิบายสีตามปี: แสดงเฉพาะปีที่มีข้อมูลในช่วงที่เลือก พร้อมจำนวนจุด -->
             <div class="mt-4 p-4 bg-white rounded-lg shadow-sm text-sm border flex items-center flex-wrap gap-4" id="deathMapLegend">
@@ -2380,12 +2392,13 @@ function initDashboardDeathMap(mapData) {
   if (!dashboardDeathMap) {
     dashboardDeathMap = L.map('dashboardDeathMap').setView([15.705, 100.140], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap', keepBuffer: 6, updateWhenZooming: false, updateWhenIdle: true
+      attribution: '© OpenStreetMap · ขอบเขตตำบล: กรมแผนที่ทหาร (RTSD/OCHA 2565)', keepBuffer: 6, updateWhenZooming: false, updateWhenIdle: true
     }).addTo(dashboardDeathMap);
     deathMarkersLayer = L.layerGroup().addTo(dashboardDeathMap);
   }
 
   deathMarkersLayer.clearLayers();
+  renderTambonLayer(mapData); // ชั้นเขตตำบล ระบายสีตามข้อมูลชุดเดียวกับหมุด (ตามปี/ช่วงที่กรอง)
 
   // สีประจำปี: 5 ปีแรกคงสีเดิม ปีถัดๆ ไปวนใช้ชุดสีอัตโนมัติ (รองรับ 2028+)
   const yearPalette = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#0891b2', '#65a30d'];
@@ -2477,11 +2490,117 @@ function initDashboardDeathMap(mapData) {
         html += `<div class="flex items-center"><span class="w-4 h-4 rounded-full inline-block mr-2 shadow-sm" style="background-color:${colorOfYear(y) || '#6b7280'};"></span> พ.ศ. ${Number(y) + 543} (${counts[y].spots.size} จุด · ${counts[y].rows} ราย)</div>`;
       });
     }
+    // ต่อท้ายด้วยคำอธิบายสีเขตตำบล (เมื่อชั้นตำบลเปิดอยู่)
+    if (tambonOn) {
+      html += '<p class="font-bold text-gray-800 mr-2" style="margin-left:8px">เขตตำบล (รายในช่วงที่เลือก):</p>' +
+        tambonBins().map(b => `<div class="flex items-center"><span class="w-4 h-4 inline-block mr-2 shadow-sm" style="background-color:${b.color};opacity:.55;border-radius:4px"></span> ${b.label}</div>`).join('');
+    }
     legend.innerHTML = html;
   }
 
   setTimeout(() => dashboardDeathMap.invalidateSize(), 500);
 }
+
+/* ============ ชั้นเขตตำบล 7 ตำบลเขตรับผิดชอบ (RTSD) + จุดเสี่ยงที่แจ้ง บนแผนที่ผู้เสียชีวิต ============ */
+let tambonGeo = null, tambonLayer = null, tambonOn = true, tambonLastData = [];
+let riskOvLayer = null, riskOvOn = false, riskOvLoaded = false;
+
+// ช่วงสี 2 ชุด: ตัวเลขน้อย (ปีเดียว) กับตัวเลขสะสม — ใช้ชุดเดียวสีจะแบน
+// สเกลไล่แบบเรดาร์อากาศ: ชมพู(มากสุด) → ม่วง → ฟ้า → เหลือง(น้อยสุด) → เขียว(ไม่มี=ปลอดภัย)
+const TB_BINS_SMALL = [
+  { min:10, color:'#ec1fa8', label:'10 รายขึ้นไป' }, { min:6, color:'#a855f7', label:'6–9 ราย' },
+  { min:3, color:'#38a8ff', label:'3–5 ราย' }, { min:1, color:'#e8d81e', label:'1–2 ราย' },
+  { min:0, color:'#30cf7f', label:'ไม่มี (ปลอดภัย)' }
+];
+const TB_BINS_BIG = [
+  { min:21, color:'#ec1fa8', label:'มากกว่า 20 ราย' }, { min:11, color:'#a855f7', label:'11–20 ราย' },
+  { min:6, color:'#38a8ff', label:'6–10 ราย' }, { min:1, color:'#e8d81e', label:'1–5 ราย' },
+  { min:0, color:'#30cf7f', label:'ไม่มี (ปลอดภัย)' }
+];
+function tambonBins() { return tambonLastData.length > 40 ? TB_BINS_BIG : TB_BINS_SMALL; }
+
+async function renderTambonLayer(mapData) {
+  tambonLastData = mapData || [];
+  if (!dashboardDeathMap) return;
+  if (!tambonOn) { if (tambonLayer) { dashboardDeathMap.removeLayer(tambonLayer); tambonLayer = null; } return; }
+  if (!tambonGeo) {
+    try { tambonGeo = await (await fetch('data/tambon_muang.json')).json(); }
+    catch (e) { return; } // โหลดขอบเขตไม่ได้ — แผนที่หมุดยังทำงานปกติ
+  }
+  // นับจาก "พิกัดจริงตกในเขตตำบล" ไม่ใช่ช่องตำบลที่พิมพ์ไว้ — ตรวจพบว่าสองอย่างต่างกันมาก
+  // (เช่น สะสม: ช่องตำบลบอกนครสวรรค์ตก 35 แต่พิกัดจริงตกในเขตแค่ 12) สีต้องตรงกับหมุดที่ตาเห็น
+  const pip = (pt, ring) => {
+    let inside = false; const x = pt[1], y = pt[0];
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  };
+  const inTambon = (pt, f) => {
+    const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+    return polys.some(rings => pip(pt, rings[0]) && !rings.slice(1).some(h => pip(pt, h)));
+  };
+  const counts = {};
+  tambonLastData.forEach(it => {
+    const p = String(it.coords).split(',');
+    const la = parseFloat(p[0]), ln = parseFloat(p[1]);
+    if (isNaN(la) || isNaN(ln)) return;
+    const f = tambonGeo.features.find(f => inTambon([la, ln], f));
+    if (f) counts[f.properties.tambon] = (counts[f.properties.tambon] || 0) + 1;
+  });
+  const bins = tambonBins();
+  const colorOf = n => bins.find(b => n >= b.min).color;
+  if (tambonLayer) { dashboardDeathMap.removeLayer(tambonLayer); }
+  tambonLayer = L.geoJSON(tambonGeo, {
+    style: f => {
+      const n = counts[f.properties.tambon] || 0;
+      return { color:'#3a2b52', weight:1.6, fillColor:colorOf(n), fillOpacity:.38 }; // ขอบม่วงเข้มเข้าชุดสเกลใหม่
+    },
+    onEachFeature: (f, layer) => {
+      const name = f.properties.tambon;
+      layer.bindPopup(() => '<b style="font-size:1rem">ต.' + name + '</b><br>ผู้เสียชีวิตในช่วงที่เลือก: <b style="color:#c1122f">' + (counts[name] || 0) + ' ราย</b><br><span style="font-size:.72rem;color:#5b6b7f">นับจากพิกัดจุดเกิดเหตุที่ตกในเขตตำบล</span>');
+    }
+  }).addTo(dashboardDeathMap);
+  tambonLayer.bringToBack(); // โพลิกอนอยู่ใต้หมุดเสมอ
+}
+
+function toggleTambonLayer() {
+  tambonOn = !tambonOn;
+  document.getElementById('tgTambon').setAttribute('aria-pressed', String(tambonOn));
+  initDashboardDeathMap(tambonLastData); // วาดใหม่ทั้งชุด (หมุด+ชั้นตำบล+คำอธิบายสี) จากข้อมูลล่าสุด
+}
+
+async function toggleRiskOverlay() {
+  riskOvOn = !riskOvOn;
+  document.getElementById('tgRiskOv').setAttribute('aria-pressed', String(riskOvOn));
+  if (!riskOvOn) { if (riskOvLayer) dashboardDeathMap.removeLayer(riskOvLayer); return; }
+  if (!riskOvLoaded) {
+    try {
+      const { data, error } = await sb.from('risk_points').select('location,status,coordinates');
+      if (error) throw error;
+      riskOvLayer = L.layerGroup();
+      (data || []).forEach(r => {
+        if (!r.coordinates || !String(r.coordinates).includes(',')) return;
+        const [la, ln] = String(r.coordinates).split(',').map(s => parseFloat(s.trim()));
+        if (isNaN(la) || isNaN(ln)) return;
+        const done = r.status === 'ดำเนินการแก้ไขแล้ว';
+        L.marker([la, ln], { icon: L.divIcon({ className:'', iconSize:[26,26], iconAnchor:[13,13],
+          html:'<div class="risk-ov-pin" style="background:' + (done ? '#16834b' : '#d97706') + '"><i class="fa-solid fa-triangle-exclamation"></i></div>' }) })
+          .bindPopup('<b>จุดเสี่ยงที่แจ้ง:</b> ' + avEsc(r.location || '-') + '<br>สถานะ: <b style="color:' + (done ? '#16834b' : '#d97706') + '">' + avEsc(r.status || '-') + '</b>')
+          .addTo(riskOvLayer);
+      });
+      riskOvLoaded = true;
+    } catch (e) {
+      riskOvOn = false;
+      document.getElementById('tgRiskOv').setAttribute('aria-pressed', 'false');
+      Swal.fire({ icon:'error', title:'โหลดจุดเสี่ยงไม่สำเร็จ', text:e.message });
+      return;
+    }
+  }
+  riskOvLayer.addTo(dashboardDeathMap);
+}
+
 
 
 async function updateMonthlyChart() {
