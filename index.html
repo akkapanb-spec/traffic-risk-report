@@ -2559,7 +2559,9 @@ async function renderTambonLayer(mapData) {
     },
     onEachFeature: (f, layer) => {
       const name = f.properties.tambon;
-      layer.bindPopup(() => '<b style="font-size:1rem">ต.' + name + '</b><br>ผู้เสียชีวิตในช่วงที่เลือก: <b style="color:#c1122f">' + (counts[name] || 0) + ' ราย</b><br><span style="font-size:.72rem;color:#5b6b7f">นับจากพิกัดจุดเกิดเหตุที่ตกในเขตตำบล</span>');
+      const isMuni = name === 'เทศบาลนครนครสวรรค์';
+      layer.bindPopup(() => '<b style="font-size:1rem">' + (isMuni ? name : 'ต.' + name) + '</b><br>ผู้เสียชีวิตในช่วงที่เลือก: <b style="color:#c1122f">' + (counts[name] || 0) + ' ราย</b>' +
+        (f.properties.note ? '<br><span style="font-size:.7rem;color:#5b6b7f">' + f.properties.note + '</span>' : '<br><span style="font-size:.72rem;color:#5b6b7f">นับจากพิกัดจุดเกิดเหตุที่ตกในเขต</span>'));
     }
   }).addTo(dashboardDeathMap);
   tambonLayer.bringToBack(); // โพลิกอนอยู่ใต้หมุดเสมอ

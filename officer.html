@@ -1118,7 +1118,9 @@
         style: f => ({ color:'#3a2b52', weight:1.6, fillColor:colorOf(counts[f.properties.tambon] || 0), fillOpacity:.32 }),
         onEachFeature: (f, layer) => {
           const name = f.properties.tambon;
-          layer.bindPopup(() => '<b style="font-size:1rem">ต.' + name + '</b><br>อุบัติเหตุที่แสดงอยู่: <b style="color:#1d4ed8">' + (counts[name] || 0) + ' จุด</b><br><span style="font-size:.72rem;color:#64748b">นับจากพิกัดหมุดตามช่วง/ตัวกรองปัจจุบัน</span>');
+          const isMuni = name === 'เทศบาลนครนครสวรรค์';
+          layer.bindPopup(() => '<b style="font-size:1rem">' + (isMuni ? name : 'ต.' + name) + '</b><br>อุบัติเหตุที่แสดงอยู่: <b style="color:#1d4ed8">' + (counts[name] || 0) + ' จุด</b>' +
+            '<br><span style="font-size:.72rem;color:#64748b">' + (f.properties.note || 'นับจากพิกัดหมุดตามช่วง/ตัวกรองปัจจุบัน') + '</span>');
         }
       }).addTo(state.accidentMap);
       state.tbLayer.bringToBack();
