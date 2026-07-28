@@ -81,6 +81,26 @@
     .menu-badge{margin-left:auto;background:#dc2626;color:#fff;border-radius:999px;font-size:.68rem;font-weight:900;min-width:20px;height:20px;display:inline-grid;place-items:center;padding:0 6px}
     .tab-btn{position:relative}
     .tab-btn .menu-badge{position:absolute;top:3px;right:8px;margin:0;min-width:17px;height:17px;font-size:.6rem;padding:0 5px}
+    /* แผงเมนูผู้ดูแล: ลอยเหนือแถบล่าง ไม่บังหน้าจอ — สไตล์เดียวกับเมนู "เพิ่มเติม" หน้าประชาชน */
+    .adm-backdrop{position:fixed;inset:0;background:rgba(9,25,48,.45);z-index:810;opacity:0;pointer-events:none;transition:opacity .2s}
+    .adm-backdrop.open{opacity:1;pointer-events:auto}
+    .adm-sheet{position:fixed;left:10px;right:10px;bottom:calc(94px + env(safe-area-inset-bottom));z-index:820;
+      background:rgba(255,255,255,.98);border:1px solid rgba(207,225,251,.92);border-radius:20px;
+      box-shadow:0 18px 44px rgba(15,23,42,.28);padding:12px;
+      transform:translateY(14px) scale(.97);opacity:0;pointer-events:none;transition:transform .2s ease,opacity .2s ease;transform-origin:bottom center}
+    .adm-sheet.open{transform:none;opacity:1;pointer-events:auto}
+    .adm-head{font-size:.74rem;font-weight:800;color:#7c3aed;display:flex;align-items:center;gap:7px;padding:2px 6px 10px}
+    .adm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .adm-tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;
+      border:0;cursor:pointer;background:#f6f9fd;border-radius:14px;font-family:inherit;
+      font-weight:700;font-size:.68rem;line-height:1.25;color:#334155;text-align:center;transition:.15s;touch-action:manipulation}
+    .adm-tile:hover{background:#eef4ff}
+    .adm-tile:active{transform:scale(.96)}
+    .adm-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;font-size:1rem;
+      box-shadow:0 4px 10px rgba(15,23,42,.18)}
+    .adm-badge{position:absolute;top:4px;right:6px;background:#dc2626;color:#fff;border-radius:999px;
+      font-size:.6rem;font-weight:900;min-width:17px;height:17px;display:grid;place-items:center;padding:0 5px}
+    @media(min-width:781px){.adm-sheet,.adm-backdrop{display:none}} /* จอใหญ่ใช้ drawer อยู่แล้ว */
     .tab-btn.admin-item{background:rgba(124,58,237,.09);color:#6d28d9}
     .tab-btn.admin-item.active{background:linear-gradient(135deg,#5b21b6,#8b5cf6)!important;color:#fff!important;box-shadow:0 9px 20px rgba(124,58,237,.28)!important}
 
@@ -358,6 +378,7 @@
         <button class="nav-btn admin-item" data-page="admin" id="adminNavBtn" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน <span class="menu-badge" id="badgeApprove" style="display:none"></span></button>
         <button class="nav-btn admin-item" data-page="riskmanage" id="riskNavBtn" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง <span class="menu-badge" id="badgeRisk" style="display:none"></span></button>
         <button class="nav-btn admin-item" data-page="deaths" id="deathsNavBtn" style="display:none" onclick="openPage('deaths',this)"><i class="fa-solid fa-skull-crossbones"></i> บันทึกข้อมูลผู้เสียชีวิต</button>
+        <button class="nav-btn admin-item" data-page="avoid" id="avoidNavBtn" style="display:none" onclick="openPage('avoid',this)"><i class="fa-solid fa-diamond-turn-right"></i> ประกาศจุดหลีกเลี่ยง</button>
       </nav>
     </aside>
 
@@ -366,8 +387,15 @@
       <button class="tab-btn" data-page="accident" type="button" onclick="openPage('accident',this)"><i class="fa-solid fa-car-burst"></i><span>บันทึก</span></button>
       <button class="tab-btn" data-page="dashboard" type="button" onclick="openPage('dashboard',this)"><i class="fa-solid fa-chart-line"></i><span>สถิติ</span></button>
       <button class="tab-btn" data-page="map" type="button" onclick="openPage('map',this)"><i class="fa-solid fa-map-location-dot"></i><span>แผนที่</span></button>
-      <button class="tab-btn admin-item" id="adminMenuTab" type="button" style="display:none" onclick="openAdminMenu()"><i class="fa-solid fa-shield-halved"></i><span>ผู้ดูแล</span><span class="menu-badge" id="badgeAdminTab" style="display:none"></span></button>
+      <button class="tab-btn admin-item" id="adminMenuTab" type="button" style="display:none" onclick="openAdminMenu()" aria-haspopup="menu" aria-expanded="false" aria-controls="admSheet"><i class="fa-solid fa-shield-halved"></i><span>ผู้ดูแล</span><span class="menu-badge" id="badgeAdminTab" style="display:none"></span></button>
     </nav>
+
+    <!-- แผงเมนูผู้ดูแล: ลอยเหนือแถบล่าง ไม่บังหน้าจอ (แบบเดียวกับปุ่ม "เพิ่มเติม" หน้าประชาชน) -->
+    <div id="admBackdrop" class="adm-backdrop" onclick="openAdminMenu(false)"></div>
+    <div id="admSheet" class="adm-sheet" role="menu" aria-label="เมนูผู้ดูแลระบบ">
+      <div class="adm-head"><i class="fa-solid fa-shield-halved"></i> เมนูผู้ดูแลระบบ</div>
+      <div class="adm-grid" id="admGrid"></div>
+    </div>
 
     <main class="main">
       <section id="page-home" class="page active">
@@ -571,6 +599,58 @@
             <button class="btn btn-soft btn-sm" type="button" onclick="loadDeathList()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
           <input id="deathSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ปี, เดือน, ตำบล, สาเหตุ, เพศ, อายุ, ประเภทรถ..." oninput="renderDeathList()">
           <div id="deathListTable"><div class="loading-skeleton"></div></div>
+        </div>
+      </section>
+
+      <!-- ประกาศจุดจราจรที่ควรหลีกเลี่ยง (admin เท่านั้น) -->
+      <section id="page-avoid" class="page">
+        <div class="page-head"><div class="page-icon" style="background:linear-gradient(135deg,#e07000,#c24e00)"><i class="fa-solid fa-diamond-turn-right"></i></div><div><h2>ประกาศจุดหลีกเลี่ยง</h2><p>สำหรับผู้ดูแลระบบ · ขึ้นหน้าแรกประชาชนทันที หมดเวลาแล้วหายเอง</p></div></div>
+        <div class="card">
+          <h3 class="card-title" id="avFormTitle"><i class="fa-solid fa-bullhorn"></i> ประกาศใหม่</h3>
+          <form id="avoidForm" class="form-grid" onsubmit="return false">
+            <div class="field span-6"><label>ชนิดเหตุการณ์ <span class="req">*</span></label>
+              <select id="avKind" class="select">
+                <option value="work">ก่อสร้าง / ซ่อมทาง</option>
+                <option value="close">ปิดถนน</option>
+                <option value="event">ขบวน / กิจกรรม</option>
+                <option value="flood">น้ำท่วม</option>
+                <option value="other">อื่นๆ</option>
+              </select></div>
+            <div class="field span-6"><label>หัวข้อประกาศ <span class="req">*</span></label>
+              <input id="avTitle" class="input" maxlength="60" placeholder="สั้น กระชับ เช่น ซ่อมผิวทาง เบี่ยง 1 ช่องจราจร"></div>
+            <div class="field span-6"><label>สถานที่ <span class="req">*</span></label>
+              <input id="avPlace" class="input" maxlength="120" placeholder="ถนน / จุดสังเกต / ตำบล"></div>
+            <div class="field span-6"><label>พิกัด (ละติจูด, ลองจิจูด)</label>
+              <div style="display:flex;gap:8px"><input id="avCoords" class="input" style="flex:1;min-width:0" placeholder="15.7051, 100.1372">
+                <button class="btn btn-soft" type="button" onclick="avOpenMapPicker()" title="จิ้มเลือกบนแผนที่"><i class="fa-solid fa-map-location-dot"></i></button>
+                <button class="btn btn-soft" type="button" onclick="avUseCurrentLocation()" title="ใช้ตำแหน่งปัจจุบัน"><i class="fa-solid fa-crosshairs"></i></button></div></div>
+            <div class="field"><label>เริ่ม <span class="req">*</span></label><input id="avStarts" class="input" type="datetime-local"></div>
+            <div class="field"><label>สิ้นสุด <span class="req">*</span></label><input id="avEnds" class="input" type="datetime-local"></div>
+            <div class="field"><label>ขยายเวลาเร็ว</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn btn-soft btn-sm" type="button" onclick="avQuickDays(1)">+1 วัน</button>
+                <button class="btn btn-soft btn-sm" type="button" onclick="avQuickDays(3)">+3 วัน</button>
+                <button class="btn btn-soft btn-sm" type="button" onclick="avQuickDays(7)">+7 วัน</button></div>
+              <div class="hint">บวกจากวันสิ้นสุดปัจจุบัน — งานหลายวันไม่ต้องกรอกใหม่</div></div>
+            <div class="field span-12"><label>รายละเอียด</label>
+              <textarea id="avDetail" class="textarea" maxlength="200" placeholder="เช่น เบี่ยงช่องขวา มีเจ้าหน้าที่อำนวยความสะดวก 06:00-18:00"></textarea></div>
+            <div class="field span-12"><label>เส้นทางเลี่ยงที่แนะนำ (ไม่บังคับ)</label>
+              <input id="avReroute" class="input" maxlength="120" placeholder="เช่น ใช้ทางเลี่ยงเมือง ทล.122"></div>
+            <div class="field span-12"><label>รูปประกอบ สูงสุด 4 รูป (หนังสือแจ้งราชการ / ภาพหน้างาน / ผังเบี่ยงจราจร)</label>
+              <label class="btn btn-soft" for="avImageFiles" style="width:fit-content"><i class="fa-solid fa-camera"></i> เลือกรูป</label>
+              <input id="avImageFiles" class="sr-only" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" multiple>
+              <div id="avImagePreviews" class="image-previews"></div>
+              <div class="hint">ระบบย่อรูปก่อนอัปโหลดแบบเดียวกับฟอร์มอุบัติเหตุ</div></div>
+            <div class="field span-12" style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-outline" type="button" id="avCancelEditBtn" style="display:none;color:#c1122f" onclick="resetAvoidForm()"><i class="fa-solid fa-xmark"></i> ยกเลิกการแก้ไข</button>
+              <button class="btn btn-outline" type="button" onclick="resetAvoidForm()"><i class="fa-solid fa-rotate-left"></i> ล้างฟอร์ม</button>
+              <button class="btn" type="button" id="avSubmitBtn" onclick="saveAdvisory()" style="background:linear-gradient(135deg,#e07000,#c24e00);color:#fff;box-shadow:0 9px 20px rgba(194,78,0,.28)"><i class="fa-solid fa-bullhorn"></i> ประกาศขึ้นหน้าเว็บ</button></div>
+          </form>
+        </div>
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-list-check"></i> ประกาศทั้งหมด <span id="avTotal" class="pill">0 รายการ</span>
+            <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="loadAdvisories()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+          <div id="avList"><div class="loading-skeleton"></div></div>
         </div>
       </section>
     </main>
@@ -1103,6 +1183,7 @@
       document.getElementById('adminNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('riskNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('deathsNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
+      document.getElementById('avoidNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminMenuTab').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.querySelector('.mobile-tabbar').classList.toggle('admin-mode', !!state.user.isAdmin);
       updateAdminBadges();
@@ -1201,6 +1282,7 @@
       document.querySelectorAll('.nav-btn,.tab-btn').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('[data-page="' + page + '"]').forEach(el => el.classList.add('active'));
       toggleDrawer(false);
+      if (document.getElementById('admSheet')) openAdminMenu(false); // สลับหน้าแล้วแผงผู้ดูแลต้องหุบ
       window.scrollTo({ top:0, behavior:'smooth' });
       if (page === 'home') { loadHomeStats(); startHomeAutoRefresh(); } else { stopHomeAutoRefresh(); }
       if (page === 'dashboard') loadDashboard();
@@ -1209,9 +1291,10 @@
       if (page === 'admin') loadAdminList();
       if (page === 'riskmanage') loadRiskManage();
       if (page === 'deaths') initDeathPage();
+      if (page === 'avoid') initAvoidPage();
       // ไฮไลต์ปุ่ม "ผู้ดูแล" ในแถบล่าง เมื่ออยู่ในหน้าใดหน้าหนึ่งของ admin
       const adminMenuTab = document.getElementById('adminMenuTab');
-      if (adminMenuTab) adminMenuTab.classList.toggle('active', ['admin','riskmanage','deaths'].includes(page));
+      if (adminMenuTab) adminMenuTab.classList.toggle('active', ['admin','riskmanage','deaths','avoid'].includes(page));
     }
 
     // ตัวเลขงานค้างบนเมนูผู้ดูแล (รออนุมัติสิทธิ์ + จุดเสี่ยงที่ยังไม่ตอบรับ)
@@ -1233,21 +1316,31 @@
     }
 
     // เมนูย่อยผู้ดูแลบนมือถือ (แถบล่างปุ่มเดียว ไม่เบียดแท็บอื่น)
-    function openAdminMenu() {
-      const b = state.badges || {};
-      const cnt = n => n > 0 ? ' <span class="menu-badge" style="margin-left:6px">' + n + '</span>' : '';
-      Swal.fire({
-        title: '<i class="fa-solid fa-shield-halved" style="color:#7c3aed"></i> เมนูผู้ดูแลระบบ',
-        html: '<div style="display:grid;gap:10px;text-align:left">' +
-          '<button class="btn btn-soft" style="justify-content:flex-start;width:100%" onclick="adminMenuGo(\'admin\')"><i class="fa-solid fa-user-check" style="color:#7c3aed"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน' + cnt(b.officers) + '</button>' +
-          '<button class="btn btn-soft" style="justify-content:flex-start;width:100%" onclick="adminMenuGo(\'riskmanage\')"><i class="fa-solid fa-triangle-exclamation" style="color:#7c3aed"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง' + cnt(b.risk) + '</button>' +
-          '<button class="btn btn-soft" style="justify-content:flex-start;width:100%" onclick="adminMenuGo(\'deaths\')"><i class="fa-solid fa-skull-crossbones" style="color:#7c3aed"></i> บันทึกข้อมูลผู้เสียชีวิต</button>' +
-          '</div>',
-        showConfirmButton: false, showCloseButton: true, width: 400
-      });
+    // แผงเมนูผู้ดูแล: เปิด/ปิดสลับได้จากปุ่ม "ผู้ดูแล" — ไม่บังฟอร์มที่กรอกค้างอยู่
+    function openAdminMenu(force) {
+      const sheet = document.getElementById('admSheet');
+      const bd = document.getElementById('admBackdrop');
+      const tab = document.getElementById('adminMenuTab');
+      const open = typeof force === 'boolean' ? force : !sheet.classList.contains('open');
+      if (open) {
+        const b = state.badges || {};
+        const badge = n => n > 0 ? '<span class="adm-badge">' + n + '</span>' : '';
+        const tile = (page, grad, icon, label, bdg) =>
+          '<button class="adm-tile" role="menuitem" onclick="adminMenuGo(\'' + page + '\')">' + bdg +
+          '<span class="adm-ic" style="background:linear-gradient(135deg,' + grad + ')"><i class="fa-solid ' + icon + '"></i></span>' +
+          '<span>' + label + '</span></button>';
+        document.getElementById('admGrid').innerHTML =
+          tile('admin',      '#a78bfa,#6d28d9', 'fa-user-check',           'อนุมัติ<br>สิทธิ์',      badge(b.officers)) +
+          tile('riskmanage', '#f87171,#b91c1c', 'fa-triangle-exclamation', 'จัดการ<br>จุดเสี่ยง',    badge(b.risk)) +
+          tile('deaths',     '#607a9b,#33475f', 'fa-skull-crossbones',     'บันทึก<br>ผู้เสียชีวิต', '') +
+          tile('avoid',      '#f59e0b,#c24e00', 'fa-diamond-turn-right',   'ประกาศ<br>หลีกเลี่ยง',   '');
+      }
+      sheet.classList.toggle('open', open);
+      bd.classList.toggle('open', open);
+      if (tab) tab.setAttribute('aria-expanded', String(open));
     }
     function adminMenuGo(page) {
-      Swal.close();
+      openAdminMenu(false);
       openPage(page, null);
     }
 
@@ -3297,8 +3390,264 @@
           r.nationalId, r.policeCode, r.status, r.isAdmin ? 'ใช่' : '']));
     }
 
+    /* ============ ประกาศจุดหลีกเลี่ยง (admin) ============ */
+    const AVOID_KINDS = { work:'ก่อสร้าง/ซ่อมทาง', close:'ปิดถนน', event:'ขบวน/กิจกรรม', flood:'น้ำท่วม', other:'อื่นๆ' };
+    const AVOID_ICONS = { work:'fa-person-digging', close:'fa-road-barrier', event:'fa-flag', flood:'fa-water', other:'fa-circle-exclamation' };
+    let avPickerMap = null, avPickerMarker = null;
+
+    function isoToLocalInput(iso) {
+      const d = new Date(iso);
+      const p = n => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+
+    function initAvoidPage() {
+      if (!state.avBound) {
+        state.avBound = true;
+        document.getElementById('avImageFiles').addEventListener('change', avHandleImages);
+      }
+      if (!document.getElementById('avStarts').value) resetAvoidForm();
+      loadAdvisories();
+    }
+
+    function resetAvoidForm() {
+      state.editingAdvisory = null;
+      state.avImages = [];
+      document.getElementById('avoidForm').reset();
+      const now = new Date();
+      document.getElementById('avStarts').value = isoToLocalInput(now.toISOString());
+      document.getElementById('avEnds').value = isoToLocalInput(new Date(now.getTime() + 24*60*60*1000).toISOString());
+      document.getElementById('avImagePreviews').innerHTML = '';
+      document.getElementById('avImageFiles').value = '';
+      document.getElementById('avCancelEditBtn').style.display = 'none';
+      document.getElementById('avFormTitle').innerHTML = '<i class="fa-solid fa-bullhorn"></i> ประกาศใหม่';
+      document.getElementById('avSubmitBtn').innerHTML = '<i class="fa-solid fa-bullhorn"></i> ประกาศขึ้นหน้าเว็บ';
+    }
+
+    function avQuickDays(days) {
+      const inp = document.getElementById('avEnds');
+      const base = inp.value ? new Date(inp.value) : new Date();
+      base.setDate(base.getDate() + days);
+      inp.value = isoToLocalInput(base.toISOString());
+    }
+
+    async function avHandleImages(event) {
+      const files = Array.from(event.target.files || []);
+      const existing = state.avImages.length;
+      if (existing + files.length > 4) {
+        event.target.value = '';
+        await Swal.fire({ icon:'warning', title:'รูปได้สูงสุด 4 รูป', text:'ตอนนี้มีแล้ว ' + existing + ' รูป' });
+        return;
+      }
+      for (const file of files) {
+        if (!['image/jpeg','image/png'].includes(file.type)) {
+          event.target.value = '';
+          await Swal.fire({ icon:'error', title:'ชนิดไฟล์ไม่ถูกต้อง', text:'รองรับเฉพาะ JPG และ PNG' });
+          return;
+        }
+      }
+      Swal.fire({ title:'กำลังเตรียมรูปภาพ', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+      try {
+        for (const file of files) state.avImages.push(await resizeImage(file));
+        renderAvImagePreviews();
+        Swal.close();
+      } catch (error) {
+        Swal.close();
+        await Swal.fire({ icon:'error', title:'ไม่สามารถอ่านรูปภาพได้', text:error.message });
+      }
+      event.target.value = '';
+    }
+
+    function renderAvImagePreviews() {
+      document.getElementById('avImagePreviews').innerHTML = state.avImages.map((img, i) =>
+        '<div class="image-preview"><img src="' + (img.existingUrl || img.preview) + '" alt="รูปที่ ' + (i+1) + '">' +
+        '<button type="button" onclick="avRemoveImage(' + i + ')"><i class="fa-solid fa-xmark"></i></button></div>').join('');
+    }
+    function avRemoveImage(i) { state.avImages.splice(i, 1); renderAvImagePreviews(); }
+
+    async function avUploadImages() {
+      const urls = [];
+      for (const img of state.avImages) {
+        if (img.existingUrl) { urls.push(img.existingUrl); continue; }
+        const ext = img.mimeType === 'image/png' ? 'png' : 'jpg';
+        const path = 'advisories/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+        const { error } = await db.storage.from(STORAGE_BUCKET).upload(path, b64ToBlob(img.data, img.mimeType), { contentType: img.mimeType });
+        if (error) throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + error.message);
+        urls.push(db.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl);
+      }
+      return urls;
+    }
+
+    async function saveAdvisory() {
+      const title = document.getElementById('avTitle').value.trim();
+      const place = document.getElementById('avPlace').value.trim();
+      const starts = document.getElementById('avStarts').value;
+      const ends = document.getElementById('avEnds').value;
+      if (!title || !place) { Swal.fire({ icon:'warning', title:'กรุณากรอกหัวข้อและสถานที่' }); return; }
+      if (!starts || !ends || new Date(ends) <= new Date(starts)) {
+        Swal.fire({ icon:'warning', title:'ช่วงวันเวลาไม่ถูกต้อง', text:'วันสิ้นสุดต้องอยู่หลังวันเริ่ม' }); return;
+      }
+      let lat = null, lng = null;
+      const coords = document.getElementById('avCoords').value.trim();
+      if (coords) {
+        const parts = coords.split(',');
+        lat = parseFloat(parts[0]); lng = parseFloat(parts[1]);
+        if (isNaN(lat) || isNaN(lng)) { Swal.fire({ icon:'warning', title:'รูปแบบพิกัดไม่ถูกต้อง', text:'ต้องเป็น ละติจูด, ลองจิจูด' }); return; }
+      }
+      Swal.fire({ title:'กำลังบันทึกประกาศ', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+      try {
+        const images = await avUploadImages();
+        const result = await rpc('advisory_save', {
+          p_token: state.token, p_id: state.editingAdvisory,
+          p_kind: document.getElementById('avKind').value, p_title: title, p_place: place,
+          p_detail: document.getElementById('avDetail').value.trim(),
+          p_reroute: document.getElementById('avReroute').value.trim(),
+          p_lat: lat, p_lng: lng,
+          p_starts: new Date(starts).toISOString(), p_ends: new Date(ends).toISOString(),
+          p_images: images
+        });
+        if (!result.success) {
+          if (result.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
+          throw new Error(result.message || 'บันทึกไม่สำเร็จ');
+        }
+        await Swal.fire({ icon:'success', title:result.message, timer:1600, showConfirmButton:false });
+        resetAvoidForm();
+        loadAdvisories();
+      } catch (error) {
+        Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:error.message });
+      }
+    }
+
+    async function loadAdvisories() {
+      const host = document.getElementById('avList');
+      host.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const result = await rpc('advisory_admin_list', { p_token: state.token });
+        if (!result.success) {
+          if (result.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); return; }
+          throw new Error(result.message);
+        }
+        state.avRows = result.rows || [];
+        renderAvoidList();
+      } catch (error) {
+        host.innerHTML = '<div class="hint" style="padding:12px">โหลดรายการไม่สำเร็จ: ' + escapeHtml(error.message) + '</div>';
+      }
+    }
+
+    function avoidStatusOf(r) {
+      const now = Date.now();
+      if (r.closed_at) return { t:'ปิดแล้ว', c:'#64748b', bg:'#eef2f6' };
+      if (new Date(r.ends_at).getTime() < now) return { t:'หมดเวลา', c:'#64748b', bg:'#eef2f6' };
+      if (new Date(r.starts_at).getTime() > now) return { t:'รอถึงวัน', c:'#c24e00', bg:'#fff1e6' };
+      return { t:'กำลังแสดง', c:'#c1122f', bg:'#fdecef' };
+    }
+
+    function renderAvoidList() {
+      const rows = state.avRows || [];
+      document.getElementById('avTotal').textContent = rows.length + ' รายการ';
+      const host = document.getElementById('avList');
+      if (!rows.length) { host.innerHTML = '<div class="hint" style="padding:12px">ยังไม่มีประกาศ</div>'; return; }
+      const fmt = iso => new Date(iso).toLocaleString('th-TH', { timeZone:'Asia/Bangkok', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      host.innerHTML = rows.map(r => {
+        const st = avoidStatusOf(r);
+        const active = !r.closed_at && new Date(r.ends_at).getTime() >= Date.now();
+        return '<div style="display:flex;gap:10px;align-items:center;padding:11px 4px;border-bottom:1px solid #edf2f8;flex-wrap:wrap">' +
+          '<i class="fa-solid ' + (AVOID_ICONS[r.kind] || AVOID_ICONS.other) + '" style="width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:#fff1e6;color:#c24e00;flex:0 0 30px"></i>' +
+          '<div style="flex:1;min-width:180px"><b style="font-size:.86rem">' + escapeHtml(r.title) + '</b>' +
+          '<div style="font-size:.72rem;color:#64748b">' + escapeHtml(AVOID_KINDS[r.kind] || r.kind) + ' · ' + fmt(r.starts_at) + ' – ' + fmt(r.ends_at) + ' · ' + escapeHtml(r.place) +
+          ((r.images || []).length ? ' · <i class="fa-solid fa-image"></i> ' + r.images.length : '') + '</div></div>' +
+          '<span style="font-size:.66rem;font-weight:800;border-radius:999px;padding:3px 10px;background:' + st.bg + ';color:' + st.c + '">' + st.t + '</span>' +
+          '<span style="display:flex;gap:5px">' +
+          '<button class="btn btn-soft btn-sm" type="button" onclick="editAdvisory(' + r.id + ')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>' +
+          (active ? '<button class="btn btn-soft btn-sm" type="button" style="color:#c24e00" onclick="closeAdvisory(' + r.id + ')" title="ปิดประกาศก่อนเวลา"><i class="fa-solid fa-stop"></i></button>' : '') +
+          '<button class="btn btn-soft btn-sm" type="button" style="color:#c1122f" onclick="deleteAdvisory(' + r.id + ')" title="ลบถาวร"><i class="fa-solid fa-trash"></i></button>' +
+          '</span></div>';
+      }).join('');
+    }
+
+    function editAdvisory(id) {
+      const r = (state.avRows || []).find(x => x.id === id);
+      if (!r) return;
+      state.editingAdvisory = id;
+      document.getElementById('avKind').value = r.kind || 'other';
+      document.getElementById('avTitle').value = r.title || '';
+      document.getElementById('avPlace').value = r.place || '';
+      document.getElementById('avDetail').value = r.detail || '';
+      document.getElementById('avReroute').value = r.reroute || '';
+      document.getElementById('avCoords').value = (r.latitude != null && r.longitude != null) ? r.latitude.toFixed(6) + ', ' + r.longitude.toFixed(6) : '';
+      document.getElementById('avStarts').value = isoToLocalInput(r.starts_at);
+      document.getElementById('avEnds').value = isoToLocalInput(r.ends_at);
+      state.avImages = (r.images || []).map(url => ({ existingUrl: url }));
+      renderAvImagePreviews();
+      document.getElementById('avCancelEditBtn').style.display = 'inline-flex';
+      document.getElementById('avFormTitle').innerHTML = '<i class="fa-solid fa-pen"></i> แก้ไขประกาศ #' + id;
+      document.getElementById('avSubmitBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกการแก้ไข';
+      window.scrollTo({ top:0, behavior:'smooth' });
+    }
+
+    async function closeAdvisory(id) {
+      const c = await Swal.fire({ icon:'question', title:'ปิดประกาศนี้?', text:'จะหายจากหน้าประชาชนทันที แต่ยังอยู่ในประวัติ', showCancelButton:true, confirmButtonText:'ปิดประกาศ', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c24e00' });
+      if (!c.isConfirmed) return;
+      try {
+        const result = await rpc('advisory_close', { p_token: state.token, p_id: id });
+        if (!result.success) throw new Error(result.message);
+        loadAdvisories();
+      } catch (error) { Swal.fire({ icon:'error', title:'ปิดไม่สำเร็จ', text:error.message }); }
+    }
+
+    async function deleteAdvisory(id) {
+      const c = await Swal.fire({ icon:'warning', title:'ลบประกาศถาวร?', text:'ลบแล้วกู้คืนไม่ได้', showCancelButton:true, confirmButtonText:'ลบถาวร', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c1122f' });
+      if (!c.isConfirmed) return;
+      try {
+        const result = await rpc('advisory_delete', { p_token: state.token, p_id: id });
+        if (!result.success) throw new Error(result.message);
+        if (state.editingAdvisory === id) resetAvoidForm();
+        loadAdvisories();
+      } catch (error) { Swal.fire({ icon:'error', title:'ลบไม่สำเร็จ', text:error.message }); }
+    }
+
+    function avOpenMapPicker() {
+      Swal.fire({
+        title: 'จิ้มหรือลากหมุดเพื่อเลือกตำแหน่ง',
+        html: '<div id="avMapPicker" style="height:380px;width:100%;border-radius:14px"></div>',
+        width: Math.min(720, window.innerWidth - 20),
+        showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' },
+        showCancelButton: true, confirmButtonText: 'ยืนยันตำแหน่งนี้', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#c24e00',
+        didOpen: () => {
+          let startLat = 15.705, startLng = 100.140;
+          const current = document.getElementById('avCoords').value;
+          if (current && current.includes(',')) {
+            const parts = current.split(',');
+            const lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
+            if (!isNaN(lat) && !isNaN(lng)) { startLat = lat; startLng = lng; }
+          }
+          avPickerMap = L.map('avMapPicker').setView([startLat, startLng], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap', keepBuffer:6, updateWhenZooming:false, updateWhenIdle:true }).addTo(avPickerMap);
+          avPickerMarker = L.marker([startLat, startLng], { draggable:true }).addTo(avPickerMap);
+          avPickerMap.on('click', e => avPickerMarker.setLatLng(e.latlng));
+          setTimeout(() => avPickerMap.invalidateSize(), 150);
+        },
+        preConfirm: () => avPickerMarker ? avPickerMarker.getLatLng() : null,
+        willClose: () => { if (avPickerMap) { avPickerMap.remove(); avPickerMap = null; avPickerMarker = null; } }
+      }).then(result => {
+        if (result.isConfirmed && result.value) {
+          document.getElementById('avCoords').value = result.value.lat.toFixed(6) + ', ' + result.value.lng.toFixed(6);
+        }
+      });
+    }
+
+    function avUseCurrentLocation() {
+      if (!navigator.geolocation) { Swal.fire({ icon:'error', title:'เบราว์เซอร์ไม่รองรับ GPS' }); return; }
+      navigator.geolocation.getCurrentPosition(
+        pos => { document.getElementById('avCoords').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6); },
+        () => Swal.fire({ icon:'error', title:'ไม่สามารถดึงตำแหน่งได้', text:'โปรดอนุญาตการเข้าถึงตำแหน่ง หรือกรอกพิกัดเอง' })
+      );
+    }
+
     Object.assign(window, {
       showRegister, showLogin, logout, toggleDrawer, openPage,
+      avOpenMapPicker, avUseCurrentLocation, avQuickDays, resetAvoidForm, saveAdvisory,
+      loadAdvisories, editAdvisory, closeAdvisory, deleteAdvisory, avRemoveImage,
       openLocationPicker, closeLocationPicker, useCurrentLocation, confirmLocation,
       resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard,
       setMapFilter, loadAdminList, setApproval,
