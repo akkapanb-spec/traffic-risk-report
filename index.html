@@ -324,6 +324,24 @@ a.promo-card:hover .promo-open{background:#1d4ed8;color:#fff}
   .store-btn i{font-size:1.05rem}
 }
 
+/* ปุ่มประวัติ + modal ประวัติประกาศจุดหลีกเลี่ยง */
+.av-hist-link{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:1px solid #f3d3b8;
+  border-radius:999px;background:#fff;color:#c24e00;font-weight:700;font-size:.76rem;cursor:pointer;transition:background .15s}
+.av-hist-link:hover{background:#fff1e6}
+.av-modal.av-hist{max-height:78vh}
+.avh-item{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;padding:10px;border-radius:13px;
+  border:1px solid #e6eef6;background:#fbfdff;cursor:pointer;margin-bottom:8px;font-family:inherit;transition:border-color .15s}
+.avh-item:hover{border-color:#f3d3b8;background:#fff8f2}
+.avh-item .av-sign{width:32px;height:32px;flex:0 0 32px}
+.avh-item .av-sign i{font-size:.66rem}
+.avh-item .avh-b{min-width:0;flex:1}
+.avh-item .avh-b strong{display:block;font-size:.84rem;line-height:1.4;color:#132238}
+.avh-item .avh-b span{display:block;font-size:.7rem;color:#5b6b7f;margin-top:1px}
+.avh-tag{font-size:.62rem;font-weight:800;border-radius:999px;padding:3px 9px;white-space:nowrap;background:#eef2f6;color:#64748b;align-self:center}
+.avh-tag.closed{background:#fdecef;color:#c1122f}
+.avh-month{font-size:.7rem;font-weight:800;color:#5b6b7f;letter-spacing:.03em;display:flex;align-items:center;gap:8px;padding:8px 2px 4px}
+.avh-month:after{content:"";flex:1;height:1px;background:#dbe6f2}
+
 /* ผู้ใช้ที่ตั้งค่าลดการเคลื่อนไหว: ปิดแอนิเมชัน/ทรานซิชันทั้งหน้า */
 @media(prefers-reduced-motion:reduce){
   *,::before,::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
@@ -809,7 +827,8 @@ canvas{max-width:100%!important;}
 
         <!-- ซ้าย: จุดจราจรที่ควรหลีกเลี่ยง (admin ประกาศจากแอปเจ้าหน้าที่) -->
         <div class="stats-zone av-zone" id="avoidZone">
-          <h3 class="zone-title"><i class="fa-solid fa-diamond-turn-right" style="color:#c24e00;background:#fff1e6"></i> จุดจราจรที่ควรหลีกเลี่ยง <span class="av-count" id="avoidCount" style="display:none">0 จุด</span></h3>
+          <h3 class="zone-title"><i class="fa-solid fa-diamond-turn-right" style="color:#c24e00;background:#fff1e6"></i> จุดจราจรที่ควรหลีกเลี่ยง <span class="av-count" id="avoidCount" style="display:none">0 จุด</span>
+            <button type="button" class="av-hist-link" onclick="openAvoidHistory()"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติ</button></h3>
           <div id="avoidMap" class="av-map" style="display:none"></div>
           <div id="avoidList" class="av-list"><div class="av-empty"><i class="fa-solid fa-circle-check"></i> ขณะนี้ไม่มีประกาศจุดหลีกเลี่ยง เดินทางได้ตามปกติ</div></div>
         </div>
@@ -920,6 +939,19 @@ canvas{max-width:100%!important;}
         </div>
         <div class="av-modal-cta">
           <a id="avmGmap" class="avm-go" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-map"></i> เปิด Google Maps</a>
+        </div>
+      </div>
+
+      <!-- ประวัติประกาศที่จบไปแล้ว (หน้าเว็บหลักโชว์เฉพาะ active — ย้อนดูได้จากตรงนี้) -->
+      <div id="avHistBackdrop" class="av-backdrop" onclick="closeAvoidHistory()"></div>
+      <div id="avHistModal" class="av-modal av-hist" role="dialog" aria-modal="true" aria-label="ประวัติประกาศจุดหลีกเลี่ยง">
+        <div class="av-modal-head">
+          <span class="av-sign avk-other"><i class="fa-solid fa-clock-rotate-left"></i></span>
+          <strong>ประวัติประกาศจุดหลีกเลี่ยง</strong>
+          <button type="button" class="av-modal-close" onclick="closeAvoidHistory()" aria-label="ปิด"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="av-modal-body" id="avHistList" style="padding-top:8px">
+          <div class="av-empty"><i class="fa-solid fa-rotate animate-spin" style="color:#5b6b7f"></i> กำลังโหลดประวัติ…</div>
         </div>
       </div>
 </div>
@@ -1677,6 +1709,61 @@ function closeAvoidModal() {
   document.getElementById('avModalBackdrop').classList.remove('open');
   document.getElementById('avModal').classList.remove('open');
   if (avmLMap) { setTimeout(() => { if (avmLMap) { avmLMap.remove(); avmLMap = null; } }, 300); }
+}
+
+/* ประวัติประกาศ: จบไปแล้ว/ถูกปิด — โหลดตอนกดครั้งแรก เก็บ cache ไว้ในตัวแปร */
+let avoidHistRows = null;
+
+async function openAvoidHistory() {
+  document.getElementById('avHistBackdrop').classList.add('open');
+  document.getElementById('avHistModal').classList.add('open');
+  const host = document.getElementById('avHistList');
+  if (avoidHistRows === null) {
+    try {
+      const nowIso = new Date().toISOString();
+      const { data, error } = await sb.from('traffic_advisories').select('*')
+        .or('ends_at.lt.' + nowIso + ',closed_at.not.is.null')
+        .order('starts_at', { ascending: false }).limit(100);
+      if (error) throw error;
+      avoidHistRows = data || [];
+    } catch (e) {
+      host.innerHTML = '<div class="av-empty err"><i class="fa-solid fa-plug-circle-exclamation"></i> โหลดประวัติไม่ได้ในขณะนี้</div>';
+      return;
+    }
+  }
+  if (!avoidHistRows.length) {
+    host.innerHTML = '<div class="av-empty"><i class="fa-solid fa-inbox"></i> ยังไม่มีประกาศที่จบไปแล้ว</div>';
+    return;
+  }
+  const fd = iso => new Date(iso).toLocaleDateString('th-TH', { timeZone:'Asia/Bangkok', day:'numeric', month:'short', year:'2-digit' });
+  const monthOf = iso => new Date(iso).toLocaleDateString('th-TH', { timeZone:'Asia/Bangkok', month:'long', year:'numeric' });
+  let html = '', lastMonth = '';
+  avoidHistRows.forEach(r => {
+    const m = monthOf(r.starts_at);
+    if (m !== lastMonth) { html += '<div class="avh-month">' + avEsc(m) + '</div>'; lastMonth = m; }
+    const k = avKind(r.kind);
+    const closedEarly = !!r.closed_at && new Date(r.closed_at) < new Date(r.ends_at);
+    html += '<button type="button" class="avh-item" onclick="openAvoidHistDetail(' + r.id + ')">' +
+      '<span class="av-sign ' + k.cls + '"><i class="fa-solid ' + k.ic + '"></i></span>' +
+      '<span class="avh-b"><strong>' + avEsc(r.title) + '</strong>' +
+      '<span>' + avEsc(r.place) + '</span>' +
+      '<span>' + fd(r.starts_at) + ' – ' + fd(r.ends_at) + '</span></span>' +
+      '<span class="avh-tag' + (closedEarly ? ' closed' : '') + '">' + (closedEarly ? 'ปิดก่อนกำหนด' : 'สิ้นสุดแล้ว') + '</span>' +
+      '</button>';
+  });
+  host.innerHTML = html;
+}
+
+function closeAvoidHistory() {
+  document.getElementById('avHistBackdrop').classList.remove('open');
+  document.getElementById('avHistModal').classList.remove('open');
+}
+
+function openAvoidHistDetail(id) {
+  const r = (avoidHistRows || []).find(x => x.id === id);
+  if (!r) return;
+  closeAvoidHistory();
+  openAvoidModal(r); // modal รายละเอียดเดิม (แผนที่/รูป/ทางเลี่ยง) ใช้ร่วมกันได้ทั้ง PC และมือถือ
 }
 
 function avShowImg(url) {

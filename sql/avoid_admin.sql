@@ -26,10 +26,12 @@ create table if not exists traffic_advisories (
 
 alter table traffic_advisories enable row level security;
 
--- ประชาชน (anon) อ่านได้เฉพาะประกาศที่ยังมีผล
+-- ประชาชน (anon) อ่านได้ทุกแถวรวมประวัติ — หน้าเว็บกรองเองว่าโซนหลักโชว์เฉพาะ active
+-- ส่วน "ประวัติ" เป็นข้อมูลสาธารณะชุดเดียวกับตอนที่มันเคยขึ้นหน้าเว็บ ไม่มี PII
 drop policy if exists "public read active advisories" on traffic_advisories;
-create policy "public read active advisories" on traffic_advisories
-  for select using (closed_at is null and ends_at >= now());
+drop policy if exists "public read advisories" on traffic_advisories;
+create policy "public read advisories" on traffic_advisories
+  for select using (true);
 
 -- ============================================================
 -- RPC ฝั่ง admin (ใช้ admin_check_ จาก deaths_admin.sql)
