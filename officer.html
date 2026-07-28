@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#123B7A">
   <title>บันทึกข้อมูลอุบัติเหตุ | Traffic Police</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,6 +26,7 @@
       --radius:22px;
     }
     *{box-sizing:border-box}
+    @media(prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
     html{scroll-behavior:smooth}
     body{margin:0;font-family:'Sarabun',sans-serif;color:var(--ink);background:
       radial-gradient(circle at 8% 5%,rgba(255,255,255,.92),transparent 26%),
