@@ -605,7 +605,8 @@ canvas{max-width:100%!important;}
 .av-item{display:flex;gap:11px;align-items:flex-start;text-align:left;width:100%;padding:11px;border-radius:14px;
   border:1px solid transparent;background:#fbfdff;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
 .av-item:hover{border-color:#f3d3b8;background:#fff1e6}
-.av-item.on{border-color:#c24e00;background:#fff1e6;box-shadow:0 8px 18px rgba(194,78,0,.14)}
+.av-entry.on .av-item{border-color:#c24e00;background:#fff1e6;box-shadow:0 8px 18px rgba(194,78,0,.14)}
+.av-entry.open .av-item{box-shadow:none}
 .av-sign{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;position:relative}
 .av-sign:before{content:"";position:absolute;inset:4px;transform:rotate(45deg);border-radius:7px;
   background:var(--avc,#64748b);border:2.5px solid #fff;box-shadow:0 3px 9px rgba(15,23,42,.28)}
@@ -621,9 +622,39 @@ canvas{max-width:100%!important;}
 .av-photos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:9px}
 .av-photos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;border:1px solid rgba(15,23,42,.1);cursor:pointer}
 .av-item .av-photos{display:none}
-.av-item.on .av-photos{display:grid}
+.av-entry.on .av-photos{display:grid}
+/* จอใหญ่: กดรายการแล้ว "ยืด" ออกในที่ — แผนที่ด้านบนยังอยู่ ไม่ต้องเปิด modal ทับ */
+.av-more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .24s ease}
+.av-more-clip{overflow:hidden;min-height:0}   /* ต้องไม่มี padding เอง ไม่งั้นตอนพับจะเหลือความสูงค้าง */
+.av-entry.open .av-more{grid-template-rows:1fr}
+.av-entry.open .av-item{border-radius:14px 14px 0 0}
+.av-entry.open .av-photos{display:none}          /* ภาพย่อในหัวข้อ ย้ายไปโชว์ใหญ่ในแผงแทน */
+.av-chev{transition:transform .2s}
+.av-entry.open .av-chev{transform:rotate(90deg);color:#c24e00}
+.av-more-in{position:relative;margin:0 0 2px;padding:13px 14px 14px 20px;background:#fffaf4;
+  border:1px solid #f0cfae;border-top:0;border-radius:0 0 14px 14px}
+/* แถบลายเฉียงแบบแผงกั้นเขตงานทาง — ตัวบอกว่านี่คือ "ประกาศหน้างาน" */
+.av-more-in:before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;border-radius:0 0 0 13px;
+  background:repeating-linear-gradient(135deg,#e07000 0 7px,#ffdcb8 7px 14px)}
+.avm-detail{margin:0;font-size:.82rem;line-height:1.75;color:#3b4a5e}
+.avm-reroute{margin:11px 0 0;font-size:.82rem;line-height:1.7;color:#7c3a00;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.avm-lbl{flex:0 0 auto;font-size:.66rem;font-weight:800;letter-spacing:.02em;background:#fff;border:1px solid #f0cfae;
+  color:#c24e00;border-radius:999px;padding:3px 10px}
+.avm-shots{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+.avm-shots img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:11px;border:1px solid #f0cfae;cursor:zoom-in;
+  transition:transform .15s}
+.avm-shots img:hover{transform:scale(1.015)}
+.avm-gmap{display:inline-flex;align-items:center;gap:8px;margin-top:13px;padding:9px 16px;border-radius:11px;
+  background:#123b7a;color:#fff;font-size:.79rem;font-weight:800;text-decoration:none;transition:background .15s}
+.avm-gmap:hover{background:#0d2c5c}
+.avm-none{margin:0;font-size:.79rem;color:#7b8798}
 /* หมุดเพชรบนแผนที่ */
 .av-pin{filter:drop-shadow(0 3px 6px rgba(15,23,42,.35))}
+.av-pin.sel{z-index:900!important}
+.av-pin.sel .av-sign:after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2.5px solid #c24e00;
+  animation:av-halo 1.5s ease-out infinite}
+@keyframes av-halo{0%{transform:scale(.7);opacity:.85}100%{transform:scale(1.4);opacity:0}}
+@media(prefers-reduced-motion:reduce){.av-more{transition:none}.av-pin.sel .av-sign:after{animation:none;opacity:.6}}
 /* สถิติย่อบรรทัดเดียว */
 .srow-zone{padding:16px 14px 12px}
 .srowx{display:flex;align-items:center;gap:10px;background:#fbfdff;border:1px solid #e6eef6;border-radius:14px;padding:10px 12px;margin-bottom:8px}
@@ -1638,13 +1669,15 @@ function renderAvoidPoints() {
     const k = avKind(r.kind), w = avoidWhenText(r);
     const photos = (r.images || []).slice(0, 4).map(u =>
       '<img src="' + avEsc(u) + '" alt="รูปประกอบ" onclick="event.stopPropagation();avShowImg(\'' + avEsc(u) + '\')">').join('');
-    return '<button type="button" class="av-item" data-avid="' + r.id + '" onclick="selectAvoid(' + r.id + ')">' +
+    return '<div class="av-entry" data-avid="' + r.id + '">' +
+      '<button type="button" class="av-item" onclick="selectAvoid(' + r.id + ')" aria-expanded="false" aria-controls="avMore' + r.id + '">' +
       '<span class="av-sign ' + k.cls + '"><i class="fa-solid ' + k.ic + '"></i></span>' +
       '<span class="av-body"><strong>' + avEsc(r.title) + '</strong>' +
       '<span class="av-place">' + avEsc(r.place) + '</span>' +
       '<span class="av-when' + (w.live ? ' live' : '') + '"><i class="fa-' + (w.live ? 'solid fa-clock' : 'regular fa-calendar') + '"></i> ' + avEsc(w.text) + '</span>' +
       (photos ? '<span class="av-photos">' + photos + '</span>' : '') +
-      '</span><i class="fa-solid fa-chevron-right av-chev"></i></button>';
+      '</span><i class="fa-solid fa-chevron-right av-chev"></i></button>' +
+      '<div class="av-more" id="avMore' + r.id + '" role="region"></div></div>';
   };
   let html = '';
   if (lives.length) html += '<div class="av-group live"><span class="av-dot"></span> กำลังเกิดขึ้นตอนนี้</div>' + lives.map(item).join('');
@@ -1660,12 +1693,11 @@ function renderAvoidPoints() {
       const k = avKind(r.kind), w = avoidWhenText(r);
       const m = L.marker([r.latitude, r.longitude], {
         icon: L.divIcon({ className:'av-pin', html:'<div class="av-sign ' + k.cls + '"><i class="fa-solid ' + k.ic + '"></i></div>', iconSize:[38,38], iconAnchor:[19,19], popupAnchor:[0,-16] })
-      }).addTo(avoidLMap).bindPopup(
-        '<div style="min-width:190px"><b>' + avEsc(r.title) + '</b><br>' +
-        '<span style="font-size:.82rem;color:#5b6b7f">' + avEsc(r.place) + '</span><br>' +
-        '<span style="font-size:.8rem;color:#c24e00;font-weight:700">' + avEsc(w.text) + '</span>' +
-        (r.reroute ? '<br><span style="font-size:.8rem"><b>เลี่ยง:</b> ' + avEsc(r.reroute) + '</span>' : '') + '</div>');
-      m.on('click', () => highlightAvoid(r.id));
+      }).addTo(avoidLMap).bindTooltip(
+        '<b>' + avEsc(r.title) + '</b><br><span style="color:#c24e00;font-weight:700">' + avEsc(w.text) + '</span>',
+        { direction:'top', offset:[0,-16], opacity:.96 });
+      // กดหมุด = เปิดรายละเอียดของรายการนั้นในรายการด้านล่าง (ไม่เปิด popup ซ้อนอีกชั้น)
+      m.on('click', () => selectAvoid(r.id, true));
       avoidLMarkers[r.id] = m;
     });
     avoidLMap.fitBounds(L.latLngBounds(pts.map(r => [r.latitude, r.longitude])).pad(0.25));
@@ -1674,19 +1706,51 @@ function renderAvoidPoints() {
 }
 
 function highlightAvoid(id) {
-  document.querySelectorAll('.av-item').forEach(el => el.classList.toggle('on', +el.dataset.avid === id));
+  document.querySelectorAll('.av-entry').forEach(el => el.classList.toggle('on', +el.dataset.avid === id));
+  Object.entries(avoidLMarkers).forEach(([mid, m]) => {
+    const el = m.getElement();
+    if (el) el.classList.toggle('sel', +mid === id);
+  });
 }
 
-function selectAvoid(id) {
+// เนื้อหาแผงที่ยืดออกมาบนจอใหญ่ (สร้างครั้งแรกที่กดเท่านั้น — มือถือไม่โหลดรูปทิ้งไว้เปล่าๆ)
+function avoidMoreHtml(r) {
+  const imgs = (r.images || []).slice(0, 4);
+  const hasCoord = r.latitude != null && r.longitude != null;
+  let inner = '';
+  if (r.detail) inner += '<p class="avm-detail">' + avEsc(r.detail) + '</p>';
+  if (r.reroute) inner += '<p class="avm-reroute"><span class="avm-lbl">เส้นทางเลี่ยง</span><span>' + avEsc(r.reroute) + '</span></p>';
+  if (imgs.length) inner += '<div class="avm-shots">' + imgs.map(u =>
+    '<img src="' + avEsc(u) + '" alt="ภาพบริเวณจุดที่ควรหลีกเลี่ยง" onclick="avShowImg(\'' + avEsc(u) + '\')">').join('') + '</div>';
+  if (!inner) inner = '<p class="avm-none">ยังไม่มีรายละเอียดเพิ่มเติมสำหรับจุดนี้</p>';
+  if (hasCoord) inner += '<a class="avm-gmap" href="https://www.google.com/maps?q=' + r.latitude + ',' + r.longitude +
+    '" target="_blank" rel="noopener"><i class="fa-solid fa-diamond-turn-right"></i> เปิดเส้นทางใน Google Maps</a>';
+  return '<div class="av-more-clip"><div class="av-more-in">' + inner + '</div></div>';
+}
+
+function selectAvoid(id, fromMap) {
   const r = avoidRows.find(x => x.id === id);
   if (!r) return;
-  highlightAvoid(id);
-  if (window.matchMedia('(min-width:861px)').matches) {
-    const m = avoidLMarkers[id];
-    if (m && avoidLMap) { avoidLMap.flyTo(m.getLatLng(), Math.max(avoidLMap.getZoom(), 14), { duration:.6 }); m.openPopup(); }
-  } else {
-    openAvoidModal(r);
+  if (!window.matchMedia('(min-width:861px)').matches) { highlightAvoid(id); openAvoidModal(r); return; }
+
+  // จอใหญ่: ยืดรายการออกในที่ (เปิดได้ทีละรายการ) แล้วเลื่อนแผนที่ด้านบนไปที่จุดนั้น
+  const entry = document.querySelector('.av-entry[data-avid="' + id + '"]');
+  const wasOpen = entry && entry.classList.contains('open');
+  document.querySelectorAll('.av-entry.open').forEach(el => {
+    el.classList.remove('open');
+    el.querySelector('.av-item').setAttribute('aria-expanded', 'false');
+  });
+  if (entry && !(wasOpen && !fromMap)) {
+    const box = entry.querySelector('.av-more');
+    if (!box.dataset.filled) { box.innerHTML = avoidMoreHtml(r); box.dataset.filled = '1'; }
+    entry.classList.add('open');
+    entry.querySelector('.av-item').setAttribute('aria-expanded', 'true');
+    if (fromMap) setTimeout(() => entry.scrollIntoView({ behavior:'smooth', block:'nearest' }), 60);
   }
+  highlightAvoid(entry && entry.classList.contains('open') ? id : -1);
+
+  const m = avoidLMarkers[id];
+  if (m && avoidLMap) avoidLMap.flyTo(m.getLatLng(), Math.max(avoidLMap.getZoom(), 15), { duration:.6 });
 }
 
 function openAvoidModal(r) {
