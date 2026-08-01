@@ -626,11 +626,14 @@ canvas{max-width:100%!important;}
 /* จอใหญ่: กดรายการแล้ว "ยืด" ออกในที่ — แผนที่ด้านบนยังอยู่ ไม่ต้องเปิด modal ทับ */
 .av-more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .24s ease}
 .av-more-clip{overflow:hidden;min-height:0}   /* ต้องไม่มี padding เอง ไม่งั้นตอนพับจะเหลือความสูงค้าง */
-.av-entry.open .av-more{grid-template-rows:1fr}
-.av-entry.open .av-item{border-radius:14px 14px 0 0}
-.av-entry.open .av-photos{display:none}          /* ภาพย่อในหัวข้อ ย้ายไปโชว์ใหญ่ในแผงแทน */
 .av-chev{transition:transform .2s}
-.av-entry.open .av-chev{transform:rotate(90deg);color:#c24e00}
+/* แผงยืดเป็นของจอใหญ่เท่านั้น — มือถือใช้ modal กันไว้ที่ CSS ด้วย เผื่อ .open ค้างมาจากตอนจอกว้าง */
+@media(min-width:861px){
+  .av-entry.open .av-more{grid-template-rows:1fr}
+  .av-entry.open .av-item{border-radius:14px 14px 0 0}
+  .av-entry.open .av-photos{display:none}        /* ภาพย่อในหัวข้อ ย้ายไปโชว์ใหญ่ในแผงแทน */
+  .av-entry.open .av-chev{transform:rotate(90deg);color:#c24e00}
+}
 .av-more-in{position:relative;margin:0 0 2px;padding:13px 14px 14px 20px;background:#fffaf4;
   border:1px solid #f0cfae;border-top:0;border-radius:0 0 14px 14px}
 /* แถบลายเฉียงแบบแผงกั้นเขตงานทาง — ตัวบอกว่านี่คือ "ประกาศหน้างาน" */
@@ -1668,21 +1671,22 @@ function renderAvoidPoints() {
   const item = r => {
     const k = avKind(r.kind), w = avoidWhenText(r);
     const photos = (r.images || []).slice(0, 4).map(u =>
-      '<img src="' + avEsc(u) + '" alt="รูปประกอบ" onclick="event.stopPropagation();avShowImg(\'' + avEsc(u) + '\')">').join('');
+      '<img src="' + avEsc(u) + '" alt="รูปประกอบ" data-avimg="' + avEsc(u) + '">').join('');
     return '<div class="av-entry" data-avid="' + r.id + '">' +
-      '<button type="button" class="av-item" onclick="selectAvoid(' + r.id + ')" aria-expanded="false" aria-controls="avMore' + r.id + '">' +
+      '<button type="button" class="av-item" onclick="selectAvoid(' + r.id + ')">' +
       '<span class="av-sign ' + k.cls + '"><i class="fa-solid ' + k.ic + '"></i></span>' +
       '<span class="av-body"><strong>' + avEsc(r.title) + '</strong>' +
       '<span class="av-place">' + avEsc(r.place) + '</span>' +
       '<span class="av-when' + (w.live ? ' live' : '') + '"><i class="fa-' + (w.live ? 'solid fa-clock' : 'regular fa-calendar') + '"></i> ' + avEsc(w.text) + '</span>' +
       (photos ? '<span class="av-photos">' + photos + '</span>' : '') +
       '</span><i class="fa-solid fa-chevron-right av-chev"></i></button>' +
-      '<div class="av-more" id="avMore' + r.id + '" role="region"></div></div>';
+      '<div class="av-more" id="avMore' + r.id + '" role="region" aria-label="รายละเอียด ' + avEsc(r.title) + '"></div></div>';
   };
   let html = '';
   if (lives.length) html += '<div class="av-group live"><span class="av-dot"></span> กำลังเกิดขึ้นตอนนี้</div>' + lives.map(item).join('');
   if (nexts.length) html += '<div class="av-group next"><i class="fa-regular fa-calendar"></i> กำหนดการล่วงหน้า</div>' + nexts.map(item).join('');
   list.innerHTML = html;
+  avSyncA11y();
 
   // แผนที่: เฉพาะจอใหญ่ (เปิดรอไว้เสมอ) — ปักหมุดเฉพาะจุดที่มีพิกัด
   const pts = avoidRows.filter(r => r.latitude != null && r.longitude != null);
@@ -1721,7 +1725,7 @@ function avoidMoreHtml(r) {
   if (r.detail) inner += '<p class="avm-detail">' + avEsc(r.detail) + '</p>';
   if (r.reroute) inner += '<p class="avm-reroute"><span class="avm-lbl">เส้นทางเลี่ยง</span><span>' + avEsc(r.reroute) + '</span></p>';
   if (imgs.length) inner += '<div class="avm-shots">' + imgs.map(u =>
-    '<img src="' + avEsc(u) + '" alt="ภาพบริเวณจุดที่ควรหลีกเลี่ยง" onclick="avShowImg(\'' + avEsc(u) + '\')">').join('') + '</div>';
+    '<img src="' + avEsc(u) + '" alt="ภาพบริเวณจุดที่ควรหลีกเลี่ยง" data-avimg="' + avEsc(u) + '">').join('') + '</div>';
   if (!inner) inner = '<p class="avm-none">ยังไม่มีรายละเอียดเพิ่มเติมสำหรับจุดนี้</p>';
   if (hasCoord) inner += '<a class="avm-gmap" href="https://www.google.com/maps?q=' + r.latitude + ',' + r.longitude +
     '" target="_blank" rel="noopener"><i class="fa-solid fa-diamond-turn-right"></i> เปิดเส้นทางใน Google Maps</a>';
@@ -1736,21 +1740,44 @@ function selectAvoid(id, fromMap) {
   // จอใหญ่: ยืดรายการออกในที่ (เปิดได้ทีละรายการ) แล้วเลื่อนแผนที่ด้านบนไปที่จุดนั้น
   const entry = document.querySelector('.av-entry[data-avid="' + id + '"]');
   const wasOpen = entry && entry.classList.contains('open');
-  document.querySelectorAll('.av-entry.open').forEach(el => {
-    el.classList.remove('open');
-    el.querySelector('.av-item').setAttribute('aria-expanded', 'false');
-  });
+  avCollapseAll();
   if (entry && !(wasOpen && !fromMap)) {
     const box = entry.querySelector('.av-more');
     if (!box.dataset.filled) { box.innerHTML = avoidMoreHtml(r); box.dataset.filled = '1'; }
     entry.classList.add('open');
-    entry.querySelector('.av-item').setAttribute('aria-expanded', 'true');
     if (fromMap) setTimeout(() => entry.scrollIntoView({ behavior:'smooth', block:'nearest' }), 60);
   }
-  highlightAvoid(entry && entry.classList.contains('open') ? id : -1);
+  const isOpen = !!(entry && entry.classList.contains('open'));
+  avSyncA11y();
+  highlightAvoid(isOpen ? id : -1);
 
+  // กดซ้ำเพื่อ "หุบ" ไม่ควรลากแผนที่ตามไปด้วย — เลื่อนเฉพาะตอนเปิดจริง
   const m = avoidLMarkers[id];
-  if (m && avoidLMap) avoidLMap.flyTo(m.getLatLng(), Math.max(avoidLMap.getZoom(), 15), { duration:.6 });
+  if (isOpen && m && avoidLMap) avoidLMap.flyTo(m.getLatLng(), Math.max(avoidLMap.getZoom(), 15), { duration:.6 });
+}
+
+function avCollapseAll() {
+  document.querySelectorAll('.av-entry.open').forEach(el => el.classList.remove('open'));
+  avSyncA11y();
+}
+
+// ปุ่มรายการทำคนละอย่างตามขนาดจอ — จอใหญ่กาง/หุบในที่ (aria-expanded), มือถือเปิด modal (aria-haspopup)
+// ประกาศให้ตรงพฤติกรรมจริง และต้อง sync ใหม่ทุกครั้งที่ข้าม breakpoint
+function avSyncA11y() {
+  const pc = window.matchMedia('(min-width:861px)').matches;
+  document.querySelectorAll('.av-entry').forEach(en => {
+    const btn = en.querySelector('.av-item');
+    if (!btn) return;
+    if (pc) {
+      btn.removeAttribute('aria-haspopup');
+      btn.setAttribute('aria-controls', 'avMore' + en.dataset.avid);
+      btn.setAttribute('aria-expanded', String(en.classList.contains('open')));
+    } else {
+      btn.removeAttribute('aria-expanded');
+      btn.removeAttribute('aria-controls');
+      btn.setAttribute('aria-haspopup', 'dialog');
+    }
+  });
 }
 
 function openAvoidModal(r) {
@@ -1768,7 +1795,7 @@ function openAvoidModal(r) {
   const photos = document.getElementById('avmPhotos');
   const imgs = (r.images || []).slice(0, 4);
   photos.style.display = imgs.length ? 'grid' : 'none';
-  photos.innerHTML = imgs.map(u => '<img src="' + avEsc(u) + '" alt="รูปประกอบ" onclick="avShowImg(\'' + avEsc(u) + '\')">').join('');
+  photos.innerHTML = imgs.map(u => '<img src="' + avEsc(u) + '" alt="รูปประกอบ" data-avimg="' + avEsc(u) + '">').join('');
 
   const hasCoord = r.latitude != null && r.longitude != null;
   document.getElementById('avmMap').style.display = hasCoord ? 'block' : 'none';
@@ -1791,11 +1818,14 @@ function openAvoidModal(r) {
   }
 }
 
-// ขยายจอจากแคบเป็นกว้าง (หมุนแท็บเล็ต/ลากหน้าต่าง): เปิดแผนที่ให้โดยไม่ต้องรีโหลด
+// ข้าม breakpoint (หมุนแท็บเล็ต/ลากหน้าต่าง): กว้างขึ้น = เปิดแผนที่ให้โดยไม่ต้องรีโหลด
+// แคบลง = หุบแผงที่กางไว้ตอนอยู่ PC เพราะฝั่งมือถือใช้ modal ไม่ใช่แผงยืด ไม่งั้นค้างกางทั้งคู่
 window.addEventListener('resize', () => {
   clearTimeout(window.__avResizeT);
   window.__avResizeT = setTimeout(() => {
-    if (window.matchMedia('(min-width:861px)').matches && !avoidLMap) renderAvoidPoints();
+    if (window.matchMedia('(min-width:861px)').matches) { if (!avoidLMap) renderAvoidPoints(); }
+    else if (document.querySelector('.av-entry.open')) avCollapseAll();
+    avSyncA11y();
   }, 350);
 });
 
@@ -1863,6 +1893,17 @@ function openAvoidHistDetail(id) {
 function avShowImg(url) {
   Swal.fire({ imageUrl:url, imageAlt:'รูปประกอบประกาศ', showConfirmButton:false, showCloseButton:true, width:Math.min(760, window.innerWidth - 20) });
 }
+
+// URL รูปมาจากฐานข้อมูล จึงห้ามฝังลงใน onclick="...('URL')" — เบราว์เซอร์ decode entity ของ attribute
+// ก่อนส่งให้ JS parse เครื่องหมาย ' ที่ escape เป็น &#39; จะกลายเป็น ' จริงและหลุดออกจาก string ได้
+// เก็บ URL ไว้ใน data-avimg แล้วดักคลิกที่นี่แทน (capture: ต้องกันไม่ให้ทะลุไปโดนปุ่มรายการที่ครอบอยู่)
+document.addEventListener('click', e => {
+  const img = e.target.closest && e.target.closest('[data-avimg]');
+  if (!img) return;
+  e.preventDefault();
+  e.stopPropagation();
+  avShowImg(img.dataset.avimg);
+}, true);
 
 /* ตัวกรองหน้า HOME: default = ปีปัจจุบัน (ปี/เดือน/วันนี้ตามจริง), เลือกปี/ช่วง = การ์ดใบแรกแสดงยอดช่วงนั้น */
 window.__homeRange = null;
