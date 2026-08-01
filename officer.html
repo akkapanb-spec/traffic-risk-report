@@ -79,6 +79,8 @@
     .nav-btn.admin-item i{background:#f3e8ff;color:#7c3aed}
     .nav-btn.admin-item.active,.nav-btn.admin-item:hover{background:#f7f1ff;border-color:#e4d4fb;color:#5b21b6}
     .nav-btn.admin-item.active i{background:#7c3aed;color:#fff}
+    /* ลูกศรบอกว่าเมนูนี้เป็นลิงก์นอก เปิดแท็บใหม่ (ไม่ใช่หน้าในระบบ) */
+    .nav-btn i.ext-arrow{width:auto;height:auto;background:transparent;color:#7c3aed;font-size:.66rem;margin-left:auto;flex:0 0 auto;border-radius:0}
     .menu-badge{margin-left:auto;background:#dc2626;color:#fff;border-radius:999px;font-size:.68rem;font-weight:900;min-width:20px;height:20px;display:inline-grid;place-items:center;padding:0 6px}
     .tab-btn{position:relative}
     .tab-btn .menu-badge{position:absolute;top:3px;right:8px;margin:0;min-width:17px;height:17px;font-size:.6rem;padding:0 5px}
@@ -101,6 +103,7 @@
       box-shadow:0 4px 10px rgba(15,23,42,.18)}
     .adm-badge{position:absolute;top:4px;right:6px;background:#dc2626;color:#fff;border-radius:999px;
       font-size:.6rem;font-weight:900;min-width:17px;height:17px;display:grid;place-items:center;padding:0 5px}
+    .adm-ext{position:absolute;top:6px;left:7px;font-size:.55rem;color:#7c3aed} /* ไทล์นี้ = ลิงก์นอก เปิดแท็บใหม่ */
     @media(min-width:781px){.adm-sheet,.adm-backdrop{display:none}} /* จอใหญ่ใช้ drawer อยู่แล้ว */
     .tab-btn.admin-item{background:rgba(124,58,237,.09);color:#6d28d9}
     .tab-btn.admin-item.active{background:linear-gradient(135deg,#5b21b6,#8b5cf6)!important;color:#fff!important;box-shadow:0 9px 20px rgba(124,58,237,.28)!important}
@@ -381,6 +384,7 @@
         <button class="nav-btn admin-item" data-page="riskmanage" id="riskNavBtn" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง <span class="menu-badge" id="badgeRisk" style="display:none"></span></button>
         <button class="nav-btn admin-item" data-page="deaths" id="deathsNavBtn" style="display:none" onclick="openPage('deaths',this)"><i class="fa-solid fa-skull-crossbones"></i> บันทึกข้อมูลผู้เสียชีวิต</button>
         <button class="nav-btn admin-item" data-page="avoid" id="avoidNavBtn" style="display:none" onclick="openPage('avoid',this)"><i class="fa-solid fa-diamond-turn-right"></i> ประกาศจุดหลีกเลี่ยง</button>
+        <button class="nav-btn admin-item" id="dutyNavBtn" type="button" style="display:none" onclick="toggleDrawer(false);openDutySystem()"><i class="fa-solid fa-clipboard-user"></i> ระบบการปฏิบัติหน้าที่จราจรประจำวัน <i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i></button>
       </nav>
     </aside>
 
@@ -1236,6 +1240,7 @@
       document.getElementById('riskNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('deathsNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('avoidNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
+      document.getElementById('dutyNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminMenuTab').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.querySelector('.mobile-tabbar').classList.toggle('admin-mode', !!state.user.isAdmin);
       updateAdminBadges();
@@ -1381,16 +1386,26 @@
           '<button class="adm-tile" role="menuitem" onclick="adminMenuGo(\'' + page + '\')">' + bdg +
           '<span class="adm-ic" style="background:linear-gradient(135deg,' + grad + ')"><i class="fa-solid ' + icon + '"></i></span>' +
           '<span>' + label + '</span></button>';
+        // ไทล์ลิงก์นอกระบบ: หุบแผงแล้วเปิดแท็บใหม่ ไม่ใช่สลับหน้าใน SPA
+        const extTile = (fn, grad, icon, label) =>
+          '<button class="adm-tile" role="menuitem" onclick="openAdminMenu(false);' + fn + '()">' +
+          '<span class="adm-ic" style="background:linear-gradient(135deg,' + grad + ')"><i class="fa-solid ' + icon + '"></i></span>' +
+          '<span>' + label + '</span><i class="fa-solid fa-arrow-up-right-from-square adm-ext"></i></button>';
         document.getElementById('admGrid').innerHTML =
           tile('admin',      '#a78bfa,#6d28d9', 'fa-user-check',           'อนุมัติ<br>สิทธิ์',      badge(b.officers)) +
           tile('riskmanage', '#f87171,#b91c1c', 'fa-triangle-exclamation', 'จัดการ<br>จุดเสี่ยง',    badge(b.risk)) +
           tile('deaths',     '#607a9b,#33475f', 'fa-skull-crossbones',     'บันทึก<br>ผู้เสียชีวิต', '') +
-          tile('avoid',      '#f59e0b,#c24e00', 'fa-diamond-turn-right',   'ประกาศ<br>หลีกเลี่ยง',   '');
+          tile('avoid',      '#f59e0b,#c24e00', 'fa-diamond-turn-right',   'ประกาศ<br>หลีกเลี่ยง',   '') +
+          extTile('openDutySystem', '#38bdf8,#0369a1', 'fa-clipboard-user', 'ปฏิบัติหน้าที่<br>ประจำวัน');
       }
       sheet.classList.toggle('open', open);
       bd.classList.toggle('open', open);
       if (tab) tab.setAttribute('aria-expanded', String(open));
     }
+    // ระบบเดิมบน Google Apps Script — คนละระบบกับเว็บนี้ จึงเปิดแท็บใหม่ ไม่ใช่หน้าใน SPA
+    const DUTY_SYSTEM_URL = 'https://script.google.com/macros/s/AKfycbxlJ2jV01beXcKB7cQofXH_sEA90T3X4x6imAdUif9MtUcjl3f6qyWh47yAxTzKkIyh/exec';
+    function openDutySystem() { window.open(DUTY_SYSTEM_URL, '_blank', 'noopener'); }
+
     function adminMenuGo(page) {
       openAdminMenu(false);
       openPage(page, null);
@@ -3708,7 +3723,7 @@
       editRiskAction, deleteRiskAction, deleteRiskPoint,
       eaRemove, eaAddFiles, viewRiskDetail,
       saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation,
-      renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo, setDashYear, dashCustomRange,
+      renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo, openDutySystem, setDashYear, dashCustomRange,
       renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail, toggleDeathOverlay, toggleTambonOfficer,
       editOfficer, delOfficer, editAccidentCase, deleteAccidentCase, editRiskReport,
       updateAdminBadges, exportMapCsv, exportRiskCsv, exportDeathCsv, exportOfficerCsv,
