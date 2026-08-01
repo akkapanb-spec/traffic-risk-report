@@ -1,0 +1,10 @@
+# Scratch output from design/QA passes — regenerated on demand, never shipped.
+.mockup-*
+.report-*
+.playwright-mcp/
+
+# Local-only
+node_modules/
+.env
+.dev.vars
+Thumbs.db
