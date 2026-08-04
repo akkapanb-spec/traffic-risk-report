@@ -2419,8 +2419,11 @@ function getEmptyDeathData() {
     monthly2026: Array(12).fill(0), monthly2027: Array(12).fill(0), total: 0,
     ageGroups: Array(6).fill(0), gender: [0, 0], vehicleTypes: Array(6).fill(0),
     vehicleLabels: ['รถจักรยานยนต์', 'รถยนต์เก๋ง', 'รถกระบะ', 'รถบรรทุก 6 ล้อขึ้นไป', 'รถบรรทุกพ่วง/เทรลเลอร์', 'อื่นๆ'],
-    safetyEquipment: [0, 0, 0, 0], causes: Array(8).fill(0),
-    causeLabels: ['ขับรถขณะเมาสุรา', 'ขับรถเร็วเกินกำหนด', 'ฝ่าฝืนสัญญาไฟ', 'ตัดหน้ากระชั้นชิด', 'แซงในที่คับขัน', 'หลับใน', 'ทัศนวิสัย', 'อื่นๆ'],
+    // รายการสาเหตุยึดตามฟอร์มบันทึกอุบัติเหตุในแอปเจ้าหน้าที่ ต้องตรงกันเป๊ะ
+    // ไม่งั้นตัวเลขหน้าประชาชนกับหน้าเจ้าหน้าที่จะไม่ตรงกันโดยไม่มีใครรู้
+    // 'ขับเร็ว' ยังอยู่เพราะข้อมูลเก่าเคยบันทึกไว้ แต่ฟอร์มไม่ให้เลือกแล้ว
+    safetyEquipment: [0, 0, 0, 0], causes: Array(15).fill(0),
+    causeLabels: ['เมาสุรา','ขับรถประมาทหวาดเสียว','ชนท้าย','ตัดหน้า','เปลี่ยนช่องทาง','กลับรถ','ย้อนศร','ฝ่าฝืนสัญญาณไฟ','แซงในที่คับขัน','ทัศนวิสัยแย่','ใช้โทรศัพท์','ขาดความระมัดระวัง','อ่อนล้า/หลับใน','รถขัดข้อง','อื่นๆ'],
     timeGroups: Array(12).fill(0),
     timeLabels: ['00.00.01-02.00.00', '02.00.01-04.00.00', '04.00.01-06.00.00', '06.00.01-08.00.00', '08.00.01-10.00.00', '10.00.01-12.00.00', '12.00.01-14.00.00', '14.00.01-16.00.00', '16.00.01-18.00.00', '18.00.01-20.00.00', '20.00.01-22.00.00', '22.00.01-00.00.00'],
     statusGroups: [0, 0, 0], licenseGroups: [0, 0], roadTypeGroups: Array(7).fill(0), roadNameGroups: Array(7).fill(0),
@@ -2487,14 +2490,23 @@ function processDeathRowStatistics(row, data, deathCount = 1) {
   }
   if (row.cause) {
     const cause = String(row.cause).toLowerCase();
-    if (cause.includes('เมา')) data.causes[0] += deathCount;
-    else if (cause.includes('เร็ว')) data.causes[1] += deathCount;
-    else if (cause.includes('ไฟ') || cause.includes('สัญญาณ')) data.causes[2] += deathCount;
+    // จับคู่ตามลำดับเดียวกับ causeLabels — เรียงจากคำที่เจาะจงไปหาคำกว้าง
+    // 'ประมาท' ต้องมาก่อน 'ระมัดระวัง' เพราะ 'ขาดความระมัดระวัง' กับ 'ประมาท' คนละหมวดกัน
+    if (cause.includes('เมา') || cause.includes('สุรา')) data.causes[0] += deathCount;
+    else if (cause.includes('หวาดเสียว') || cause.includes('ประมาท')) data.causes[1] += deathCount;
+    else if (cause.includes('ชนท้าย')) data.causes[2] += deathCount;
     else if (cause.includes('ตัดหน้า')) data.causes[3] += deathCount;
-    else if (cause.includes('แซง')) data.causes[4] += deathCount;
-    else if (cause.includes('หลับ')) data.causes[5] += deathCount;
-    else if (cause.includes('ทัศน')) data.causes[6] += deathCount;
-    else data.causes[7] += deathCount;
+    else if (cause.includes('เปลี่ยนช่องทาง')) data.causes[4] += deathCount;
+    else if (cause.includes('กลับรถ')) data.causes[5] += deathCount;
+    else if (cause.includes('ย้อนศร')) data.causes[6] += deathCount;
+    else if (cause.includes('สัญญาณ') || cause.includes('ไฟ')) data.causes[7] += deathCount;
+    else if (cause.includes('แซง')) data.causes[8] += deathCount;
+    else if (cause.includes('ทัศน')) data.causes[9] += deathCount;
+    else if (cause.includes('โทรศัพท์')) data.causes[10] += deathCount;
+    else if (cause.includes('ระมัดระวัง')) data.causes[11] += deathCount;
+    else if (cause.includes('หลับ') || cause.includes('อ่อนล้า') || cause.includes('ง่วง')) data.causes[12] += deathCount;
+    else if (cause.includes('ขัดข้อง')) data.causes[13] += deathCount;
+    else data.causes[14] += deathCount;
   }
   if (row.road_name) {
     const roadName = String(row.road_name).toLowerCase();
