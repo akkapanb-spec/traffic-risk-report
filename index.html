@@ -230,6 +230,8 @@ td{vertical-align:top;font-size:.92rem;}
 #deathStatsTab .glass-effect{background:rgba(255,255,255,.94);border:1px solid rgba(209,222,237,.9);border-radius:20px;box-shadow:0 10px 28px rgba(23,52,88,.08);min-width:0;}
 #deathStatsTab .glass-effect canvas{filter:drop-shadow(0 7px 11px rgba(15,23,42,.08));}
 .dt-title{display:flex;align-items:center;gap:11px;margin:0 0 16px;font-size:1.08rem;font-weight:800;color:#132238;}
+/* คำขยายท้ายหัวข้อ (หน่วย/ขอบเขต) — แทนที่จะเป็นบรรทัดโน้ตใต้กราฟที่กินที่เปล่า ๆ */
+.dt-sub,.card-sub{font-size:.7rem;font-weight:600;color:#7d8ba0;letter-spacing:.01em}
 .dt-title i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#edf4ff;color:#1d4ed8;font-size:.95rem;flex:0 0 34px;}
 .dt-title i.i-red{background:#fdeef1;color:#c1122f}
 .dt-title i.i-amber{background:#fff6e6;color:#d97706}
@@ -1173,7 +1175,8 @@ canvas{max-width:100%!important;}
 
         <!-- แถวที่ 1: Age, Gender, Domicile -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-people-arrows"></i> แยกตามช่วงอายุ</h3><div class="dt-visual" id="ageVisual"></div><p class="text-xs text-gray-500 mt-2">นับตามตัวเลขอายุจริง: 1-14, 15-18, 19-24, 25-35, 36-60, 60+</p></div>
+          <!-- ช่วงอายุย้ายไปอยู่ในหัวข้อเป็นตัวเล็ก แทนที่จะกินบรรทัดล่างทั้งบรรทัด -->
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-people-arrows"></i> แยกตามช่วงอายุ <span class="dt-sub">ปี</span></h3><div class="dt-visual" id="ageVisual"></div></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-venus-mars i-purple"></i> แยกตามเพศ</h3><div class="dt-visual" id="genderVisual"></div></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-house-user i-green"></i> แยกตามภูมิลำเนา</h3><div class="h-[250px]"><canvas id="domicileChart"></canvas></div></div>
         </div>
