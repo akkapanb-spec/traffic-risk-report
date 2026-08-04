@@ -36,7 +36,8 @@ begin
   returning id into v_run_id;
 
   -- ผลรอบก่อนถูกแทนที่ทั้งหมด (จุดเสี่ยงเป็นภาพรวม ณ รอบวิเคราะห์ ไม่สะสม)
-  delete from bs_sites;
+  -- ต้องมี where เสมอ Supabase เปิด sql_safe_updates ไว้ delete ทั้งตารางจะถูกบล็อก
+  delete from bs_sites where id is not null;
   delete from bs_zones where source = 'auto';
 
   for r in select value from jsonb_array_elements(coalesce(p_sites, '[]'::jsonb))
@@ -83,7 +84,8 @@ declare v_err jsonb; v_pub boolean := coalesce(p_published, false);
 begin
   v_err := admin_check_(p_token);
   if v_err is not null then return v_err; end if;
-  update bs_sites set published = v_pub;
+  -- where id is not null จำเป็น Supabase เปิด sql_safe_updates ไว้ update ทั้งตารางจะถูกบล็อก
+  update bs_sites set published = v_pub where id is not null;
   update bs_zones set published = v_pub where source = 'auto';
   update bs_runs set published = v_pub
    where id = (select id from bs_runs order by ran_at desc limit 1);

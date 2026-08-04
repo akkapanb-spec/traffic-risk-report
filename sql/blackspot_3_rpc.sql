@@ -111,7 +111,8 @@ begin
   if v_err is not null then return v_err; end if;
   v_user := officer_session_user(p_token);
 
-  if coalesce(p_replace, false) then delete from bs_features; end if;
+  -- where id is not null จำเป็น Supabase เปิด sql_safe_updates ไว้ delete ทั้งตารางจะถูกบล็อก
+  if coalesce(p_replace, false) then delete from bs_features where id is not null; end if;
 
   for r in select value from jsonb_array_elements(coalesce(p_rows, '[]'::jsonb))
   loop
@@ -199,7 +200,8 @@ begin
   if v_err is not null then return v_err; end if;
   v_user := officer_session_user(p_token);
 
-  if coalesce(p_replace, false) then delete from bs_incidents; end if;
+  -- where id is not null จำเป็น Supabase เปิด sql_safe_updates ไว้ delete ทั้งตารางจะถูกบล็อก
+  if coalesce(p_replace, false) then delete from bs_incidents where id is not null; end if;
 
   for r in select value from jsonb_array_elements(coalesce(p_rows, '[]'::jsonb))
   loop
