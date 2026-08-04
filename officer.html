@@ -661,7 +661,7 @@
             <div class="field span-6"><label>อวัยวะบาดเจ็บ</label><select id="dfBody" class="select"><option value="">เลือกอวัยวะ</option><option>ลำคอ-ศีรษะ</option><option>ลำตัว</option><option>แขน-มือ</option><option>ขา-เท้า</option><option>หลายส่วน</option><option>อื่นๆ</option></select></div>
             <div class="field span-6"><label>ใบอนุญาตขับขี่</label><select id="dfLicense" class="select"><option value="">เลือก</option><option>มีใบอนุญาต</option><option>ไม่มีใบอนุญาต</option><option>ผู้โดยสาร</option><option>เดินเท้า</option></select></div>
             <div class="field span-6"><label>ลักษณะทาง</label><select id="dfRoadType" class="select"><option value="">เลือกลักษณะทาง</option><option>ทางตรง</option><option>ทางโค้ง</option><option>ทางร่วมทางแยก</option><option>จุดกลับรถ</option><option>ทางแยกมีสัญญาณไฟ</option><option>สะพาน</option><option>อื่นๆ</option></select></div>
-            <div class="field span-6"><label>สาเหตุ</label><select id="dfCause" class="select"><option value="">เลือกสาเหตุ</option><option>เมา</option><option>เร็ว</option><option>ฝ่าฝืนสัญญาณไฟ</option><option>เปลี่ยนช่องทางเดินรถ/ตัดหน้ากระชั้นชิด</option><option>แซงในที่คับขัน</option><option>หลับใน</option><option>ทัศนวิสัยไม่ดี</option><option>ย้อนศร</option><option>ขาดความระมัดระวัง</option><option>อื่นๆ</option></select></div>
+            <div class="field span-6"><label>สาเหตุ</label><select id="dfCause" class="select"><option value="">เลือกสาเหตุ</option></select></div>
             <div class="field span-6"><label>ประเภททางหลวง</label><select id="dfHighway" class="select"><option value="">เลือกประเภท</option><option>ทล.แผ่นดิน</option><option>ทล.ชนบท</option><option>ทล.อปท.</option></select></div>
             <div class="field span-6"><label>ถนน</label><input id="dfRoadName" class="input" list="dfRoadList" placeholder="เช่น ทล.1 /ในเขตเทศบาลนคร">
               <datalist id="dfRoadList"><option value="ทล.1 /ในเขตเทศบาลนคร"></option><option value="ทล.1 /ในเขตเทศบาลหนองเบน"></option><option value="ทล.1 /นอกเขตเทศบาล"></option><option value="ทล.117/ในเขตเทศบาลนคร"></option><option value="ทล.122"></option><option value="ทล.1072 /นอกเขตเทศบาล"></option><option value="ทล.1182 /นอกเขตเทศบาล"></option><option value="ทล.1182 /ในเขตเทศบาล"></option><option value="ทล.3005 /ในเขตเทศบาล"></option><option value="ทล.3005 /นอกเขตเทศบาล"></option><option value="นว..1120 /ในเขตเทศบาลนคร"></option><option value="อปท.เทศบาลนคร"></option><option value="อปท.นอกเขตเทศบาล"></option></datalist></div>
@@ -1232,7 +1232,9 @@
     const subdistricts = ['ปากน้ำโพ','นครสวรรค์ตก','วัดไทรย์','ตะเคียนเลื่อน','หนองกรด','หนองกระโดน','บ้านแก่ง'];
     // ตำบลครบทั้งอำเภอเมืองนครสวรรค์ (ใช้ในหน้าบันทึกผู้เสียชีวิต)
     const subdistrictsFull = ['ปากน้ำโพ','นครสวรรค์ตก','นครสวรรค์ออก','วัดไทรย์','ตะเคียนเลื่อน','หนองกรด','หนองกระโดน','บ้านแก่ง','หนองปลิง','กลางแดด','เกรียงไกร','แควใหญ่','บางพระหลวง','พระนอน','บางม่วง','บ้านมะเกลือ','บึงเสนาท'];
-    const causes = ['เมาสุรา','ชนท้าย','ตัดหน้า','เปลี่ยนช่องทาง','กลับรถ','ย้อนศร','ฝ่าฝืนสัญญาณไฟ','แซงในที่คับขัน','ทัศนวิสัยแย่','ใช้โทรศัพท์','ขาดความระมัดระวัง','อ่อนล้า/หลับใน','รถขัดข้อง'];
+    // รายการสาเหตุมาตรฐานของทั้งระบบ — ฟอร์มอุบัติเหตุ ฟอร์มผู้เสียชีวิต และกราฟ ใช้ชุดนี้ชุดเดียว
+    // เพิ่มตัวเลือกใหม่ที่นี่ที่เดียว แล้วทุกที่จะตามอัตโนมัติ
+    const causes = ['เมาสุรา','ขับรถประมาทหวาดเสียว','ชนท้าย','ตัดหน้า','เปลี่ยนช่องทาง','กลับรถ','ย้อนศร','ฝ่าฝืนสัญญาณไฟ','แซงในที่คับขัน','ทัศนวิสัยแย่','ใช้โทรศัพท์','ขาดความระมัดระวัง','อ่อนล้า/หลับใน','รถขัดข้อง'];
     const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -1394,7 +1396,31 @@
     function normalizeBodyPart(v){ v = clean(v); if (!v) return ''; if (v.indexOf('ศรีษะ') !== -1 || v.indexOf('ศีรษะ') !== -1 || v.indexOf('ลำคอ') !== -1) return 'ศรีษะ-ลำคอ'; if (v.indexOf('ลำตัว') !== -1 || v.indexOf('เอว') !== -1) return 'ลำตัว-เอว'; if (v.indexOf('แขน') !== -1 || v.indexOf('มือ') !== -1) return 'แขน-มือ'; if (v.indexOf('ขา') !== -1 || v.indexOf('เท้า') !== -1) return 'ขา-เท้า'; if (v.indexOf('หลาย') !== -1) return 'หลายส่วน'; return 'หลายส่วน'; }
     function normalizeRoadCharacter(v){ v = clean(v); if (!v) return ''; if (v.indexOf('ทางร่วม') !== -1) return 'ทางร่วม'; if (v.indexOf('ทางแยก') !== -1) return 'ทางแยก'; if (v.indexOf('จุดกลับรถ') !== -1) return 'จุดกลับรถ'; if (v.indexOf('ทางตรง') !== -1) return 'ทางตรง'; if (v.indexOf('ทางโค้ง') !== -1) return 'ทางโค้ง'; if (v.indexOf('สะพาน') !== -1) return 'สะพาน'; if (v.indexOf('ทางม้าลาย') !== -1) return 'ทางม้าลาย'; return 'อื่นๆ'; }
     function normalizeLocalAuthority(v){ v = clean(v); if (!v) return ''; if (v.indexOf('เทศบาล') !== -1 || v.indexOf('ในเขต') !== -1) return 'ในเขตเทศบาล'; if (v.indexOf('อบต') !== -1 || v.indexOf('อปท') !== -1 || v.indexOf('นอกเขต') !== -1) return 'นอกเขตเทศบาล'; return v; }
-    function normalizeCause(v){ v = clean(v); if (!v) return ''; if (v.indexOf('เมา') !== -1 || v.indexOf('สุรา') !== -1) return 'ขับรถเมาสุรา'; if (v.indexOf('ฝ่าฝืนสัญญาณไฟ') !== -1) return 'ฝ่าฝืนสัญญาณไฟคับขัน'; return v; }
+    /* สาเหตุ: ยึดรายการของฟอร์มบันทึกอุบัติเหตุ (ตัวแปร causes) เป็นมาตรฐานเดียวของทั้งระบบ
+       เดิมมีสามรายการที่ไม่ตรงกัน (ฟอร์มอุบัติเหตุ / ฟอร์มผู้เสียชีวิต / ป้ายในกราฟ)
+       รวมสถิติข้ามฟอร์มไม่ได้ และตัวแปลงค่ายังเปลี่ยนชื่อเป็นคำที่ไม่มีอยู่จริง
+       ('ฝ่าฝืนสัญญาณไฟ' -> 'ฝ่าฝืนสัญญาณไฟคับขัน' ซึ่งเกิดจากก๊อปปนกับ 'แซงในที่คับขัน')
+
+       ค่าที่จับคู่ไม่ได้ปล่อยผ่านตามเดิม ไม่ยัดลง 'อื่นๆ' — ข้อมูลเก่าที่ลงว่า 'เร็ว' ไว้
+       ต้องยังเห็นว่าเป็น 'เร็ว' เพราะการเงียบ ๆ จับไปหมวดอื่นคือการแก้ประวัติ */
+    function normalizeCause(v){
+      v = clean(v); if (!v) return '';
+      if (v.indexOf('เมา') !== -1 || v.indexOf('สุรา') !== -1) return 'เมาสุรา';
+      if (v.indexOf('สัญญาณไฟ') !== -1) return 'ฝ่าฝืนสัญญาณไฟ';
+      if (v.indexOf('แซง') !== -1) return 'แซงในที่คับขัน';
+      if (v.indexOf('หลับ') !== -1 || v.indexOf('อ่อนล้า') !== -1 || v.indexOf('ง่วง') !== -1) return 'อ่อนล้า/หลับใน';
+      if (v.indexOf('เปลี่ยนช่องทาง') !== -1) return 'เปลี่ยนช่องทาง';
+      if (v.indexOf('ตัดหน้า') !== -1) return 'ตัดหน้า';
+      if (v.indexOf('กลับรถ') !== -1) return 'กลับรถ';
+      if (v.indexOf('ย้อนศร') !== -1) return 'ย้อนศร';
+      if (v.indexOf('ทัศนวิสัย') !== -1) return 'ทัศนวิสัยแย่';
+      if (v.indexOf('โทรศัพท์') !== -1) return 'ใช้โทรศัพท์';
+      if (v.indexOf('หวาดเสียว') !== -1 || v.indexOf('ประมาท') !== -1) return 'ขับรถประมาทหวาดเสียว';
+      if (v.indexOf('ระมัดระวัง') !== -1) return 'ขาดความระมัดระวัง';
+      if (v.indexOf('ชนท้าย') !== -1) return 'ชนท้าย';
+      if (v.indexOf('ขัดข้อง') !== -1) return 'รถขัดข้อง';
+      return v;
+    }
     function displayVehicleOf(party){ if (!party) return ''; return party.vehicle === 'อื่นๆ' && party.vehicleOther ? party.vehicleOther : (party.vehicle || ''); }
 
     function personsFromRow(row) {
@@ -1495,7 +1521,7 @@
         roadCharacters: zeroCounts(['ทางตรง','ทางโค้ง','ทางแยก','ทางร่วม','จุดกลับรถ','สะพาน','ทางม้าลาย','อื่นๆ']),
         localAuthorities: zeroCounts(['ในเขตเทศบาล','นอกเขตเทศบาล']),
         subdistricts: zeroCounts(subdistricts),
-        causes: zeroCounts(['ขับรถเมาสุรา','ชนท้าย','ตัดหน้า','เปลี่ยนช่องทาง','กลับรถ','ย้อนศร','ฝ่าฝืนสัญญาณไฟคับขัน','ทัศนวิสัยแย่','ใช้โทรศัพท์','ขาดความระมัดระวัง','อ่อนล้า/หลับใน','รถขัดข้อง'])
+        causes: zeroCounts(causes)   // ใช้รายการมาตรฐานชุดเดียว ไม่ประกาศซ้ำให้หลุดกัน
       };
       const safetyInjuryMatrix = {};
       safetyOptions.forEach(s => safetyInjuryMatrix[s] = zeroCounts(injuries));
@@ -2477,6 +2503,9 @@
     function initDeathPage() {
       const subSelect = document.getElementById('dfSubdistrict');
       if (subSelect.options.length <= 1) fillSelect(subSelect, subdistrictsFull, 'เลือกตำบล');
+      // สาเหตุดึงจากรายการมาตรฐานชุดเดียวกับฟอร์มอุบัติเหตุ จะได้ไม่หลุดกันอีก
+      const causeSelect = document.getElementById('dfCause');
+      if (causeSelect.options.length <= 1) fillSelect(causeSelect, causes.concat(['อื่นๆ']), 'เลือกสาเหตุ');
       if (!document.getElementById('dfDatetime').value) {
         document.getElementById('dfDatetime').value = datetimeLocalNow();
       }
@@ -5757,9 +5786,9 @@
     async function initRoadnetPage() {
       if (!state.rnInit) {
         state.rnInit = true;
-        fillSelect('rnSubdistrict', subdistrictsFull);
-        fillSelect('rnPlSubdistrict', subdistrictsFull);
-        fillSelect('rnPlKind', RN_PLACE_KINDS);
+        rnFillOptions('rnSubdistrict', subdistrictsFull);
+        rnFillOptions('rnPlSubdistrict', subdistrictsFull);
+        rnFillOptions('rnPlKind', RN_PLACE_KINDS);
         document.getElementById('rnPlaceImportFile').addEventListener('change', ev => rnImportPlaces(ev));
         ['rnRoadSearch','rnSegSearch','rnPlaceSearch'].forEach(id => {
           const el = document.getElementById(id); if (el) el.value = '';
@@ -5768,7 +5797,9 @@
       await rnLoadData();
     }
 
-    function fillSelect(id, items) {
+    // ชื่อ fillSelect ถูกใช้ไปแล้วโดยฟังก์ชันกลางที่รับ element ไม่ใช่ id
+    // ถ้าตั้งชื่อซ้ำจะทับกันทั้งไฟล์ ตัวนี้จึงตั้งชื่อแยกและต่อท้าย option เดิมที่มีอยู่
+    function rnFillOptions(id, items) {
       const el = document.getElementById(id);
       if (!el) return;
       const keep = el.innerHTML;
@@ -6206,7 +6237,7 @@
     async function initCheckpointPage() {
       if (!state.cpInit) {
         state.cpInit = true;
-        fillSelect('cpSubdistrict', subdistrictsFull);
+        rnFillOptions('cpSubdistrict', subdistrictsFull);
         const t = new Date().toLocaleString('sv-SE', { timeZone:'Asia/Bangkok' }).slice(0, 10);
         document.getElementById('cpDate').value = t;
         document.getElementById('cpTo').value = t;
