@@ -593,6 +593,17 @@ canvas{max-width:100%!important;}
 .av-count{font-size:.72rem;font-weight:800;background:#c24e00;color:#fff;border-radius:999px;padding:4px 11px}
 .av-map{height:230px;margin:12px 0 0;border-top:1px solid rgba(209,222,237,.9);border-bottom:1px solid rgba(209,222,237,.9)}
 @media(max-width:860px){.av-map{display:none!important}} /* มือถือ: แผนที่อยู่ใน modal เท่านั้น */
+/* แถบเปิด/ปิดชั้นข้อมูลบนแผนที่ — ผูกกับแผนที่ จึงซ่อนพร้อมกันบนมือถือ */
+.av-lyrbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:9px 12px;background:#fafcff;border-bottom:1px solid rgba(209,222,237,.9)}
+.av-lyrlbl{font-size:.72rem;font-weight:800;color:#5b6b7f;display:inline-flex;align-items:center;gap:5px;margin-right:2px}
+.av-lyr{display:inline-flex;align-items:center;gap:5px;border:1px solid #d8e3f0;background:#fff;border-radius:999px;
+  padding:5px 11px;font-family:inherit;font-size:.72rem;font-weight:700;color:#33475f;cursor:pointer;opacity:.55;transition:all .15s ease}
+.av-lyr:hover{border-color:#123b7a}
+.av-lyr.on{opacity:1;border-color:#123b7a;background:#eef4ff;box-shadow:0 3px 9px rgba(18,59,122,.14)}
+.av-lyrdot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+@media(max-width:860px){.av-lyrbar{display:none!important}}
+/* แถวสถิติจุดเสี่ยงจากการวิเคราะห์ */
+.bs-row-hint{font-size:.72rem;color:#5b6b7f;padding-left:2px}
 .av-list{padding:10px 12px 12px;display:grid;gap:8px}
 .av-empty{text-align:center;color:#5b6b7f;font-size:.88rem;padding:22px 10px;line-height:1.7}
 .av-empty i{display:block;font-size:1.6rem;color:#16834b;margin-bottom:8px}
@@ -882,6 +893,15 @@ canvas{max-width:100%!important;}
           <h3 class="zone-title"><i class="fa-solid fa-diamond-turn-right" style="color:#c24e00;background:#fff1e6"></i> จุดจราจรที่ควรหลีกเลี่ยง <span class="av-count" id="avoidCount" style="display:none">0 จุด</span>
             <button type="button" class="av-hist-link" onclick="openAvoidHistory()"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติ</button></h3>
           <div id="avoidMap" class="av-map" style="display:none"></div>
+          <!-- ชั้นจุดเสี่ยงจากการวิเคราะห์ ซ้อนบนแผนที่จุดหลีกเลี่ยง — เปิด/ปิดได้ทีละชั้น -->
+          <div id="avoidLayerBar" class="av-lyrbar" style="display:none">
+            <span class="av-lyrlbl"><i class="fa-solid fa-layer-group"></i> ชั้นข้อมูล</span>
+            <button type="button" class="av-lyr" id="avLyrSites" onclick="toggleAvoidLayer('sites')"><span class="av-lyrdot" style="background:#e07000"></span> จุดเสี่ยง</button>
+            <button type="button" class="av-lyr" id="avLyrDrunk" onclick="toggleAvoidLayer('drunk')"><span class="av-lyrdot" style="background:#7c3aed"></span> จุดเมาขับ</button>
+            <button type="button" class="av-lyr" id="avLyrRed" onclick="toggleAvoidLayer('red')"><span class="av-lyrdot" style="background:#c1122f"></span> โซนแดง</button>
+            <button type="button" class="av-lyr" id="avLyrOrange" onclick="toggleAvoidLayer('orange')"><span class="av-lyrdot" style="background:#f59e0b"></span> โซนส้ม</button>
+            <button type="button" class="av-lyr" id="avLyrCorr" onclick="toggleAvoidLayer('corridor')"><i class="fa-solid fa-route"></i> เส้นทางเสี่ยง</button>
+          </div>
           <div id="avoidList" class="av-list"><div class="av-empty"><i class="fa-solid fa-circle-check"></i> ขณะนี้ไม่มีประกาศจุดหลีกเลี่ยง เดินทางได้ตามปกติ</div></div>
         </div>
 
@@ -905,6 +925,24 @@ canvas{max-width:100%!important;}
 
           <div id="officerStyleStats" class="stats-zone srow-zone">
             <h3 class="zone-title"><i class="fa-solid fa-chart-simple" style="color:#123b7a"></i> สถิติ สภ.เมืองนครสวรรค์</h3>
+            <!-- จุดเสี่ยงจากการวิเคราะห์ (ตาราง bs_sites/bs_zones ที่เจ้าหน้าที่เผยแพร่)
+                 ซ่อนทั้งบล็อกไว้ก่อนจนกว่าจะมีผลวิเคราะห์เผยแพร่จริง -->
+            <div class="srowx bs-row" id="bsRowSites" style="display:none">
+              <span class="srow-ic" style="background:#ffe9ec;color:#9f1239"><i class="fa-solid fa-location-crosshairs"></i></span>
+              <span class="srow-t"><b>จุดเสี่ยงอุบัติเหตุ</b><span>จากการวิเคราะห์ · จุด</span></span>
+              <span class="srow-nums">
+                <span class="ncell"><b id="bsStatSiteYear">-</b><span>รายปี</span></span>
+                <span class="ncell"><b id="bsStatSiteMonth">-</b><span>เดือนนี้</span></span></span>
+            </div>
+            <div class="srowx bs-row" id="bsRowDrunk" style="display:none">
+              <span class="srow-ic" style="background:#f3e8ff;color:#6d28d9"><i class="fa-solid fa-wine-bottle"></i></span>
+              <span class="srow-t"><b>จุดเสี่ยง (เมาขับ)</b><span>จุด / โซน</span></span>
+              <span class="srow-nums">
+                <span class="ncell"><b id="bsStatDrunkYear">-</b><span>รายปี</span></span>
+                <span class="ncell red"><b id="bsStatRedMonth">-</b><span>โซนแดง</span></span>
+                <span class="ncell orange"><b id="bsStatOrangeMonth">-</b><span>โซนส้ม</span></span></span>
+            </div>
+            <p class="stats-hint bs-row-hint" id="bsRowHint" style="display:none;margin:-2px 0 10px"></p>
             <div class="srowx">
               <span class="srow-ic" style="background:#e7eefb;color:#123b7a"><i class="fa-solid fa-car-burst"></i></span>
               <span class="srow-t"><b>อุบัติเหตุ</b><span>ครั้ง</span></span>
@@ -1597,6 +1635,123 @@ function initializeDashboard() {
   markHomeYearChip('default');
   refreshDashboard();
   loadAvoidPoints(); // ประกาศจุดหลีกเลี่ยง โหลดคู่ขนาน ไม่บล็อกสถิติ
+  loadBlackspotPublic(); // จุดเสี่ยงจากการวิเคราะห์ (ถ้าเจ้าหน้าที่เผยแพร่ไว้)
+}
+
+/* ============ จุดเสี่ยงอุบัติเหตุจากการวิเคราะห์ (เผยแพร่จากแอปเจ้าหน้าที่) ============
+   อ่านตรงจาก bs_sites / bs_zones ซึ่งเปิด public read เฉพาะแถวที่ published = true
+   ไม่มี PII — มีแต่พิกัด จำนวน และขอบเขตโซน */
+let bsPubSites = [], bsPubZones = [], bsLayerGroups = null, bsLayerOn = {};
+
+function bsPeakLabel(peak) {
+  if (!peak || !Array.isArray(peak.top) || !peak.top.length) return '';
+  return peak.top.map(t => t.label + ' (' + t.n + ')').join(', ');
+}
+
+async function loadBlackspotPublic() {
+  try {
+    const [siteRes, zoneRes] = await Promise.all([
+      sb.from('bs_sites').select('*').eq('published', true),
+      sb.from('bs_zones').select('*').eq('published', true)
+    ]);
+    if (siteRes.error) throw siteRes.error;
+    if (zoneRes.error) throw zoneRes.error;
+    bsPubSites = siteRes.data || [];
+    bsPubZones = zoneRes.data || [];
+  } catch (e) {
+    // ยังไม่ได้รัน sql/blackspot.sql หรือยังไม่เคยเผยแพร่ — ซ่อนบล็อกไว้เฉยๆ ไม่ล้มทั้งหน้า
+    bsPubSites = []; bsPubZones = [];
+  }
+  renderBlackspotStats();
+  renderBlackspotLayers();
+}
+
+function renderBlackspotStats() {
+  const rowSites = document.getElementById('bsRowSites');
+  const rowDrunk = document.getElementById('bsRowDrunk');
+  const hint = document.getElementById('bsRowHint');
+  if (!bsPubSites.length && !bsPubZones.length) {
+    rowSites.style.display = 'none'; rowDrunk.style.display = 'none'; hint.style.display = 'none';
+    return;
+  }
+  const general = bsPubSites.filter(s => s.rule !== 'drunk');
+  const drunk = bsPubSites.filter(s => s.rule === 'drunk');
+  // "เดือนนี้" = จุด/โซนที่มีเหตุเกิดจริงในเดือนที่วิเคราะห์ (นับไว้ตอนรันวิเคราะห์)
+  const monthly = arr => arr.filter(x => Number(x.month_count) > 0).length;
+  const set = (id, v) => document.getElementById(id).textContent = Number(v || 0).toLocaleString('th-TH');
+
+  set('bsStatSiteYear', general.length);
+  set('bsStatSiteMonth', monthly(general));
+  set('bsStatDrunkYear', drunk.length);
+  set('bsStatRedMonth', monthly(bsPubZones.filter(z => z.level === 'red')));
+  set('bsStatOrangeMonth', monthly(bsPubZones.filter(z => z.level === 'orange')));
+
+  rowSites.style.display = ''; rowDrunk.style.display = '';
+  const any = bsPubSites[0] || bsPubZones[0];
+  hint.style.display = '';
+  hint.innerHTML = '<i class="fa-solid fa-circle-info"></i> วิเคราะห์จากข้อมูลอุบัติเหตุจริง' +
+    (any && any.period_start ? ' ช่วง ' + thaiDateLabel(any.period_start) + ' ถึง ' + thaiDateLabel(any.period_end) : '') +
+    ' · โซนแดง/ส้มดูได้บนแผนที่จุดที่ควรหลีกเลี่ยง';
+}
+
+/* ---------- ชั้นจุดเสี่ยงบนแผนที่จุดหลีกเลี่ยง ---------- */
+function renderBlackspotLayers() {
+  if (!bsPubSites.length && !bsPubZones.length) return;
+  if (!ensureAvoidMap()) return;                 // มือถือไม่มีแผนที่ในหน้านี้
+  document.getElementById('avoidLayerBar').style.display = 'flex';
+  if (!bsLayerGroups) {
+    bsLayerGroups = { sites:L.layerGroup(), drunk:L.layerGroup(), red:L.layerGroup(), orange:L.layerGroup(), corridor:L.layerGroup() };
+  }
+  Object.values(bsLayerGroups).forEach(g => g.clearLayers());
+
+  bsPubSites.forEach(s => {
+    const isDrunk = s.rule === 'drunk';
+    const color = isDrunk ? '#7c3aed' : s.level === 'high' ? '#c1122f' : s.level === 'risk' ? '#e07000' : '#0284c7';
+    L.circleMarker([s.latitude, s.longitude], {
+      radius: Math.min(14, 5 + Math.sqrt(s.acc_count || 1) * 2.6), color:'#fff', weight:2, fillColor:color, fillOpacity:.85
+    }).bindTooltip('<b>' + avEsc(s.title) + '</b><br>อุบัติเหตุ ' + s.acc_count + ' ครั้ง' +
+        (s.fatal_count ? ' · เสียชีวิต ' + s.fatal_count : '') +
+        (bsPeakLabel(s.peak) ? '<br><span style="color:#c24e00">ช่วงเวลาที่เกิดบ่อย ' + avEsc(bsPeakLabel(s.peak)) + '</span>' : ''),
+      { direction:'top', opacity:.96 })
+      .addTo(bsLayerGroups[isDrunk ? 'drunk' : 'sites']);
+  });
+
+  bsPubZones.forEach(z => {
+    const red = z.level === 'red';
+    const poly = (z.polygon || []).map(c => [c[0], c[1]]);
+    if (poly.length >= 3) {
+      L.polygon(poly, { color: red ? '#c1122f' : '#e07000', weight:2, fillColor: red ? '#ef4444' : '#f59e0b', fillOpacity:.18 })
+        .bindTooltip('<b>' + avEsc(z.title) + '</b><br>จุดเมาแล้วขับ ' + z.point_count + ' จุด · พื้นที่ ' +
+          Number(z.area_km2 || 0).toFixed(2) + ' ตร.กม.' +
+          (bsPeakLabel(z.peak) ? '<br><span style="color:#c24e00">ช่วงเวลาที่เกิดบ่อย ' + avEsc(bsPeakLabel(z.peak)) + '</span>' : ''),
+          { direction:'top', opacity:.96 })
+        .addTo(bsLayerGroups[red ? 'red' : 'orange']);
+    }
+    if ((z.corridor || []).length >= 2) {
+      L.polyline(z.corridor.map(c => [c[0], c[1]]), { color:'#c1122f', weight:4, opacity:.8, dashArray:'10 6' })
+        .bindTooltip('เส้นทางเสี่ยง · ' + avEsc(z.title), { sticky:true })
+        .addTo(bsLayerGroups.corridor);
+    }
+  });
+
+  // เปิดโซนแดงไว้ตั้งแต่แรกเพราะเป็นข้อมูลที่ประชาชนควรเห็นที่สุด ที่เหลือให้กดเปิดเอง
+  if (!Object.keys(bsLayerOn).length) bsLayerOn = { red: true };
+  Object.keys(bsLayerGroups).forEach(k => applyAvoidLayer(k));
+}
+
+function applyAvoidLayer(name) {
+  const on = !!bsLayerOn[name];
+  const g = bsLayerGroups && bsLayerGroups[name];
+  if (!g || !avoidLMap) return;
+  if (on) { g.addTo(avoidLMap); if (['red','orange'].includes(name)) g.eachLayer(l => l.bringToBack && l.bringToBack()); }
+  else avoidLMap.removeLayer(g);
+  const btn = document.getElementById('avLyr' + { sites:'Sites', drunk:'Drunk', red:'Red', orange:'Orange', corridor:'Corr' }[name]);
+  if (btn) btn.classList.toggle('on', on);
+}
+
+function toggleAvoidLayer(name) {
+  bsLayerOn[name] = !bsLayerOn[name];
+  applyAvoidLayer(name);
 }
 
 /* ============ จุดจราจรที่ควรหลีกเลี่ยง (ประกาศโดย admin จากแอปเจ้าหน้าที่) ============ */
