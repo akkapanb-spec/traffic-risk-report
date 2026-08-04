@@ -108,6 +108,27 @@
     .cp-arrest label{display:flex;flex-direction:column;gap:3px;font-size:.66rem;color:#5b6b7f;font-weight:700;min-width:0}
     .cp-arrest .input,.cp-arrest .select{padding:6px 8px;font-size:.8rem;min-width:0}
     @media(max-width:820px){.cp-arrest{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    /* ---- ประชากรและอัตราความเสี่ยง ---- */
+    .pop-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+    .pop-num{font-size:3rem;font-weight:800;line-height:1;letter-spacing:-.02em}
+    .pop-unit{font-size:.8rem;color:#5b6b7f;font-weight:600;margin-left:8px}
+    .pop-sub{font-size:.76rem;color:#5b6b7f;margin-top:6px}
+    .pop-target{text-align:right;background:#f6f9fd;border:1px solid #e3ecf5;border-radius:12px;padding:9px 14px}
+    .pop-target-lb{display:block;font-size:.66rem;color:#5b6b7f;font-weight:700}
+    .pop-target-num{display:block;font-size:1.5rem;font-weight:800;color:#123b7a;line-height:1.15}
+    .pop-target-sub{display:block;font-size:.66rem;color:#5b6b7f}
+    .pop-bar{position:relative;height:14px;border-radius:999px;background:#eef2f7;overflow:visible}
+    .pop-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;transition:width .35s}
+    .pop-bar-target{position:absolute;top:-5px;width:3px;height:24px;background:#123b7a;border-radius:2px}
+    .pop-bar-lb{position:relative;height:18px;margin-top:5px;font-size:.62rem;color:#7d8ba0}
+    .pop-bar-lb span:nth-child(1){position:absolute;left:0}
+    .pop-bar-lb span:nth-child(2){position:absolute;transform:translateX(-50%);color:#123b7a;font-weight:700}
+    .pop-bar-lb span:nth-child(3){position:absolute;right:0}
+    .pop-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:14px}
+    .pop-fact{background:#fbfdff;border:1px solid #e6eef6;border-radius:12px;padding:9px 11px;text-align:center}
+    .pop-fact b{display:block;font-size:1.05rem;line-height:1.2}
+    .pop-fact span{display:block;font-size:.64rem;color:#5b6b7f;margin-top:3px}
+    @media(max-width:640px){.pop-facts{grid-template-columns:1fr}.pop-num{font-size:2.4rem}}
     /* ---- หลักฐานและข้อหาที่แจ้ง (คุณภาพข้อมูลสาเหตุ) ---- */
     .cq-toggle{display:flex;align-items:center;gap:9px;width:100%;border:1px solid #e4d4fb;cursor:pointer;
       background:#f9f5ff;color:#5b21b6;font-weight:700;font-size:.86rem;padding:10px 13px;border-radius:12px;font-family:inherit}
@@ -471,6 +492,7 @@
         <button class="nav-btn admin-item" data-page="blackspot" id="bsNavBtn" style="display:none" onclick="openPage('blackspot',this)"><i class="fa-solid fa-location-crosshairs"></i> จุดเสี่ยงอุบัติเหตุ (วิเคราะห์)</button>
         <button class="nav-btn admin-item" data-page="roadnet" id="rnNavBtn" style="display:none" onclick="openPage('roadnet',this)"><i class="fa-solid fa-road"></i> โครงข่ายถนนและสถานที่</button>
         <button class="nav-btn admin-item" data-page="checkpoint" id="cpNavBtn" style="display:none" onclick="openPage('checkpoint',this)"><i class="fa-solid fa-clipboard-check"></i> จุดตรวจกวดขันวินัยจราจร</button>
+        <button class="nav-btn admin-item" data-page="population" id="popNavBtn" style="display:none" onclick="openPage('population',this)"><i class="fa-solid fa-people-group"></i> ประชากรและอัตราความเสี่ยง</button>
         <!-- ลิงก์จริง ไม่ใช่ window.open — popup blocker บล็อก window.open แต่ไม่บล็อกการกดลิงก์ -->
         <a class="nav-btn admin-item" id="dutyNavBtn" style="display:none" href="https://akkapanb-spec.github.io/traffic-duty-daily/" target="_blank" rel="noopener" onclick="toggleDrawer(false)"><i class="fa-solid fa-clipboard-user"></i> ระบบการปฏิบัติหน้าที่จราจรประจำวัน <i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i></a>
       </nav>
@@ -1111,6 +1133,50 @@
               <input id="rnPlaceSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อ, ประเภท, ถนน, ตำบล..." oninput="rnRenderPlaces()">
               <div id="rnPlaceTable"><div class="loading-skeleton"></div></div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN: ประชากรและอัตราความเสี่ยง -->
+      <section id="page-population" class="page">
+        <div class="page-head"><div class="page-icon" style="background:linear-gradient(135deg,#f472b6,#9d174d)"><i class="fa-solid fa-people-group"></i></div><div><h2>ประชากรและอัตราความเสี่ยง</h2><p>อัตราการเสียชีวิตต่อประชากรแสนคน · เทียบเป้าหมายแผนแม่บท · สอบทานกับแหล่งข้อมูลอื่น</p></div></div>
+
+        <div id="popNotReady" class="card" style="display:none;border-color:#fecaca;background:#fff5f5">
+          <h3 class="card-title" style="color:#c1122f"><i class="fa-solid fa-triangle-exclamation"></i> ยังใช้งานไม่ได้</h3>
+          <p class="hint" style="margin:0">ยังไม่ได้รันไฟล์ <b>sql/population_1_tables.sql</b> และ <b>population_2_rpc.sql</b> ใน Supabase SQL Editor</p>
+        </div>
+
+        <div id="popReady" style="display:none">
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-bullseye"></i> อัตราการเสียชีวิตต่อประชากรแสนคน
+              <select id="popYear" class="select" style="margin-left:auto;max-width:130px" onchange="popLoad()"></select></h3>
+            <div id="popRateCard"><div class="loading-skeleton"></div></div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-map"></i> อัตรารายพื้นที่ <span id="popAreaTotal" class="pill">0 พื้นที่</span></h3>
+            <p class="hint" style="margin:0 0 10px">นับผู้เสียชีวิตจาก<b>พิกัด</b>ว่าตกอยู่ในเขตไหน ไม่ได้ใช้ชื่อตำบล เพราะเทศบาลนครฯ คร่อมหลายตำบล</p>
+            <div id="popAreaTable"><div class="loading-skeleton"></div></div>
+            <p class="dashboard-note" style="margin-top:10px"><i class="fa-solid fa-circle-info"></i> ผู้เสียชีวิตในพื้นที่รวมคนต่างถิ่นที่ขับผ่าน ทล.1 / ทล.117 แต่ตัวหารเป็นประชากรตามทะเบียนบ้าน พื้นที่ที่มีทางหลวงผ่านจึงมีอัตราสูงกว่าโดยธรรมชาติ ไม่ได้แปลว่าคนในพื้นที่ขับเสี่ยงกว่า</p>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-file-import"></i> นำเข้าข้อมูลประชากร</h3>
+            <p class="hint" style="margin:0 0 12px">ใช้ไฟล์สถิติประชากรจากกรมการปกครอง — เปิดไฟล์ <code>.xls</code> ด้วย Excel แล้ว <b>Save As → CSV</b> จากนั้นลากไฟล์มาวางที่นี่ ระบบอ่านรหัสภาษาไทยแบบเก่าได้เอง</p>
+            <div class="filter-bar">
+              <div class="field"><label for="popImpYear">ปีของข้อมูล (พ.ศ.)</label><input id="popImpYear" class="input" type="number" min="2560" max="2600" inputmode="numeric"></div>
+              <div class="field"><label for="popImpMonth">เดือน</label><select id="popImpMonth" class="select"><option value="">ทั้งปี</option></select></div>
+              <label class="btn btn-primary" for="popFile" style="align-self:end"><i class="fa-solid fa-upload"></i> เลือกไฟล์ CSV</label>
+              <input id="popFile" class="sr-only" type="file" accept=".csv,text/csv">
+            </div>
+            <div id="popPreview" style="margin-top:14px"></div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-code-compare"></i> สอบทานกับแหล่งข้อมูลอื่น
+              <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="reconAdd()"><i class="fa-solid fa-plus"></i> เพิ่มตัวเลข</button></h3>
+            <p class="hint" style="margin:0 0 12px">ตัวเลขจาก ThaiRSC / 3 ฐาน / สาธารณสุข <b>ไม่มีทางตรงกับเราเป๊ะ</b> เพราะนับคนละจังหวะ — เรานับตอนเกิดเหตุ ThaiRSC นับตอนเคลมสำเร็จ ที่ต้องจับตาคือช่องว่างที่กว้างผิดปกติ</p>
+            <div id="reconTable"><div class="loading-skeleton"></div></div>
           </div>
         </div>
       </section>
@@ -1931,6 +1997,7 @@
       document.getElementById('bsNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('rnNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('cpNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
+      document.getElementById('popNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('dutyNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminMenuTab').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.querySelector('.mobile-tabbar').classList.toggle('admin-mode', !!state.user.isAdmin);
@@ -2043,9 +2110,10 @@
       if (page === 'blackspot') initBlackspotPage();
       if (page === 'roadnet') initRoadnetPage();
       if (page === 'checkpoint') initCheckpointPage();
+      if (page === 'population') initPopulationPage();
       // ไฮไลต์ปุ่ม "ผู้ดูแล" ในแถบล่าง เมื่ออยู่ในหน้าใดหน้าหนึ่งของ admin
       const adminMenuTab = document.getElementById('adminMenuTab');
-      if (adminMenuTab) adminMenuTab.classList.toggle('active', ['admin','riskmanage','deaths','avoid','blackspot','roadnet','checkpoint'].includes(page));
+      if (adminMenuTab) adminMenuTab.classList.toggle('active', ['admin','riskmanage','deaths','avoid','blackspot','roadnet','checkpoint','population'].includes(page));
     }
 
     // ตัวเลขงานค้างบนเมนูผู้ดูแล (รออนุมัติสิทธิ์ + จุดเสี่ยงที่ยังไม่ตอบรับ)
@@ -2094,6 +2162,7 @@
           tile('blackspot',  '#fb7185,#9f1239', 'fa-location-crosshairs',  'จุดเสี่ยง<br>(วิเคราะห์)', '') +
           tile('roadnet',    '#34d399,#047857', 'fa-road',                 'โครงข่าย<br>ถนน',        '') +
           tile('checkpoint', '#818cf8,#4338ca', 'fa-clipboard-check',      'จุดตรวจ<br>กวดขัน',      '') +
+          tile('population', '#f472b6,#9d174d', 'fa-people-group',         'ประชากร<br>อัตราเสี่ยง',  '') +
           extTile(DUTY_SYSTEM_URL, '#38bdf8,#0369a1', 'fa-clipboard-user', 'ปฏิบัติหน้าที่<br>ประจำวัน');
       }
       sheet.classList.toggle('open', open);
@@ -5821,6 +5890,295 @@
       a.click();
       URL.revokeObjectURL(a.href);
     }
+
+    /* ============================================================
+       ประชากรและอัตราความเสี่ยง
+       ============================================================ */
+    const POP_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+      'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+    async function initPopulationPage() {
+      if (!state.popInit) {
+        state.popInit = true;
+        const y = Number(bkkStamp(new Date(), 'year'));
+        const sel = document.getElementById('popYear');
+        let html = '';
+        for (let i = y; i >= 2566 - 543; i--) html += '<option value="' + i + '">พ.ศ. ' + (i + 543) + '</option>';
+        sel.innerHTML = html;
+        document.getElementById('popImpYear').value = y + 543;
+        document.getElementById('popImpMonth').innerHTML = '<option value="">ทั้งปี</option>' +
+          POP_MONTHS.map((m, i) => '<option value="' + (i + 1) + '">' + m + '</option>').join('');
+        document.getElementById('popFile').addEventListener('change', popImportFile);
+      }
+      await popLoad();
+    }
+
+    async function popLoad() {
+      const year = Number(valueOf('popYear'));
+      try {
+        const [rates, admin] = await Promise.all([
+          rpc('pop_rates', { p_token: state.token, p_year: year }),
+          rpc('pop_admin_data', { p_token: state.token, p_year: year })
+        ]);
+        if (!rates || !rates.success) throw new Error((rates && rates.message) || 'โหลดข้อมูลไม่สำเร็จ');
+        state.popRates = rates; state.popAdmin = admin;
+        document.getElementById('popNotReady').style.display = 'none';
+        document.getElementById('popReady').style.display = 'block';
+        popRenderRate(rates);
+        await popRenderAreas(rates, year);
+        reconRender();
+      } catch (e) {
+        const missing = /pop_rates|pop_rows|does not exist|schema cache/i.test(e.message);
+        document.getElementById('popNotReady').style.display = missing ? 'block' : 'none';
+        document.getElementById('popReady').style.display = missing ? 'none' : 'block';
+        if (!missing) Swal.fire({ icon:'error', title:'โหลดข้อมูลไม่สำเร็จ', text:e.message });
+      }
+    }
+
+    function popRenderRate(r) {
+      const el = document.getElementById('popRateCard');
+      if (!r.population) {
+        el.innerHTML = '<p class="hint" style="margin:0"><i class="fa-solid fa-triangle-exclamation" style="color:#c2410c"></i> ยังไม่มีข้อมูลประชากร — นำเข้าไฟล์ด้านล่างก่อน จึงจะคำนวณอัตราได้</p>';
+        return;
+      }
+      const target = Number(r.target) || 12;
+      const rate = Number(r.rateProjected) || 0;
+      const over = target > 0 ? (rate - target) / target * 100 : 0;
+      const cut = Math.max(0, (Number(r.projected) || 0) - (Number(r.allowedDeaths) || 0));
+      const prev = Number(r.deathsPrevSamePeriod) || 0, now = Number(r.deaths) || 0;
+      const diff = now - prev;
+      // แถบเทียบเป้า: ยาวตามอัตราจริงเทียบกับสองเท่าของเป้า จะได้เห็นทั้งกรณีต่ำและสูงกว่าเป้า
+      const scale = Math.max(target * 2, rate * 1.15, 1);
+      const pos = v => Math.min(100, v / scale * 100);
+      const good = rate <= target;
+      el.innerHTML =
+        '<div class="pop-hero">' +
+          '<div><span class="pop-num" style="color:' + (good ? VIZ.status.good : VIZ.status.critical) + '">' + rate.toFixed(1) + '</span>' +
+            '<span class="pop-unit">ต่อประชากรแสนคน</span>' +
+            '<div class="pop-sub">คาดการณ์ทั้งปี ' + (Number(r.projected) || 0).toFixed(0) + ' ราย · ประชากร ' + Number(r.population).toLocaleString('th-TH') + ' คน</div></div>' +
+          '<div class="pop-target"><span class="pop-target-lb">เป้าหมาย 2570–2573</span>' +
+            '<span class="pop-target-num">' + target.toFixed(1) + '</span>' +
+            '<span class="pop-target-sub">ไม่เกิน ' + (Number(r.allowedDeaths) || 0).toFixed(0) + ' ราย/ปี</span></div>' +
+        '</div>' +
+        '<div class="pop-bar"><span class="pop-bar-fill" style="width:' + pos(rate) + '%;background:' + (good ? VIZ.status.good : VIZ.status.critical) + '"></span>' +
+          '<span class="pop-bar-target" style="left:' + pos(target) + '%"></span></div>' +
+        '<div class="pop-bar-lb"><span>0</span><span style="left:' + pos(target) + '%">เป้า ' + target + '</span><span>' + scale.toFixed(0) + '</span></div>' +
+        '<div class="pop-facts">' +
+          '<div class="pop-fact"><b>' + now + '</b><span>เสียชีวิตสะสม (' + r.daysElapsed + '/' + r.daysInYear + ' วัน)</span></div>' +
+          '<div class="pop-fact"><b style="color:' + (diff > 0 ? VIZ.status.critical : diff < 0 ? VIZ.status.good : VIZ.ink2) + '">' +
+            (diff > 0 ? '▲ +' : diff < 0 ? '▼ ' : '') + (diff === 0 ? 'เท่าเดิม' : diff) + '</b><span>เทียบช่วงเดียวกันปีก่อน (' + prev + ' ราย)</span></div>' +
+          (good ? '<div class="pop-fact"><b style="color:' + VIZ.status.good + '">ถึงเป้าแล้ว</b><span>ต่ำกว่าเป้า ' + Math.abs(over).toFixed(0) + '%</span></div>'
+                : '<div class="pop-fact"><b style="color:' + VIZ.status.critical + '">ต้องลด ' + cut.toFixed(0) + ' ราย/ปี</b><span>สูงกว่าเป้า ' + over.toFixed(0) + '%</span></div>') +
+        '</div>' +
+        '<p class="dashboard-note" style="margin-top:10px">อัตราสะสม ณ วันนี้คือ <b>' + (Number(r.rateToDate) || 0).toFixed(1) + '</b> ซึ่ง<b>ยังเทียบเป้ารายปีไม่ได้</b> เพราะยังไม่ครบปี ตัวที่ใช้เทียบคือค่าคาดการณ์ด้านบน</p>';
+    }
+
+    // นับผู้เสียชีวิตเข้าพื้นที่จากพิกัด ไม่ใช่ชื่อตำบล เพราะเทศบาลนครฯ คร่อมหลายตำบล
+    async function popRenderAreas(r, year) {
+      const areas = r.byArea || [];
+      document.getElementById('popAreaTotal').textContent = areas.length + ' พื้นที่';
+      if (!areas.length) {
+        document.getElementById('popAreaTable').innerHTML = '<p class="hint" style="margin:0">ยังไม่มีข้อมูลประชากร</p>';
+        return;
+      }
+      if (!state.tbGeo) {
+        try { state.tbGeo = await (await fetch('data/tambon_muang.json')).json(); } catch (e) { state.tbGeo = null; }
+      }
+      const deaths = await fetchDeathsFull();
+      const counts = {};
+      let unplaced = 0;
+      deaths.forEach(d => {
+        if (!d.incident_datetime) return;
+        if (Number(bkkStamp(d.incident_datetime, 'year')) !== year) return;
+        const p = (d.coordinates || '').split(',');
+        const lat = parseFloat(p[0]), lng = parseFloat(p[1]);
+        if (isNaN(lat) || isNaN(lng) || !state.tbGeo) { unplaced++; return; }
+        const f = state.tbGeo.features.find(f => pointInFeature([lat, lng], f));
+        if (f) counts[f.properties.tambon] = (counts[f.properties.tambon] || 0) + 1;
+        else unplaced++;
+      });
+      const rows = areas.map(a => {
+        const n = counts[a.map_area] || 0;
+        return { area: a.map_area, pop: a.population, hh: a.households, deaths: n,
+          rate: a.population > 0 ? n * 100000 / a.population : 0 };
+      }).sort((x, y2) => y2.rate - x.rate);
+      const target = Number(r.target) || 12;
+      document.getElementById('popAreaTable').innerHTML =
+        '<div class="table-wrap"><table class="data-table"><thead><tr><th>พื้นที่</th><th>ประชากร</th><th>ครัวเรือน</th><th>เสียชีวิต</th><th>ต่อแสนประชากร</th></tr></thead><tbody>' +
+        rows.map(x => '<tr><td><b>' + escapeHtml(x.area) + '</b></td>' +
+          '<td>' + x.pop.toLocaleString('th-TH') + '</td><td>' + x.hh.toLocaleString('th-TH') + '</td>' +
+          '<td>' + (x.deaths ? '<b style="color:#c1122f">' + x.deaths + '</b>' : '0') + '</td>' +
+          '<td><b style="color:' + (x.rate > target ? VIZ.status.critical : VIZ.status.good) + '">' + x.rate.toFixed(1) + '</b></td></tr>').join('') +
+        '</tbody></table></div>' +
+        (unplaced ? '<p class="hint" style="margin:8px 0 0">⚠ มีผู้เสียชีวิต ' + unplaced + ' รายที่ไม่มีพิกัดหรือพิกัดอยู่นอกเขตทั้ง 7 พื้นที่ จึงไม่ถูกนับในตารางนี้</p>' : '');
+    }
+
+    // point-in-polygon รองรับทั้ง Polygon และ MultiPolygon พร้อมรูเจาะ
+    function pointInFeature(pt, f) {
+      const pip = (p, ring) => {
+        let inside = false; const x = p[1], y = p[0];
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+          const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+          if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+        }
+        return inside;
+      };
+      const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+      return polys.some(rings => pip(pt, rings[0]) && !rings.slice(1).some(h => pip(pt, h)));
+    }
+
+    /* ---------- นำเข้าไฟล์ประชากรกรมการปกครอง ----------
+       ไฟล์แบ่งสองส่วน: อำเภอ->ตำบล คือนอกเขตเทศบาล, เทศบาล->ตำบล คือในเขต
+       สี่คอลัมน์ท้ายสุดคือ ชาย หญิง รวม และจำนวนบ้าน ตามลำดับ
+       Excel บันทึก CSV เป็นรหัส CP874 ไม่ใช่ UTF-8 จึงต้องเดารหัสให้ถูก */
+    function popDecode(buf) {
+      let txt = new TextDecoder('utf-8').decode(buf);
+      if (txt.indexOf('�') !== -1) {
+        try { txt = new TextDecoder('windows-874').decode(buf); } catch (e) { /* เบราว์เซอร์เก่าไม่รองรับ */ }
+      }
+      return txt.replace(/^﻿/, '');
+    }
+
+    function popParse(text) {
+      const rows = bsParseCsv(text);
+      const num = v => Number(String(v || '').replace(/[, ]/g, '')) || 0;
+      const pick = (r, name, parent, muni) => {
+        const L = r.length;
+        return { area_name: name, parent_name: parent, in_municipality: muni,
+          male: num(r[L - 4]), female: num(r[L - 3]), total: num(r[L - 2]), households: num(r[L - 1]) };
+      };
+      const out = [];
+      let parent = '', inMuni = false;
+      /* แถวเทศบาลต้องพักไว้ก่อน เพราะมีสองกรณีที่ประชากรจะหายไปเงียบ ๆ ถ้าอ่านแต่แถว "ตำบล"
+         1) เทศบาลที่ไม่มีแถวตำบลย่อยเลย ตัวเลขอยู่บนบรรทัดเทศบาลเอง
+         2) เทศบาลที่ยอดบนหัวมากกว่าผลรวมตำบลที่ระบุไว้ (พบจริง 2 แห่งในไฟล์ปี 2569)
+            ส่วนต่างคือคนที่ไม่ได้ถูกผูกกับตำบลไหน ต้องเก็บเป็นแถวเศษ ไม่ใช่ทิ้ง
+         ทั้งสองกรณีทำให้ยอดรวมไม่ตรงกับที่ไฟล์แจ้ง ซึ่งเป็นตัวเลขที่คนอื่นเอาไปตรวจได้ */
+      let pending = null;
+      const flush = () => {
+        if (pending) {
+          const rest = pending.row.total - pending.sum;
+          if (pending.children === 0) { if (pending.row.total) out.push(pending.row); }
+          else if (rest > 0) {
+            out.push(Object.assign({}, pending.row, { total: rest,
+              male: Math.max(0, pending.row.male - pending.male),
+              female: Math.max(0, pending.row.female - pending.female),
+              households: Math.max(0, pending.row.households - pending.households),
+              area_name: pending.row.area_name + ' (ไม่ระบุตำบล)' }));
+          }
+        }
+        pending = null;
+      };
+
+      rows.forEach(r => {
+        const name = String(r[0] || '').trim();
+        if (!name) return;
+        if (name.startsWith('จังหวัด')) { flush(); parent = name; inMuni = false; return; }
+        if (name.startsWith('อำเภอ'))  { flush(); parent = name; inMuni = false; return; }
+        if (name.startsWith('เทศบาล')) {
+          flush(); parent = name; inMuni = true;
+          pending = { children:0, sum:0, male:0, female:0, households:0,
+            row: pick(r, name.replace(/^เทศบาล(นคร|เมือง|ตำบล)?/, '').trim() || name, name, true) };
+          return;
+        }
+        if (!name.startsWith('ตำบล')) return;
+        const row = pick(r, name.replace(/^ตำบล/, '').trim(), parent, inMuni);
+        if (!row.total) return;
+        if (pending) {
+          pending.children++; pending.sum += row.total;
+          pending.male += row.male; pending.female += row.female; pending.households += row.households;
+        }
+        out.push(row);
+      });
+      flush();
+      return out;
+    }
+
+    async function popImportFile(ev) {
+      const file = ev.target.files && ev.target.files[0];
+      ev.target.value = '';
+      if (!file) return;
+      const yearBE = Number(valueOf('popImpYear'));
+      if (!yearBE) { Swal.fire({ icon:'warning', title:'กรุณาระบุปีของข้อมูล' }); return; }
+      try {
+        const parsed = popParse(popDecode(await file.arrayBuffer()));
+        if (!parsed.length) throw new Error('อ่านไฟล์ไม่พบแถวตำบล — ตรวจว่าบันทึกเป็น CSV จากไฟล์ต้นฉบับของกรมการปกครองแล้วหรือยัง');
+        const inM = parsed.filter(r => r.in_municipality), outM = parsed.filter(r => !r.in_municipality);
+        const sum = a => a.reduce((s, r) => s + r.total, 0);
+        document.getElementById('popPreview').innerHTML =
+          '<div class="table-wrap"><table class="data-table"><thead><tr><th>ส่วน</th><th>จำนวนแถว</th><th>ประชากรรวม</th></tr></thead><tbody>' +
+          '<tr><td>นอกเขตเทศบาล</td><td>' + outM.length + '</td><td>' + sum(outM).toLocaleString('th-TH') + '</td></tr>' +
+          '<tr><td>ในเขตเทศบาล</td><td>' + inM.length + '</td><td>' + sum(inM).toLocaleString('th-TH') + '</td></tr>' +
+          '<tr><td><b>รวม</b></td><td><b>' + parsed.length + '</b></td><td><b>' + sum(parsed).toLocaleString('th-TH') + '</b></td></tr>' +
+          '</tbody></table></div>';
+        const ask = await Swal.fire({ icon:'question', title:'นำเข้า ' + parsed.length + ' แถว?',
+          html:'งวด <b>' + yearBE + (valueOf('popImpMonth') ? ' เดือน' + POP_MONTHS[Number(valueOf('popImpMonth')) - 1] : ' ทั้งปี') + '</b><br>ข้อมูลงวดเดียวกันที่มีอยู่จะถูกแทนที่',
+          showCancelButton:true, confirmButtonText:'นำเข้า', cancelButtonText:'ยกเลิก' });
+        if (!ask.isConfirmed) return;
+        const res = await rpc('pop_import', { p_token: state.token, p_year: yearBE,
+          p_month: valueOf('popImpMonth') ? Number(valueOf('popImpMonth')) : null, p_rows: parsed });
+        if (!res || !res.success) throw new Error((res && res.message) || 'นำเข้าไม่สำเร็จ');
+        Swal.fire({ icon:'success', title:'นำเข้าแล้ว', text:res.message });
+        await popLoad();
+      } catch (e) { Swal.fire({ icon:'error', title:'นำเข้าไม่สำเร็จ', text:e.message }); }
+    }
+
+    /* ---------- ตารางสอบทาน ---------- */
+    function reconRender() {
+      const rows = (state.popAdmin && state.popAdmin.recon) || [];
+      const ours = Number((state.popRates || {}).deaths) || 0;
+      document.getElementById('reconTable').innerHTML = !rows.length
+        ? '<p class="hint" style="margin:0">ยังไม่มีตัวเลขเปรียบเทียบ — กด “เพิ่มตัวเลข” แล้วกรอกยอดจากเว็บของแหล่งนั้น</p>'
+        : '<div class="table-wrap"><table class="data-table"><thead><tr><th>แหล่งข้อมูล</th><th>พื้นที่</th><th>เสียชีวิต</th><th>ของเรา</th><th>ผลต่าง</th><th>สอบทาน</th><th></th></tr></thead><tbody>' +
+          rows.map(r => {
+            const d = (r.deaths || 0) - ours;
+            const wide = Math.abs(d) >= Math.max(3, ours * 0.25);
+            return '<tr><td><b>' + escapeHtml(r.source) + '</b></td>' +
+              '<td>' + escapeHtml(r.map_area || 'ทั้งพื้นที่') + '</td>' +
+              '<td>' + (r.deaths || 0) + '</td><td>' + ours + '</td>' +
+              '<td><b style="color:' + (wide ? VIZ.status.critical : VIZ.ink2) + '">' + (d > 0 ? '+' : '') + d + '</b>' +
+                (wide ? ' <span class="pill" style="background:#fee2e2;color:#991b1b">ห่างผิดปกติ</span>' : '') + '</td>' +
+              '<td>' + (r.checked ? '<span class="pill" style="background:#dcfce7;color:#14532d">สอบทานแล้ว</span>' : '<span class="pill">ยังไม่สอบทาน</span>') +
+                (r.finding ? '<br><span class="hint">' + escapeHtml(r.finding) + '</span>' : '') + '</td>' +
+              '<td><button class="btn btn-soft btn-sm" type="button" onclick="reconAdd(' + escapeHtml(JSON.stringify(r)).replace(/"/g, '&quot;') + ')"><i class="fa-solid fa-pen"></i></button></td></tr>';
+          }).join('') + '</tbody></table></div>';
+    }
+
+    async function reconAdd(existing) {
+      const e = existing || {};
+      const year = Number(valueOf('popYear')) + 543;
+      const areas = ((state.popRates || {}).byArea || []).map(a => a.map_area);
+      const r = await Swal.fire({
+        title: existing ? 'แก้ไขตัวเลขสอบทาน' : 'เพิ่มตัวเลขสอบทาน', width: 520,
+        html:
+          '<div style="text-align:left;display:grid;gap:9px">' +
+          '<label class="hint">แหล่งข้อมูล</label><select id="rcSource" class="swal2-input" style="margin:0;width:100%">' +
+            ['ThaiRSC','3 ฐาน','สาธารณสุข','อื่นๆ'].map(s => '<option' + (e.source === s ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>' +
+          '<label class="hint">พื้นที่</label><select id="rcArea" class="swal2-input" style="margin:0;width:100%"><option value="">ทั้งพื้นที่รับผิดชอบ</option>' +
+            areas.map(a => '<option' + (e.map_area === a ? ' selected' : '') + '>' + a + '</option>').join('') + '</select>' +
+          '<label class="hint">จำนวนผู้เสียชีวิตตามแหล่งนั้น</label><input id="rcDeaths" type="number" min="0" class="swal2-input" style="margin:0;width:100%" value="' + (e.deaths != null ? e.deaths : '') + '">' +
+          '<label class="hint"><input type="checkbox" id="rcChecked"' + (e.checked ? ' checked' : '') + '> สอบทานแล้ว</label>' +
+          '<label class="hint">สอบทานแล้วเจออะไร</label><input id="rcFinding" class="swal2-input" style="margin:0;width:100%" value="' + escapeHtml(e.finding || '') + '">' +
+          '</div>',
+        showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก',
+        preConfirm: () => ({
+          period_year: Number(valueOf('popYear')), period_month: null,
+          map_area: document.getElementById('rcArea').value,
+          source: document.getElementById('rcSource').value,
+          deaths: document.getElementById('rcDeaths').value,
+          checked: document.getElementById('rcChecked').checked,
+          finding: document.getElementById('rcFinding').value
+        })
+      });
+      if (!r.isConfirmed) return;
+      try {
+        const res = await rpc('recon_save', { p_token: state.token, p_row: r.value });
+        if (!res || !res.success) throw new Error((res && res.message) || 'บันทึกไม่สำเร็จ');
+        await popLoad();
+      } catch (err) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:err.message }); }
+    }
+
+    Object.assign(window, { initPopulationPage, popLoad, reconAdd });
 
     /* ============================================================
        คุณภาพข้อมูลสาเหตุ — หลักฐานที่รองรับ และข้อหาที่แจ้งจริง
