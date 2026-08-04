@@ -98,6 +98,8 @@
       border:0;cursor:pointer;background:#f6f9fd;border-radius:14px;font-family:inherit;
       font-weight:700;font-size:.68rem;line-height:1.25;color:#334155;text-align:center;transition:.15s;touch-action:manipulation}
     .adm-tile:hover{background:#eef4ff}
+    /* ไทล์/เมนูที่เป็นลิงก์ออกนอกระบบใช้ <a> จึงต้องล้างขีดเส้นใต้ให้เหมือนปุ่ม */
+    a.adm-tile,a.nav-btn{text-decoration:none;cursor:pointer}
     .adm-tile:active{transform:scale(.96)}
     .adm-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;font-size:1rem;
       box-shadow:0 4px 10px rgba(15,23,42,.18)}
@@ -155,6 +157,33 @@
     .legend-filter:hover{border-color:var(--blue);box-shadow:0 4px 12px rgba(29,78,216,.14)}
     .legend-filter.active{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(29,78,216,.25)}
     .legend-filter.active .dot{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+    /* ปุ่มเปิด/ปิดชั้นแผนที่ (.lyr): ติดแล้วเป็นทึบ ปิดแล้วจาง — อ่านสถานะได้จากสายตาเดียว
+       ใช้คลาสแยกเพื่อไม่ไปกระทบปุ่มกรองสีเดิมที่ใช้ .active */
+    .legend-filter.lyr.on{background:#eef4ff;border-color:#1d4ed8;box-shadow:0 4px 12px rgba(29,78,216,.16)}
+    .legend-filter.lyr:not(.on){opacity:.5}
+    /* หน้าวิเคราะห์จุดเสี่ยง */
+    .bs-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+    .bs-tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 16px;cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:700;color:var(--ink);transition:all .15s ease;display:flex;align-items:center;gap:7px}
+    .bs-tab:hover{border-color:#9f1239;color:#9f1239}
+    .bs-tab.active{background:linear-gradient(135deg,#fb7185,#9f1239);color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(159,18,57,.26)}
+    .bs-pane{display:none}.bs-pane.active{display:block}
+    .bs-doc p{margin:0 0 10px;font-size:.84rem;line-height:1.75;color:#334155}
+    .bs-doc p:last-child{margin-bottom:0}
+    .bs-warn{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:11px 13px;color:#9a3412 !important}
+    .bs-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
+    .bs-kpi{background:#f7fafc;border:1px solid var(--line);border-radius:14px;padding:11px 13px}
+    .bs-kpi b{display:block;font-size:1.45rem;font-weight:900;color:#0f2544;line-height:1.2}
+    .bs-kpi span{font-size:.74rem;color:#64748b;font-weight:700}
+    .bs-kpi.red b{color:#c1122f}.bs-kpi.orange b{color:#c24e00}.bs-kpi.purple b{color:#6d28d9}
+    .bs-lvl{border-radius:999px;padding:3px 9px;font-size:.7rem;font-weight:800;white-space:nowrap}
+    .bs-lvl.high{background:#fee2e2;color:#991b1b}.bs-lvl.risk{background:#ffedd5;color:#9a3412}.bs-lvl.watch{background:#e0f2fe;color:#075985}
+    .bs-lvl.red{background:#fee2e2;color:#991b1b}.bs-lvl.orange{background:#ffedd5;color:#9a3412}
+    .bs-table{width:100%;border-collapse:collapse;font-size:.8rem}
+    .bs-table th{text-align:left;padding:9px 10px;background:#f2f6fb;color:#334155;font-weight:800;white-space:nowrap;position:sticky;top:0}
+    .bs-table td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:top}
+    .bs-table tr:hover td{background:#f9fbfe}
+    .bs-scroll{overflow-x:auto;max-height:520px;overflow-y:auto;border:1px solid var(--line);border-radius:14px}
+    .bs-zone-pin{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:900;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.35)}
     .death-pin{width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid #dc2626;display:grid;place-items:center;color:#dc2626;font-size:12px;box-shadow:0 3px 10px rgba(220,38,38,.45)}
     /* หมุดรวม: จุดเดียวมีผู้เสียชีวิตหลายราย แสดงจำนวนแทนการวางหมุดทับกัน */
     .death-pin-multi{background:#dc2626;color:#fff;border-color:#fff;font-weight:900;font-size:13px;box-shadow:0 3px 12px rgba(220,38,38,.6)}
@@ -384,7 +413,9 @@
         <button class="nav-btn admin-item" data-page="riskmanage" id="riskNavBtn" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง <span class="menu-badge" id="badgeRisk" style="display:none"></span></button>
         <button class="nav-btn admin-item" data-page="deaths" id="deathsNavBtn" style="display:none" onclick="openPage('deaths',this)"><i class="fa-solid fa-skull-crossbones"></i> บันทึกข้อมูลผู้เสียชีวิต</button>
         <button class="nav-btn admin-item" data-page="avoid" id="avoidNavBtn" style="display:none" onclick="openPage('avoid',this)"><i class="fa-solid fa-diamond-turn-right"></i> ประกาศจุดหลีกเลี่ยง</button>
-        <button class="nav-btn admin-item" id="dutyNavBtn" type="button" style="display:none" onclick="toggleDrawer(false);openDutySystem()"><i class="fa-solid fa-clipboard-user"></i> ระบบการปฏิบัติหน้าที่จราจรประจำวัน <i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i></button>
+        <button class="nav-btn admin-item" data-page="blackspot" id="bsNavBtn" style="display:none" onclick="openPage('blackspot',this)"><i class="fa-solid fa-location-crosshairs"></i> จุดเสี่ยงอุบัติเหตุ (วิเคราะห์)</button>
+        <!-- ลิงก์จริง ไม่ใช่ window.open — popup blocker บล็อก window.open แต่ไม่บล็อกการกดลิงก์ -->
+        <a class="nav-btn admin-item" id="dutyNavBtn" style="display:none" href="https://akkapanb-spec.github.io/traffic-duty-daily/" target="_blank" rel="noopener" onclick="toggleDrawer(false)"><i class="fa-solid fa-clipboard-user"></i> ระบบการปฏิบัติหน้าที่จราจรประจำวัน <i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i></a>
       </nav>
     </aside>
 
@@ -539,6 +570,15 @@
             <button type="button" class="legend-item legend-filter" id="tambonBtn" style="margin-left:auto;border-color:#c7d8f5;color:#1d4ed8" onclick="toggleTambonOfficer()"><i class="fa-solid fa-draw-polygon"></i> เขตตำบล</button>
             <button type="button" class="legend-item legend-filter" id="deathOverlayBtn" style="border-color:#e9d5ff;color:#6d28d9" onclick="toggleDeathOverlay()"><i class="fa-solid fa-skull-crossbones"></i> เทียบจุดเสียชีวิต</button>
           </div>
+          <!-- ชั้นผลวิเคราะห์จุดเสี่ยง: ชุดเดียวกับที่เผยแพร่บนหน้าประชาชน -->
+          <div class="legend" id="mapRiskLegend" style="margin-top:-4px">
+            <span class="hint" style="margin:0;align-self:center;font-weight:700">ผลวิเคราะห์จุดเสี่ยง:</span>
+            <button type="button" class="legend-item legend-filter lyr" id="mapLyrSites"  onclick="toggleRiskLayer('sites')"><span class="dot orange"></span> จุดเสี่ยง</button>
+            <button type="button" class="legend-item legend-filter lyr" id="mapLyrDrunk"  onclick="toggleRiskLayer('drunk')"><span class="dot" style="background:#7c3aed"></span> จุดเมาแล้วขับ</button>
+            <button type="button" class="legend-item legend-filter lyr" id="mapLyrRed"    onclick="toggleRiskLayer('red')"><span class="dot" style="background:#c1122f"></span> โซนแดง</button>
+            <button type="button" class="legend-item legend-filter lyr" id="mapLyrOrange" onclick="toggleRiskLayer('orange')"><span class="dot" style="background:#e07000"></span> โซนส้ม</button>
+            <button type="button" class="legend-item legend-filter lyr" id="mapLyrCorr"   onclick="toggleRiskLayer('corridor')"><i class="fa-solid fa-route" style="font-size:.75rem"></i> Red Corridor</button>
+          </div>
           <div id="accidentMap" class="map-main"></div>
         </div>
         <div class="card"><h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการจุดเกิดเหตุ
@@ -658,6 +698,207 @@
           <h3 class="card-title"><i class="fa-solid fa-list-check"></i> ประกาศทั้งหมด <span id="avTotal" class="pill">0 รายการ</span>
             <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="loadAdvisories()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
           <div id="avList"><div class="loading-skeleton"></div></div>
+        </div>
+      </section>
+
+      <!-- ADMIN: วิเคราะห์จุดเสี่ยงอุบัติเหตุ (black spot) -->
+      <section id="page-blackspot" class="page">
+        <div class="page-head"><div class="page-icon" style="background:linear-gradient(135deg,#fb7185,#9f1239)"><i class="fa-solid fa-location-crosshairs"></i></div><div><h2>จุดเสี่ยงอุบัติเหตุ (วิเคราะห์)</h2><p>สำหรับผู้ดูแลระบบ · วิเคราะห์จุดเสี่ยงและโซนเมาแล้วขับจากข้อมูลจริง แล้วเผยแพร่ขึ้นหน้าประชาชน</p></div></div>
+
+        <div class="bs-tabs" role="tablist">
+          <button class="bs-tab active" type="button" role="tab" data-bstab="run"      onclick="bsTab('run')"><i class="fa-solid fa-wand-magic-sparkles"></i> ผลวิเคราะห์</button>
+          <button class="bs-tab" type="button" role="tab" data-bstab="features" onclick="bsTab('features')"><i class="fa-solid fa-road-circle-exclamation"></i> จุดกายภาพเสี่ยง</button>
+          <button class="bs-tab" type="button" role="tab" data-bstab="incidents" onclick="bsTab('incidents')"><i class="fa-solid fa-file-import"></i> จุดเกิดเหตุเพิ่มเติม</button>
+          <button class="bs-tab" type="button" role="tab" data-bstab="zones"    onclick="bsTab('zones')"><i class="fa-solid fa-draw-polygon"></i> โซนวาดเอง</button>
+          <button class="bs-tab" type="button" role="tab" data-bstab="settings" onclick="bsTab('settings')"><i class="fa-solid fa-sliders"></i> ตั้งค่าเกณฑ์</button>
+        </div>
+
+        <!-- ============ แท็บ: รันวิเคราะห์ + ผลลัพธ์ ============ -->
+        <div class="bs-pane active" id="bsPane-run">
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-wand-magic-sparkles"></i> รันการวิเคราะห์</h3>
+            <div class="filter-bar">
+              <div class="field"><label for="bsAsOf">วิเคราะห์ ณ วันที่</label><input id="bsAsOf" class="input" type="date"></div>
+              <button class="btn btn-primary" type="button" onclick="bsRun()"><i class="fa-solid fa-play"></i> วิเคราะห์</button>
+              <button class="btn btn-soft" type="button" onclick="bsSampleTest()"><i class="fa-solid fa-flask"></i> ทดสอบด้วยพิกัดสมมุติ</button>
+            </div>
+            <p class="hint" style="margin:10px 0 0">ใช้ข้อมูลอุบัติเหตุ + ผู้เสียชีวิต + จุดเกิดเหตุที่นำเข้าเพิ่ม ย้อนหลังตามหน้าต่างวิเคราะห์ในแท็บตั้งค่าเกณฑ์ · ผลจะยังเป็น <b>ฉบับร่าง</b> จนกดเผยแพร่</p>
+            <div id="bsRunSummary" style="margin-top:14px"></div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-map"></i> แผนที่ผลวิเคราะห์</h3>
+            <div class="legend" id="bsPreviewLegend">
+              <button type="button" class="legend-item legend-filter lyr on" id="bsLyrSites"  onclick="bsToggleLayer('sites')"><span class="dot orange"></span> จุดเสี่ยง</button>
+              <button type="button" class="legend-item legend-filter lyr on" id="bsLyrDrunk"  onclick="bsToggleLayer('drunk')"><span class="dot" style="background:#7c3aed"></span> จุดเมาแล้วขับ</button>
+              <button type="button" class="legend-item legend-filter lyr on" id="bsLyrRed"    onclick="bsToggleLayer('red')"><span class="dot" style="background:#c1122f"></span> โซนแดง</button>
+              <button type="button" class="legend-item legend-filter lyr on" id="bsLyrOrange" onclick="bsToggleLayer('orange')"><span class="dot" style="background:#e07000"></span> โซนส้ม</button>
+              <button type="button" class="legend-item legend-filter lyr on" id="bsLyrCorr"   onclick="bsToggleLayer('corridor')"><i class="fa-solid fa-route" style="font-size:.75rem"></i> Red Corridor</button>
+            </div>
+            <div id="bsPreviewMap" class="map-main"></div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-table-list"></i> จุดเสี่ยงที่วิเคราะห์ได้ <span id="bsSiteTotal" class="pill">0 จุด</span>
+              <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="bsExportSites()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button></h3>
+            <input id="bsSiteSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อจุด, ถนน, ตำบล, ระดับ..." oninput="bsRenderSites()">
+            <div id="bsSiteTable"><div class="hint">ยังไม่มีผลวิเคราะห์ — กดปุ่ม “วิเคราะห์” ด้านบน</div></div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-draw-polygon"></i> โซนที่วิเคราะห์ได้ <span id="bsZoneTotal" class="pill">0 โซน</span>
+              <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="bsExportZones()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
+              <button class="btn btn-soft btn-sm" type="button" onclick="bsExportGeoJson()"><i class="fa-solid fa-map-location-dot"></i> ส่งออก GeoJSON</button></h3>
+            <div id="bsZoneTable"><div class="hint">ยังไม่มีผลวิเคราะห์</div></div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-tower-broadcast"></i> เผยแพร่ขึ้นหน้าประชาชน</h3>
+            <p class="hint" style="margin:0 0 12px">บันทึกผลชุดนี้ลงฐานข้อมูล — ผลรอบก่อนจะถูกแทนที่ (โซนที่วาดเองไม่ถูกแตะต้อง)</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-primary" type="button" onclick="bsSave(true)"><i class="fa-solid fa-tower-broadcast"></i> บันทึก + เผยแพร่</button>
+              <button class="btn btn-soft" type="button" onclick="bsSave(false)"><i class="fa-solid fa-floppy-disk"></i> บันทึกเป็นฉบับร่าง</button>
+              <button class="btn btn-outline" type="button" style="color:#c1122f" onclick="bsUnpublish()"><i class="fa-solid fa-eye-slash"></i> ถอนออกจากหน้าประชาชน</button>
+            </div>
+            <p class="hint" id="bsPublishState" style="margin:12px 0 0"></p>
+          </div>
+        </div>
+
+        <!-- ============ แท็บ: จุดกายภาพเสี่ยง ============ -->
+        <div class="bs-pane" id="bsPane-features">
+          <div class="card">
+            <h3 class="card-title" id="bsFeatFormTitle"><i class="fa-solid fa-map-pin"></i> เพิ่มจุดกายภาพเสี่ยง</h3>
+            <p class="hint" style="margin:0 0 12px">ทางแยก / ทางร่วม / จุดกลับรถ / สะพาน / ทางโค้ง / เนินเขา / ทางลอด — ใช้เป็นศูนย์กลางของเกณฑ์ข้อ 1</p>
+            <form id="bsFeatForm" class="form-grid" onsubmit="return false">
+              <div class="field span-6"><label>ชนิดจุด <span class="req">*</span></label><select id="bsFeatKind" class="select"></select></div>
+              <div class="field span-6"><label>ชื่อจุด <span class="req">*</span></label><input id="bsFeatName" class="input" maxlength="120" placeholder="เช่น แยกสวรรค์วิถี-มาตุลี, สะพานเดชาติวงศ์"></div>
+              <div class="field span-6"><label>ถนน</label><input id="bsFeatRoad" class="input" maxlength="120" placeholder="เช่น ถ.สวรรค์วิถี"></div>
+              <div class="field span-6"><label>ตำบล</label><select id="bsFeatSub" class="select"><option value="">เลือกตำบล</option></select></div>
+              <div class="field span-6"><label>พิกัด (ละติจูด, ลองจิจูด) <span class="req">*</span></label>
+                <div style="display:flex;gap:8px"><input id="bsFeatCoords" class="input" style="flex:1;min-width:0" placeholder="15.7051, 100.1372">
+                  <button class="btn btn-soft" type="button" onclick="bsPickCoords('bsFeatCoords')" title="จิ้มเลือกบนแผนที่"><i class="fa-solid fa-map-location-dot"></i></button>
+                  <button class="btn btn-soft" type="button" onclick="bsUseGps('bsFeatCoords')" title="ใช้ตำแหน่งปัจจุบัน"><i class="fa-solid fa-crosshairs"></i></button></div></div>
+              <div class="field span-6"><label>เขตการปกครอง <span class="req">*</span></label>
+                <select id="bsFeatMuni" class="select">
+                  <option value="true">ในเขตเทศบาล — ใช้เกณฑ์ 200 ม.</option>
+                  <option value="false">นอกเขตเทศบาล — ใช้เกณฑ์ 500 ม.</option>
+                </select></div>
+              <div class="field span-12"><label>หมายเหตุ</label><input id="bsFeatNote" class="input" maxlength="200" placeholder="เช่น ทัศนวิสัยจำกัด มีเสาไฟบัง"></div>
+              <div class="field span-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn btn-primary" type="button" onclick="bsSaveFeature()"><i class="fa-solid fa-floppy-disk"></i> บันทึกจุด</button>
+                <button class="btn btn-soft" type="button" id="bsFeatCancelBtn" style="display:none" onclick="bsResetFeatureForm()"><i class="fa-solid fa-xmark"></i> ยกเลิกการแก้ไข</button>
+                <button class="btn btn-soft" type="button" onclick="bsResetFeatureForm()"><i class="fa-solid fa-broom"></i> ล้างฟอร์ม</button>
+              </div>
+            </form>
+          </div>
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-list"></i> จุดกายภาพทั้งหมด <span id="bsFeatTotal" class="pill">0 จุด</span>
+              <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="bsExportFeatures()"><i class="fa-solid fa-file-excel"></i> ส่งออก</button>
+              <label class="btn btn-soft btn-sm" for="bsFeatFile" style="margin:0"><i class="fa-solid fa-file-import"></i> นำเข้า CSV</label>
+              <input id="bsFeatFile" class="sr-only" type="file" accept=".csv,text/csv">
+              <button class="btn btn-soft btn-sm" type="button" onclick="bsLoadAdminData()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+            <input id="bsFeatSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อจุด, ถนน, ตำบล, ชนิด..." oninput="bsRenderFeatures()">
+            <div id="bsFeatTable"><div class="loading-skeleton"></div></div>
+          </div>
+        </div>
+
+        <!-- ============ แท็บ: จุดเกิดเหตุเพิ่มเติม ============ -->
+        <div class="bs-pane" id="bsPane-incidents">
+          <div class="card">
+            <h3 class="card-title" id="bsIncFormTitle"><i class="fa-solid fa-file-circle-plus"></i> เพิ่มจุดเกิดเหตุ</h3>
+            <p class="hint" style="margin:0 0 12px">สำหรับข้อมูลที่ไม่ได้บันทึกผ่านระบบเจ้าหน้าที่ (เช่น จากบันทึกประจำวัน หรือ ThaiRSC) เพื่อให้การวิเคราะห์มีข้อมูลมากที่สุด</p>
+            <form id="bsIncForm" class="form-grid" onsubmit="return false">
+              <div class="field span-6"><label>วันเวลาเกิดเหตุ <span class="req">*</span></label><input id="bsIncAt" class="input" type="datetime-local"></div>
+              <div class="field span-6"><label>พิกัด (ละติจูด, ลองจิจูด) <span class="req">*</span></label>
+                <div style="display:flex;gap:8px"><input id="bsIncCoords" class="input" style="flex:1;min-width:0" placeholder="15.7051, 100.1372">
+                  <button class="btn btn-soft" type="button" onclick="bsPickCoords('bsIncCoords')" title="จิ้มเลือกบนแผนที่"><i class="fa-solid fa-map-location-dot"></i></button>
+                  <button class="btn btn-soft" type="button" onclick="bsUseGps('bsIncCoords')" title="ใช้ตำแหน่งปัจจุบัน"><i class="fa-solid fa-crosshairs"></i></button></div></div>
+              <div class="field span-6"><label>สถานที่ / จุดสังเกต</label><input id="bsIncPlace" class="input" maxlength="150" placeholder="เช่น หน้าร้าน..., สวนสาธารณะ..."></div>
+              <div class="field span-6"><label>ถนน</label><input id="bsIncRoad" class="input" maxlength="120"></div>
+              <div class="field span-6"><label>ตำบล</label><select id="bsIncSub" class="select"><option value="">เลือกตำบล</option></select></div>
+              <div class="field span-6"><label>เขตการปกครอง</label>
+                <select id="bsIncMuni" class="select"><option value="true">ในเขตเทศบาล (200 ม.)</option><option value="false">นอกเขตเทศบาล (500 ม.)</option></select></div>
+              <div class="field span-6"><label>ทิศทางเดินรถ</label><input id="bsIncDir" class="input" list="bsDirList" maxlength="60" placeholder="เช่น ขาเข้าเมือง">
+                <datalist id="bsDirList"><option value="ขาเข้าเมือง"></option><option value="ขาออกเมือง"></option><option value="ขาขึ้น (เหนือ)"></option><option value="ขาล่อง (ใต้)"></option><option value="ฝั่งขาไป"></option><option value="ฝั่งขากลับ"></option></datalist>
+                <div class="hint">ใช้ในเกณฑ์ข้อ 2 — เว้นว่างได้ ระบบจะจับกลุ่มตามถนนอย่างเดียว</div></div>
+              <div class="field span-6"><label>ลักษณะทาง</label><select id="bsIncRoadChar" class="select"></select></div>
+              <div class="field span-6"><label>สาเหตุ</label><select id="bsIncCause" class="select"></select></div>
+              <div class="field span-6"><label>เมาแล้วขับ <span class="req">*</span></label>
+                <select id="bsIncDrunk" class="select"><option value="false">ไม่ใช่</option><option value="true">ใช่ — เข้าเกณฑ์ข้อ 3</option></select></div>
+              <div class="field span-6"><label>ผู้เสียชีวิต (ราย)</label><input id="bsIncFatal" class="input" type="number" min="0" max="50" value="0" inputmode="numeric"></div>
+              <div class="field span-6"><label>ผู้บาดเจ็บ (ราย)</label><input id="bsIncInj" class="input" type="number" min="0" max="99" value="0" inputmode="numeric"></div>
+              <div class="field span-6"><label>ที่มาข้อมูล</label><input id="bsIncSource" class="input" maxlength="80" placeholder="เช่น บันทึกประจำวัน, ThaiRSC"></div>
+              <div class="field span-12"><label>หมายเหตุ</label><input id="bsIncNote" class="input" maxlength="200"></div>
+              <div class="field span-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn btn-primary" type="button" onclick="bsSaveIncident()"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>
+                <button class="btn btn-soft" type="button" id="bsIncCancelBtn" style="display:none" onclick="bsResetIncidentForm()"><i class="fa-solid fa-xmark"></i> ยกเลิกการแก้ไข</button>
+                <button class="btn btn-soft" type="button" onclick="bsResetIncidentForm()"><i class="fa-solid fa-broom"></i> ล้างฟอร์ม</button>
+              </div>
+            </form>
+          </div>
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-list"></i> จุดเกิดเหตุที่นำเข้า <span id="bsIncTotal" class="pill">0 แถว</span>
+              <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="bsExportIncidents()"><i class="fa-solid fa-file-excel"></i> ส่งออก</button>
+              <label class="btn btn-soft btn-sm" for="bsIncFile" style="margin:0"><i class="fa-solid fa-file-import"></i> นำเข้า CSV</label>
+              <input id="bsIncFile" class="sr-only" type="file" accept=".csv,text/csv">
+              <button class="btn btn-soft btn-sm" type="button" onclick="bsLoadAdminData()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+            <input id="bsIncSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: สถานที่, ถนน, ตำบล, ที่มา, ปี..." oninput="bsRenderIncidents()">
+            <div id="bsIncTable"><div class="loading-skeleton"></div></div>
+          </div>
+        </div>
+
+        <!-- ============ แท็บ: โซนวาดเอง ============ -->
+        <div class="bs-pane" id="bsPane-zones">
+          <div class="card">
+            <h3 class="card-title" id="bsZoneFormTitle"><i class="fa-solid fa-draw-polygon"></i> วาดโซนเอง</h3>
+            <p class="hint" style="margin:0 0 12px">คลิกบนแผนที่เพื่อวางมุมของพื้นที่ (อย่างน้อย 3 จุด) — ใช้ประกาศพื้นที่ที่รู้อยู่แล้วโดยไม่ต้องรอผลวิเคราะห์</p>
+            <form class="form-grid" onsubmit="return false">
+              <div class="field span-6"><label>ชื่อโซน <span class="req">*</span></label><input id="bsZTitle" class="input" maxlength="90" placeholder="เช่น ย่านสถานบันเทิงถนน..."></div>
+              <div class="field span-6"><label>ระดับ <span class="req">*</span></label>
+                <select id="bsZLevel" class="select"><option value="red">โซนแดง</option><option value="orange">โซนส้ม</option></select></div>
+              <div class="field span-12"><label>หมายเหตุ / แนวทางปฏิบัติ</label><input id="bsZNote" class="input" maxlength="200" placeholder="เช่น ตั้งจุดตรวจก่อนเข้าพื้นที่ ช่วง 22.00-02.00 น."></div>
+              <div class="field span-12">
+                <label>พื้นที่ <span class="req">*</span> <span class="hint" id="bsZInfo" style="margin-left:6px">ยังไม่ได้วาด</span></label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                  <button class="btn btn-soft btn-sm" type="button" onclick="bsZoneUndo()"><i class="fa-solid fa-rotate-left"></i> ถอยกลับ 1 จุด</button>
+                  <button class="btn btn-soft btn-sm" type="button" onclick="bsZoneClear()"><i class="fa-solid fa-eraser"></i> ล้างรูป</button>
+                </div>
+                <div id="bsZoneDrawMap" class="map-main" style="height:400px"></div>
+              </div>
+              <div class="field span-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn btn-primary" type="button" onclick="bsSaveZone()"><i class="fa-solid fa-floppy-disk"></i> บันทึกโซน</button>
+                <button class="btn btn-soft" type="button" id="bsZCancelBtn" style="display:none" onclick="bsResetZoneForm()"><i class="fa-solid fa-xmark"></i> ยกเลิกการแก้ไข</button>
+                <button class="btn btn-soft" type="button" onclick="bsResetZoneForm()"><i class="fa-solid fa-broom"></i> ล้างฟอร์ม</button>
+              </div>
+            </form>
+          </div>
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-list"></i> โซนที่วาดเอง <span id="bsManualTotal" class="pill">0 โซน</span>
+              <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="bsLoadAdminData()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+            <div id="bsManualTable"><div class="loading-skeleton"></div></div>
+          </div>
+        </div>
+
+        <!-- ============ แท็บ: ตั้งค่าเกณฑ์ ============ -->
+        <div class="bs-pane" id="bsPane-settings">
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-sliders"></i> ค่าเกณฑ์การวิเคราะห์</h3>
+            <p class="hint" style="margin:0 0 12px">แก้แล้วกดบันทึก จะมีผลกับการวิเคราะห์รอบถัดไปทันที ไม่ต้องแก้โค้ด</p>
+            <form class="form-grid" onsubmit="return false" id="bsSettingsForm"></form>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+              <button class="btn btn-primary" type="button" onclick="bsSaveSettings()"><i class="fa-solid fa-floppy-disk"></i> บันทึกค่าเกณฑ์</button>
+              <button class="btn btn-soft" type="button" onclick="bsResetSettings()"><i class="fa-solid fa-rotate-left"></i> คืนค่าตั้งต้น</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-circle-info"></i> เกณฑ์ที่ระบบใช้ตัดสิน</h3>
+            <div class="bs-doc">
+              <p><b>ข้อ 1 — จุดกายภาพเสี่ยง</b> จุดเกิดเหตุที่อยู่ห่างจากทางแยก/ทางร่วม/จุดกลับรถ/สะพาน/ทางโค้ง/เนินเขา/ทางลอด ไม่เกิน <b>200 ม. ในเขตเทศบาล</b> หรือ <b>500 ม. นอกเขต</b> นับเป็นของจุดกายภาพนั้น เมื่อคะแนนรวมถึงเกณฑ์จึงขึ้นเป็นจุดเสี่ยง (อุบัติเหตุมีผู้เสียชีวิตคิดคะแนนเป็น 2 เท่า) ถ้ายังไม่ได้บันทึกจุดกายภาพไว้ ระบบจะอนุมานตำแหน่งจากช่อง “ลักษณะทาง” ของตัวเหตุเอง โดยจับกลุ่มด้วยระยะ BLACK_SPOT_DISTANCE</p>
+              <p><b>ข้อ 2 — ช่วงถนนเสี่ยง</b> จุดเกิดเหตุตั้งแต่ 2 จุดบนถนนและทิศทางเดียวกัน ที่อยู่ห่างจาก<b>กึ่งกลางของทุกจุดในกลุ่ม</b>ไม่เกินเกณฑ์เดียวกับข้อ 1</p>
+              <p><b>ข้อ 3 — เมาแล้วขับ</b> นับจุดเมาแล้วขับ<b>ทุกราย</b> แล้วจับกลุ่ม: กลุ่มที่เกาะกันภายใน RED_CLUSTER_DISTANCE และมีจำนวนถึงเกณฑ์ = <b>โซนแดง</b> พร้อมลาก <b>Red Corridor</b> เชื่อมจุดในกลุ่ม · ขยายด้วยจุดที่อยู่ในระยะ PATROL_ZONE_DISTANCE = <b>โซนส้ม</b> (เขตวางกำลัง/ตั้งจุดตรวจ) · ทุกโซนสรุปช่วงเวลาเกิดเหตุแบบถัง 2 ชั่วโมงไว้ให้ด้วย</p>
+              <p class="bs-warn"><i class="fa-solid fa-triangle-exclamation"></i> <b>ข้อจำกัดที่ต้องรู้</b> เกณฑ์ข้อ 1/2 กำหนดให้วัดด้วย <b>ระยะทางตามถนน</b> แต่ระบบไม่มี routing engine จึงประมาณจากระยะเส้นตรงคูณด้วยตัวคูณอ้อม (detourFactor) ตัวเลขที่ได้จึงเป็นค่าประมาณ ไม่ใช่ระยะทางจริงบนถนน · ส่วน “ทิศทางเดินรถ” ตารางอุบัติเหตุเดิมไม่ได้เก็บไว้ ระบบจะจับกลุ่มตามชื่อถนนอย่างเดียว เว้นแต่ระบุทิศทางเองในแท็บจุดเกิดเหตุเพิ่มเติม</p>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -1200,6 +1441,84 @@
       catch (e) { state.deathOverlayOn = false; Swal.fire({ icon:'error', title:'โหลดข้อมูลผู้เสียชีวิตไม่สำเร็จ', text:e.message }); }
     }
 
+    /* ============ ชั้นผลวิเคราะห์จุดเสี่ยงบนแผนที่อุบัติเหตุ ============
+       อ่านชุดที่เผยแพร่แล้วเหมือนที่ประชาชนเห็น เจ้าหน้าที่จึงเทียบได้ว่า
+       จุดที่ประกาศไปตรงกับหมุดเหตุจริงตามช่วงที่กำลังกรองอยู่หรือไม่ */
+    async function fetchRiskLayers(force) {
+      if (state.riskLayerData && !force) return state.riskLayerData;
+      const [siteRes, zoneRes] = await Promise.all([
+        db.from('bs_sites').select('*').eq('published', true),
+        db.from('bs_zones').select('*').eq('published', true)
+      ]);
+      if (siteRes.error) throw new Error(siteRes.error.message);
+      if (zoneRes.error) throw new Error(zoneRes.error.message);
+      state.riskLayerData = { sites: siteRes.data || [], zones: zoneRes.data || [] };
+      return state.riskLayerData;
+    }
+    function riskLayerGroups() {
+      if (!state.riskGroups) {
+        state.riskGroups = { sites:L.layerGroup(), drunk:L.layerGroup(), red:L.layerGroup(), orange:L.layerGroup(), corridor:L.layerGroup() };
+      }
+      return state.riskGroups;
+    }
+    async function buildRiskLayers() {
+      initAccidentMap();
+      const data = await fetchRiskLayers();
+      const g = riskLayerGroups();
+      Object.values(g).forEach(l => l.clearLayers());
+      data.sites.forEach(s => {
+        const drunk = s.rule === 'drunk';
+        const color = drunk ? '#7c3aed' : s.level === 'high' ? '#c1122f' : s.level === 'risk' ? '#e07000' : '#0284c7';
+        L.circleMarker([s.latitude, s.longitude], {
+          radius: Math.min(16, 5 + Math.sqrt(s.acc_count || 1) * 3), color:'#fff', weight:2, fillColor:color, fillOpacity:.85
+        }).bindPopup('<div class="popup"><h3 style="color:' + color + '">' + escapeHtml(s.title) + '</h3>' +
+          '<div class="popup-row">อุบัติเหตุ <b>' + s.acc_count + '</b> ครั้ง · เสียชีวิต <b>' + s.fatal_count + '</b> · เมาแล้วขับ <b>' + s.drunk_count + '</b></div>' +
+          '<div class="popup-row">รัศมีเกณฑ์ ' + s.radius_m + ' ม.' + (s.confirmed ? ' · <b style="color:#c1122f">ยืนยันระยะยาว</b>' : '') + '</div>' +
+          (bsPeakText(s.peak) ? '<div class="popup-row">ช่วงเวลาที่เกิดบ่อย: <b>' + escapeHtml(bsPeakText(s.peak)) + '</b></div>' : '') + '</div>')
+          .addTo(g[drunk ? 'drunk' : 'sites']);
+      });
+      data.zones.forEach(z => {
+        const red = z.level === 'red';
+        const poly = (z.polygon || []).map(c => [c[0], c[1]]);
+        if (poly.length >= 3) {
+          L.polygon(poly, { color: red ? '#c1122f' : '#e07000', weight:2, fillColor: red ? '#ef4444' : '#f59e0b', fillOpacity:.18 })
+            .bindPopup('<div class="popup"><h3 style="color:' + (red ? '#c1122f' : '#c24e00') + '">' + escapeHtml(z.title) + '</h3>' +
+              '<div class="popup-row">จุดเมาแล้วขับ <b>' + z.point_count + '</b> · เสียชีวิต <b>' + z.fatal_count + '</b> · พื้นที่ <b>' + Number(z.area_km2 || 0).toFixed(2) + '</b> ตร.กม.</div>' +
+              (bsPeakText(z.peak) ? '<div class="popup-row">ช่วงเวลาที่เกิดบ่อย: <b>' + escapeHtml(bsPeakText(z.peak)) + '</b></div>' : '') +
+              (z.note ? '<div class="popup-row">' + escapeHtml(z.note) + '</div>' : '') + '</div>')
+            .addTo(g[red ? 'red' : 'orange']);
+        }
+        if ((z.corridor || []).length >= 2) {
+          L.polyline(z.corridor.map(c => [c[0], c[1]]), { color:'#c1122f', weight:4, opacity:.85, dashArray:'10 6' })
+            .bindTooltip('Red Corridor · ' + escapeHtml(z.title), { sticky:true }).addTo(g.corridor);
+        }
+      });
+      state.riskLayersBuilt = true;
+    }
+    async function toggleRiskLayer(name) {
+      const on = !(state.riskLayerOn || {})[name];
+      state.riskLayerOn = Object.assign({}, state.riskLayerOn, { [name]: on });
+      const btn = document.getElementById('mapLyr' + { sites:'Sites', drunk:'Drunk', red:'Red', orange:'Orange', corridor:'Corr' }[name]);
+      if (!on) {
+        if (state.riskGroups && state.accidentMap) state.accidentMap.removeLayer(state.riskGroups[name]);
+        if (btn) btn.classList.remove('on');
+        return;
+      }
+      try {
+        if (!state.riskLayersBuilt) await buildRiskLayers();
+        const g = riskLayerGroups()[name];
+        g.addTo(state.accidentMap);
+        // โซนต้องอยู่หลังหมุด ไม่งั้นบังการคลิกหมุดอุบัติเหตุ
+        if (['red','orange'].includes(name) && g.eachLayer) g.eachLayer(l => l.bringToBack && l.bringToBack());
+        if (btn) btn.classList.add('on');
+      } catch (e) {
+        state.riskLayerOn[name] = false;
+        Swal.fire({ icon:'error', title:'โหลดชั้นข้อมูลไม่สำเร็จ',
+          text: /bs_sites|bs_zones|does not exist|schema cache/i.test(e.message)
+            ? 'ยังไม่ได้รันไฟล์ sql/blackspot.sql ใน Supabase SQL Editor' : e.message });
+      }
+    }
+
     /* ============ Session ============ */
     async function restoreSession() {
       const saved = localStorage.getItem(SESSION_KEY);
@@ -1240,6 +1559,7 @@
       document.getElementById('riskNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('deathsNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('avoidNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
+      document.getElementById('bsNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('dutyNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminMenuTab').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.querySelector('.mobile-tabbar').classList.toggle('admin-mode', !!state.user.isAdmin);
@@ -1349,9 +1669,10 @@
       if (page === 'riskmanage') loadRiskManage();
       if (page === 'deaths') initDeathPage();
       if (page === 'avoid') initAvoidPage();
+      if (page === 'blackspot') initBlackspotPage();
       // ไฮไลต์ปุ่ม "ผู้ดูแล" ในแถบล่าง เมื่ออยู่ในหน้าใดหน้าหนึ่งของ admin
       const adminMenuTab = document.getElementById('adminMenuTab');
-      if (adminMenuTab) adminMenuTab.classList.toggle('active', ['admin','riskmanage','deaths','avoid'].includes(page));
+      if (adminMenuTab) adminMenuTab.classList.toggle('active', ['admin','riskmanage','deaths','avoid','blackspot'].includes(page));
     }
 
     // ตัวเลขงานค้างบนเมนูผู้ดูแล (รออนุมัติสิทธิ์ + จุดเสี่ยงที่ยังไม่ตอบรับ)
@@ -1387,24 +1708,36 @@
           '<span class="adm-ic" style="background:linear-gradient(135deg,' + grad + ')"><i class="fa-solid ' + icon + '"></i></span>' +
           '<span>' + label + '</span></button>';
         // ไทล์ลิงก์นอกระบบ: หุบแผงแล้วเปิดแท็บใหม่ ไม่ใช่สลับหน้าใน SPA
-        const extTile = (fn, grad, icon, label) =>
-          '<button class="adm-tile" role="menuitem" onclick="openAdminMenu(false);' + fn + '()">' +
+        // ใช้ <a> จริง เพราะ popup blocker บล็อก window.open แต่ไม่บล็อกการกดลิงก์
+        const extTile = (url, grad, icon, label) =>
+          '<a class="adm-tile" role="menuitem" href="' + url + '" target="_blank" rel="noopener" onclick="openAdminMenu(false)">' +
           '<span class="adm-ic" style="background:linear-gradient(135deg,' + grad + ')"><i class="fa-solid ' + icon + '"></i></span>' +
-          '<span>' + label + '</span><i class="fa-solid fa-arrow-up-right-from-square adm-ext"></i></button>';
+          '<span>' + label + '</span><i class="fa-solid fa-arrow-up-right-from-square adm-ext"></i></a>';
         document.getElementById('admGrid').innerHTML =
           tile('admin',      '#a78bfa,#6d28d9', 'fa-user-check',           'อนุมัติ<br>สิทธิ์',      badge(b.officers)) +
           tile('riskmanage', '#f87171,#b91c1c', 'fa-triangle-exclamation', 'จัดการ<br>จุดเสี่ยง',    badge(b.risk)) +
           tile('deaths',     '#607a9b,#33475f', 'fa-skull-crossbones',     'บันทึก<br>ผู้เสียชีวิต', '') +
           tile('avoid',      '#f59e0b,#c24e00', 'fa-diamond-turn-right',   'ประกาศ<br>หลีกเลี่ยง',   '') +
-          extTile('openDutySystem', '#38bdf8,#0369a1', 'fa-clipboard-user', 'ปฏิบัติหน้าที่<br>ประจำวัน');
+          tile('blackspot',  '#fb7185,#9f1239', 'fa-location-crosshairs',  'จุดเสี่ยง<br>(วิเคราะห์)', '') +
+          extTile(DUTY_SYSTEM_URL, '#38bdf8,#0369a1', 'fa-clipboard-user', 'ปฏิบัติหน้าที่<br>ประจำวัน');
       }
       sheet.classList.toggle('open', open);
       bd.classList.toggle('open', open);
       if (tab) tab.setAttribute('aria-expanded', String(open));
     }
-    // ระบบเดิมบน Google Apps Script — คนละระบบกับเว็บนี้ จึงเปิดแท็บใหม่ ไม่ใช่หน้าใน SPA
+    // ระบบเวรประจำวันเป็นคนละเว็บกับที่นี่ จึงเปิดแท็บใหม่ ไม่ใช่หน้าใน SPA
     const DUTY_SYSTEM_URL = 'https://akkapanb-spec.github.io/traffic-duty-daily/';
-    function openDutySystem() { window.open(DUTY_SYSTEM_URL, '_blank', 'noopener'); }
+    // เมนูทั้งสองจุดใช้ <a href> แล้ว ฟังก์ชันนี้เหลือไว้เผื่อเรียกจากที่อื่น
+    // ถ้า popup ถูกบล็อก (window.open คืน null) ให้โชว์ลิงก์ให้กดเองแทนการเงียบหาย
+    function openDutySystem() {
+      const w = window.open(DUTY_SYSTEM_URL, '_blank', 'noopener');
+      if (w) return;
+      Swal.fire({
+        icon: 'info', title: 'เบราว์เซอร์บล็อกการเปิดแท็บใหม่',
+        html: '<a href="' + DUTY_SYSTEM_URL + '" target="_blank" rel="noopener" style="font-weight:700;color:#1d4ed8">' +
+              'กดที่นี่เพื่อเปิดระบบการปฏิบัติหน้าที่จราจรประจำวัน</a>'
+      });
+    }
 
     function adminMenuGo(page) {
       openAdminMenu(false);
@@ -3712,6 +4045,1284 @@
       );
     }
 
+    /* ============================================================
+       ระบบวิเคราะห์จุดเสี่ยงอุบัติเหตุ (Black Spot / Risk Zone Analysis)
+
+       ทำไมคำนวณฝั่งเว็บ: ต้องจับกลุ่มเชิงพื้นที่ + หา convex hull + วาด polygon
+       ซึ่งเขียนใน plpgsql แล้วช้าและแก้ยาก ฝั่ง DB จึงเก็บแค่ "ข้อมูลเข้า"
+       (bs_features / bs_incidents / bs_settings) กับ "ผลลัพธ์" (bs_sites / bs_zones)
+       แล้ว admin กดเผยแพร่เองก่อนขึ้นหน้าประชาชน
+
+       เกณฑ์ (ดู sql/blackspot.sql):
+         ข้อ 1 จุดเกิดเหตุใกล้จุดกายภาพเสี่ยง (แยก/ร่วม/กลับรถ/สะพาน/โค้ง/เนิน/ทางลอด)
+               ไม่เกิน 200 ม. ในเขตเทศบาล / 500 ม. นอกเขต — วัดด้วย "ระยะทาง" ไม่ใช่ระยะขจัด
+         ข้อ 2 จุดเกิดเหตุ >= 2 จุดบนถนน+ทิศทางเดียวกัน ห่างจากกึ่งกลางกลุ่มไม่เกินเกณฑ์เดียวกัน
+         ข้อ 3 จุดเมาแล้วขับทุกราย → จับกลุ่มเป็นโซนแดง/ส้ม + Red Corridor
+    ============================================================ */
+
+    const BS_DEFAULTS = {
+      blackSpotKm: 0.10, redClusterKm: 1.50, patrolZoneKm: 2.00,
+      analysisMonths: 12, confirmMonths: 36,
+      muniRadiusKm: 0.20, ruralRadiusKm: 0.50, detourFactor: 1.30,
+      siteMinScore: 2, fatalWeight: 2, redMinPoints: 3, orangeMinPoints: 2,
+      redBufferKm: 0.20, orangeBufferKm: 0.50
+    };
+    const BS_FEATURE_KINDS = {
+      junction:'ทางแยก (ไม่มีสัญญาณไฟ)', junction_signal:'ทางแยกมีสัญญาณไฟ', merge:'ทางร่วม',
+      u_turn:'จุดกลับรถ', bridge:'สะพาน', curve:'ทางโค้ง', hill:'เนินเขา', underpass:'ทางลอด/อุโมงค์'
+    };
+    // ลักษณะทางในฟอร์มอุบัติเหตุที่นับเป็นจุดอันตรายทางกายภาพตามเกณฑ์ข้อ 1
+    const BS_HAZARD_CHARS = [
+      { re:/สัญญาณไฟ/, kind:'junction_signal' }, { re:/ทางแยก/, kind:'junction' },
+      { re:/ทางร่วม/, kind:'merge' }, { re:/กลับรถ/, kind:'u_turn' },
+      { re:/สะพาน/, kind:'bridge' }, { re:/โค้ง/, kind:'curve' },
+      { re:/เนิน/, kind:'hill' }, { re:/ทางลอด|อุโมงค์/, kind:'underpass' }
+    ];
+
+    /* ---------- เรขาคณิตพื้นฐาน ---------- */
+    const BS_EARTH_KM = 6371.0088;
+    function bsHav(a, b) {
+      const rad = Math.PI / 180;
+      const dLat = (b.lat - a.lat) * rad, dLng = (b.lng - a.lng) * rad;
+      const h = Math.sin(dLat / 2) ** 2 +
+        Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+      return 2 * BS_EARTH_KM * Math.asin(Math.min(1, Math.sqrt(h)));
+    }
+    // เกณฑ์ข้อ 1/2 พูดถึง "ระยะทาง" (ตามถนน) ไม่ใช่ระยะขจัด แต่เราไม่มี routing engine
+    // จึงประมาณด้วยเส้นตรง x ตัวคูณอ้อม (detourFactor) ที่ปรับได้ในหน้าตั้งค่า
+    function bsRoadKm(a, b, cfg) { return bsHav(a, b) * (cfg.detourFactor || 1); }
+    function bsRadiusKm(p, cfg) { return p.muni ? cfg.muniRadiusKm : cfg.ruralRadiusKm; }
+    function bsCentroid(pts) {
+      const n = pts.length || 1;
+      return { lat: pts.reduce((s, p) => s + p.lat, 0) / n, lng: pts.reduce((s, p) => s + p.lng, 0) / n };
+    }
+    // ระนาบท้องถิ่นหน่วยกิโลเมตร — ใช้ตอนหา convex hull / วาดกันชน / คิดพื้นที่
+    function bsPlane(origin) {
+      const kx = 111.320 * Math.cos(origin.lat * Math.PI / 180), ky = 110.574;
+      return {
+        to: p => ({ x: (p.lng - origin.lng) * kx, y: (p.lat - origin.lat) * ky }),
+        from: q => ({ lat: origin.lat + q.y / ky, lng: origin.lng + q.x / kx })
+      };
+    }
+    function bsHull(pts) {                       // Andrew monotone chain (รับ {x,y})
+      if (pts.length < 3) return pts.slice();
+      const s = pts.slice().sort((a, b) => a.x - b.x || a.y - b.y);
+      const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+      const half = arr => {
+        const h = [];
+        arr.forEach(p => { while (h.length >= 2 && cross(h[h.length - 2], h[h.length - 1], p) <= 0) h.pop(); h.push(p); });
+        h.pop(); return h;
+      };
+      return half(s).concat(half(s.reverse()));
+    }
+    // กันชนรอบกลุ่มจุด: กระจายจุดรอบวงกลมรัศมี r ของทุกสมาชิก แล้วหา hull รวม
+    // จุดเดียว = วงกลม, สองจุด = แคปซูล, หลายจุด = รูปหลายเหลี่ยมมนขอบ
+    function bsBufferPolygon(pts, radiusKm, seg) {
+      if (!pts.length) return [];
+      const origin = bsCentroid(pts), plane = bsPlane(origin), steps = seg || 18;
+      const ring = [];
+      pts.forEach(p => {
+        const q = plane.to(p);
+        for (let i = 0; i < steps; i++) {
+          const a = (2 * Math.PI * i) / steps;
+          ring.push({ x: q.x + radiusKm * Math.cos(a), y: q.y + radiusKm * Math.sin(a) });
+        }
+      });
+      return bsHull(ring).map(q => { const g = plane.from(q); return [Number(g.lat.toFixed(6)), Number(g.lng.toFixed(6))]; });
+    }
+    function bsPolygonAreaKm2(latlngs) {
+      if (!latlngs || latlngs.length < 3) return 0;
+      const origin = bsCentroid(latlngs.map(c => ({ lat: c[0], lng: c[1] })));
+      const plane = bsPlane(origin);
+      const pts = latlngs.map(c => plane.to({ lat: c[0], lng: c[1] }));
+      let a = 0;
+      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) a += pts[j].x * pts[i].y - pts[i].x * pts[j].y;
+      return Math.abs(a / 2);
+    }
+
+    /* ---------- การจับกลุ่ม ---------- */
+    // Single linkage + ตารางกริด — ใช้กับเกณฑ์ระยะสั้น (จุดอันตรายทางกายภาพ 100 ม.)
+    function bsClusterSingle(points, thrKm) {
+      const n = points.length;
+      if (!n) return [];
+      const parent = Array.from({ length: n }, (_, i) => i);
+      const find = i => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+      const union = (a, b) => { a = find(a); b = find(b); if (a !== b) parent[b] = a; };
+      const meanLat = points.reduce((s, p) => s + p.lat, 0) / n;
+      const dLat = thrKm / 110.574;
+      const dLng = thrKm / (111.320 * Math.max(0.2, Math.cos(meanLat * Math.PI / 180)));
+      const cells = new Map(), cx = [], cy = [];
+      points.forEach((p, i) => {
+        cx[i] = Math.floor(p.lng / dLng); cy[i] = Math.floor(p.lat / dLat);
+        const k = cx[i] + ',' + cy[i];
+        if (!cells.has(k)) cells.set(k, []);
+        cells.get(k).push(i);
+      });
+      points.forEach((p, i) => {
+        for (let ax = -1; ax <= 1; ax++) for (let ay = -1; ay <= 1; ay++) {
+          const arr = cells.get((cx[i] + ax) + ',' + (cy[i] + ay));
+          if (!arr) continue;
+          arr.forEach(j => { if (j > i && bsHav(p, points[j]) <= thrKm) union(i, j); });
+        }
+      });
+      const out = new Map();
+      points.forEach((p, i) => { const r = find(i); if (!out.has(r)) out.set(r, []); out.get(r).push(p); });
+      return Array.from(out.values());
+    }
+    // Centroid linkage — ตรงกับถ้อยคำในเกณฑ์ "ห่างกัน...จากกึ่งกลางของทุกจุด"
+    // รวมสองกลุ่มที่กึ่งกลางใกล้กันที่สุดไปเรื่อยๆ จนเกินเกณฑ์
+    function bsClusterCentroid(points, thrKm, factor) {
+      const n = points.length;
+      if (n > 600) return bsClusterSingle(points, thrKm);   // กันช้าเมื่อข้อมูลเยอะผิดปกติ
+      const mul = factor || 1;
+      let groups = points.map(p => ({ pts: [p], c: { lat: p.lat, lng: p.lng } }));
+      for (;;) {
+        let bi = -1, bj = -1, best = Infinity;
+        for (let i = 0; i < groups.length; i++) {
+          for (let j = i + 1; j < groups.length; j++) {
+            const d = bsHav(groups[i].c, groups[j].c) * mul;
+            if (d < best) { best = d; bi = i; bj = j; }
+          }
+        }
+        if (bi < 0 || best > thrKm) break;
+        const merged = groups[bi].pts.concat(groups[bj].pts);
+        groups.splice(bj, 1);
+        groups[bi] = { pts: merged, c: bsCentroid(merged) };
+      }
+      return groups.map(g => g.pts);
+    }
+    // เรียงจุดเป็นเส้นทางเดียว (Red Corridor) — เริ่มจากปลายที่ไกลสุดแล้วไล่จุดใกล้สุด
+    function bsCorridorPath(pts) {
+      if (pts.length < 2) return null;
+      let a = 0, far = -1;
+      for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+        const d = bsHav(pts[i], pts[j]);
+        if (d > far) { far = d; a = i; }
+      }
+      const left = pts.slice(), path = [left.splice(a, 1)[0]];
+      while (left.length) {
+        const cur = path[path.length - 1];
+        let bi = 0, bd = Infinity;
+        left.forEach((p, i) => { const d = bsHav(cur, p); if (d < bd) { bd = d; bi = i; } });
+        path.push(left.splice(bi, 1)[0]);
+      }
+      return path.map(p => [Number(p.lat.toFixed(6)), Number(p.lng.toFixed(6))]);
+    }
+    // ช่วงเวลาเกิดเหตุแบบถัง 2 ชั่วโมง (เกณฑ์ข้อ 3.6)
+    function bsPeak(pts) {
+      const buckets = new Array(12).fill(0);
+      pts.forEach(p => { if (p.hour != null) buckets[Math.floor(p.hour / 2)]++; });
+      const top = buckets.map((n, i) => ({ i, n })).filter(b => b.n > 0)
+        .sort((a, b) => b.n - a.n).slice(0, 2)
+        .map(b => ({ label: String(b.i * 2).padStart(2, '0') + '-' + String(b.i * 2 + 2).padStart(2, '0') + ' น.', n: b.n }));
+      return { buckets, top };
+    }
+    function bsPeakText(peak) {
+      if (!peak || !peak.top || !peak.top.length) return '';
+      return peak.top.map(t => t.label + ' (' + t.n + ')').join(', ');
+    }
+
+    /* ---------- รวบรวมจุดเกิดเหตุจากทุกแหล่ง ---------- */
+    function bsInMuni(text) {
+      const t = String(text || '');
+      if (/นอกเขต/.test(t)) return false;
+      return /เทศบาล/.test(t);
+    }
+    function bsHazardKind(roadChar) {
+      const t = String(roadChar || '');
+      const hit = BS_HAZARD_CHARS.find(h => h.re.test(t));
+      return hit ? hit.kind : null;
+    }
+    function bsHourOf(ts) {
+      const s = bkkStamp(ts);
+      return s ? Number(s.slice(11, 13)) : null;
+    }
+    function bsPointsFromAccidents(rows) {
+      return rows.filter(r => Number.isFinite(Number(r.latitude)) && Number.isFinite(Number(r.longitude)) && r.incident_datetime)
+        .map(r => {
+          const persons = personsFromRow(r);
+          const fatal = persons.filter(p => normalizeInjury(p.injury) === 'เสียชีวิต').length;
+          const inj = persons.filter(p => ['หมดสติ','สาหัส','เล็กน้อย'].includes(normalizeInjury(p.injury))).length;
+          const roadChar = r.road_character === 'อื่นๆ' ? (r.road_character_other || '') : (r.road_character || '');
+          return {
+            key: 'acc:' + r.id, src: 'acc', ref: r.accident_code || String(r.id), ts: r.incident_datetime,
+            lat: Number(r.latitude), lng: Number(r.longitude), hour: bsHourOf(r.incident_datetime),
+            road: r.road || '', subdistrict: r.subdistrict || '', place: r.place || '',
+            muni: bsInMuni(r.local_authority || r.road), direction: '', roadChar,
+            drunk: /เมา/.test(r.cause || ''), fatal: fatal > 0, fatalN: fatal, injN: inj
+          };
+        });
+    }
+    function bsPointsFromDeaths(rows) {
+      return rows.map(r => {
+        const parts = String(r.coordinates || '').split(',');
+        const lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng) || !r.incident_datetime) return null;
+        return {
+          key: 'death:' + r.id, src: 'death', ref: '#' + r.id, ts: r.incident_datetime,
+          lat, lng, hour: bsHourOf(r.incident_datetime),
+          road: r.road_name || '', subdistrict: r.subdistrict || '', place: '',
+          muni: bsInMuni(r.road_name), direction: '', roadChar: r.road_type || '',
+          drunk: /เมา/.test(r.cause || ''), fatal: true, fatalN: 1, injN: 0
+        };
+      }).filter(Boolean);
+    }
+    function bsPointsFromIncidents(rows) {
+      return rows.filter(r => Number.isFinite(Number(r.latitude)) && Number.isFinite(Number(r.longitude)) && r.occurred_at)
+        .map(r => ({
+          key: 'ext:' + r.id, src: 'ext', ref: r.source || ('#' + r.id), ts: r.occurred_at,
+          lat: Number(r.latitude), lng: Number(r.longitude), hour: bsHourOf(r.occurred_at),
+          road: r.road || '', subdistrict: r.subdistrict || '', place: r.place || '',
+          muni: !!r.in_municipality, direction: r.direction || '', roadChar: r.road_character || '',
+          drunk: !!r.is_drunk, fatal: Number(r.fatal_count) > 0,
+          fatalN: Number(r.fatal_count) || 0, injN: Number(r.injury_count) || 0
+        }));
+    }
+    // ตาราง deaths ถูกแตกมาจาก accidents โดย officer_save_accident อยู่แล้ว
+    // ถ้าไม่กรองออกจะนับซ้ำ — ตัดแถวที่เวลาใกล้กัน (<=2 นาที) และอยู่ห่างไม่เกิน 60 ม.
+    function bsDedupeDeaths(deathPts, accPts) {
+      return deathPts.filter(d => !accPts.some(a =>
+        Math.abs(new Date(a.ts) - new Date(d.ts)) <= 120000 && bsHav(a, d) <= 0.06));
+    }
+
+    /* ---------- เครื่องวิเคราะห์ ---------- */
+    function bsScoreOf(pts, cfg) {
+      return pts.reduce((s, p) => s + (p.fatal ? cfg.fatalWeight : 1), 0);
+    }
+    function bsLevelOf(score, fatalN, cfg) {
+      if (fatalN > 0 || score >= cfg.siteMinScore * 3) return 'high';
+      if (score >= cfg.siteMinScore * 1.5) return 'risk';
+      return 'watch';
+    }
+    function bsSiteFrom(pts, extra, cfg, ctx) {
+      const c = bsCentroid(pts);
+      const fatalN = pts.reduce((s, p) => s + p.fatalN, 0);
+      const score = bsScoreOf(pts, cfg);
+      const road = (pts.find(p => p.road) || {}).road || '';
+      const sub = (pts.find(p => p.subdistrict) || {}).subdistrict || '';
+      const muni = pts.filter(p => p.muni).length * 2 >= pts.length;
+      return Object.assign({
+        rule: 'corridor', kind: null, title: 'จุดเสี่ยง',
+        latitude: Number(c.lat.toFixed(6)), longitude: Number(c.lng.toFixed(6)),
+        road, subdistrict: sub, in_municipality: muni,
+        radius_m: Math.round((muni ? cfg.muniRadiusKm : cfg.ruralRadiusKm) * 1000),
+        acc_count: pts.length, fatal_count: fatalN,
+        injury_count: pts.reduce((s, p) => s + p.injN, 0),
+        drunk_count: pts.filter(p => p.drunk).length,
+        month_count: pts.filter(p => bkkStamp(p.ts, 'month') === ctx.month).length,
+        score, level: bsLevelOf(score, fatalN, cfg),
+        confirmed: false,          // bsAnalyze ตีธงนี้ทีหลังโดยเทียบกับข้อมูลนอกหน้าต่าง 12 เดือน
+        peak: bsPeak(pts), members: pts.map(p => p.key)
+      }, extra || {});
+    }
+
+    // เกณฑ์ข้อ 1 — จุดเกิดเหตุที่เกาะอยู่กับจุดกายภาพเสี่ยง
+    function bsRule1(points, features, cfg, ctx) {
+      const sites = [], claimed = new Set();
+      features.forEach(f => {
+        const fp = { lat: Number(f.latitude), lng: Number(f.longitude), muni: !!f.in_municipality };
+        // รัศมียึดตามเขตของ "จุดกายภาพ" เพราะจุดกายภาพคือศูนย์กลางของเกณฑ์ข้อ 1
+        const thr = bsRadiusKm(fp, cfg);
+        const members = points.filter(p => bsRoadKm(p, fp, cfg) <= thr);
+        if (!members.length) return;
+        const score = bsScoreOf(members, cfg);
+        if (score < cfg.siteMinScore) return;
+        members.forEach(p => claimed.add(p.key));
+        sites.push(bsSiteFrom(members, {
+          rule: 'feature', kind: f.kind,
+          title: (BS_FEATURE_KINDS[f.kind] || 'จุดกายภาพเสี่ยง') + ' · ' + f.name,
+          latitude: Number(fp.lat.toFixed(6)), longitude: Number(fp.lng.toFixed(6)),
+          road: f.road || '', subdistrict: f.subdistrict || '', in_municipality: !!f.in_municipality,
+          radius_m: Math.round((f.in_municipality ? cfg.muniRadiusKm : cfg.ruralRadiusKm) * 1000)
+        }, cfg, ctx));
+      });
+      // จุดที่ "ลักษณะทาง" บอกเองว่าเป็นจุดอันตราย แต่ยังไม่มีใครบันทึกจุดกายภาพไว้
+      // จับกลุ่มด้วย BLACK_SPOT_DISTANCE เพื่ออนุมานตำแหน่งจุดกายภาพจากตัวเหตุเอง
+      const orphan = points.filter(p => !claimed.has(p.key) && bsHazardKind(p.roadChar));
+      bsClusterSingle(orphan, cfg.blackSpotKm).forEach(g => {
+        const score = bsScoreOf(g, cfg);
+        if (score < cfg.siteMinScore) return;
+        g.forEach(p => claimed.add(p.key));
+        const kind = bsHazardKind(g[0].roadChar);
+        const where = g[0].place || g[0].road || g[0].subdistrict || 'ไม่ระบุตำแหน่ง';
+        sites.push(bsSiteFrom(g, {
+          rule: 'feature', kind,
+          title: (BS_FEATURE_KINDS[kind] || 'จุดกายภาพเสี่ยง') + ' · ' + where + ' (อนุมานจากลักษณะทาง)'
+        }, cfg, ctx));
+      });
+      return { sites, claimed };
+    }
+
+    // เกณฑ์ข้อ 2 — จุดเกิดเหตุ >= 2 จุดบนถนน + ทิศทางเดียวกัน
+    function bsRule2(points, cfg, ctx, claimed) {
+      const sites = [], groups = new Map();
+      points.forEach(p => {
+        if (claimed.has(p.key)) return;
+        const road = String(p.road || '').trim().replace(/\s+/g, ' ');
+        if (!road) return;                                  // ไม่รู้ชื่อถนน = จับกลุ่มตามเกณฑ์นี้ไม่ได้
+        const key = road + '|' + (p.direction || '*');       // ทิศทางไม่ทราบจะรวมอยู่ถัง '*'
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(p);
+      });
+      groups.forEach((list, key) => {
+        if (list.length < 2) return;
+        const muni = list.filter(p => p.muni).length * 2 >= list.length;
+        const thr = muni ? cfg.muniRadiusKm : cfg.ruralRadiusKm;
+        bsClusterCentroid(list, thr, cfg.detourFactor).forEach(g => {
+          if (g.length < 2) return;
+          if (bsScoreOf(g, cfg) < cfg.siteMinScore) return;
+          g.forEach(p => claimed.add(p.key));
+          const dir = key.split('|')[1];
+          sites.push(bsSiteFrom(g, {
+            rule: 'corridor',
+            title: 'ช่วงถนนเสี่ยง · ' + key.split('|')[0] + (dir !== '*' ? ' (' + dir + ')' : '')
+          }, cfg, ctx));
+        });
+      });
+      return sites;
+    }
+
+    // เกณฑ์ข้อ 3 — เมาแล้วขับ: จุดทุกราย + โซนแดง/ส้ม + Red Corridor
+    function bsRule3(points, cfg, ctx) {
+      const drunk = points.filter(p => p.drunk);
+      const sites = [], zones = [];
+      if (!drunk.length) return { sites, zones, drunk };
+
+      // 3.0 จุดเมาขับ "ทุกราย" — รวมเฉพาะที่ซ้ำตำแหน่งกันจริงๆ (BLACK_SPOT_DISTANCE)
+      bsClusterSingle(drunk, cfg.blackSpotKm).forEach(g => {
+        const where = g[0].place || g[0].road || g[0].subdistrict || 'ไม่ระบุตำแหน่ง';
+        sites.push(bsSiteFrom(g, {
+          rule: 'drunk', kind: 'drunk',
+          title: 'จุดเมาแล้วขับ · ' + where + (g.length > 1 ? ' (' + g.length + ' ครั้ง)' : '')
+        }, cfg, ctx));
+      });
+
+      // 3.1–3.3 โซนแดง = กลุ่มที่เกาะกันภายใน RED_CLUSTER_DISTANCE และมีจำนวนถึงเกณฑ์
+      const clusters = bsClusterCentroid(drunk, cfg.redClusterKm);
+      const redGroups = clusters.filter(g => g.length >= cfg.redMinPoints);
+      const zoneOf = (pts, level, title, bufferKm, note) => {
+        const c = bsCentroid(pts);
+        const polygon = bsBufferPolygon(pts, bufferKm);
+        return {
+          level, title, polygon,
+          corridor: level === 'red' ? bsCorridorPath(pts) : null,
+          centroid_lat: Number(c.lat.toFixed(6)), centroid_lng: Number(c.lng.toFixed(6)),
+          point_count: pts.length,
+          fatal_count: pts.reduce((s, p) => s + p.fatalN, 0),
+          month_count: pts.filter(p => bkkStamp(p.ts, 'month') === ctx.month).length,
+          area_km2: Number(bsPolygonAreaKm2(polygon).toFixed(3)),
+          peak: bsPeak(pts), note
+        };
+      };
+      redGroups.forEach((g, i) => {
+        const where = (g.find(p => p.subdistrict) || {}).subdistrict || (g.find(p => p.road) || {}).road || ('กลุ่มที่ ' + (i + 1));
+        zones.push(zoneOf(g, 'red', 'โซนแดง · ' + where, cfg.redBufferKm,
+          'กลุ่มเมาแล้วขับ ' + g.length + ' จุด เกาะกันภายใน ' + cfg.redClusterKm + ' กม. — ตั้งจุดตรวจก่อนเข้าพื้นที่ ไม่ควรตั้งที่จุดเกิดเหตุอย่างเดียว'));
+        // 3.4 ขยายเป็นเขตวางกำลัง: ดึงจุดเมาขับที่อยู่ในระยะเชื่อมโยงจากสมาชิกโซนแดง
+        const linked = drunk.filter(p => !g.includes(p) && g.some(q => bsHav(p, q) <= cfg.patrolZoneKm));
+        if (linked.length) {
+          const all = g.concat(linked);
+          zones.push(zoneOf(all, 'orange', 'โซนส้ม (เขตวางกำลัง) · ' + where, cfg.orangeBufferKm,
+            'ขยายจากโซนแดงในระยะเชื่อมโยง ' + cfg.patrolZoneKm + ' กม. รวมอีก ' + linked.length + ' จุด'));
+        }
+      });
+      // 3.2 กลุ่มที่ยังไม่ถึงเกณฑ์แดงแต่เกาะกลุ่มแล้ว = โซนส้มเดี่ยว (เฝ้าระวัง)
+      clusters.filter(g => g.length >= cfg.orangeMinPoints && g.length < cfg.redMinPoints).forEach((g, i) => {
+        const where = (g.find(p => p.subdistrict) || {}).subdistrict || (g.find(p => p.road) || {}).road || ('กลุ่มเฝ้าระวังที่ ' + (i + 1));
+        zones.push(zoneOf(g, 'orange', 'โซนส้ม · ' + where, cfg.orangeBufferKm,
+          'กลุ่มเมาแล้วขับ ' + g.length + ' จุด ยังไม่ถึงเกณฑ์โซนแดง (' + cfg.redMinPoints + ' จุด)'));
+      });
+      return { sites, zones, drunk };
+    }
+
+    function bsCfg() {
+      return Object.assign({}, BS_DEFAULTS, state.bsSettings || {});
+    }
+
+    async function bsAnalyze(asOfDate) {
+      const cfg = bsCfg();
+      const asOf = asOfDate ? new Date(asOfDate + 'T12:00:00+07:00') : new Date();
+      const windowStart = new Date(asOf); windowStart.setMonth(windowStart.getMonth() - cfg.analysisMonths);
+      const confirmStart = new Date(asOf); confirmStart.setMonth(confirmStart.getMonth() - cfg.confirmMonths);
+      // เทียบเวลาด้วยตัวเลข ไม่ใช่สตริง ISO — Supabase คืน '+00:00' ส่วน toISOString() คืน 'Z'
+      // ถ้าเทียบเป็นสตริงจะเพี้ยนตรงวินาทีที่ตรงขอบพอดี
+      const ctx = {
+        month: bkkStamp(asOf, 'month'),
+        windowStart: windowStart.getTime(), confirmStart: confirmStart.getTime(), asOfTime: asOf.getTime(),
+        periodStart: bkkStamp(windowStart, 'day'), periodEnd: bkkStamp(asOf, 'day')
+      };
+
+      const [accRows, deathRows] = await Promise.all([fetchAccidents(true), fetchDeathsFull(true)]);
+      const extraRows = state.bsIncidents || [];
+      const accPts = bsPointsFromAccidents(accRows);
+      const deathPts = bsDedupeDeaths(bsPointsFromDeaths(deathRows), accPts);
+      const extPts = bsPointsFromIncidents(extraRows);
+
+      const all = accPts.concat(deathPts, extPts)
+        .map(p => Object.assign(p, { t: new Date(p.ts).getTime() }))
+        .filter(p => Number.isFinite(p.t) && p.t >= ctx.confirmStart && p.t <= ctx.asOfTime);
+      // หน้าต่างวิเคราะห์หลัก 12 เดือน — ส่วน 36 เดือนใช้ตีธง confirmed เท่านั้น
+      const main = all.filter(p => p.t >= ctx.windowStart);
+
+      const r1 = bsRule1(main, state.bsFeatures || [], cfg, ctx);
+      const r2 = bsRule2(main, cfg, ctx, r1.claimed);
+      const r3 = bsRule3(main, cfg, ctx);
+
+      // ตีธง confirmed: จุดที่ยังมีเหตุซ้ำในหน้าต่าง 36 เดือนรอบๆ ตำแหน่งเดียวกัน
+      const older = all.filter(p => p.t < ctx.windowStart);
+      const markConfirmed = site => {
+        const c = { lat: site.latitude, lng: site.longitude };
+        site.confirmed = older.some(p => bsHav(p, c) <= Math.max(cfg.blackSpotKm, (site.radius_m || 200) / 1000));
+        return site;
+      };
+      const sites = r1.sites.concat(r2, r3.sites).map(markConfirmed);
+
+      state.bsDraft = {
+        run: {
+          as_of: ctx.periodEnd, period_start: ctx.periodStart, period_end: ctx.periodEnd,
+          settings: cfg,
+          totals: {
+            points: main.length, drunk: r3.drunk.length,
+            rule1: r1.sites.length, rule2: r2.length, drunkSites: r3.sites.length,
+            red: r3.zones.filter(z => z.level === 'red').length,
+            orange: r3.zones.filter(z => z.level === 'orange').length
+          }
+        },
+        sites, zones: r3.zones,
+        stats: {
+          accPts: accPts.length, deathPts: deathPts.length, extPts: extPts.length,
+          used: main.length, older: older.length
+        }
+      };
+      return state.bsDraft;
+    }
+
+    /* ---------- ทดสอบเครื่องวิเคราะห์ด้วยพิกัดสมมุติ A/B/C/D ---------- */
+    const BS_SAMPLE = [
+      { name:'A', lat:15.69589, lng:100.10263 }, { name:'B', lat:15.69685, lng:100.12167 },
+      { name:'C', lat:15.70100, lng:100.13002 }, { name:'D', lat:15.71076, lng:100.11862 }
+    ];
+    function bsSampleTest() {
+      const cfg = bsCfg();
+      const now = new Date().toISOString();
+      const pts = BS_SAMPLE.map((s, i) => ({
+        key:'sample:' + s.name, src:'sample', ref:s.name, ts:now, lat:s.lat, lng:s.lng,
+        hour:22, road:'ตัวอย่าง', subdistrict:'ตัวอย่าง', place:'จุด ' + s.name,
+        muni:true, direction:'', roadChar:'', drunk:true, fatal:false, fatalN:0, injN:0
+      }));
+      let rows = '';
+      for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+        const d = bsHav(pts[i], pts[j]);
+        const within = d <= cfg.redClusterKm ? 'แดง' : d <= cfg.patrolZoneKm ? 'ส้ม' : '—';
+        rows += '<tr><td style="padding:3px 10px 3px 0;font-weight:700">' + pts[i].ref + '–' + pts[j].ref +
+          '</td><td style="padding:3px 10px 3px 0;text-align:right">' + d.toFixed(2) + ' กม.</td>' +
+          '<td style="padding:3px 0;color:' + (within === 'แดง' ? '#c1122f' : within === 'ส้ม' ? '#c24e00' : '#64748b') + ';font-weight:700">' + within + '</td></tr>';
+      }
+      const ctx = { month: bkkStamp(new Date(), 'month'), windowStart: 0 };
+      const res = bsRule3(pts, cfg, ctx);
+      const red = res.zones.filter(z => z.level === 'red'), orange = res.zones.filter(z => z.level === 'orange');
+      const summary = red.length
+        ? 'ได้โซนแดง ' + red.length + ' โซน (' + red[0].point_count + ' จุด) และโซนส้ม ' + orange.length + ' โซน'
+        : 'ยังไม่เกิดโซนแดง — กลุ่มใหญ่สุดยังไม่ถึง ' + cfg.redMinPoints + ' จุดภายใน ' + cfg.redClusterKm + ' กม.';
+      Swal.fire({
+        icon: red.length ? 'success' : 'info',
+        title: 'ทดสอบด้วยพิกัดสมมุติ A/B/C/D',
+        width: 620,
+        html: '<div style="text-align:left;font-size:.85rem">' +
+          '<p style="margin:0 0 8px">ระยะจริงที่คำนวณจากพิกัดที่ระบุ (เส้นตรง) เทียบกับเกณฑ์ปัจจุบัน ' +
+          'แดง ' + cfg.redClusterKm + ' กม. / ส้ม ' + cfg.patrolZoneKm + ' กม.:</p>' +
+          '<table style="width:100%;border-collapse:collapse">' + rows + '</table>' +
+          '<p style="margin:10px 0 0;font-weight:700">' + summary + '</p>' +
+          '<p style="margin:8px 0 0;color:#64748b;font-size:.78rem">หมายเหตุ: ระยะที่สมมุติไว้ในโจทย์ (B–D 1.5, C–D 1.5, A–B 2.0 กม.) ' +
+          'ต่างจากระยะจริงที่คำนวณจากพิกัดเล็กน้อย (1.58, 1.63, 2.04 กม.) เกณฑ์ที่ตั้งไว้พอดี 1.50/2.00 จึงตัด D และ A ออก ' +
+          'ถ้าต้องการผลตามตัวอย่าง (โซนแดง B–C–D และขยายโซนส้มถึง A) ให้ตั้ง ' +
+          '<b>RED_CLUSTER_DISTANCE = 1.60</b> และ <b>PATROL_ZONE_DISTANCE = 2.10</b> กม. ในแท็บตั้งค่าเกณฑ์</p></div>'
+      });
+    }
+
+    /* ============================================================
+       หน้า admin: จุดเสี่ยงอุบัติเหตุ (วิเคราะห์)
+    ============================================================ */
+    const BS_SETTING_FIELDS = [
+      { k:'blackSpotKm',     label:'BLACK_SPOT_DISTANCE — จุดอันตรายทางกายภาพ (กม.)', step:0.01 },
+      { k:'redClusterKm',    label:'RED_CLUSTER_DISTANCE — กลุ่มเมาแล้วขับ (กม.)', step:0.05 },
+      { k:'patrolZoneKm',    label:'PATROL_ZONE_DISTANCE — เขตวางกำลัง/จุดตรวจ (กม.)', step:0.05 },
+      { k:'analysisMonths',  label:'ANALYSIS_WINDOW — หน้าต่างวิเคราะห์ (เดือน)', step:1 },
+      { k:'confirmMonths',   label:'CONFIRMATION_WINDOW — ยืนยันระยะยาว (เดือน)', step:1 },
+      { k:'muniRadiusKm',    label:'รัศมีเกณฑ์ข้อ 1/2 ในเขตเทศบาล (กม.)', step:0.05 },
+      { k:'ruralRadiusKm',   label:'รัศมีเกณฑ์ข้อ 1/2 นอกเขตเทศบาล (กม.)', step:0.05 },
+      { k:'detourFactor',    label:'ตัวคูณอ้อม — แปลงเส้นตรงเป็นระยะทางถนน', step:0.05 },
+      { k:'siteMinScore',    label:'คะแนนขั้นต่ำที่ถือว่าเป็นจุดเสี่ยง', step:1 },
+      { k:'fatalWeight',     label:'น้ำหนักคะแนนของเหตุที่มีผู้เสียชีวิต', step:1 },
+      { k:'redMinPoints',    label:'จำนวนจุดขั้นต่ำของโซนแดง', step:1 },
+      { k:'orangeMinPoints', label:'จำนวนจุดขั้นต่ำของโซนส้ม', step:1 },
+      { k:'redBufferKm',     label:'ระยะกันชนตอนวาดโซนแดง (กม.)', step:0.05 },
+      { k:'orangeBufferKm',  label:'ระยะกันชนตอนวาดโซนส้ม (กม.)', step:0.05 }
+    ];
+    let bsPickerMap = null, bsPickerMarker = null;
+
+    function initBlackspotPage() {
+      if (!state.bsInit) {
+        state.bsInit = true;
+        state.bsEditFeature = null; state.bsEditIncident = null; state.bsEditZone = null;
+        state.bsDrawPts = [];
+        state.bsLayers = { sites:true, drunk:true, red:true, orange:true, corridor:true };
+        // เติมตัวเลือกในฟอร์ม (ใช้ชุดเดียวกับฟอร์มอุบัติเหตุ ค่าจะได้ตรงกันตอนวิเคราะห์)
+        const opt = (v, t) => '<option value="' + escapeHtml(v) + '">' + escapeHtml(t || v) + '</option>';
+        document.getElementById('bsFeatKind').innerHTML =
+          Object.keys(BS_FEATURE_KINDS).map(k => opt(k, BS_FEATURE_KINDS[k])).join('');
+        document.getElementById('bsIncRoadChar').innerHTML =
+          '<option value="">ไม่ระบุ</option>' + roadCharacters.map(v => opt(v)).join('');
+        document.getElementById('bsIncCause').innerHTML =
+          '<option value="">ไม่ระบุ</option>' + causes.map(v => opt(v)).join('');
+        ['bsFeatSub','bsIncSub'].forEach(id => {
+          document.getElementById(id).innerHTML = '<option value="">เลือกตำบล</option>' + subdistrictsFull.map(v => opt(v)).join('');
+        });
+        document.getElementById('bsAsOf').value = bkkStamp(new Date(), 'day');
+        document.getElementById('bsFeatFile').addEventListener('change', e => bsImportCsv(e, 'features'));
+        document.getElementById('bsIncFile').addEventListener('change', e => bsImportCsv(e, 'incidents'));
+        bsRenderSettingsForm();
+      }
+      bsLoadAdminData();
+    }
+
+    function bsTab(name) {
+      document.querySelectorAll('.bs-tab').forEach(b => b.classList.toggle('active', b.dataset.bstab === name));
+      document.querySelectorAll('.bs-pane').forEach(p => p.classList.remove('active'));
+      document.getElementById('bsPane-' + name).classList.add('active');
+      if (name === 'run' && state.bsPreviewMap) setTimeout(() => state.bsPreviewMap.invalidateSize(), 200);
+      if (name === 'zones') bsInitDrawMap();
+    }
+
+    async function bsLoadAdminData() {
+      try {
+        const res = await rpc('bs_admin_data', { p_token: state.token });
+        if (!res.success) throw new Error(res.message || 'โหลดข้อมูลไม่สำเร็จ');
+        // ค่าใน bs_settings เก็บเป็น jsonb ตัวเลข — แปลงเป็น number ให้เครื่องวิเคราะห์ใช้ได้ตรงๆ
+        const st = {};
+        Object.keys(res.settings || {}).forEach(k => { const n = Number(res.settings[k]); if (Number.isFinite(n)) st[k] = n; });
+        state.bsSettings = st;
+        state.bsFeatures = res.features || [];
+        state.bsIncidents = res.incidents || [];
+        state.bsSavedSites = res.sites || [];
+        state.bsSavedZones = res.zones || [];
+        state.bsLastRun = res.lastRun || null;
+        bsRenderSettingsForm();
+        bsRenderFeatures();
+        bsRenderIncidents();
+        bsRenderManualZones();
+        // ยังไม่ได้รันรอบใหม่ในเซสชันนี้ — เอาผลที่บันทึกไว้มาแสดงก่อน
+        if (!state.bsDraft && state.bsSavedSites.length) {
+          state.bsDraft = {
+            run: state.bsLastRun || {},
+            sites: state.bsSavedSites,
+            zones: state.bsSavedZones.filter(z => z.source === 'auto'),
+            stats: null, saved: true
+          };
+          bsRenderResults();
+        }
+        bsRenderPublishState();
+      } catch (e) {
+        Swal.fire({ icon:'error', title:'โหลดข้อมูลไม่สำเร็จ',
+          text: /bs_admin_data|does not exist|schema cache/i.test(e.message)
+            ? 'ยังไม่ได้รันไฟล์ sql/blackspot.sql ใน Supabase SQL Editor' : e.message });
+      }
+    }
+
+    function bsRenderPublishState() {
+      const el = document.getElementById('bsPublishState');
+      const run = state.bsLastRun;
+      if (!run) { el.textContent = 'ยังไม่เคยบันทึกผลวิเคราะห์'; return; }
+      const pub = (state.bsSavedSites || []).some(s => s.published);
+      el.innerHTML = '<i class="fa-regular fa-clock"></i> บันทึกล่าสุด ' + formatThaiDateTimeStr(run.ran_at) +
+        ' โดย ' + escapeHtml(run.ran_by || '-') + ' · ช่วง ' + (run.period_start || '-') + ' ถึง ' + (run.period_end || '-') +
+        ' · <b style="color:' + (pub ? '#16834b' : '#9a3412') + '">' + (pub ? 'เผยแพร่อยู่' : 'ยังไม่เผยแพร่') + '</b>';
+    }
+
+    /* ---------- รันวิเคราะห์ + แสดงผล ---------- */
+    async function bsRun() {
+      Swal.fire({ title:'กำลังวิเคราะห์...', text:'ดึงข้อมูลและจับกลุ่มเชิงพื้นที่', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+      try {
+        const draft = await bsAnalyze(valueOf('bsAsOf'));
+        draft.saved = false;
+        Swal.close();
+        bsRenderResults();
+        bsTab('run');
+        const t = draft.run.totals;
+        Swal.fire({ icon:'success', title:'วิเคราะห์เสร็จแล้ว',
+          html: '<div style="text-align:left;font-size:.86rem;line-height:1.9">' +
+            'จุดเกิดเหตุที่ใช้: <b>' + t.points + '</b> จุด (เมาแล้วขับ <b>' + t.drunk + '</b>)<br>' +
+            'จุดเสี่ยงตามเกณฑ์ข้อ 1: <b>' + t.rule1 + '</b> · ข้อ 2: <b>' + t.rule2 + '</b><br>' +
+            'จุดเมาแล้วขับ: <b>' + t.drunkSites + '</b> · โซนแดง: <b style="color:#c1122f">' + t.red + '</b> · โซนส้ม: <b style="color:#c24e00">' + t.orange + '</b>' +
+            '</div><p style="margin:10px 0 0;font-size:.78rem;color:#64748b">ยังเป็นฉบับร่าง — ตรวจแล้วกด “บันทึก + เผยแพร่” ด้านล่าง</p>' });
+      } catch (e) {
+        Swal.fire({ icon:'error', title:'วิเคราะห์ไม่สำเร็จ', text:e.message });
+      }
+    }
+
+    function bsRenderResults() {
+      const d = state.bsDraft;
+      if (!d) return;
+      const t = (d.run && d.run.totals) || {};
+      const sites = d.sites || [], zones = d.zones || [];
+      const kpi = (cls, n, label) => '<div class="bs-kpi ' + cls + '"><b>' + Number(n || 0).toLocaleString('th-TH') + '</b><span>' + label + '</span></div>';
+      document.getElementById('bsRunSummary').innerHTML =
+        '<div class="bs-kpis">' +
+          kpi('', sites.filter(s => s.rule !== 'drunk').length, 'จุดเสี่ยง (ข้อ 1+2)') +
+          kpi('purple', sites.filter(s => s.rule === 'drunk').length, 'จุดเมาแล้วขับ') +
+          kpi('red', zones.filter(z => z.level === 'red').length, 'โซนแดง') +
+          kpi('orange', zones.filter(z => z.level === 'orange').length, 'โซนส้ม') +
+          kpi('', sites.filter(s => s.confirmed).length, 'ยืนยันระยะยาว') +
+          kpi('red', sites.reduce((s, x) => s + (x.fatal_count || 0), 0), 'ผู้เสียชีวิตในจุดเสี่ยง') +
+        '</div>' +
+        (d.stats ? '<p class="hint" style="margin:12px 0 0">ข้อมูลนำเข้า: อุบัติเหตุ ' + d.stats.accPts +
+          ' · ผู้เสียชีวิต (ไม่ซ้ำกับอุบัติเหตุ) ' + d.stats.deathPts + ' · นำเข้าเพิ่ม ' + d.stats.extPts +
+          ' — ใช้ในหน้าต่างวิเคราะห์ ' + d.stats.used + ' จุด' + (t.points ? '' : '') + '</p>' : '') +
+        (d.saved ? '<p class="hint" style="margin:8px 0 0"><i class="fa-solid fa-database"></i> นี่คือผลที่บันทึกไว้ในฐานข้อมูล — กด “วิเคราะห์” เพื่อคำนวณใหม่</p>' : '');
+      bsRenderSites();
+      bsRenderZoneTable();
+      bsRenderPreviewMap();
+    }
+
+    function bsRenderSites() {
+      const d = state.bsDraft;
+      const all = (d && d.sites) || [];
+      const q = valueOf('bsSiteSearch').toLowerCase();
+      const rows = q ? all.filter(s => JSON.stringify([s.title, s.road, s.subdistrict, s.level, s.rule]).toLowerCase().includes(q)) : all;
+      document.getElementById('bsSiteTotal').textContent = all.length + ' จุด';
+      if (!rows.length) {
+        document.getElementById('bsSiteTable').innerHTML = '<div class="hint">' + (all.length ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีผลวิเคราะห์ — กดปุ่ม “วิเคราะห์” ด้านบน') + '</div>';
+        return;
+      }
+      const ruleLabel = { feature:'ข้อ 1 จุดกายภาพ', corridor:'ข้อ 2 ช่วงถนน', drunk:'ข้อ 3 เมาแล้วขับ' };
+      const lvlLabel = { high:'สูง', risk:'เสี่ยง', watch:'เฝ้าระวัง' };
+      document.getElementById('bsSiteTable').innerHTML = '<div class="bs-scroll"><table class="bs-table"><thead><tr>' +
+        '<th>จุด</th><th>เกณฑ์</th><th>ระดับ</th><th style="text-align:right">ครั้ง</th><th style="text-align:right">ตาย</th>' +
+        '<th style="text-align:right">เจ็บ</th><th style="text-align:right">เมา</th><th style="text-align:right">เดือนนี้</th>' +
+        '<th style="text-align:right">คะแนน</th><th>ช่วงเวลาเกิดเหตุ</th><th>พิกัด</th></tr></thead><tbody>' +
+        rows.map(s => '<tr>' +
+          '<td><b>' + escapeHtml(s.title) + '</b>' + (s.confirmed ? ' <span class="bs-lvl watch">ยืนยัน</span>' : '') +
+            (s.road || s.subdistrict ? '<div style="color:#64748b;font-size:.74rem">' + escapeHtml([s.road, s.subdistrict].filter(Boolean).join(' · ')) + '</div>' : '') + '</td>' +
+          '<td style="white-space:nowrap;font-size:.74rem;color:#475569">' + (ruleLabel[s.rule] || s.rule) + '<div style="color:#94a3b8">รัศมี ' + (s.radius_m || 0) + ' ม.</div></td>' +
+          '<td><span class="bs-lvl ' + s.level + '">' + (lvlLabel[s.level] || s.level) + '</span></td>' +
+          '<td style="text-align:right;font-weight:800">' + s.acc_count + '</td>' +
+          '<td style="text-align:right;color:#c1122f;font-weight:800">' + s.fatal_count + '</td>' +
+          '<td style="text-align:right">' + s.injury_count + '</td>' +
+          '<td style="text-align:right;color:#6d28d9">' + s.drunk_count + '</td>' +
+          '<td style="text-align:right">' + s.month_count + '</td>' +
+          '<td style="text-align:right;font-weight:800">' + Number(s.score).toFixed(0) + '</td>' +
+          '<td style="font-size:.74rem;color:#475569">' + escapeHtml(bsPeakText(s.peak)) + '</td>' +
+          '<td style="font-size:.72rem;white-space:nowrap"><a href="https://www.google.com/maps?q=' + s.latitude + ',' + s.longitude + '" target="_blank" rel="noopener">' +
+            Number(s.latitude).toFixed(5) + ', ' + Number(s.longitude).toFixed(5) + '</a></td></tr>').join('') +
+        '</tbody></table></div>';
+    }
+
+    function bsRenderZoneTable() {
+      const zones = (state.bsDraft && state.bsDraft.zones) || [];
+      document.getElementById('bsZoneTotal').textContent = zones.length + ' โซน';
+      if (!zones.length) { document.getElementById('bsZoneTable').innerHTML = '<div class="hint">ยังไม่มีผลวิเคราะห์</div>'; return; }
+      document.getElementById('bsZoneTable').innerHTML = '<div class="bs-scroll"><table class="bs-table"><thead><tr>' +
+        '<th>โซน</th><th>ระดับ</th><th style="text-align:right">จุด</th><th style="text-align:right">ตาย</th>' +
+        '<th style="text-align:right">เดือนนี้</th><th style="text-align:right">พื้นที่</th><th>ช่วงเวลาเกิดเหตุ</th><th>แนวทาง</th></tr></thead><tbody>' +
+        zones.map(z => '<tr>' +
+          '<td><b>' + escapeHtml(z.title) + '</b>' + (z.corridor ? '<div style="color:#c1122f;font-size:.72rem"><i class="fa-solid fa-route"></i> มี Red Corridor ' + z.corridor.length + ' จุด</div>' : '') + '</td>' +
+          '<td><span class="bs-lvl ' + z.level + '">' + (z.level === 'red' ? 'แดง' : 'ส้ม') + '</span></td>' +
+          '<td style="text-align:right;font-weight:800">' + z.point_count + '</td>' +
+          '<td style="text-align:right;color:#c1122f;font-weight:800">' + z.fatal_count + '</td>' +
+          '<td style="text-align:right">' + z.month_count + '</td>' +
+          '<td style="text-align:right;white-space:nowrap">' + Number(z.area_km2 || 0).toFixed(2) + ' ตร.กม.</td>' +
+          '<td style="font-size:.74rem;color:#475569">' + escapeHtml(bsPeakText(z.peak)) + '</td>' +
+          '<td style="font-size:.74rem;color:#475569;max-width:280px">' + escapeHtml(z.note || '') + '</td></tr>').join('') +
+        '</tbody></table></div>';
+    }
+
+    /* ---------- แผนที่ตัวอย่างผลวิเคราะห์ ---------- */
+    function bsInitPreviewMap() {
+      if (state.bsPreviewMap) return;
+      state.bsPreviewMap = L.map('bsPreviewMap').setView(NAKHON_SAWAN_CENTER, 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap contributors', keepBuffer:6, updateWhenZooming:false, updateWhenIdle:true }).addTo(state.bsPreviewMap);
+      state.bsGroups = {
+        sites: L.layerGroup().addTo(state.bsPreviewMap), drunk: L.layerGroup().addTo(state.bsPreviewMap),
+        red: L.layerGroup().addTo(state.bsPreviewMap), orange: L.layerGroup().addTo(state.bsPreviewMap),
+        corridor: L.layerGroup().addTo(state.bsPreviewMap)
+      };
+    }
+    function bsRenderPreviewMap() {
+      bsInitPreviewMap();
+      const d = state.bsDraft; if (!d) return;
+      Object.values(state.bsGroups).forEach(g => g.clearLayers());
+      const bounds = [];
+      (d.sites || []).forEach(s => {
+        const drunk = s.rule === 'drunk';
+        const color = drunk ? '#7c3aed' : s.level === 'high' ? '#c1122f' : s.level === 'risk' ? '#e07000' : '#0284c7';
+        bounds.push([s.latitude, s.longitude]);
+        L.circleMarker([s.latitude, s.longitude], {
+          radius: Math.min(16, 5 + Math.sqrt(s.acc_count) * 3), color:'#fff', weight:2,
+          fillColor:color, fillOpacity:.88
+        }).bindPopup('<div class="popup"><h3 style="color:' + color + '">' + escapeHtml(s.title) + '</h3>' +
+          '<div class="popup-row">อุบัติเหตุ <b>' + s.acc_count + '</b> ครั้ง · เสียชีวิต <b>' + s.fatal_count + '</b> · บาดเจ็บ <b>' + s.injury_count + '</b></div>' +
+          '<div class="popup-row">เมาแล้วขับ <b>' + s.drunk_count + '</b> · คะแนน <b>' + Number(s.score).toFixed(0) + '</b> · รัศมีเกณฑ์ ' + s.radius_m + ' ม.</div>' +
+          (bsPeakText(s.peak) ? '<div class="popup-row">ช่วงเวลาที่เกิดบ่อย: <b>' + escapeHtml(bsPeakText(s.peak)) + '</b></div>' : '') + '</div>')
+          .addTo(state.bsGroups[drunk ? 'drunk' : 'sites']);
+      });
+      (d.zones || []).forEach(z => {
+        const red = z.level === 'red';
+        const poly = (z.polygon || []).map(c => [c[0], c[1]]);
+        if (poly.length >= 3) {
+          poly.forEach(c => bounds.push(c));
+          L.polygon(poly, { color: red ? '#c1122f' : '#e07000', weight:2, fillColor: red ? '#ef4444' : '#f59e0b', fillOpacity:.2 })
+            .bindPopup('<div class="popup"><h3 style="color:' + (red ? '#c1122f' : '#c24e00') + '">' + escapeHtml(z.title) + '</h3>' +
+              '<div class="popup-row">จุดเมาแล้วขับ <b>' + z.point_count + '</b> · เสียชีวิต <b>' + z.fatal_count + '</b> · พื้นที่ <b>' + Number(z.area_km2 || 0).toFixed(2) + '</b> ตร.กม.</div>' +
+              (bsPeakText(z.peak) ? '<div class="popup-row">ช่วงเวลาที่เกิดบ่อย: <b>' + escapeHtml(bsPeakText(z.peak)) + '</b></div>' : '') +
+              (z.note ? '<div class="popup-row">' + escapeHtml(z.note) + '</div>' : '') + '</div>')
+            .addTo(state.bsGroups[red ? 'red' : 'orange']);
+        }
+        if (z.corridor && z.corridor.length >= 2) {
+          L.polyline(z.corridor.map(c => [c[0], c[1]]), { color:'#c1122f', weight:4, opacity:.85, dashArray:'10 6' })
+            .bindTooltip('Red Corridor · ' + escapeHtml(z.title), { sticky:true })
+            .addTo(state.bsGroups.corridor);
+        }
+      });
+      Object.keys(state.bsLayers).forEach(k => bsApplyLayer(k));
+      if (bounds.length) state.bsPreviewMap.fitBounds(L.latLngBounds(bounds).pad(0.15));
+      setTimeout(() => state.bsPreviewMap.invalidateSize(), 200);
+    }
+    function bsApplyLayer(name) {
+      const on = state.bsLayers[name];
+      const g = state.bsGroups && state.bsGroups[name];
+      if (!g || !state.bsPreviewMap) return;
+      if (on) g.addTo(state.bsPreviewMap); else state.bsPreviewMap.removeLayer(g);
+      const btn = document.getElementById('bsLyr' + { sites:'Sites', drunk:'Drunk', red:'Red', orange:'Orange', corridor:'Corr' }[name]);
+      if (btn) btn.classList.toggle('on', on);
+    }
+    function bsToggleLayer(name) {
+      state.bsLayers[name] = !state.bsLayers[name];
+      bsApplyLayer(name);
+    }
+
+    /* ---------- บันทึก / เผยแพร่ ---------- */
+    async function bsSave(publish) {
+      const d = state.bsDraft;
+      if (!d || !d.sites) { Swal.fire({ icon:'info', title:'ยังไม่มีผลวิเคราะห์', text:'กดปุ่ม “วิเคราะห์” ก่อน' }); return; }
+      if (d.saved) { Swal.fire({ icon:'info', title:'นี่คือผลที่บันทึกไว้แล้ว', text:'กด “วิเคราะห์” เพื่อคำนวณรอบใหม่ก่อนบันทึกทับ' }); return; }
+      const ask = await Swal.fire({
+        icon:'warning', title: publish ? 'เผยแพร่ขึ้นหน้าประชาชน?' : 'บันทึกเป็นฉบับร่าง?',
+        html: 'จุดเสี่ยง <b>' + d.sites.length + '</b> จุด · โซน <b>' + d.zones.length + '</b> โซน<br>' +
+          '<span style="color:#9a3412">ผลวิเคราะห์รอบก่อนจะถูกแทนที่</span> (โซนที่วาดเองไม่ถูกแตะต้อง)',
+        showCancelButton:true, confirmButtonText: publish ? 'เผยแพร่เลย' : 'บันทึกร่าง', cancelButtonText:'ยกเลิก'
+      });
+      if (!ask.isConfirmed) return;
+      try {
+        const res = await rpc('bs_publish', {
+          p_token: state.token, p_run: d.run, p_sites: d.sites, p_zones: d.zones, p_publish: !!publish
+        });
+        if (!res.success) throw new Error(res.message);
+        Swal.fire({ icon:'success', title:'สำเร็จ', text:res.message });
+        state.bsDraft = null;
+        await bsLoadAdminData();
+      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+    }
+    async function bsUnpublish() {
+      const ask = await Swal.fire({ icon:'warning', title:'ถอนผลวิเคราะห์ออกจากหน้าประชาชน?',
+        text:'ข้อมูลยังอยู่ในระบบ แต่ประชาชนจะไม่เห็น', showCancelButton:true, confirmButtonText:'ถอนออก', cancelButtonText:'ยกเลิก' });
+      if (!ask.isConfirmed) return;
+      try {
+        const res = await rpc('bs_set_published', { p_token: state.token, p_published: false });
+        if (!res.success) throw new Error(res.message);
+        Swal.fire({ icon:'success', title:'ถอนออกแล้ว', text:res.message });
+        bsLoadAdminData();
+      } catch (e) { Swal.fire({ icon:'error', title:'ทำรายการไม่สำเร็จ', text:e.message }); }
+    }
+
+    /* ---------- ตั้งค่าเกณฑ์ ---------- */
+    function bsRenderSettingsForm() {
+      const cfg = bsCfg();
+      document.getElementById('bsSettingsForm').innerHTML = BS_SETTING_FIELDS.map(f =>
+        '<div class="field span-6"><label for="bsSet_' + f.k + '">' + escapeHtml(f.label) + '</label>' +
+        '<input id="bsSet_' + f.k + '" class="input" type="number" step="' + f.step + '" min="0" value="' + cfg[f.k] + '"></div>').join('');
+    }
+    async function bsSaveSettings() {
+      const payload = {};
+      let bad = '';
+      BS_SETTING_FIELDS.forEach(f => {
+        const n = Number(valueOf('bsSet_' + f.k));
+        if (!Number.isFinite(n) || n <= 0) { bad = bad || f.label; return; }
+        payload[f.k] = n;
+      });
+      if (bad) { Swal.fire({ icon:'error', title:'ค่าไม่ถูกต้อง', text:'ตรวจสอบช่อง: ' + bad }); return; }
+      try {
+        const res = await rpc('bs_settings_save', { p_token: state.token, p_settings: payload });
+        if (!res.success) throw new Error(res.message);
+        state.bsSettings = payload;
+        Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:'มีผลกับการวิเคราะห์รอบถัดไป' });
+      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+    }
+    function bsResetSettings() {
+      state.bsSettings = Object.assign({}, BS_DEFAULTS);
+      bsRenderSettingsForm();
+      Swal.fire({ icon:'info', title:'คืนค่าตั้งต้นในฟอร์มแล้ว', text:'กด “บันทึกค่าเกณฑ์” เพื่อยืนยัน' });
+    }
+
+    /* ---------- จุดกายภาพเสี่ยง ---------- */
+    function bsParseCoords(id) {
+      const parts = valueOf(id).split(',');
+      const lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
+      return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+    }
+    function bsRenderFeatures() {
+      const all = state.bsFeatures || [];
+      const q = valueOf('bsFeatSearch').toLowerCase();
+      const rows = q ? all.filter(f => JSON.stringify([f.name, f.road, f.subdistrict, BS_FEATURE_KINDS[f.kind]]).toLowerCase().includes(q)) : all;
+      document.getElementById('bsFeatTotal').textContent = all.length + ' จุด';
+      if (!rows.length) {
+        document.getElementById('bsFeatTable').innerHTML = '<div class="hint">' + (all.length ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีจุดกายภาพ — เพิ่มจากฟอร์มด้านบน หรือนำเข้า CSV') + '</div>';
+        return;
+      }
+      document.getElementById('bsFeatTable').innerHTML = '<div class="bs-scroll"><table class="bs-table"><thead><tr>' +
+        '<th>ชื่อจุด</th><th>ชนิด</th><th>ถนน / ตำบล</th><th>เขต</th><th>พิกัด</th><th></th></tr></thead><tbody>' +
+        rows.map(f => '<tr>' +
+          '<td><b>' + escapeHtml(f.name) + '</b>' + (f.note ? '<div style="color:#64748b;font-size:.74rem">' + escapeHtml(f.note) + '</div>' : '') + '</td>' +
+          '<td style="white-space:nowrap">' + escapeHtml(BS_FEATURE_KINDS[f.kind] || f.kind) + '</td>' +
+          '<td>' + escapeHtml([f.road, f.subdistrict].filter(Boolean).join(' · ') || '-') + '</td>' +
+          '<td style="white-space:nowrap;font-size:.74rem">' + (f.in_municipality ? 'ในเขต (200 ม.)' : 'นอกเขต (500 ม.)') + '</td>' +
+          '<td style="font-size:.72rem;white-space:nowrap"><a href="https://www.google.com/maps?q=' + f.latitude + ',' + f.longitude + '" target="_blank" rel="noopener">' +
+            Number(f.latitude).toFixed(5) + ', ' + Number(f.longitude).toFixed(5) + '</a></td>' +
+          '<td style="white-space:nowrap"><button class="btn btn-soft btn-sm" type="button" onclick="bsEditFeature(' + f.id + ')"><i class="fa-solid fa-pen"></i></button> ' +
+            '<button class="btn btn-soft btn-sm" type="button" style="color:#c1122f" onclick="bsDeleteFeature(' + f.id + ')"><i class="fa-solid fa-trash"></i></button></td></tr>').join('') +
+        '</tbody></table></div>';
+    }
+    function bsResetFeatureForm() {
+      state.bsEditFeature = null;
+      ['bsFeatName','bsFeatRoad','bsFeatCoords','bsFeatNote'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('bsFeatSub').value = '';
+      document.getElementById('bsFeatMuni').value = 'true';
+      document.getElementById('bsFeatFormTitle').innerHTML = '<i class="fa-solid fa-map-pin"></i> เพิ่มจุดกายภาพเสี่ยง';
+      document.getElementById('bsFeatCancelBtn').style.display = 'none';
+    }
+    function bsEditFeature(id) {
+      const f = (state.bsFeatures || []).find(x => x.id === id);
+      if (!f) return;
+      state.bsEditFeature = id;
+      document.getElementById('bsFeatKind').value = f.kind;
+      document.getElementById('bsFeatName').value = f.name || '';
+      document.getElementById('bsFeatRoad').value = f.road || '';
+      document.getElementById('bsFeatSub').value = f.subdistrict || '';
+      document.getElementById('bsFeatCoords').value = Number(f.latitude).toFixed(6) + ', ' + Number(f.longitude).toFixed(6);
+      document.getElementById('bsFeatMuni').value = String(!!f.in_municipality);
+      document.getElementById('bsFeatNote').value = f.note || '';
+      document.getElementById('bsFeatFormTitle').innerHTML = '<i class="fa-solid fa-pen"></i> แก้ไขจุดกายภาพเสี่ยง';
+      document.getElementById('bsFeatCancelBtn').style.display = 'inline-flex';
+      document.getElementById('bsFeatForm').scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+    async function bsSaveFeature() {
+      const c = bsParseCoords('bsFeatCoords');
+      if (!valueOf('bsFeatName')) { Swal.fire({ icon:'error', title:'กรุณากรอกชื่อจุด' }); return; }
+      if (!c) { Swal.fire({ icon:'error', title:'พิกัดไม่ถูกต้อง', text:'รูปแบบ: 15.7051, 100.1372' }); return; }
+      try {
+        const res = await rpc('bs_feature_save', {
+          p_token: state.token, p_id: state.bsEditFeature,
+          p_row: {
+            kind: valueOf('bsFeatKind'), name: valueOf('bsFeatName'), road: valueOf('bsFeatRoad'),
+            subdistrict: valueOf('bsFeatSub'), in_municipality: valueOf('bsFeatMuni') === 'true',
+            latitude: c.lat, longitude: c.lng, note: valueOf('bsFeatNote')
+          }
+        });
+        if (!res.success) throw new Error(res.message);
+        Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:res.message, timer:1400, showConfirmButton:false });
+        bsResetFeatureForm();
+        bsLoadAdminData();
+      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+    }
+    async function bsDeleteFeature(id) {
+      const f = (state.bsFeatures || []).find(x => x.id === id);
+      const ask = await Swal.fire({ icon:'warning', title:'ลบจุดนี้?', text:(f && f.name) || '', showCancelButton:true, confirmButtonText:'ลบ', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c1122f' });
+      if (!ask.isConfirmed) return;
+      try {
+        const res = await rpc('bs_feature_delete', { p_token: state.token, p_id: id });
+        if (!res.success) throw new Error(res.message);
+        bsLoadAdminData();
+      } catch (e) { Swal.fire({ icon:'error', title:'ลบไม่สำเร็จ', text:e.message }); }
+    }
+
+    /* ---------- จุดเกิดเหตุเพิ่มเติม ---------- */
+    function bsRenderIncidents() {
+      const all = state.bsIncidents || [];
+      const q = valueOf('bsIncSearch').toLowerCase();
+      const rows = q ? all.filter(r => JSON.stringify([r.place, r.road, r.subdistrict, r.source, r.cause, bkkStamp(r.occurred_at, 'day')]).toLowerCase().includes(q)) : all;
+      document.getElementById('bsIncTotal').textContent = all.length + ' แถว';
+      if (!rows.length) {
+        document.getElementById('bsIncTable').innerHTML = '<div class="hint">' + (all.length ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีข้อมูล — เพิ่มจากฟอร์มด้านบน หรือนำเข้า CSV') + '</div>';
+        return;
+      }
+      document.getElementById('bsIncTable').innerHTML = '<div class="bs-scroll"><table class="bs-table"><thead><tr>' +
+        '<th>วันเวลา</th><th>สถานที่</th><th>ถนน / ตำบล</th><th>เมา</th><th style="text-align:right">ตาย</th>' +
+        '<th style="text-align:right">เจ็บ</th><th>ที่มา</th><th>พิกัด</th><th></th></tr></thead><tbody>' +
+        rows.map(r => '<tr>' +
+          '<td style="white-space:nowrap;font-size:.75rem">' + escapeHtml(formatThaiDateTimeStr(r.occurred_at)) + '</td>' +
+          '<td>' + escapeHtml(r.place || '-') + (r.direction ? '<div style="color:#64748b;font-size:.72rem">' + escapeHtml(r.direction) + '</div>' : '') + '</td>' +
+          '<td>' + escapeHtml([r.road, r.subdistrict].filter(Boolean).join(' · ') || '-') + '</td>' +
+          '<td>' + (r.is_drunk ? '<span class="bs-lvl high">เมา</span>' : '') + '</td>' +
+          '<td style="text-align:right;color:#c1122f;font-weight:800">' + (r.fatal_count || 0) + '</td>' +
+          '<td style="text-align:right">' + (r.injury_count || 0) + '</td>' +
+          '<td style="font-size:.74rem">' + escapeHtml(r.source || '-') + '</td>' +
+          '<td style="font-size:.72rem;white-space:nowrap"><a href="https://www.google.com/maps?q=' + r.latitude + ',' + r.longitude + '" target="_blank" rel="noopener">' +
+            Number(r.latitude).toFixed(5) + ', ' + Number(r.longitude).toFixed(5) + '</a></td>' +
+          '<td style="white-space:nowrap"><button class="btn btn-soft btn-sm" type="button" onclick="bsEditIncident(' + r.id + ')"><i class="fa-solid fa-pen"></i></button> ' +
+            '<button class="btn btn-soft btn-sm" type="button" style="color:#c1122f" onclick="bsDeleteIncident(' + r.id + ')"><i class="fa-solid fa-trash"></i></button></td></tr>').join('') +
+        '</tbody></table></div>';
+    }
+    function bsResetIncidentForm() {
+      state.bsEditIncident = null;
+      ['bsIncAt','bsIncCoords','bsIncPlace','bsIncRoad','bsIncDir','bsIncSource','bsIncNote'].forEach(id => document.getElementById(id).value = '');
+      ['bsIncSub','bsIncRoadChar','bsIncCause'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('bsIncMuni').value = 'true';
+      document.getElementById('bsIncDrunk').value = 'false';
+      document.getElementById('bsIncFatal').value = '0';
+      document.getElementById('bsIncInj').value = '0';
+      document.getElementById('bsIncFormTitle').innerHTML = '<i class="fa-solid fa-file-circle-plus"></i> เพิ่มจุดเกิดเหตุ';
+      document.getElementById('bsIncCancelBtn').style.display = 'none';
+    }
+    function bsEditIncident(id) {
+      const r = (state.bsIncidents || []).find(x => x.id === id);
+      if (!r) return;
+      state.bsEditIncident = id;
+      document.getElementById('bsIncAt').value = bkkStamp(r.occurred_at).slice(0, 16).replace(' ', 'T');
+      document.getElementById('bsIncCoords').value = Number(r.latitude).toFixed(6) + ', ' + Number(r.longitude).toFixed(6);
+      document.getElementById('bsIncPlace').value = r.place || '';
+      document.getElementById('bsIncRoad').value = r.road || '';
+      document.getElementById('bsIncSub').value = r.subdistrict || '';
+      document.getElementById('bsIncMuni').value = String(!!r.in_municipality);
+      document.getElementById('bsIncDir').value = r.direction || '';
+      document.getElementById('bsIncRoadChar').value = r.road_character || '';
+      document.getElementById('bsIncCause').value = r.cause || '';
+      document.getElementById('bsIncDrunk').value = String(!!r.is_drunk);
+      document.getElementById('bsIncFatal').value = r.fatal_count || 0;
+      document.getElementById('bsIncInj').value = r.injury_count || 0;
+      document.getElementById('bsIncSource').value = r.source || '';
+      document.getElementById('bsIncNote').value = r.note || '';
+      document.getElementById('bsIncFormTitle').innerHTML = '<i class="fa-solid fa-pen"></i> แก้ไขจุดเกิดเหตุ';
+      document.getElementById('bsIncCancelBtn').style.display = 'inline-flex';
+      document.getElementById('bsIncForm').scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+    async function bsSaveIncident() {
+      const c = bsParseCoords('bsIncCoords');
+      const at = valueOf('bsIncAt');
+      if (!at) { Swal.fire({ icon:'error', title:'กรุณาระบุวันเวลาเกิดเหตุ' }); return; }
+      if (!c) { Swal.fire({ icon:'error', title:'พิกัดไม่ถูกต้อง', text:'รูปแบบ: 15.7051, 100.1372' }); return; }
+      try {
+        const res = await rpc('bs_incident_save', {
+          p_token: state.token, p_id: state.bsEditIncident,
+          p_row: {
+            occurred_at: at + ':00+07:00', latitude: c.lat, longitude: c.lng,
+            place: valueOf('bsIncPlace'), road: valueOf('bsIncRoad'), subdistrict: valueOf('bsIncSub'),
+            in_municipality: valueOf('bsIncMuni') === 'true', direction: valueOf('bsIncDir'),
+            road_character: valueOf('bsIncRoadChar'), is_drunk: valueOf('bsIncDrunk') === 'true',
+            fatal_count: Number(valueOf('bsIncFatal')) || 0, injury_count: Number(valueOf('bsIncInj')) || 0,
+            cause: valueOf('bsIncCause'), source: valueOf('bsIncSource'), note: valueOf('bsIncNote')
+          }
+        });
+        if (!res.success) throw new Error(res.message);
+        Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:res.message, timer:1400, showConfirmButton:false });
+        bsResetIncidentForm();
+        bsLoadAdminData();
+      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+    }
+    async function bsDeleteIncident(id) {
+      const ask = await Swal.fire({ icon:'warning', title:'ลบข้อมูลจุดเกิดเหตุนี้?', showCancelButton:true, confirmButtonText:'ลบ', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c1122f' });
+      if (!ask.isConfirmed) return;
+      try {
+        const res = await rpc('bs_incident_delete', { p_token: state.token, p_id: id });
+        if (!res.success) throw new Error(res.message);
+        bsLoadAdminData();
+      } catch (e) { Swal.fire({ icon:'error', title:'ลบไม่สำเร็จ', text:e.message }); }
+    }
+
+    /* ---------- โซนที่วาดเอง ---------- */
+    function bsInitDrawMap() {
+      if (state.bsDrawMap) { setTimeout(() => state.bsDrawMap.invalidateSize(), 200); return; }
+      state.bsDrawMap = L.map('bsZoneDrawMap').setView(NAKHON_SAWAN_CENTER, 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap contributors', keepBuffer:6, updateWhenZooming:false, updateWhenIdle:true }).addTo(state.bsDrawMap);
+      state.bsDrawLayer = L.layerGroup().addTo(state.bsDrawMap);
+      state.bsDrawMap.on('click', e => {
+        state.bsDrawPts.push([Number(e.latlng.lat.toFixed(6)), Number(e.latlng.lng.toFixed(6))]);
+        bsRedrawZone();
+      });
+      setTimeout(() => state.bsDrawMap.invalidateSize(), 250);
+    }
+    function bsRedrawZone() {
+      if (!state.bsDrawLayer) return;
+      state.bsDrawLayer.clearLayers();
+      const pts = state.bsDrawPts;
+      const red = valueOf('bsZLevel') !== 'orange';
+      pts.forEach((p, i) => L.circleMarker(p, { radius:5, color:'#fff', weight:2, fillColor: red ? '#c1122f' : '#e07000', fillOpacity:1 })
+        .bindTooltip(String(i + 1), { permanent:false }).addTo(state.bsDrawLayer));
+      if (pts.length >= 3) {
+        L.polygon(pts, { color: red ? '#c1122f' : '#e07000', weight:2, fillColor: red ? '#ef4444' : '#f59e0b', fillOpacity:.22 }).addTo(state.bsDrawLayer);
+      } else if (pts.length === 2) {
+        L.polyline(pts, { color: red ? '#c1122f' : '#e07000', weight:2, dashArray:'6 4' }).addTo(state.bsDrawLayer);
+      }
+      const info = document.getElementById('bsZInfo');
+      info.textContent = pts.length < 3
+        ? 'วางแล้ว ' + pts.length + ' จุด (ต้องอย่างน้อย 3 จุด)'
+        : 'วางแล้ว ' + pts.length + ' จุด · พื้นที่ประมาณ ' + bsPolygonAreaKm2(pts).toFixed(2) + ' ตร.กม.';
+    }
+    function bsZoneUndo() { state.bsDrawPts.pop(); bsRedrawZone(); }
+    function bsZoneClear() { state.bsDrawPts = []; bsRedrawZone(); }
+    function bsResetZoneForm() {
+      state.bsEditZone = null;
+      state.bsDrawPts = [];
+      ['bsZTitle','bsZNote'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('bsZLevel').value = 'red';
+      document.getElementById('bsZoneFormTitle').innerHTML = '<i class="fa-solid fa-draw-polygon"></i> วาดโซนเอง';
+      document.getElementById('bsZCancelBtn').style.display = 'none';
+      bsRedrawZone();
+    }
+    function bsRenderManualZones() {
+      const rows = (state.bsSavedZones || []).filter(z => z.source === 'manual');
+      document.getElementById('bsManualTotal').textContent = rows.length + ' โซน';
+      if (!rows.length) { document.getElementById('bsManualTable').innerHTML = '<div class="hint">ยังไม่มีโซนที่วาดเอง</div>'; return; }
+      document.getElementById('bsManualTable').innerHTML = '<div class="bs-scroll"><table class="bs-table"><thead><tr>' +
+        '<th>ชื่อโซน</th><th>ระดับ</th><th style="text-align:right">พื้นที่</th><th>สถานะ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody>' +
+        rows.map(z => '<tr>' +
+          '<td><b>' + escapeHtml(z.title) + '</b></td>' +
+          '<td><span class="bs-lvl ' + z.level + '">' + (z.level === 'red' ? 'แดง' : 'ส้ม') + '</span></td>' +
+          '<td style="text-align:right;white-space:nowrap">' + Number(z.area_km2 || 0).toFixed(2) + ' ตร.กม.</td>' +
+          '<td><span class="bs-lvl ' + (z.published ? 'high' : 'watch') + '">' + (z.published ? 'เผยแพร่' : 'ซ่อน') + '</span></td>' +
+          '<td style="font-size:.74rem;color:#475569;max-width:260px">' + escapeHtml(z.note || '') + '</td>' +
+          '<td style="white-space:nowrap">' +
+            '<button class="btn btn-soft btn-sm" type="button" onclick="bsToggleZonePublish(' + z.id + ',' + (!z.published) + ')" title="' + (z.published ? 'ซ่อน' : 'เผยแพร่') + '"><i class="fa-solid fa-' + (z.published ? 'eye-slash' : 'tower-broadcast') + '"></i></button> ' +
+            '<button class="btn btn-soft btn-sm" type="button" onclick="bsEditZone(' + z.id + ')"><i class="fa-solid fa-pen"></i></button> ' +
+            '<button class="btn btn-soft btn-sm" type="button" style="color:#c1122f" onclick="bsDeleteZone(' + z.id + ')"><i class="fa-solid fa-trash"></i></button></td></tr>').join('') +
+        '</tbody></table></div>';
+    }
+    function bsEditZone(id) {
+      const z = (state.bsSavedZones || []).find(x => x.id === id);
+      if (!z) return;
+      bsTab('zones');
+      state.bsEditZone = id;
+      document.getElementById('bsZTitle').value = z.title || '';
+      document.getElementById('bsZLevel').value = z.level || 'red';
+      document.getElementById('bsZNote').value = z.note || '';
+      state.bsDrawPts = (z.polygon || []).map(c => [c[0], c[1]]);
+      document.getElementById('bsZoneFormTitle').innerHTML = '<i class="fa-solid fa-pen"></i> แก้ไขโซน';
+      document.getElementById('bsZCancelBtn').style.display = 'inline-flex';
+      bsInitDrawMap();
+      bsRedrawZone();
+      if (state.bsDrawPts.length) setTimeout(() => state.bsDrawMap.fitBounds(L.latLngBounds(state.bsDrawPts).pad(0.2)), 300);
+    }
+    async function bsSaveZone() {
+      if (!valueOf('bsZTitle')) { Swal.fire({ icon:'error', title:'กรุณากรอกชื่อโซน' }); return; }
+      if (state.bsDrawPts.length < 3) { Swal.fire({ icon:'error', title:'ต้องวาดพื้นที่อย่างน้อย 3 จุด' }); return; }
+      const c = bsCentroid(state.bsDrawPts.map(p => ({ lat:p[0], lng:p[1] })));
+      try {
+        const res = await rpc('bs_zone_save', {
+          p_token: state.token, p_id: state.bsEditZone,
+          p_row: {
+            level: valueOf('bsZLevel'), title: valueOf('bsZTitle'), note: valueOf('bsZNote'),
+            polygon: state.bsDrawPts, centroid_lat: Number(c.lat.toFixed(6)), centroid_lng: Number(c.lng.toFixed(6)),
+            area_km2: Number(bsPolygonAreaKm2(state.bsDrawPts).toFixed(3)),
+            published: state.bsEditZone ? undefined : false
+          }
+        });
+        if (!res.success) throw new Error(res.message);
+        Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:res.message + ' — กดปุ่มกระจายเสียงในตารางเพื่อเผยแพร่', timer:2200, showConfirmButton:false });
+        bsResetZoneForm();
+        bsLoadAdminData();
+      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+    }
+    async function bsToggleZonePublish(id, pub) {
+      try {
+        const res = await rpc('bs_zone_set_published', { p_token: state.token, p_id: id, p_published: pub });
+        if (!res.success) throw new Error(res.message);
+        bsLoadAdminData();
+      } catch (e) { Swal.fire({ icon:'error', title:'ทำรายการไม่สำเร็จ', text:e.message }); }
+    }
+    async function bsDeleteZone(id) {
+      const ask = await Swal.fire({ icon:'warning', title:'ลบโซนนี้?', showCancelButton:true, confirmButtonText:'ลบ', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c1122f' });
+      if (!ask.isConfirmed) return;
+      try {
+        const res = await rpc('bs_zone_delete', { p_token: state.token, p_id: id });
+        if (!res.success) throw new Error(res.message);
+        bsLoadAdminData();
+      } catch (e) { Swal.fire({ icon:'error', title:'ลบไม่สำเร็จ', text:e.message }); }
+    }
+
+    /* ---------- เลือกพิกัดบนแผนที่ (ใช้ร่วมกันทุกฟอร์มในหน้านี้) ---------- */
+    function bsPickCoords(targetId) {
+      Swal.fire({
+        title: 'จิ้มเลือกพิกัดบนแผนที่', width: 720,
+        html: '<div id="bsMapPicker" style="height:420px;border-radius:14px"></div>' +
+          '<p style="margin:8px 0 0;font-size:.78rem;color:#64748b">คลิกหรือลากหมุดไปยังตำแหน่งที่ต้องการ</p>',
+        showCancelButton: true, confirmButtonText: 'ใช้พิกัดนี้', cancelButtonText: 'ยกเลิก',
+        didOpen: () => {
+          const cur = bsParseCoords(targetId);
+          const start = cur ? [cur.lat, cur.lng] : NAKHON_SAWAN_CENTER;
+          bsPickerMap = L.map('bsMapPicker').setView(start, cur ? 16 : 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap', keepBuffer:6, updateWhenZooming:false, updateWhenIdle:true }).addTo(bsPickerMap);
+          bsPickerMarker = L.marker(start, { draggable:true }).addTo(bsPickerMap);
+          bsPickerMap.on('click', e => bsPickerMarker.setLatLng(e.latlng));
+          setTimeout(() => bsPickerMap.invalidateSize(), 150);
+        },
+        // อ่านตำแหน่งตอน preConfirm — willClose ทำลาย marker ไปแล้ว
+        preConfirm: () => bsPickerMarker ? bsPickerMarker.getLatLng() : null,
+        willClose: () => { if (bsPickerMap) { bsPickerMap.remove(); bsPickerMap = null; bsPickerMarker = null; } }
+      }).then(r => {
+        if (r.isConfirmed && r.value) document.getElementById(targetId).value = r.value.lat.toFixed(6) + ', ' + r.value.lng.toFixed(6);
+      });
+    }
+    function bsUseGps(targetId) {
+      if (!navigator.geolocation) { Swal.fire({ icon:'error', title:'เบราว์เซอร์ไม่รองรับ GPS' }); return; }
+      navigator.geolocation.getCurrentPosition(
+        pos => { document.getElementById(targetId).value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6); },
+        () => Swal.fire({ icon:'error', title:'ไม่สามารถดึงตำแหน่งได้', text:'โปรดอนุญาตการเข้าถึงตำแหน่ง หรือกรอกพิกัดเอง' })
+      );
+    }
+
+    /* ---------- นำเข้า / ส่งออก ---------- */
+    // CSV ที่รองรับเครื่องหมายคำพูดและ newline ในเซลล์ (ไฟล์จาก Excel มักมี)
+    function bsParseCsv(text) {
+      const rows = []; let row = [], cell = '', q = false;
+      const s = text.replace(/^﻿/, '');
+      for (let i = 0; i < s.length; i++) {
+        const ch = s[i];
+        if (q) {
+          if (ch === '"') { if (s[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+          else cell += ch;
+        } else if (ch === '"') q = true;
+        else if (ch === ',') { row.push(cell); cell = ''; }
+        else if (ch === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+        else if (ch !== '\r') cell += ch;
+      }
+      if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+      return rows.filter(r => r.some(c => String(c).trim() !== ''));
+    }
+    const BS_FEATURE_COLS = ['ชนิด','ชื่อจุด','ถนน','ตำบล','ในเขตเทศบาล','ละติจูด','ลองจิจูด','หมายเหตุ'];
+    const BS_INCIDENT_COLS = ['วันเวลาเกิดเหตุ','ละติจูด','ลองจิจูด','สถานที่','ถนน','ตำบล','ในเขตเทศบาล','ทิศทางเดินรถ','ลักษณะทาง','เมาแล้วขับ','ผู้เสียชีวิต','ผู้บาดเจ็บ','สาเหตุ','ที่มาข้อมูล','หมายเหตุ'];
+    const bsYes = v => /^(1|true|ใช่|y|yes|ในเขต.*)$/i.test(String(v || '').trim());
+
+    async function bsImportCsv(ev, what) {
+      const file = ev.target.files && ev.target.files[0];
+      ev.target.value = '';
+      if (!file) return;
+      try {
+        const rows = bsParseCsv(await file.text());
+        if (rows.length < 2) throw new Error('ไฟล์ว่างหรือมีแต่หัวตาราง');
+        const body = rows.slice(1);
+        let payload;
+        if (what === 'features') {
+          payload = body.map(r => ({
+            kind: Object.keys(BS_FEATURE_KINDS).includes(String(r[0]).trim()) ? String(r[0]).trim()
+              : (Object.keys(BS_FEATURE_KINDS).find(k => BS_FEATURE_KINDS[k] === String(r[0]).trim()) || 'junction'),
+            name: String(r[1] || '').trim(), road: String(r[2] || '').trim(), subdistrict: String(r[3] || '').trim(),
+            in_municipality: bsYes(r[4]), latitude: parseFloat(r[5]), longitude: parseFloat(r[6]), note: String(r[7] || '').trim()
+          })).filter(r => r.name && Number.isFinite(r.latitude) && Number.isFinite(r.longitude));
+        } else {
+          payload = body.map(r => {
+            const raw = String(r[0] || '').trim();
+            // รับได้ทั้ง 2026-08-04 22:15 และ 04/08/2026 22:15
+            const m = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})[ T]?(\d{2}:\d{2})?/);
+            const iso = m ? (m[3] + '-' + m[2] + '-' + m[1] + 'T' + (m[4] || '00:00') + ':00+07:00')
+                          : (raw ? raw.replace(' ', 'T') + (/[+Z]/.test(raw) ? '' : '+07:00') : '');
+            return {
+              occurred_at: iso, latitude: parseFloat(r[1]), longitude: parseFloat(r[2]),
+              place: String(r[3] || '').trim(), road: String(r[4] || '').trim(), subdistrict: String(r[5] || '').trim(),
+              in_municipality: bsYes(r[6]), direction: String(r[7] || '').trim(), road_character: String(r[8] || '').trim(),
+              is_drunk: bsYes(r[9]), fatal_count: Number(r[10]) || 0, injury_count: Number(r[11]) || 0,
+              cause: String(r[12] || '').trim(), source: String(r[13] || '').trim(), note: String(r[14] || '').trim()
+            };
+          }).filter(r => r.occurred_at && Number.isFinite(r.latitude) && Number.isFinite(r.longitude));
+        }
+        if (!payload.length) throw new Error('ไม่พบแถวที่ข้อมูลครบ — ตรวจลำดับคอลัมน์ให้ตรงกับไฟล์ที่ส่งออกจากระบบ');
+        const ask = await Swal.fire({
+          icon:'question', title:'นำเข้า ' + payload.length + ' แถว',
+          text:'เลือกวิธีนำเข้า', showDenyButton:true, showCancelButton:true,
+          confirmButtonText:'เพิ่มต่อท้ายของเดิม', denyButtonText:'แทนที่ทั้งหมด', cancelButtonText:'ยกเลิก'
+        });
+        if (ask.isDismissed) return;
+        const fn = what === 'features' ? 'bs_features_import' : 'bs_incidents_import';
+        const res = await rpc(fn, { p_token: state.token, p_rows: payload, p_replace: ask.isDenied });
+        if (!res.success) throw new Error(res.message);
+        Swal.fire({ icon:'success', title:'นำเข้าสำเร็จ', text:res.message });
+        bsLoadAdminData();
+      } catch (e) {
+        Swal.fire({ icon:'error', title:'นำเข้าไม่สำเร็จ', text:e.message });
+      }
+    }
+    function bsExportFeatures() {
+      const rows = state.bsFeatures || [];
+      if (!rows.length) { Swal.fire({ icon:'info', title:'ไม่มีข้อมูลให้ส่งออก' }); return; }
+      exportCsv('จุดกายภาพเสี่ยง-' + stamp() + '.csv', BS_FEATURE_COLS,
+        rows.map(f => [BS_FEATURE_KINDS[f.kind] || f.kind, f.name, f.road, f.subdistrict,
+          f.in_municipality ? 'ใช่' : 'ไม่ใช่', f.latitude, f.longitude, f.note]));
+    }
+    function bsExportIncidents() {
+      const rows = state.bsIncidents || [];
+      if (!rows.length) { Swal.fire({ icon:'info', title:'ไม่มีข้อมูลให้ส่งออก' }); return; }
+      exportCsv('จุดเกิดเหตุนำเข้า-' + stamp() + '.csv', BS_INCIDENT_COLS,
+        rows.map(r => [bkkStamp(r.occurred_at).slice(0, 16), r.latitude, r.longitude, r.place, r.road, r.subdistrict,
+          r.in_municipality ? 'ใช่' : 'ไม่ใช่', r.direction, r.road_character, r.is_drunk ? 'ใช่' : 'ไม่ใช่',
+          r.fatal_count, r.injury_count, r.cause, r.source, r.note]));
+    }
+    function bsExportSites() {
+      const rows = (state.bsDraft && state.bsDraft.sites) || [];
+      if (!rows.length) { Swal.fire({ icon:'info', title:'ยังไม่มีผลวิเคราะห์' }); return; }
+      const ruleLabel = { feature:'ข้อ 1 จุดกายภาพ', corridor:'ข้อ 2 ช่วงถนน', drunk:'ข้อ 3 เมาแล้วขับ' };
+      exportCsv('จุดเสี่ยงวิเคราะห์-' + stamp() + '.csv',
+        ['ชื่อจุด','เกณฑ์','ชนิด','ระดับ','ยืนยันระยะยาว','ถนน','ตำบล','ในเขตเทศบาล','รัศมีเกณฑ์(ม.)','ครั้ง','เสียชีวิต','บาดเจ็บ','เมาแล้วขับ','เดือนนี้','คะแนน','ช่วงเวลาที่เกิดบ่อย','ละติจูด','ลองจิจูด'],
+        rows.map(s => [s.title, ruleLabel[s.rule] || s.rule, BS_FEATURE_KINDS[s.kind] || s.kind || '', s.level,
+          s.confirmed ? 'ใช่' : '', s.road, s.subdistrict, s.in_municipality ? 'ใช่' : 'ไม่ใช่', s.radius_m,
+          s.acc_count, s.fatal_count, s.injury_count, s.drunk_count, s.month_count, s.score,
+          bsPeakText(s.peak), s.latitude, s.longitude]));
+    }
+    function bsExportZones() {
+      const rows = (state.bsDraft && state.bsDraft.zones) || [];
+      if (!rows.length) { Swal.fire({ icon:'info', title:'ยังไม่มีผลวิเคราะห์' }); return; }
+      exportCsv('โซนเสี่ยง-' + stamp() + '.csv',
+        ['ชื่อโซน','ระดับ','จำนวนจุด','เสียชีวิต','เดือนนี้','พื้นที่(ตร.กม.)','ช่วงเวลาที่เกิดบ่อย','จุดศูนย์กลาง','ขอบเขต(lat lng ...)','Red Corridor','แนวทาง'],
+        rows.map(z => [z.title, z.level === 'red' ? 'แดง' : 'ส้ม', z.point_count, z.fatal_count, z.month_count,
+          z.area_km2, bsPeakText(z.peak), z.centroid_lat + ', ' + z.centroid_lng,
+          (z.polygon || []).map(c => c.join(' ')).join(' | '),
+          (z.corridor || []).map(c => c.join(' ')).join(' | '), z.note]));
+    }
+    // GeoJSON: เอาไปเปิดใน QGIS / Google My Maps ต่อได้ทันที
+    function bsExportGeoJson() {
+      const d = state.bsDraft;
+      if (!d || (!d.zones.length && !d.sites.length)) { Swal.fire({ icon:'info', title:'ยังไม่มีผลวิเคราะห์' }); return; }
+      const features = [];
+      d.zones.forEach(z => {
+        if ((z.polygon || []).length >= 3) {
+          const ring = z.polygon.map(c => [c[1], c[0]]);          // GeoJSON เรียง lng,lat
+          ring.push(ring[0]);
+          features.push({ type:'Feature', geometry:{ type:'Polygon', coordinates:[ring] },
+            properties:{ title:z.title, level:z.level, points:z.point_count, fatal:z.fatal_count, area_km2:z.area_km2, note:z.note } });
+        }
+        if ((z.corridor || []).length >= 2) {
+          features.push({ type:'Feature', geometry:{ type:'LineString', coordinates:z.corridor.map(c => [c[1], c[0]]) },
+            properties:{ title:'Red Corridor · ' + z.title, level:z.level } });
+        }
+      });
+      d.sites.forEach(s => features.push({
+        type:'Feature', geometry:{ type:'Point', coordinates:[s.longitude, s.latitude] },
+        properties:{ title:s.title, rule:s.rule, level:s.level, accidents:s.acc_count, fatal:s.fatal_count, drunk:s.drunk_count, score:s.score }
+      }));
+      const blob = new Blob([JSON.stringify({ type:'FeatureCollection', features }, null, 2)], { type:'application/geo+json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'จุดเสี่ยงและโซน-' + stamp() + '.geojson';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    Object.assign(window, {
+      initBlackspotPage, bsTab, bsRun, bsSave, bsUnpublish, bsSampleTest, bsToggleLayer,
+      bsRenderSites, bsLoadAdminData, bsSaveSettings, bsResetSettings,
+      bsSaveFeature, bsEditFeature, bsDeleteFeature, bsResetFeatureForm, bsRenderFeatures,
+      bsSaveIncident, bsEditIncident, bsDeleteIncident, bsResetIncidentForm, bsRenderIncidents,
+      bsSaveZone, bsEditZone, bsDeleteZone, bsResetZoneForm, bsToggleZonePublish,
+      bsZoneUndo, bsZoneClear, bsPickCoords, bsUseGps,
+      bsExportFeatures, bsExportIncidents, bsExportSites, bsExportZones, bsExportGeoJson
+    });
+
     Object.assign(window, {
       showRegister, showLogin, logout, toggleDrawer, openPage,
       avOpenMapPicker, avUseCurrentLocation, avQuickDays, resetAvoidForm, saveAdvisory,
@@ -3725,6 +5336,7 @@
       saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation,
       renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo, openDutySystem, setDashYear, dashCustomRange,
       renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail, toggleDeathOverlay, toggleTambonOfficer,
+      toggleRiskLayer,
       editOfficer, delOfficer, editAccidentCase, deleteAccidentCase, editRiskReport,
       updateAdminBadges, exportMapCsv, exportRiskCsv, exportDeathCsv, exportOfficerCsv,
       viewDeathDetail
