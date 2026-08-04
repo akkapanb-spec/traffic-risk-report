@@ -389,6 +389,20 @@ a.promo-card:hover .promo-open{background:#1d4ed8;color:#fff}
 .hf-dates input{width:100%;min-width:0;padding:8px 10px;border-radius:9px;font-size:.82rem}
 .hf-go{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
   margin-top:9px;padding:10px 14px;border-radius:10px;font-size:.88rem}
+/* ตัวเลือกปีอยู่ในแถวหัวกราฟ ตัวเล็ก ๆ — เลือกแล้ววาดใหม่ทันที ไม่มีปุ่มอัปเดต */
+.dt-title-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}
+.yr-inline{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto}
+/* ต้องใช้ !important เพราะมีกฎกลาง .form-input,input,select,textarea บังคับ
+   width:100% และ min-height:52px ไว้ให้ฟอร์มกดง่ายบนมือถือ ซึ่งไม่เหมาะกับตัวเลือกเล็กในหัวกราฟ
+   คงความสูงไว้ 34px ยังกดด้วยนิ้วได้ (select เปิดตัวเลือกเต็มจอให้อยู่แล้ว) */
+.yr-sel{appearance:none;-webkit-appearance:none;border:1px solid #dbe6f2;background:#f7fafd;
+  width:auto!important;min-height:26px!important;height:26px;line-height:1;
+  color:#1e3a5f;font-weight:700;font-size:.72rem!important;padding:0 21px 0 8px;
+  border-radius:9px!important;cursor:pointer;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M1 3l4 4 4-4' fill='none' stroke='%231e3a5f' stroke-width='1.6' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 7px center}
+.yr-sel:hover{border-color:#9ec5f4;background-color:#eef4ff}
+.yr-vs{font-size:.62rem;color:#94a3b8;flex:0 0 auto}
 .death-year-chip.active{background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-color:#1d4ed8;color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.35);}
 /* dashboard cards */
 #dashboardTab .glass-effect,#deathStatsTab .glass-effect{
@@ -1146,12 +1160,14 @@ canvas{max-width:100%!important;}
 
         <!-- สถิติจำนวนผู้เสียชีวิตสะสม (บนสุด) -->
         <div class="glass-effect rounded-xl p-6">
-          <h3 class="dt-title"><i class="fa-solid fa-chart-line"></i> สถิติจำนวนผู้เสียชีวิตสะสม แยกตามเดือน</h3>
-          <div class="flex gap-4 mb-4">
-            <select id="year1" class="form-input px-4 py-2 rounded-lg"><option value="2023">พ.ศ. 2566</option><option value="2024" selected>พ.ศ. 2567</option><option value="2025">พ.ศ. 2568</option><option value="2026">พ.ศ. 2569</option><option value="2027">พ.ศ. 2570</option></select>
-            <select id="year2" class="form-input px-4 py-2 rounded-lg"><option value="2023" selected>พ.ศ. 2566</option><option value="2024">พ.ศ. 2567</option><option value="2025">พ.ศ. 2568</option><option value="2026">พ.ศ. 2569</option><option value="2027">พ.ศ. 2570</option></select>
-            <button onclick="updateMonthlyChart()" class="btn-primary text-white px-4 py-2 rounded-lg">อัปเดต</button>
-          </div>
+          <!-- ปีอยู่ในแถวหัวกราฟ ตัวเล็ก ๆ · ไม่มีปุ่มอัปเดต เปลี่ยนปีแล้ววาดใหม่ทันที -->
+          <h3 class="dt-title dt-title-row"><span><i class="fa-solid fa-chart-line"></i> ผู้เสียชีวิตสะสม แยกตามเดือน</span>
+            <span class="yr-inline">
+              <select id="year1" class="yr-sel" onchange="updateMonthlyChart()"><option value="2023">พ.ศ. 2566</option><option value="2024" selected>พ.ศ. 2567</option><option value="2025">พ.ศ. 2568</option><option value="2026">พ.ศ. 2569</option><option value="2027">พ.ศ. 2570</option></select>
+              <i class="fa-solid fa-arrows-left-right yr-vs"></i>
+              <select id="year2" class="yr-sel" onchange="updateMonthlyChart()"><option value="2023" selected>พ.ศ. 2566</option><option value="2024">พ.ศ. 2567</option><option value="2025">พ.ศ. 2568</option><option value="2026">พ.ศ. 2569</option><option value="2027">พ.ศ. 2570</option></select>
+            </span>
+          </h3>
           <div class="h-[300px] w-full"><canvas id="monthlyChart"></canvas></div>
         </div>
 
@@ -2589,9 +2605,22 @@ async function getMonthlyDeathDataFromSheet(year) {
   return monthlyCount;
 }
 
-function calculateCumulative(monthlyData) {
+/* ยอดสะสมรายเดือน
+   เดือนที่ยังมาไม่ถึงต้องเป็น null ไม่ใช่ 0 — ถ้าใส่ 0 ยอดสะสมจะร่วงกลับไปที่ศูนย์
+   ทำให้กราฟดิ่งลงเหมือนอุบัติเหตุลดฮวบ ทั้งที่แค่ยังไม่ถึงเดือนนั้น
+   null ทำให้ Chart.js หยุดวาดเส้นไว้ตรงเดือนล่าสุดที่มีข้อมูลจริง
+   ปีที่ผ่านไปแล้วไม่ตัด เพราะเดือนที่ยอดเป็น 0 จริง ๆ ก็ต้องแสดงเส้นราบ */
+function calculateCumulative(monthlyData, year) {
+  const now = new Date();
+  const p = bkkDateParts(now);
+  const isCurrentYear = year != null && String(year) === p.y;
+  const lastMonth = isCurrentYear ? Number(p.m) - 1 : 11;   // index 0-11
   let cumulative = [], sum = 0;
-  for (let val of monthlyData) { sum += val; cumulative.push(sum); }
+  for (let i = 0; i < monthlyData.length; i++) {
+    if (i > lastMonth) { cumulative.push(null); continue; }
+    sum += Number(monthlyData[i]) || 0;
+    cumulative.push(sum);
+  }
   return cumulative;
 }
 
@@ -2618,19 +2647,98 @@ async function createDeathCharts(data) {
     const md2 = await getMonthlyDeathDataFromSheet(y2);
 
     // ชุดสีเดียวกับ dashboard เจ้าหน้าที่ — การ์ดหัวข้อบอกชื่อกราฟแล้ว จึงไม่ใส่ชื่อซ้ำในภาพ
-    const dtPalette = ['#1d4ed8','#c1122f','#f59e0b','#16a34a','#7c3aed','#0891b2','#ea580c','#475569','#db2777','#65a30d','#0f766e','#9333ea'];
+    /* ============================================================
+       ระบบสีกราฟ — ชุดเดียวใช้ทั้งเว็บ
+       ผ่านการตรวจ colorblind-safe บนพื้นขาวแล้ว (CVD ΔE 9.1, normal ΔE 19.6)
+       ห้ามเพิ่มสีนอกชุดนี้ และห้ามวนสีไปตามหมวด (ดูหมายเหตุที่ vizColors)
+       ============================================================ */
+    const VIZ = {
+      surface:'#ffffff', ink:'#0b0b0b', ink2:'#52514e', muted:'#898781',
+      grid:'#e8e8e3', axis:'#c3c2b7',
+      // สีประจำตัวข้อมูล (identity) ใช้เรียงตามลำดับเท่านั้น ห้ามวนซ้ำ
+      series:['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948'],
+      // ไล่เฉดสีเดียว ใช้กับปริมาณ (magnitude) — 5 เฉดคือเพดานที่ตายังแยกออกบนพื้นขาว
+      // ยืดเป็น 7 เฉดแล้วไม่ผ่านการตรวจ: เฉดติดกันเกินไป และเฉดอ่อนสุดจางกลืนพื้น
+      seq:['#86b6ef','#5598e7','#2a78d6','#1c5cab','#104281'],
+      // สีสถานะ สงวนไว้เฉพาะระดับความรุนแรง ห้ามเอาไปใช้เป็นสีหมวดทั่วไป
+      status:{ good:'#0ca30c', warning:'#fab219', serious:'#ec835a', critical:'#d03b3b' }
+    };
+
+    /* เลือกสีตาม "หน้าที่ของข้อมูล" ไม่ใช่ตามลำดับที่วาด
+       magnitude = เทียบปริมาณ เช่น อันดับสาเหตุ → สีเดียวทั้งชุด ความยาวแท่งสื่อความหมายอยู่แล้ว
+                   การไล่สีรุ้งทำให้คนอ่านนึกว่าสีมีความหมาย ทั้งที่ไม่มี
+       identity  = คนละสิ่งกัน เช่น ชาย/หญิง → สีประจำตัวเรียงตามสลอต จำกัดไม่เกิน 4 ที่เหลือยุบเป็นอื่นๆ
+       severity  = ระดับความรุนแรง → ชุดสีสถานะ */
+    function vizColors(job, n, opts) {
+      const o = opts || {};
+      if (job === 'severity') return [VIZ.status.critical, VIZ.status.serious, VIZ.status.warning, '#cbd5e1', '#e6ebf2'].slice(0, n);
+      if (job === 'identity') return VIZ.series.slice(0, n);
+      return vizRamp(o.values, n);   // magnitude — ไล่เฉดตามค่าจริง
+    }
+
+    /* ไล่เฉดตาม "ค่าของข้อมูล" ไม่ใช่ตามลำดับที่วาด
+       ค่ามาก = เฉดเข้ม ค่าน้อย = เฉดอ่อน ดูปราดเดียวรู้ว่าอันไหนหนัก
+       ถ้าไล่ตามลำดับเฉย ๆ สีจะไม่มีความหมาย และแท่งที่ค่าเท่ากันจะได้คนละสี */
+    function vizRamp(values, n) {
+      const N = n || (values || []).length || 1;
+      const v = (values || []).map(x => Number(x) || 0);
+      if (!v.length) return Array(N).fill(VIZ.seq[2]);
+      const lo = Math.min(...v), hi = Math.max(...v), span = hi - lo;
+      const last = VIZ.seq.length - 1;
+      return v.map(x => VIZ.seq[span ? Math.round((x - lo) / span * last) : last]);
+    }
+
+    // ค่าเริ่มต้นกลางของ Chart.js — ทำให้ทุกกราฟหน้าตาเป็นชุดเดียวกันโดยไม่ต้องตั้งซ้ำทีละอัน
+    if (window.Chart) {
+      Chart.defaults.font.family = "system-ui,-apple-system,'Segoe UI',sans-serif";
+      Chart.defaults.font.size = 12;
+      Chart.defaults.color = VIZ.ink2;
+      Chart.defaults.borderColor = VIZ.grid;
+      Chart.defaults.plugins.legend.labels.usePointStyle = true;
+      Chart.defaults.plugins.legend.labels.boxWidth = 8;
+      Chart.defaults.plugins.legend.labels.padding = 14;
+      Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(11,11,11,.92)';
+      Chart.defaults.plugins.tooltip.padding = 10;
+      Chart.defaults.plugins.tooltip.cornerRadius = 8;
+      Chart.defaults.plugins.tooltip.titleFont = { weight:'700', size:12 };
+      Chart.defaults.plugins.tooltip.bodyFont = { size:12 };
+      Chart.defaults.plugins.tooltip.displayColors = false;
+      Chart.defaults.elements.bar.borderRadius = 4;      // ปลายแท่งมน 4px ตามสเปก
+      Chart.defaults.elements.bar.borderSkipped = 'start';
+      Chart.defaults.elements.line.borderWidth = 2;      // เส้นบาง 2px
+      Chart.defaults.elements.line.tension = .32;
+      Chart.defaults.elements.point.radius = 0;
+      Chart.defaults.elements.point.hitRadius = 14;
+      Chart.defaults.elements.point.hoverRadius = 5;
+    }
+
+    // แกนมาตรฐาน: เส้นตารางจาง ไม่มีเส้นกรอบ ไม่มีเส้นตารางแนวตั้ง
+    function vizScales(horizontal) {
+      const val = { beginAtZero:true, ticks:{ precision:0, color:VIZ.muted, font:{size:11} },
+        grid:{ color:VIZ.grid, drawTicks:false }, border:{ display:false } };
+      const cat = { ticks:{ autoSkip:false, color:VIZ.ink2, font:{size:11} },
+        grid:{ display:false }, border:{ color:VIZ.axis } };
+      return horizontal ? { x:val, y:cat } : { y:val, x:cat };
+    }
+
+    const dtPalette = VIZ.series;
     const ctxMonthly = document.getElementById('monthlyChart');
     if (ctxMonthly) {
       charts.monthly = new Chart(ctxMonthly.getContext('2d'), {
         type: 'line',
         data: {
           labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
+          // สองปี = สองสิ่งที่ต่างกัน จึงใช้สีประจำตัวสลอต 1 กับ 2 ไม่ใช่สีที่หยิบมาลอยๆ
           datasets: [
-            { label: `พ.ศ. ${Number(y1) + 543}`, data: calculateCumulative(md1), borderColor: '#c1122f', backgroundColor: '#c1122f', fill: false, tension: 0.25, pointRadius: 3, borderWidth: 3 },
-            { label: `พ.ศ. ${Number(y2) + 543}`, data: calculateCumulative(md2), borderColor: '#1d4ed8', backgroundColor: '#1d4ed8', fill: false, tension: 0.25, pointRadius: 3, borderWidth: 3 }
+            { label: `พ.ศ. ${Number(y1) + 543}`, data: calculateCumulative(md1, y1), borderColor: VIZ.series[0], backgroundColor: VIZ.series[0], fill:false, spanGaps:false },
+            { label: `พ.ศ. ${Number(y2) + 543}`, data: calculateCumulative(md2, y2), borderColor: VIZ.series[1], backgroundColor: VIZ.series[1], fill:false, spanGaps:false }
           ]
         },
-        options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+        options: { maintainAspectRatio:false,
+          interaction:{ mode:'index', intersect:false },   // เลื่อนเมาส์ที่ไหนก็เทียบทั้งสองเส้นพร้อมกัน
+          plugins:{ legend:{ position:'bottom' },
+            tooltip:{ displayColors:true, callbacks:{ label: c => ' ' + c.dataset.label + '  ' + Number(c.parsed.y || 0).toLocaleString('th-TH') + ' ราย' } } },
+          scales: vizScales(false) }
       });
     }
     // ===== visual พิเศษ ยกแบบจาก dashboard เจ้าหน้าที่ =====
@@ -2677,46 +2785,92 @@ async function createDeathCharts(data) {
       }).join('') + '</div>';
     }
 
-    const generateChart = (id, type, labels, chartData, colors, title, horizontal) => {
+    /* เลือกรูปแบบให้เข้ากับรูปร่างข้อมูล ไม่ใช่ตั้งตายตัว
+       - หมวดเยอะ หรือชื่อหมวดยาว → แท่งแนวนอน (ป้ายอ่านออก ไม่ต้องเอียงหัว)
+       - ค่าห่างกันมาก (อันดับ 1 สูงกว่าอันดับท้าย > 8 เท่า) → แนวนอน + ป้ายตัวเลขทุกแท่ง
+         เพราะแท่งเตี้ยจะกลายเป็นขีดบาง ๆ มองไม่ออกว่าเท่าไหร่
+       - หมวดเกิน 8 → เก็บ 7 อันดับแรก ที่เหลือยุบเป็น "อื่นๆ" ไม่งั้นหางยาวรกจนอ่านไม่ไหว */
+    function vizShape(labels, values, forceHorizontal) {
+      let L = labels.slice(), V = (values || []).map(v => Number(v) || 0);
+      if (L.length > 8) {
+        const idx = L.map((_, i) => i).sort((a, b) => V[b] - V[a]);
+        const keep = idx.slice(0, 7), rest = idx.slice(7);
+        const other = rest.reduce((a, i) => a + V[i], 0);
+        L = keep.map(i => labels[i]).concat(other ? ['อื่นๆ (' + rest.length + ' รายการ)'] : []);
+        V = keep.map(i => V[i]).concat(other ? [other] : []);
+      }
+      const longest = Math.max(...L.map(s => String(s).length));
+      const nonZero = V.filter(v => v > 0);
+      const spread = nonZero.length > 1 ? Math.max(...nonZero) / Math.min(...nonZero) : 1;
+      const horizontal = forceHorizontal != null ? forceHorizontal : (L.length > 6 || longest > 10 || spread > 8);
+      return { labels:L, values:V, horizontal, spread };
+    }
+
+    /* job = หน้าที่ของข้อมูล ไม่ใช่สี — magnitude | identity | severity
+       magnitude ไล่เฉดสีเดียวตามค่า · identity ใช้สีประจำตัว · severity ใช้สีสถานะ */
+    const generateChart = (id, type, labels, chartData, job, title, horizontal) => {
       const el = document.getElementById(id);
       if (!el) return;
       const isPie = type === 'pie' || type === 'doughnut';
-      // pie ใช้สีที่กำหนดมา (สื่อความหมาย เช่น ชาย/หญิง) — bar ไล่สีตามชุดเดียวกับหน้าอุบัติเหตุ
-      const bg = isPie && Array.isArray(colors) ? colors : labels.map((_, i) => dtPalette[i % dtPalette.length]);
+      const shaped = isPie ? { labels, values:chartData, horizontal:false } : vizShape(labels, chartData, horizontal);
+      labels = shaped.labels; chartData = shaped.values; horizontal = shaped.horizontal;
+      const bg = vizColors(job || (isPie ? 'identity' : 'magnitude'), labels.length, { values: chartData });
+      const total = (chartData || []).reduce((a, b) => a + (Number(b) || 0), 0);
       charts[id] = new Chart(el.getContext('2d'), {
         type: type,
-        data: { labels: labels, datasets: [{ label: 'จำนวน', data: chartData, backgroundColor: bg,
-          borderWidth: isPie ? 2 : 0, borderColor: '#fff', borderRadius: type === 'bar' ? 7 : 0 }] },
+        data: { labels: labels, datasets: [{ label:'จำนวน', data: chartData, backgroundColor: bg,
+          // ช่องว่างสีพื้น 2px คั่นชิ้นที่ติดกัน ทำให้ขอบอ่านออกแม้สีใกล้กัน
+          borderWidth: isPie ? 2 : 0, borderColor: VIZ.surface,
+          hoverBackgroundColor: bg, hoverBorderColor: VIZ.surface }] },
         options: {
-          maintainAspectRatio: false, indexAxis: horizontal ? 'y' : 'x',
-          plugins: { legend: { display: isPie, position: 'bottom' } },
-          scales: type === 'bar'
-            ? (horizontal
-                ? { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { ticks: { autoSkip: false } } }
-                : { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } })
-            : {}
-        }
+          maintainAspectRatio:false, indexAxis: horizontal ? 'y' : 'x',
+          layout:{ padding:{ top:4, right: horizontal ? 26 : 4 } },
+          plugins: {
+            legend: { display:isPie, position:'bottom' },
+            tooltip: { callbacks: { label: c => {
+              const v = Number(c.parsed.y ?? c.parsed.x ?? c.parsed) || 0;
+              const pct = total ? ' · ' + (v / total * 100).toFixed(1) + '%' : '';
+              return ' ' + v.toLocaleString('th-TH') + ' ราย' + (isPie ? pct : '');
+            } } }
+          },
+          scales: type === 'bar' ? vizScales(horizontal) : {}
+        },
+        // ป้ายตัวเลขท้ายแท่งแนวนอน — สีที่จางเกิน 3:1 ต้องมีตัวเลขกำกับตามกฎ relief
+        plugins: horizontal ? [{
+          id:'valueLabels',
+          afterDatasetsDraw(ch) {
+            const { ctx } = ch;
+            ctx.save();
+            ctx.font = "600 11px system-ui,-apple-system,'Segoe UI',sans-serif";
+            ctx.fillStyle = VIZ.ink2; ctx.textBaseline = 'middle';
+            ch.getDatasetMeta(0).data.forEach((bar, i) => {
+              const v = Number(chartData[i]) || 0;
+              if (v) ctx.fillText(v.toLocaleString('th-TH'), bar.x + 6, bar.y);
+            });
+            ctx.restore();
+          }
+        }] : []
       });
     };
 
     // แผนภูมิตามแถว — 5 ตัวใช้ visual พิเศษแบบเดียวกับหน้าสถิติอุบัติเหตุ
     renderDtPyramid('ageVisual', ['1-14', '15-18', '19-24', '25-35', '36-60', '60+'], data.ageGroups || Array(6).fill(0));
     renderDtGenderCards('genderVisual', data.gender || [0, 0]);
-    generateChart('domicileChart', 'doughnut', ['ในพื้นที่/จว.', 'นอกพื้นที่', 'ไม่ระบุ'], data.domicileGroups || [0,0,0], ['#10b981', '#f59e0b', '#9ca3af'], 'ภูมิลำเนา');
+    generateChart('domicileChart', 'doughnut', ['ในพื้นที่/จว.', 'นอกพื้นที่', 'ไม่ระบุ'], data.domicileGroups || [0,0,0], 'identity', 'ภูมิลำเนา');
 
     renderDtVehicleBars('vehicleVisual', data.vehicleLabels || [], data.vehicleTypes || []);
-    generateChart('statusChart', 'doughnut', ['ขับขี่', 'โดยสาร', 'เดินเท้า'], data.statusGroups, ['#3b82f6', '#10b981', '#f59e0b'], 'สถานะ');
+    generateChart('statusChart', 'doughnut', ['ขับขี่', 'โดยสาร', 'เดินเท้า'], data.statusGroups, 'identity', 'สถานะ');
     renderDtLicenseCards('licenseVisual', data.licenseGroups || [0, 0]);
 
     renderDtBar3d('safetyVisual', ['สวมหมวกนิรภัย', 'ไม่สวมหมวกนิรภัย', 'คาดเข็มขัดนิรภัย', 'ไม่คาดเข็มขัดนิรภัย'], data.safetyEquipment || [0,0,0,0]);
-    generateChart('timeChart', 'bar', data.timeLabels, data.timeGroups, '#8b5cf6', 'ช่วงเวลา');
+    generateChart('timeChart', 'bar', data.timeLabels, data.timeGroups, 'magnitude', 'ช่วงเวลา');
     // ป้ายชื่อยาว → แท่งแนวนอนอ่านง่าย แบบเดียวกับหน้าสถิติอุบัติเหตุ
-    generateChart('causeChart', 'bar', data.causeLabels, data.causes, '#ef4444', 'สาเหตุอุบัติเหตุ', true);
+    generateChart('causeChart', 'bar', data.causeLabels, data.causes, 'magnitude', 'สาเหตุอุบัติเหตุ', true);
 
-    generateChart('roadTypeChart', 'bar', ['ทางตรง', 'ทางโค้ง', 'ทางแยก', 'กลับรถ', 'แยกไฟแดง', 'สะพาน', 'อื่นๆ'], data.roadTypeGroups, '#8b5cf6', 'ลักษณะถนน', true);
-    generateChart('roadNameChart', 'bar', ['ทล.1 ในเขต', 'ทล.1 นอกเขต', 'ทล.117', 'ทล.122', 'เทศบาลนคร', 'หนองเบน', 'อื่นๆ'], data.roadNameGroups, '#f59e0b', 'ชื่อถนน', true);
+    generateChart('roadTypeChart', 'bar', ['ทางตรง', 'ทางโค้ง', 'ทางแยก', 'กลับรถ', 'แยกไฟแดง', 'สะพาน', 'อื่นๆ'], data.roadTypeGroups, 'magnitude', 'ลักษณะถนน', true);
+    generateChart('roadNameChart', 'bar', ['ทล.1 ในเขต', 'ทล.1 นอกเขต', 'ทล.117', 'ทล.122', 'เทศบาลนคร', 'หนองเบน', 'อื่นๆ'], data.roadNameGroups, 'magnitude', 'ชื่อถนน', true);
     // เพิ่ม "อื่นๆ" เข้าไปใน Label เพื่อให้สอดคล้องกับ DistrictGroups ตัวใหม่
-    generateChart('districtChart', 'bar', ['ปากน้ำโพ', 'นครสวรรค์ตก', 'วัดไทรย์', 'ตะเคียนเลื่อน', 'บ้านแก่ง', 'หนองกรด', 'หนองกระโดน', 'อื่นๆ'], data.districtGroups || Array(7).fill(0), '#3b82f6', 'ตำบล', true);
+    generateChart('districtChart', 'bar', ['ปากน้ำโพ', 'นครสวรรค์ตก', 'วัดไทรย์', 'ตะเคียนเลื่อน', 'บ้านแก่ง', 'หนองกรด', 'หนองกระโดน', 'อื่นๆ'], data.districtGroups || Array(7).fill(0), 'magnitude', 'ตำบล', true);
 
     if(data.mapData) {
        initDashboardDeathMap(data.mapData);
