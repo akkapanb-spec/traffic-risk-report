@@ -53,7 +53,7 @@ When adding an admin feature, the pattern is: table + RLS → `advisory_save`-st
 
 `officer_save_accident` (`sql/officer.sql:181`) is the core write path: it inserts one `accidents` row, then walks party1/party2 plus their passengers and **derives** rows in `deaths` (injury = `เสียชีวิต`) and `injuries` (`หมดสติ`/`สาหัส`/`เล็กน้อย`). The citizen dashboard's fatality and injury counts come from those derived tables, so changing the person/injury JSON shape breaks statistics on both apps. `admin_update_accident` must keep the same derivation in sync.
 
-### Black-spot analysis (`sql/blackspot.sql`, `bs_*` tables)
+### Black-spot analysis (`sql/blackspot_1..4_*.sql`, `bs_*` tables)
 
 The risk-point analysis is the one feature that does **not** compute in Postgres. The engine lives in `officer.html` (`bsAnalyze` and the `bsRule1/2/3` functions) because it needs spatial clustering, convex hulls, and polygon buffering. The database only stores inputs (`bs_features`, `bs_incidents`, `bs_settings`) and outputs (`bs_sites`, `bs_zones`, `bs_runs`); an admin runs the analysis in the browser and presses publish, which calls `bs_publish` to replace the previous `source='auto'` rows. Hand-drawn zones (`source='manual'`) are never touched by a run.
 

@@ -1515,7 +1515,7 @@
         state.riskLayerOn[name] = false;
         Swal.fire({ icon:'error', title:'โหลดชั้นข้อมูลไม่สำเร็จ',
           text: /bs_sites|bs_zones|does not exist|schema cache/i.test(e.message)
-            ? 'ยังไม่ได้รันไฟล์ sql/blackspot.sql ใน Supabase SQL Editor' : e.message });
+            ? 'ยังไม่ได้รันไฟล์ sql/blackspot_1..4_*.sql ใน Supabase SQL Editor' : e.message });
       }
     }
 
@@ -4053,7 +4053,7 @@
        (bs_features / bs_incidents / bs_settings) กับ "ผลลัพธ์" (bs_sites / bs_zones)
        แล้ว admin กดเผยแพร่เองก่อนขึ้นหน้าประชาชน
 
-       เกณฑ์ (ดู sql/blackspot.sql):
+       เกณฑ์ (ดู sql/blackspot_1_tables.sql):
          ข้อ 1 จุดเกิดเหตุใกล้จุดกายภาพเสี่ยง (แยก/ร่วม/กลับรถ/สะพาน/โค้ง/เนิน/ทางลอด)
                ไม่เกิน 200 ม. ในเขตเทศบาล / 500 ม. นอกเขต — วัดด้วย "ระยะทาง" ไม่ใช่ระยะขจัด
          ข้อ 2 จุดเกิดเหตุ >= 2 จุดบนถนน+ทิศทางเดียวกัน ห่างจากกึ่งกลางกลุ่มไม่เกินเกณฑ์เดียวกัน
@@ -4625,7 +4625,7 @@
       } catch (e) {
         Swal.fire({ icon:'error', title:'โหลดข้อมูลไม่สำเร็จ',
           text: /bs_admin_data|does not exist|schema cache/i.test(e.message)
-            ? 'ยังไม่ได้รันไฟล์ sql/blackspot.sql ใน Supabase SQL Editor' : e.message });
+            ? 'ยังไม่ได้รันไฟล์ sql/blackspot_1..4_*.sql ใน Supabase SQL Editor' : e.message });
       }
     }
 
