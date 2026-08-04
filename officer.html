@@ -108,6 +108,30 @@
     .cp-arrest label{display:flex;flex-direction:column;gap:3px;font-size:.66rem;color:#5b6b7f;font-weight:700;min-width:0}
     .cp-arrest .input,.cp-arrest .select{padding:6px 8px;font-size:.8rem;min-width:0}
     @media(max-width:820px){.cp-arrest{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    /* ---- กราฟหมวกนิรภัย ---- */
+    .hm-hero{display:flex;align-items:center;gap:14px;padding:12px 14px;margin-bottom:14px;
+      border-radius:14px;background:#fff5f5;border:1px solid #f6cdcd}
+    .hm-hero-num{font-size:2.4rem;font-weight:800;color:#d03b3b;line-height:1;letter-spacing:-.02em}
+    .hm-hero-num small{font-size:.9rem;font-weight:700;margin-left:3px}
+    .hm-hero-txt{font-size:.82rem;color:#7a2c2c;font-weight:600;line-height:1.4}
+    .hm-row+.hm-row{margin-top:13px}
+    .hm-head{display:flex;justify-content:space-between;align-items:baseline;font-size:.82rem;margin-bottom:5px}
+    .hm-head b{color:#132238}.hm-head span{color:#5b6b7f;font-size:.72rem}
+    /* ช่องว่างสีพื้น 2px คั่นแต่ละช่วง ทำให้ขอบอ่านออกแม้สีใกล้กัน */
+    .hm-track{display:flex;height:26px;border-radius:8px;overflow:hidden;background:#f1f5f9;gap:2px}
+    .hm-seg{display:block;height:100%}
+    .hm-foot{margin-top:5px;font-size:.72rem;color:#5b6b7f}
+    .hm-legend{display:flex;flex-wrap:wrap;gap:11px;margin-top:12px;font-size:.7rem;color:#5b6b7f}
+    .hm-legend span{display:inline-flex;align-items:center;gap:5px}
+    .hm-legend i{width:10px;height:10px;border-radius:3px;flex:0 0 10px}
+    .hm-age-row{display:grid;grid-template-columns:56px minmax(0,1fr) 42px 66px;align-items:center;gap:9px;padding:5px 0}
+    .hm-age-lb{font-size:.75rem;font-weight:700;color:#34445a}
+    .hm-age-track{position:relative;height:16px;border-radius:999px;background:#eef2f7;overflow:hidden}
+    .hm-age-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;transition:width .3s}
+    .hm-age-avg{position:absolute;top:-3px;width:2px;height:22px;background:#64748b;opacity:.55}
+    .hm-age-val{font-size:.82rem;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+    .hm-age-n{font-size:.66rem;color:#7d8ba0;text-align:right;font-variant-numeric:tabular-nums}
+    @media(max-width:520px){.hm-age-row{grid-template-columns:48px minmax(0,1fr) 38px}.hm-age-n{display:none}}
     .adm-tile:active{transform:scale(.96)}
     .adm-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;font-size:1rem;
       box-shadow:0 4px 10px rgba(15,23,42,.18)}
@@ -1140,6 +1164,46 @@
     const SUPABASE_URL = 'https://ftpruljwwsmvipfcedyk.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0cHJ1bGp3d3NtdmlwZmNlZHlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTM5ODgsImV4cCI6MjA5OTkyOTk4OH0.CQDf2PUO5hjsamJojOfLMuqobwL0d8EbXxMT-2EdAts';
     const STORAGE_BUCKET = 'risk-images';
+
+    /* ============================================================
+       ระบบสีกราฟ — ชุดเดียวกับหน้าประชาชน
+       ผ่านการตรวจ colorblind-safe บนพื้นขาวแล้ว (CVD ΔE 9.1, normal ΔE 19.6)
+       ห้ามเพิ่มสีนอกชุดนี้ และห้ามวนสีไปตามหมวด
+       ============================================================ */
+    const VIZ = {
+      surface:'#ffffff', ink:'#0b0b0b', ink2:'#52514e', muted:'#898781',
+      grid:'#e8e8e3', axis:'#c3c2b7',
+      series:['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948'],
+      seq:['#cde2fb','#9ec5f4','#6da7ec','#3987e5','#2a78d6','#256abf','#184f95','#0d366b'],
+      status:{ good:'#0ca30c', warning:'#fab219', serious:'#ec835a', critical:'#d03b3b' }
+    };
+    // magnitude = เทียบปริมาณ ใช้สีเดียว · identity = คนละสิ่ง ใช้สีประจำสลอต · severity = ระดับความรุนแรง
+    function vizColors(job, n) {
+      if (job === 'severity') return [VIZ.status.critical, VIZ.status.serious, VIZ.status.warning, '#cbd5e1', '#e6ebf2'].slice(0, n);
+      if (job === 'identity') return VIZ.series.slice(0, n);
+      return Array(n).fill(VIZ.series[0]);
+    }
+    if (window.Chart) {
+      Chart.defaults.font.family = "system-ui,-apple-system,'Segoe UI',sans-serif";
+      Chart.defaults.font.size = 12;
+      Chart.defaults.color = VIZ.ink2;
+      Chart.defaults.borderColor = VIZ.grid;
+      Chart.defaults.plugins.legend.labels.usePointStyle = true;
+      Chart.defaults.plugins.legend.labels.boxWidth = 8;
+      Chart.defaults.plugins.legend.labels.padding = 14;
+      Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(11,11,11,.92)';
+      Chart.defaults.plugins.tooltip.padding = 10;
+      Chart.defaults.plugins.tooltip.cornerRadius = 8;
+      Chart.defaults.plugins.tooltip.titleFont = { weight:'700', size:12 };
+      Chart.defaults.plugins.tooltip.displayColors = false;
+      Chart.defaults.elements.bar.borderRadius = 4;
+      Chart.defaults.elements.bar.borderSkipped = 'start';
+      Chart.defaults.elements.line.borderWidth = 2;
+      Chart.defaults.elements.line.tension = .32;
+      Chart.defaults.elements.point.radius = 0;
+      Chart.defaults.elements.point.hitRadius = 14;
+      Chart.defaults.elements.point.hoverRadius = 5;
+    }
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // กันหน้าวูบ/เด้งขึ้นบนสุดตอนเปิด-ปิด popup บนมือถือ (SweetAlert2 ใส่ height:auto ให้ body แล้ว scroll หลุด)
@@ -1412,6 +1476,9 @@
       let rangeTotal = 0;
       // การสวมหมวกนิรภัยแยกตามช่วงเวลาเกิดเหตุ ช่วงละ 2 ชั่วโมง (00.00.01-02.00.00 ... 22.00.01-00.00.00)
       const helmetTime = { wear: Array(12).fill(0), noWear: Array(12).fill(0) };
+      const HELMET_AGE_GROUPS = ['0-14','15-18','19-24','25-35','36-60','60+'];
+      const helmetAge = {};
+      HELMET_AGE_GROUPS.forEach(g => helmetAge[g] = { wear:0, noWear:0 });
 
       const distributions = {
         status: zeroCounts(['ผู้ขับขี่','ผู้โดยสาร','คนเดินเท้า']),
@@ -1474,15 +1541,29 @@
             if (sKey === 'สวมหมวกนิรภัย') helmetTime.wear[timeIdx]++;
             else if (sKey === 'ไม่สวมหมวกนิรภัย') helmetTime.noWear[timeIdx]++;
           }
+          // หมวกนิรภัยแยกตามช่วงอายุ — ใช้กลุ่มอายุชุดเดียวกับพีระมิดประชากร จะได้เทียบกันได้
+          const aKey = ageGroup(person.age);
+          if (aKey && helmetAge[aKey]) {
+            if (sKey === 'สวมหมวกนิรภัย') helmetAge[aKey].wear++;
+            else if (sKey === 'ไม่สวมหมวกนิรภัย') helmetAge[aKey].noWear++;
+          }
         });
       });
 
       distributions.roads = topCounts(distributions.roads, 7);
 
       const years = Object.keys(yearMonthCounts).map(Number).sort((a,b)=>a-b).slice(-5);
+      // เดือนที่ยังมาไม่ถึงของปีปัจจุบันต้องเป็น null ไม่ใช่ 0
+      // ถ้าใส่ 0 ยอดสะสมจะร่วงกลับศูนย์ กราฟดิ่งลงเหมือนอุบัติเหตุหายไป ทั้งที่แค่ยังไม่ถึงเดือนนั้น
+      const nowBkk = bkkStamp(new Date());
+      const curYear = nowBkk.slice(0, 4), curMonthIdx = Number(nowBkk.slice(5, 7)) - 1;
       const cumulativeByYear = years.map(year => {
         let total = 0;
-        return { year, values: yearMonthCounts[year].map(count => { total += count; return total; }) };
+        const lastIdx = String(year) === curYear ? curMonthIdx : 11;
+        return { year, values: yearMonthCounts[year].map((count, i) => {
+          if (i > lastIdx) return null;
+          total += count; return total;
+        }) };
       });
 
       const recent = rows.slice().sort((a,b) => new Date(b.incident_datetime||0) - new Date(a.incident_datetime||0)).slice(0,10).map(row => ({
@@ -1495,7 +1576,7 @@
         total: rows.length,
         yearlyTotal: rangeTotal,
         rangeStart: startDate, rangeEnd: endDate,
-        monthly, cumulativeByYear, distributions, safetyInjuryMatrix, helmetTime, recent
+        monthly, cumulativeByYear, distributions, safetyInjuryMatrix, helmetTime, helmetAge, recent
       };
     }
 
@@ -3503,7 +3584,9 @@
             chartCardHtml('localAuthorityChart', 'อปท.', 'fa-city', 'ในเขตเทศบาล/นอกเขตเทศบาล') +
             chartCardHtml('subdistrictChart', 'ตำบล', 'fa-location-dot', '7 ตำบลในเขตพื้นที่') +
             chartCardHtml('causeChart', 'สาเหตุเบื้องต้น', 'fa-triangle-exclamation', 'ไม่ใช่ความเห็นทางคดี') +
-            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-helmet-safety"></i> การสวมหมวกนิรภัย แยกตามช่วงเวลา</h3><div class="chart-wrap"><canvas id="helmetTimeChart"></canvas></div><div class="dashboard-note">นับผู้ใช้รถที่ระบุการสวม/ไม่สวมหมวกนิรภัย ตามเวลาเกิดเหตุ ช่วงละ 4 ชั่วโมง</div></div>' +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-helmet-safety"></i> หมวกนิรภัย: สวม vs ไม่สวม ผลต่างกันแค่ไหน</h3><div class="custom-visual" id="helmetOutcome"></div><div class="dashboard-note">แถบยาวเท่ากันทั้งคู่ (100%) จึงเทียบสัดส่วนความรุนแรงต่อสีได้ตรง ๆ แม้สองกลุ่มมีจำนวนคนไม่เท่ากัน</div></div>' +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-clock"></i> สัดส่วนผู้ไม่สวมหมวกนิรภัย ตามช่วงเวลา</h3><div class="chart-wrap"><canvas id="helmetTimeChart"></canvas></div><div class="dashboard-note">แสดงเป็นร้อยละ ไม่ใช่จำนวนดิบ เพราะช่วงที่เกิดเหตุเยอะจะสูงทั้งสองฝั่งจนดูไม่ออกว่าช่วงไหนแย่กว่า · เลื่อนเมาส์ดูจำนวนจริง</div></div>' +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-users"></i> สัดส่วนผู้ไม่สวมหมวกนิรภัย ตามช่วงอายุ</h3><div class="custom-visual" id="helmetAge"></div></div>' +
           '</div>' +
           '<div class="card dashboard-recent-card" style="margin-top:16px"><h3 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> รายการล่าสุด</h3>' + recentTable(result.recent) + '</div>';
         renderDashboardCharts(result);
@@ -3543,7 +3626,9 @@
         ]
       }, {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{precision:0}},x:{grid:{display:false}}}});
       renderCumulativeChart('cumulativeChart',data.cumulativeByYear);
+      renderHelmetOutcome('helmetOutcome', data.safetyInjuryMatrix);
       renderHelmetTimeChart('helmetTimeChart', data.helmetTime);
+      renderHelmetAge('helmetAge', data.helmetAge);
       renderGenderCards('genderCards', data.distributions.genders);
       createDistributionChart('statusChart','doughnut',data.distributions.status);
       renderAgePyramid('agePyramid', data.distributions.ageGroups);
@@ -3646,35 +3731,159 @@
         scales:type==='bar'?{x:{beginAtZero:true,ticks:{precision:0}},y:{ticks:{autoSkip:false}}}:{}
       });
     }
+    /* สัดส่วนผู้ไม่สวมหมวกนิรภัย แยกตามช่วงเวลา
+       เดิมเป็นแท่งคู่นับหัว ซึ่งตอบคำถามผิด — ช่วงที่มีอุบัติเหตุเยอะแท่งสูงทั้งคู่
+       จึงมองไม่ออกว่าช่วงไหน "สัดส่วน" ไม่สวมแย่กว่ากัน
+       เปลี่ยนเป็นเส้นเดียว = ร้อยละไม่สวม พร้อมเส้นอ้างอิงค่าเฉลี่ยทั้งวัน
+       จำนวนดิบย้ายไปอยู่ใน tooltip — ไม่ทำเป็นแกนที่สอง เพราะกราฟสองแกนอ่านผิดง่ายที่สุด */
     function renderHelmetTimeChart(id, helmetTime) {
-      // ข้อมูลนับไว้ช่วงละ 2 ชม. (12 ช่วง) → รวบเป็นช่วงละ 4 ชม. (6 ช่วง) ให้อ่านง่าย
-      const fullLabels = ['00.00.01-04.00.00','04.00.01-08.00.00','08.00.01-12.00.00','12.00.01-16.00.00','16.00.01-20.00.00','20.00.01-00.00.00'];
-      const shortLabels = ['00-04','04-08','08-12','12-16','16-20','20-00'];
+      const labels = Array.from({length:12}, (_, i) => String(i*2).padStart(2,'0') + '-' + String(i*2+2).padStart(2,'0'));
       const src = helmetTime || { wear: Array(12).fill(0), noWear: Array(12).fill(0) };
-      const merge4h = a => Array.from({ length: 6 }, (_, i) => (a[2*i] || 0) + (a[2*i+1] || 0));
-      createChart(id, 'bar', {
-        labels: shortLabels,
+      const wear = src.wear || [], noWear = src.noWear || [];
+      const totals = labels.map((_, i) => (Number(wear[i]) || 0) + (Number(noWear[i]) || 0));
+      const pct = labels.map((_, i) => totals[i] ? (Number(noWear[i]) || 0) * 100 / totals[i] : null);
+      const sumNo = noWear.reduce((a, b) => a + (Number(b) || 0), 0);
+      const sumAll = totals.reduce((a, b) => a + b, 0);
+      const avg = sumAll ? sumNo * 100 / sumAll : 0;
+      // ช่วงที่มีตัวอย่างน้อยกว่า 5 ราย ร้อยละแกว่งจนไม่มีความหมาย ทำจุดให้จางลงและบอกใน tooltip
+      const thin = totals.map(t => t < 5);
+
+      createChart(id, 'line', {
+        labels,
         datasets: [
-          { label:'สวมหมวกนิรภัย', data:merge4h(src.wear), backgroundColor:'#16a34a', borderRadius:6 },
-          { label:'ไม่สวมหมวกนิรภัย', data:merge4h(src.noWear), backgroundColor:'#c1122f', borderRadius:6 }
+          { label:'ไม่สวมหมวกนิรภัย (ร้อยละ)', data:pct, borderColor:VIZ.status.critical,
+            backgroundColor:'rgba(208,59,59,.10)', fill:true, spanGaps:true,
+            pointRadius: totals.map((t, i) => t ? (thin[i] ? 3 : 5) : 0),
+            pointBackgroundColor: totals.map((_, i) => thin[i] ? '#ffffff' : VIZ.status.critical),
+            pointBorderColor: VIZ.status.critical, pointBorderWidth:2 },
+          { label:'ค่าเฉลี่ยทั้งวัน ' + avg.toFixed(0) + '%', data:labels.map(() => avg),
+            borderColor:VIZ.muted, borderDash:[5,4], pointRadius:0, fill:false }
         ]
       }, {
         responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ position:'bottom' },
-                  tooltip:{ callbacks:{ title: items => 'ช่วงเวลา ' + fullLabels[items[0].dataIndex] } } },
-        scales:{ x:{ ticks:{ autoSkip:false, maxRotation:0, minRotation:0, font:{ size:10, family:'Sarabun' } }, grid:{ display:false } },
-                 y:{ beginAtZero:true, ticks:{ precision:0 } } }
+        interaction:{ mode:'index', intersect:false },
+        plugins:{
+          legend:{ position:'bottom' },
+          tooltip:{ displayColors:false, callbacks:{
+            title: items => 'ช่วงเวลา ' + items[0].label + ' น.',
+            label: c => {
+              if (c.datasetIndex === 1) return ' ค่าเฉลี่ยทั้งวัน ' + avg.toFixed(1) + '%';
+              const i = c.dataIndex;
+              if (!totals[i]) return ' ไม่มีข้อมูลช่วงนี้';
+              return [' ไม่สวมหมวก ' + (Number(noWear[i])||0) + ' ราย จาก ' + totals[i] + ' ราย',
+                      ' คิดเป็น ' + pct[i].toFixed(1) + '%',
+                      thin[i] ? ' ⚠ ตัวอย่างน้อย ตัวเลขแกว่งสูง' : ''].filter(Boolean);
+            } } }
+        },
+        scales:{
+          x:{ ticks:{ autoSkip:false, maxRotation:0, font:{size:10} }, grid:{ display:false }, border:{ color:VIZ.axis } },
+          y:{ beginAtZero:true, max:100, ticks:{ stepSize:25, callback:v => v + '%', color:VIZ.muted },
+              grid:{ color:VIZ.grid, drawTicks:false }, border:{ display:false } }
+        }
       });
     }
+
+    /* สัดส่วนไม่สวมหมวกนิรภัย แยกตามช่วงอายุ
+       ใช้แท่งแนวนอนเรียงตามอายุ (ไม่เรียงตามค่า) เพราะลำดับอายุมีความหมายในตัว
+       สลับลำดับแล้วจะอ่านแนวโน้มตามวัยไม่ออก */
+    function renderHelmetAge(id, helmetAge) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const groups = ['0-14','15-18','19-24','25-35','36-60','60+'];
+      const rows = groups.map(g => {
+        const o = (helmetAge || {})[g] || { wear:0, noWear:0 };
+        const total = (o.wear || 0) + (o.noWear || 0);
+        return { g, wear:o.wear||0, noWear:o.noWear||0, total, pct: total ? (o.noWear||0)*100/total : null };
+      });
+      const grand = rows.reduce((a, r) => a + r.total, 0);
+      const grandNo = rows.reduce((a, r) => a + r.noWear, 0);
+      const avg = grand ? grandNo*100/grand : 0;
+      if (!grand) { el.innerHTML = '<p class="dashboard-note" style="margin:0">ยังไม่มีข้อมูลการสวมหมวกนิรภัยในช่วงที่เลือก</p>'; return; }
+
+      el.innerHTML = '<div class="hm-age">' + rows.map(r => {
+        const thin = r.total > 0 && r.total < 5;
+        const w = r.pct == null ? 0 : r.pct;
+        // สีตามระดับ: เกินค่าเฉลี่ยมาก = วิกฤต, ใกล้เคียง = เฝ้าระวัง, ต่ำกว่า = ปกติ
+        const color = r.pct == null ? VIZ.muted
+          : r.pct >= avg + 10 ? VIZ.status.critical
+          : r.pct >= avg - 10 ? VIZ.status.serious : VIZ.status.good;
+        return '<div class="hm-age-row">' +
+          '<span class="hm-age-lb">' + r.g + ' ปี</span>' +
+          '<span class="hm-age-track">' +
+            '<span class="hm-age-fill" style="width:' + w + '%;background:' + color + (thin ? ';opacity:.45' : '') + '"></span>' +
+            '<span class="hm-age-avg" style="left:' + avg + '%"></span>' +
+          '</span>' +
+          '<span class="hm-age-val" style="color:' + color + '">' + (r.pct == null ? '–' : r.pct.toFixed(0) + '%') + '</span>' +
+          '<span class="hm-age-n">' + (r.total ? r.noWear + '/' + r.total : 'ไม่มีข้อมูล') + (thin ? ' ⚠' : '') + '</span>' +
+        '</div>';
+      }).join('') + '</div>' +
+      '<p class="dashboard-note" style="margin-top:9px">เส้นประคือค่าเฉลี่ยทุกช่วงอายุ <b>' + avg.toFixed(0) + '%</b> · ตัวเลขท้ายแถวคือ ไม่สวม/ทั้งหมด · ⚠ คือช่วงที่มีข้อมูลน้อยกว่า 5 ราย ตัวเลขยังแกว่ง</p>';
+    }
+
+    /* เปรียบเทียบผลลัพธ์ สวม vs ไม่สวมหมวก
+       คำถามคือ "ไม่สวมแล้วเป็นยังไง" คำตอบที่ชัดที่สุดคือเทียบ *สัดส่วนความรุนแรง*
+       ของสองกลุ่ม ไม่ใช่จำนวนหัว เพราะสองกลุ่มมีขนาดไม่เท่ากันอยู่แล้ว
+       แถบยาวเท่ากัน 100% ทั้งคู่ จึงเทียบสีต่อสีได้ตรง ๆ */
+    function renderHelmetOutcome(id, matrix) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const order = ['เสียชีวิต','สาหัส','หมดสติ','เล็กน้อย','ไม่บาดเจ็บ'];
+      const tone = { 'เสียชีวิต':VIZ.status.critical, 'สาหัส':VIZ.status.serious,
+                     'หมดสติ':VIZ.status.warning, 'เล็กน้อย':'#cbd5e1', 'ไม่บาดเจ็บ':'#e6ebf2' };
+      const groups = [
+        { key:'ไม่สวมหมวกนิรภัย', label:'ไม่สวมหมวกนิรภัย' },
+        { key:'สวมหมวกนิรภัย',   label:'สวมหมวกนิรภัย' }
+      ].map(g => {
+        const row = (matrix || {})[g.key] || {};
+        const counts = order.map(k => Number(row[k]) || 0);
+        const total = counts.reduce((a, b) => a + b, 0);
+        const dead = Number(row['เสียชีวิต']) || 0;
+        const severe = dead + (Number(row['สาหัส']) || 0) + (Number(row['หมดสติ']) || 0);
+        return { ...g, counts, total, deadPct: total ? dead*100/total : 0, severePct: total ? severe*100/total : 0 };
+      });
+
+      const noHelmet = groups[0], helmet = groups[1];
+      const ratio = helmet.deadPct > 0 ? noHelmet.deadPct / helmet.deadPct : null;
+      const enough = noHelmet.total >= 10 && helmet.total >= 10;
+
+      const bar = g => '<div class="hm-row">' +
+        '<div class="hm-head"><b>' + g.label + '</b><span>' + g.total.toLocaleString('th-TH') + ' ราย</span></div>' +
+        '<div class="hm-track">' + order.map((k, i) => {
+          const p = g.total ? g.counts[i]*100/g.total : 0;
+          if (!p) return '';
+          return '<span class="hm-seg" style="width:' + p + '%;background:' + tone[k] + '" ' +
+                 'title="' + k + ' ' + g.counts[i] + ' ราย (' + p.toFixed(1) + '%)"></span>';
+        }).join('') + '</div>' +
+        '<div class="hm-foot">เสียชีวิต <b style="color:' + VIZ.status.critical + '">' + g.deadPct.toFixed(1) + '%</b>' +
+          ' · บาดเจ็บรุนแรงขึ้นไป <b>' + g.severePct.toFixed(1) + '%</b></div></div>';
+
+      el.innerHTML =
+        (enough && ratio && isFinite(ratio) && ratio > 1
+          ? '<div class="hm-hero"><span class="hm-hero-num">' + ratio.toFixed(1) + '<small> เท่า</small></span>' +
+            '<span class="hm-hero-txt">ผู้ไม่สวมหมวกนิรภัย เสียชีวิตเป็นสัดส่วนสูงกว่าผู้สวมหมวก</span></div>'
+          : '') +
+        bar(noHelmet) + bar(helmet) +
+        '<div class="hm-legend">' + order.map(k =>
+          '<span><i style="background:' + tone[k] + '"></i>' + k + '</span>').join('') + '</div>' +
+        (enough ? '' : '<p class="dashboard-note" style="margin-top:8px">⚠ ข้อมูลยังน้อย (ต้องมีอย่างน้อยกลุ่มละ 10 ราย) ตัวเลขสัดส่วนยังไม่น่าเชื่อถือ</p>');
+    }
     function renderCumulativeChart(id,series) {
-      const colors = ['#1d4ed8','#c1122f','#16a34a','#f59e0b','#7c3aed'];
       createChart(id,'line',{
         labels:months,
+        // แต่ละปีคือคนละสิ่ง จึงใช้สีประจำสลอตเรียงตามลำดับ ไม่วนซ้ำ
+        // spanGaps:false ทำให้เส้นหยุดที่เดือนล่าสุดที่มีข้อมูล ไม่ลากข้ามเดือนที่ยังมาไม่ถึง
         datasets:(series||[]).map((item,index)=>({
-          label:String(Number(item.year)+543),data:item.values,borderColor:colors[index%colors.length],backgroundColor:colors[index%colors.length],
-          tension:.25,fill:false,pointRadius:3,borderWidth:3
+          label:String(Number(item.year)+543), data:item.values,
+          borderColor:VIZ.series[index % VIZ.series.length], backgroundColor:VIZ.series[index % VIZ.series.length],
+          fill:false, spanGaps:false, pointRadius:3
         }))
-      },{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}});
+      },{responsive:true,maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{legend:{position:'bottom'},
+          tooltip:{displayColors:true,callbacks:{label:c=> c.parsed.y==null ? null :
+            ' ' + c.dataset.label + '  ' + Number(c.parsed.y).toLocaleString('th-TH') + ' ครั้ง'}}},
+        scales:{y:{beginAtZero:true,ticks:{precision:0,color:VIZ.muted},grid:{color:VIZ.grid,drawTicks:false},border:{display:false}},
+                x:{grid:{display:false},ticks:{color:VIZ.ink2},border:{color:VIZ.axis}}}});
     }
     function chartGradient(id, startColor, endColor) {
       const canvas = document.getElementById(id);
