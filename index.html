@@ -95,12 +95,6 @@
     /* ชื่อหน่วยอยู่บรรทัดที่ 2 เสมอ — block ทำให้ขึ้นบรรทัดใหม่โดยไม่ต้องพึ่งการตัดคำของเบราว์เซอร์ */
     .home-hero h1 .hero-org{display:block;font-size:.82em;font-weight:700;letter-spacing:.01em}
     .home-hero p{margin:0;opacity:.92;font-size:clamp(.88rem,2.4vw,1.02rem)}
-    .hero-tel{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:11px}
-    .hero-tel a{display:inline-flex;align-items:center;gap:7px;text-decoration:none;color:#fff;
-      background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:999px;
-      padding:7px 15px;font-size:.83rem;font-weight:600;transition:.15s}
-    .hero-tel a:hover{background:rgba(255,255,255,.28)}
-    .hero-tel b{font-weight:800;letter-spacing:.02em}
     .home-clock{display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 16px;font-size:.85rem}
     .home-wrap{margin-top:-34px;position:relative;z-index:2}
     /* hamburger + drawer เมนูข้าง (แบบเดียวกับแอปเจ้าหน้าที่) */
@@ -134,17 +128,14 @@
       .home-hero:before,.home-hero:after{display:none}
       .home-hero-inner{display:flex;align-items:center;gap:11px;max-width:100%}
       .home-hero img{width:44px;height:auto;margin:0;filter:drop-shadow(0 3px 7px rgba(0,0,0,.25));flex:0 0 auto}
-      .home-hero-text{min-width:0;text-align:left}
-      .home-hero .home-hero-text h1{font-size:.9rem!important;color:#132238!important;margin:0;line-height:1.25;
+      /* flex:1 กินที่ว่างที่เหลือจากปุ่มเมนูกับโลโก้ แล้วจัดข้อความกึ่งกลางในนั้น
+         ปล่อยให้ตัดบรรทัดได้ จะได้ขยายตัวอักษรโดยไม่โดนตัดท้ายด้วย ellipsis */
+      .home-hero-text{flex:1;min-width:0;text-align:center}
+      .home-hero .home-hero-text h1{font-size:clamp(1.02rem,3.5vw,1.4rem)!important;color:#132238!important;
+        margin:0;line-height:1.24;overflow-wrap:break-word}
+      .home-hero h1 .hero-org{font-size:.8em;letter-spacing:.02em}
+      .home-hero p{font-size:.68rem;color:#64748b;opacity:1;margin:1px 0 0;
         white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .home-hero h1 .hero-org{font-size:.83em;color:#1d4ed8}
-      /* บรรทัดอังกฤษเป็นของประดับ ตัดทิ้งบนจอเล็กเพื่อเอาที่ไปให้เบอร์โทรซึ่งจำเป็นกว่า */
-      .home-hero p{display:none}
-      .hero-tel{justify-content:flex-start;gap:6px;margin-top:4px;flex-wrap:nowrap;
-        overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-      .hero-tel::-webkit-scrollbar{display:none}
-      .hero-tel a{flex:0 0 auto;background:#eef4ff;border-color:#c7d8f5;color:#123b7a;
-        padding:4px 10px;font-size:.68rem;gap:5px}
       .home-clock{display:none}
       .home-wrap{margin-top:14px}
       .home-menu-toggle{display:grid;place-items:center}
@@ -296,6 +287,16 @@ td{vertical-align:top;font-size:.92rem;}
 .df-toggle.open .df-chev{transform:rotate(180deg);}
 /* ลิงก์แนะนำ (เว็บกรมทางหลวง / Thai RSC / แอป Police Care) */
 .promo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+/* เบอร์ติดต่อใต้การ์ด Police Care — กดแล้วเปิดหน้าโทรออก */
+.call-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:10px;border-top:1px dashed #dbe6f2}
+.call-btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+  background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:8px 13px;
+  color:#14532d;transition:border-color .16s,background .16s}
+.call-btn:hover{background:#dcfce7;border-color:#86efac}
+.call-btn>i{width:26px;height:26px;flex:0 0 26px;border-radius:8px;display:grid;place-items:center;
+  background:#16a34a;color:#fff;font-size:.7rem}
+.call-t{display:flex;flex-direction:column;line-height:1.25;font-size:.72rem;color:#3f6b52}
+.call-t b{font-size:.86rem;font-weight:800;color:#14532d;letter-spacing:.02em}
 .promo-card{display:flex;flex-direction:column;gap:11px;padding:14px;border-radius:16px;background:#fbfdff;
   border:1px solid #e2ebf4;text-decoration:none;color:inherit;transition:border-color .16s,box-shadow .16s,transform .16s;position:relative}
 a.promo-card:hover{border-color:#b9d3f3;box-shadow:0 12px 26px rgba(23,52,88,.14);transform:translateY(-2px)}
@@ -368,12 +369,26 @@ a.promo-card:hover .promo-open{background:#1d4ed8;color:#fff}
 @media(prefers-reduced-motion:reduce){
   *,::before,::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
-@media(max-width:640px){
-  .df-toggle{display:flex;}
-  .df-body{display:grid;grid-template-rows:0fr;overflow:hidden;transition:grid-template-rows .28s ease;}
-  .df-body.open{grid-template-rows:1fr;}
-  .df-inner{min-height:0;overflow:hidden;padding-top:12px;}
-}
+/* ตัวกรองปี/ช่วงวันที่พับเก็บได้ทุกขนาดจอ — เดิมจำกัดไว้ที่ ≤640px แต่บนจอกว้าง
+   ตัวกรองอยู่ในคอลัมน์ขวาที่แคบ กางค้างแล้วดันเนื้อหาอื่นตกจอ */
+.df-toggle{display:flex;}
+.df-body{display:grid;grid-template-rows:0fr;overflow:hidden;transition:grid-template-rows .28s ease;}
+.df-body.open{grid-template-rows:1fr;}
+/* padding อยู่ตอนกางเท่านั้น ถ้าติดไว้ตลอดจะเหลือขอบค้าง 12px ตอนหุบ
+   เพราะ grid row สูง 0 แต่ padding ของลูกยังกินที่ */
+.df-inner{min-height:0;overflow:hidden;}
+.df-body.open .df-inner{padding-top:12px;}
+/* ตัวกรองบนหน้าแรกอยู่ในคอลัมน์ขวาที่แคบ จึงจัดเป็น grid แทนแถวแนวนอนที่ตัดบรรทัดมั่ว
+   ปุ่มปีเรียงเป็นตารางเต็มความกว้าง ช่องวันที่คู่กันสองช่อง ปุ่มค้นเต็มแถว */
+.hf-block+.hf-block{margin-top:14px;padding-top:13px;border-top:1px dashed #e2e8f0}
+.hf-lbl{display:block;font-size:.78rem;font-weight:700;color:#475569;margin-bottom:7px}
+.hf-chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr));gap:6px}
+.hf-chips .death-year-chip{width:100%;padding:7px 4px;font-size:.8rem;min-width:0}
+.hf-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hf-dates label{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:.74rem;color:#64748b;font-weight:600}
+.hf-dates input{width:100%;min-width:0;padding:8px 10px;border-radius:9px;font-size:.82rem}
+.hf-go{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
+  margin-top:9px;padding:10px 14px;border-radius:10px;font-size:.88rem}
 .death-year-chip.active{background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-color:#1d4ed8;color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.35);}
 /* dashboard cards */
 #dashboardTab .glass-effect,#deathStatsTab .glass-effect{
@@ -701,8 +716,11 @@ canvas{max-width:100%!important;}
 .srow-t{min-width:0;flex:0 0 auto;width:88px}
 .srow-t b{display:block;font-size:.82rem;line-height:1.25;color:#132238}
 .srow-t span{display:block;font-size:.62rem;color:#5b6b7f;line-height:1.35}
-.srow-nums{flex:1;display:flex;justify-content:flex-end;gap:5px;flex-wrap:wrap}
-.ncell{min-width:60px;text-align:center;background:#fff;border:1px solid #e3ecf5;border-radius:10px;padding:4px 7px}
+/* grid 3 ช่องแทน flex-wrap — ช่องบีบตัวลงได้เมื่อที่แคบ แทนที่จะตัดบรรทัดเป็นแนวตั้ง
+   minmax(0,1fr) ไม่ใช่ 1fr เพราะ 1fr ไม่ยอมหดต่ำกว่าเนื้อหาแล้วดันความกว้างจนล้น */
+.srow-nums{flex:1;min-width:0;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);
+  gap:5px;max-width:236px;margin-left:auto}
+.ncell{min-width:0;text-align:center;background:#fff;border:1px solid #e3ecf5;border-radius:10px;padding:4px 5px}
 .ncell b{display:block;font-size:1.08rem;font-weight:800;color:#123b7a;line-height:1.15;font-variant-numeric:tabular-nums}
 .ncell span{font-size:.58rem;color:#5b6b7f;font-weight:700}
 .ncell.red b{color:#c1122f}.ncell.orange b{color:#c2410c}
@@ -710,7 +728,19 @@ canvas{max-width:100%!important;}
 .srow-pills{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fbfdff;border:1px solid #e6eef6;border-top:0;
   border-radius:0 0 14px 14px;padding:7px 12px 9px}
 .srow-pills-lbl{font-size:.64rem;font-weight:700;color:#5b6b7f}
-@media(max-width:520px){.srow-t{width:74px}.ncell{min-width:52px}.ncell b{font-size:.95rem}
+.ncell span{white-space:nowrap}
+/* คอลัมน์ขวาบนจอกว้างแคบพอ ๆ กับมือถือ (~276px) ตัวเลขจึงต้องบีบด้วย
+   ย่อไอคอนกับป้ายชื่อหัวข้อลง เพื่อคืนที่ให้ช่องตัวเลขทั้งสาม */
+.home-right .srow-ic{width:28px;height:28px;flex:0 0 28px;font-size:.75rem}
+.home-right .srowx{gap:8px;padding:9px 10px}
+.home-right .srow-t{width:64px}
+.home-right .srow-t b{font-size:.76rem}
+.home-right .srow-t span{font-size:.58rem}
+.home-right .srow-nums{gap:4px}
+.home-right .ncell{padding:4px 2px}
+.home-right .ncell b{font-size:.96rem}
+.home-right .ncell span{font-size:.52rem}
+@media(max-width:520px){.srow-t{width:74px}.ncell b{font-size:.95rem}
   .cta-more{display:none}.death-cta-bar{font-size:.66rem}}
 /* modal จุดหลีกเลี่ยง */
 .av-backdrop{position:fixed;inset:0;background:rgba(9,25,48,.55);z-index:850;opacity:0;pointer-events:none;transition:opacity .2s}
@@ -751,11 +781,6 @@ canvas{max-width:100%!important;}
     <div class="home-hero-text">
       <h1>ระบบแจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ<span class="hero-org">สภ.เมืองนครสวรรค์</span></h1>
       <p>Report information on accident risk points</p>
-      <!-- โทรออกได้เลยจากมือถือ: tel: ใช้เลขล้วนไม่มีขีด ส่วนที่แสดงคงรูปแบบมีขีดไว้ให้อ่านง่าย -->
-      <div class="hero-tel">
-        <a href="tel:055881567"><i class="fa-solid fa-phone"></i> สภ.เมืองนครสวรรค์ <b>0-5688-1567</b></a>
-        <a href="tel:056225335"><i class="fa-solid fa-tower-broadcast"></i> ศูนย์จราจรชอนตะวัน <b>0-5622-5335</b></a>
-      </div>
       <div class="home-clock"><i class="fas fa-clock"></i> <span id="currentDateTime"></span></div>
     </div>
   </div>
@@ -929,14 +954,17 @@ canvas{max-width:100%!important;}
           <div class="stats-zone" style="margin-bottom:16px;padding:14px 16px">
             <button type="button" id="homeFilterToggle" class="df-toggle" onclick="toggleHomeFilter()"><i class="fa-solid fa-filter"></i> กรองข้อมูล (ปี / ช่วงวันที่) <i class="fa-solid fa-chevron-down df-chev"></i></button>
             <div id="homeFilterBody" class="df-body"><div class="df-inner">
-              <div class="flex flex-wrap items-center gap-2 mb-3" id="homeYearChips"></div>
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="text-sm font-semibold text-gray-700 mr-1">หรือกำหนดเอง:</span>
-                <label class="text-sm text-gray-600">ตั้งแต่</label>
-                <input type="date" id="homeStartDate" class="form-input px-3 py-2 rounded-lg">
-                <label class="text-sm text-gray-600">ถึง</label>
-                <input type="date" id="homeEndDate" class="form-input px-3 py-2 rounded-lg">
-                <button onclick="homeCustomRange()" class="btn-primary text-white px-5 py-2 rounded-lg font-semibold"><i class="fa-solid fa-filter mr-1"></i> แสดงข้อมูล</button>
+              <div class="hf-block">
+                <span class="hf-lbl">ดูตามปี</span>
+                <div class="hf-chips" id="homeYearChips"></div>
+              </div>
+              <div class="hf-block">
+                <span class="hf-lbl">หรือกำหนดช่วงเอง</span>
+                <div class="hf-dates">
+                  <label>ตั้งแต่<input type="date" id="homeStartDate" class="form-input"></label>
+                  <label>ถึง<input type="date" id="homeEndDate" class="form-input"></label>
+                </div>
+                <button onclick="homeCustomRange()" class="hf-go btn-primary text-white font-semibold"><i class="fa-solid fa-filter"></i> แสดงข้อมูล</button>
               </div>
             </div></div>
             <p id="homeRangeInfo" class="text-sm text-gray-600 mt-3 font-medium"></p>
@@ -1033,6 +1061,19 @@ canvas{max-width:100%!important;}
             <span class="store-row">
               <a class="store-btn" href="https://play.google.com/store/apps/details?id=th.go.police.policecare&hl=th" target="_blank" rel="noopener" aria-label="โหลด Police Care จาก Google Play"><i class="fa-brands fa-google-play"></i><span class="store-lb"> Google Play</span></a>
               <a class="store-btn" href="https://apps.apple.com/th/app/police-care/id6754902103" target="_blank" rel="noopener" aria-label="โหลด Police Care จาก App Store"><i class="fa-brands fa-apple"></i><span class="store-lb"> App Store</span></a>
+            </span>
+            <!-- เบอร์ติดต่อ: href="tel:" ทำให้มือถือเปิดหน้าโทรออกพร้อมเลขทันที
+                 ต้องเป็นเลขล้วนไม่มีขีด ส่วนที่แสดงคงขีดไว้ให้อ่านง่าย
+                 วางในการ์ด Police Care จึงอยู่คอลัมน์ขวาใต้ปุ่มสโตร์พอดี -->
+            <span class="call-row">
+              <a class="call-btn" href="tel:055881567">
+                <i class="fa-solid fa-phone"></i>
+                <span class="call-t">สภ.เมืองนครสวรรค์<b>0-5688-1567</b></span>
+              </a>
+              <a class="call-btn" href="tel:056225335">
+                <i class="fa-solid fa-tower-broadcast"></i>
+                <span class="call-t">ศูนย์จราจรชอนตะวัน<b>0-5622-5335</b></span>
+              </a>
             </span>
           </span>
         </div>
@@ -2089,8 +2130,8 @@ function buildHomeYearChips() {
   const wrap = document.getElementById('homeYearChips');
   if (!wrap) return;
   const nowYear = Math.max(new Date().getFullYear(), 2023);
-  let html = '<span class="text-sm font-semibold text-gray-700 mr-1">ดูตามปี:</span>' +
-    '<button class="death-year-chip" data-year="default" onclick="setHomeYear(\'default\')">ปีปัจจุบัน</button>' +
+  // ป้าย "ดูตามปี" ย้ายไปอยู่ใน HTML แล้ว ที่นี่เหลือเฉพาะปุ่ม จะได้จัด grid ได้เท่ากันทุกช่อง
+  let html = '<button class="death-year-chip" data-year="default" onclick="setHomeYear(\'default\')">ปีปัจจุบัน</button>' +
     '<button class="death-year-chip" data-year="all" onclick="setHomeYear(\'all\')">ทั้งหมด</button>';
   for (let y = 2023; y <= nowYear; y++) html += '<button class="death-year-chip" data-year="' + y + '" onclick="setHomeYear(' + y + ')">' + (y + 543) + '</button>';
   wrap.innerHTML = html;
