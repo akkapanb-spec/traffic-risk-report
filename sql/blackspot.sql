@@ -9,7 +9,7 @@
 --     ให้ admin จัดการผ่าน RPC ที่ตรวจ token
 --   - ตัวเครื่องวิเคราะห์อยู่ฝั่งเว็บ (officer.html) เพราะต้องคำนวณเชิงเรขาคณิต
 --     (จับกลุ่ม/หา convex hull/วาด polygon) แล้วส่งผลกลับมาเก็บผ่าน bs_publish
---   - ผลลัพธ์ที่ "เผยแพร่แล้ว" (published) เท่านั้นที่หน้าประชาชนอ่านได้
+--   - ผลลัพธ์ที่เผยแพร่แล้ว (published) เท่านั้นที่หน้าประชาชนอ่านได้
 --     ผลที่ยังไม่เผยแพร่ = ฉบับร่าง เห็นเฉพาะ admin
 --   - ไม่มี PII ในผลลัพธ์ (มีแต่พิกัด/จำนวน/คะแนน) จึงเปิด public read ได้
 -- ============================================================
@@ -49,7 +49,7 @@ on conflict (key) do nothing;
 create table if not exists bs_features (
   id              bigint generated always as identity primary key,
   kind            text not null,                    -- junction / junction_signal / merge / u_turn / bridge / curve / hill / underpass
-  name            text not null,                    -- ชื่อจุด เช่น "แยกสวรรค์วิถี-มาตุลี"
+  name            text not null,                    -- ชื่อจุด เช่น แยกสวรรค์วิถี-มาตุลี
   road            text,
   subdistrict     text,
   in_municipality boolean not null default false,   -- true = ใช้เกณฑ์ 200 ม. / false = 500 ม.
@@ -75,13 +75,13 @@ create table if not exists bs_incidents (
   road            text,
   subdistrict     text,
   in_municipality boolean not null default false,
-  direction       text,                             -- ทิศทางเดินรถ เช่น "ขาเข้าเมือง" (ใช้ในเกณฑ์ข้อ 2)
+  direction       text,                             -- ทิศทางเดินรถ เช่น ขาเข้าเมือง (ใช้ในเกณฑ์ข้อ 2)
   road_character  text,                             -- ลักษณะทาง ใช้จับเกณฑ์ข้อ 1
   is_drunk        boolean not null default false,   -- เมาแล้วขับ (เกณฑ์ข้อ 3)
   fatal_count     int not null default 0,
   injury_count    int not null default 0,
   cause           text,
-  source          text,                             -- ที่มาข้อมูล เช่น "ThaiRSC", "บันทึกประจำวัน"
+  source          text,                             -- ที่มาข้อมูล เช่น ThaiRSC หรือ บันทึกประจำวัน
   note            text,
   created_by      text,
   created_at      timestamptz not null default now(),
