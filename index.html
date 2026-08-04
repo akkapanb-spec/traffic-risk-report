@@ -1659,7 +1659,7 @@ async function loadBlackspotPublic() {
     bsPubSites = siteRes.data || [];
     bsPubZones = zoneRes.data || [];
   } catch (e) {
-    // ยังไม่ได้รัน sql/blackspot.sql หรือยังไม่เคยเผยแพร่ — ซ่อนบล็อกไว้เฉยๆ ไม่ล้มทั้งหน้า
+    // ยังไม่ได้รันไฟล์ sql/blackspot_1..4 หรือยังไม่เคยเผยแพร่ — ซ่อนบล็อกไว้เฉยๆ ไม่ล้มทั้งหน้า
     bsPubSites = []; bsPubZones = [];
   }
   renderBlackspotStats();
