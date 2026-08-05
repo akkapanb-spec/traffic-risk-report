@@ -3258,15 +3258,18 @@ let riskOvLayer = null, riskOvOn = false, riskOvLoaded = false;
 
 // ช่วงสี 2 ชุด: ตัวเลขน้อย (ปีเดียว) กับตัวเลขสะสม — ใช้ชุดเดียวสีจะแบน
 // สเกลไล่แบบเรดาร์อากาศ: ชมพู(มากสุด) → ม่วง → ฟ้า → เหลือง(น้อยสุด) → เขียว(ไม่มี=ปลอดภัย)
+/* ไล่เฉดสีเดียว ไม่ใช่สเกลรุ้ง — จำนวนผู้เสียชีวิตคือปริมาณ มาก-น้อย
+   สเกลเดิม (ชมพู/ม่วง/ฟ้า/เหลือง/เขียว) ทำให้คนอ่านนึกว่าแต่ละสีมีความหมายคนละอย่าง
+   ทั้งที่มันคือระดับเดียวกัน · ใช้ชุดเดียวกับกราฟที่ผ่านการตรวจ colorblind แล้ว */
 const TB_BINS_SMALL = [
-  { min:10, color:'#ec1fa8', label:'10 รายขึ้นไป' }, { min:6, color:'#a855f7', label:'6–9 ราย' },
-  { min:3, color:'#38a8ff', label:'3–5 ราย' }, { min:1, color:'#e8d81e', label:'1–2 ราย' },
-  { min:0, color:'#30cf7f', label:'ไม่มี (ปลอดภัย)' }
+  { min:10, color:'#3987e5', label:'10 รายขึ้นไป' }, { min:6, color:'#6da7ec', label:'6–9 ราย' },
+  { min:3, color:'#9ec5f4', label:'3–5 ราย' }, { min:1, color:'#cde2fb', label:'1–2 ราย' },
+  { min:0, color:'#e8eef5', label:'ไม่มี (ปลอดภัย)' }
 ];
 const TB_BINS_BIG = [
-  { min:21, color:'#ec1fa8', label:'มากกว่า 20 ราย' }, { min:11, color:'#a855f7', label:'11–20 ราย' },
-  { min:6, color:'#38a8ff', label:'6–10 ราย' }, { min:1, color:'#e8d81e', label:'1–5 ราย' },
-  { min:0, color:'#30cf7f', label:'ไม่มี (ปลอดภัย)' }
+  { min:21, color:'#3987e5', label:'มากกว่า 20 ราย' }, { min:11, color:'#6da7ec', label:'11–20 ราย' },
+  { min:6, color:'#9ec5f4', label:'6–10 ราย' }, { min:1, color:'#cde2fb', label:'1–5 ราย' },
+  { min:0, color:'#e8eef5', label:'ไม่มี (ปลอดภัย)' }
 ];
 function tambonBins() { return tambonLastData.length > 40 ? TB_BINS_BIG : TB_BINS_SMALL; }
 
@@ -3306,7 +3309,8 @@ async function renderTambonLayer(mapData) {
   tambonLayer = L.geoJSON(tambonGeo, {
     style: f => {
       const n = counts[f.properties.tambon] || 0;
-      return { color:'#3a2b52', weight:1.6, fillColor:colorOf(n), fillOpacity:.38 }; // ขอบม่วงเข้มเข้าชุดสเกลใหม่
+      // จางลงและขอบบางลง เพื่อไม่ให้พื้นสีกลบหมุดจุดเกิดเหตุที่ทับอยู่ด้านบน
+      return { color:'#64748b', weight:1.3, opacity:.7, fillColor:colorOf(n), fillOpacity:.24 };
     },
     onEachFeature: (f, layer) => {
       const name = f.properties.tambon;
