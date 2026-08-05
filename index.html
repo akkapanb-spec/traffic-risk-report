@@ -744,6 +744,31 @@ canvas{max-width:100%!important;}
 .srow-pills{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fbfdff;border:1px solid #e6eef6;border-top:0;
   border-radius:0 0 14px 14px;padding:7px 12px 9px}
 .srow-pills-lbl{font-size:.64rem;font-weight:700;color:#5b6b7f}
+/* แบบสอบถาม / ความคิดเห็น */
+.fb-lead{font-size:.8rem;color:#5b6b7f;margin:0 0 14px;line-height:1.5}
+.fb-block{margin-bottom:14px}
+.fb-lb{display:block;font-size:.76rem;font-weight:700;color:#34445a;margin-bottom:7px}
+.fb-opt{font-size:.66rem;font-weight:600;color:#94a3b8}
+.fb-stars{display:flex;gap:6px}
+.fb-star{width:42px;height:42px;border:1px solid #e2e8f0;background:#fff;border-radius:12px;cursor:pointer;
+  font-size:1.15rem;color:#cbd5e1;transition:.14s;display:grid;place-items:center;padding:0}
+.fb-star:hover{border-color:#fbbf24;color:#fbbf24}
+.fb-star.on{background:#fffbeb;border-color:#fbbf24;color:#f59e0b}
+.fb-topics{display:flex;flex-wrap:wrap;gap:7px}
+.fb-topic{border:1px solid #dbe6f2;background:#fff;color:#475569;font-size:.75rem;font-weight:600;
+  padding:6px 13px;border-radius:999px;cursor:pointer;transition:.14s}
+.fb-topic:hover{border-color:#a5b8d0}
+.fb-topic.on{background:#eef4ff;border-color:#2a78d6;color:#1c5cab}
+.fb-text,.fb-input{width:100%;border:1px solid #dbe6f2;border-radius:12px;padding:10px 12px;
+  font-family:inherit;font-size:.85rem;color:#1e293b;resize:vertical}
+.fb-text:focus,.fb-input:focus{outline:none;border-color:#2a78d6}
+.fb-send{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:12px;
+  font-weight:700;font-size:.88rem;border:0;cursor:pointer}
+.fb-thanks{display:flex;align-items:center;gap:13px;padding:16px;border-radius:14px;
+  background:#f0fdf4;border:1px solid #bbf7d0}
+.fb-thanks>i{font-size:1.7rem;color:#16a34a;flex:0 0 auto}
+.fb-thanks b{display:block;font-size:.9rem;color:#14532d}
+.fb-thanks span{display:block;font-size:.76rem;color:#3f6b52;margin-top:2px}
 /* อัตราเสียชีวิตต่อแสนประชากร — ตัวชี้วัดตามแผนแม่บท วางท้ายการ์ดสถิติ */
 .rate-row{display:flex;align-items:center;gap:10px;margin-top:8px;padding:10px 12px;border-radius:14px;
   background:linear-gradient(135deg,#f7fbff,#eef4ff);border:1px solid #d8e6f7}
@@ -1124,6 +1149,35 @@ canvas{max-width:100%!important;}
         </div>
       </div>
 
+      <!-- แบบสอบถาม / ความคิดเห็น -->
+      <div class="stats-zone" style="margin-top:16px">
+        <h3 class="zone-title"><i class="fa-solid fa-comment-dots" style="color:#7c3aed;background:#f3e8ff"></i> ความคิดเห็นของท่าน</h3>
+        <p class="fb-lead">ระบบนี้สร้างขึ้นเพื่อประชาชน ความเห็นของท่านจะถูกนำไปปรับปรุงจริง — ไม่ต้องกรอกชื่อหรือเบอร์ก็ส่งได้</p>
+        <div id="fbForm">
+          <div class="fb-block">
+            <span class="fb-lb">ความพึงพอใจโดยรวม</span>
+            <div class="fb-stars" id="fbStars" role="radiogroup" aria-label="ให้คะแนนความพึงพอใจ"></div>
+          </div>
+          <div class="fb-block">
+            <span class="fb-lb">เรื่องที่อยากบอก</span>
+            <div class="fb-topics" id="fbTopics"></div>
+          </div>
+          <div class="fb-block">
+            <label class="fb-lb" for="fbMessage">รายละเอียด</label>
+            <textarea id="fbMessage" class="fb-text" rows="3" maxlength="1000" placeholder="เช่น ข้อมูลจุดเสี่ยงไม่ตรงกับพื้นที่จริง / อยากให้เพิ่มกล้องบริเวณ... / ใช้งานบนมือถือแล้วติดตรงไหน"></textarea>
+          </div>
+          <div class="fb-block">
+            <label class="fb-lb" for="fbContact">เบอร์โทรหรืออีเมล <span class="fb-opt">ไม่บังคับ — กรอกเฉพาะกรณีต้องการให้ติดต่อกลับ</span></label>
+            <input id="fbContact" class="fb-input" maxlength="120" placeholder="08x-xxx-xxxx หรือ you@example.com">
+          </div>
+          <button type="button" class="fb-send btn-primary text-white" onclick="fbSubmit()"><i class="fa-solid fa-paper-plane"></i> ส่งความคิดเห็น</button>
+        </div>
+        <div id="fbThanks" class="fb-thanks" style="display:none">
+          <i class="fa-solid fa-circle-check"></i>
+          <div><b>ขอบคุณสำหรับความคิดเห็น</b><span>เจ้าหน้าที่จะอ่านทุกข้อความและนำไปปรับปรุงระบบ</span></div>
+        </div>
+      </div>
+
       <!-- modal รายละเอียดจุดหลีกเลี่ยง (มือถือ/แท็บเล็ต) -->
       <div id="avModalBackdrop" class="av-backdrop" onclick="closeAvoidModal()"></div>
       <div id="avModal" class="av-modal" role="dialog" aria-modal="true">
@@ -1266,6 +1320,7 @@ let cachedDeathRows = null;
 document.addEventListener('DOMContentLoaded', function() {
   updateDateTime(); setInterval(updateDateTime, 1000); setupEventListeners();
   setTimeout(() => initializeDashboard(), 100); // หน้าเริ่มต้นคือ Dashboard
+  vcInit();   // แบบสอบถาม + บันทึกการใช้งานแบบไม่ระบุตัวตน
 });
 
 function getThaiDateTime() {
@@ -2406,6 +2461,107 @@ async function loadDeathRate(deathDates, p, py) {
   row.title = 'คาดการณ์ทั้งปี ' + projected.toFixed(0) + ' ราย จากสะสม ' + deaths +
               ' ราย ใน ' + elapsed + ' วัน · ประชากร ' + pop.toLocaleString('th-TH') + ' คน';
   row.style.display = 'flex';
+}
+
+/* ============ เสียงจากประชาชน: แบบสอบถาม + บันทึกการใช้งาน ============
+   ความเป็นส่วนตัว: ไม่เก็บ IP ไม่เก็บ user agent ไม่ใช้คุกกี้
+   รหัสการเข้าชมเป็นเลขสุ่มใน sessionStorage ปิดแท็บก็หาย ตามข้ามวันไม่ได้
+   จึงไม่เข้าข่ายต้องขอความยินยอมคุกกี้ */
+const VC_TOPICS = ['ความถูกต้องของข้อมูล','ใช้งานง่าย/ยาก','อยากให้เพิ่มข้อมูล','แจ้งปัญหาการใช้งาน','อื่นๆ'];
+let vcRating = 0, vcTopic = '';
+
+function vcSession() {
+  let k = sessionStorage.getItem('vcSession');
+  if (!k) {
+    k = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2));
+    sessionStorage.setItem('vcSession', k);
+  }
+  return k;
+}
+const vcDevice = () => window.matchMedia('(max-width:1023px)').matches ? 'mobile' : 'desktop';
+
+function fbBuild() {
+  const stars = document.getElementById('fbStars');
+  if (!stars) return;
+  stars.innerHTML = [1,2,3,4,5].map(n =>
+    '<button type="button" class="fb-star" role="radio" aria-checked="false" aria-label="' + n + ' ดาว" data-n="' + n + '" onclick="fbSetRating(' + n + ')"><i class="fa-solid fa-star"></i></button>').join('');
+  document.getElementById('fbTopics').innerHTML = VC_TOPICS.map(t =>
+    '<button type="button" class="fb-topic" data-t="' + t + '" onclick="fbSetTopic(this)">' + t + '</button>').join('');
+}
+function fbSetRating(n) {
+  vcRating = n;
+  document.querySelectorAll('#fbStars .fb-star').forEach(b => {
+    const on = Number(b.dataset.n) <= n;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-checked', String(Number(b.dataset.n) === n));
+  });
+}
+function fbSetTopic(el) {
+  const same = el.classList.contains('on');
+  document.querySelectorAll('#fbTopics .fb-topic').forEach(b => b.classList.remove('on'));
+  if (!same) { el.classList.add('on'); vcTopic = el.dataset.t; } else vcTopic = '';
+}
+async function fbSubmit() {
+  const msg = document.getElementById('fbMessage').value.trim();
+  if (!vcRating && !msg) {
+    Swal.fire({ icon:'info', title:'ยังไม่มีข้อมูล', text:'กรุณาให้คะแนนหรือเขียนความคิดเห็นอย่างน้อยหนึ่งอย่าง' });
+    return;
+  }
+  try {
+    const { data, error } = await sb.rpc('vc_feedback_add', { p_row: {
+      rating: vcRating || null, topic: vcTopic, message: msg,
+      contact: document.getElementById('fbContact').value.trim(),
+      page: 'home', session_key: vcSession() } });
+    if (error) throw error;
+    if (!data || !data.success) throw new Error((data && data.message) || 'ส่งไม่สำเร็จ');
+    document.getElementById('fbForm').style.display = 'none';
+    document.getElementById('fbThanks').style.display = 'flex';
+    vcTrack('click', 'home', 'ส่งความคิดเห็น');
+  } catch (e) {
+    Swal.fire({ icon:'error', title:'ส่งไม่สำเร็จ',
+      text: /vc_feedback_add|does not exist|schema cache/i.test(e.message || '')
+        ? 'ระบบรับความคิดเห็นยังไม่พร้อมใช้งาน กรุณาแจ้งผู้ดูแล' : (e.message || '') });
+  }
+}
+
+/* บันทึกการใช้งาน — สะสมไว้ในหน่วยความจำ ส่งทีเดียวตอนออกจากหน้า
+   ถ้ายิงทุกเหตุการณ์ทันที ฐานข้อมูลจะเต็มเร็วและเปลืองเน็ตผู้ใช้ */
+const vcQueue = [];
+const vcSeen = new Set();
+function vcTrack(event, page, section, meta) {
+  const key = event + '|' + page + '|' + section;
+  if (event === 'reach' && vcSeen.has(key)) return;   // หัวข้อเดียวนับครั้งเดียวต่อการเข้าชม
+  vcSeen.add(key);
+  if (vcQueue.length < 50) vcQueue.push({ event, page, section, meta });
+}
+function vcFlush() {
+  if (!vcQueue.length) return;
+  const batch = vcQueue.splice(0, vcQueue.length);
+  const payload = { p_session: vcSession(), p_device: vcDevice(), p_events: batch };
+  // sendBeacon ส่งได้แม้หน้ากำลังปิด ซึ่ง fetch ปกติมักถูกยกเลิก
+  try {
+    const url = SUPABASE_URL + '/rest/v1/rpc/vc_events_add?apikey=' + SUPABASE_ANON_KEY;
+    const blob = new Blob([JSON.stringify(payload)], { type:'application/json' });
+    if (navigator.sendBeacon && navigator.sendBeacon(url, blob)) return;
+  } catch (e) { /* ไม่รองรับก็ถอยไปใช้ rpc ปกติ */ }
+  sb.rpc('vc_events_add', payload).catch(() => {});
+}
+function vcInit() {
+  fbBuild();
+  vcTrack('view', 'home', 'เปิดหน้าแรก');
+  // หัวข้อไหนถูกเลื่อนไปถึงจริง — ตัวที่ไม่เคยถูกบันทึกคือหัวข้อที่ไม่มีคนดู
+  const watch = [['avoidZone','จุดจราจรที่ควรหลีกเลี่ยง'], ['officerStyleStats','สถิติ สภ.เมืองนครสวรรค์'],
+    ['fbForm','ความคิดเห็นของท่าน']];
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      const hit = watch.find(w => document.getElementById(w[0]) === e.target);
+      if (hit) vcTrack('reach', 'home', hit[1]);
+    }), { threshold: .35 });
+    watch.forEach(w => { const el = document.getElementById(w[0]); if (el) io.observe(el); });
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') vcFlush(); });
+  window.addEventListener('pagehide', vcFlush);
 }
 
 function showDeathStatistics() {

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clip Video ประชาสัมพันธ์และรณรงค์ลดอุบัติเหตุ สภ.เมืองนครสวรรค์</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root{
       --primary:#2563eb; --secondary:#7c3aed; --surface:rgba(255,255,255,.9);
@@ -39,6 +40,15 @@
     .btn.soft{background:#fff;color:#1e3a8a;border:1px solid rgba(37,99,235,.25);box-shadow:0 8px 18px rgba(15,23,42,.08)}
     .btn:active{transform:scale(.97)}
     .layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+    .react-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(15,23,42,.08)}
+    .react-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(15,23,42,.12);
+      background:#fff;color:#475569;font-family:inherit;font-size:.78rem;font-weight:600;
+      padding:7px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+    .react-btn:hover{border-color:var(--rc);color:var(--rc)}
+    .react-btn.on{background:color-mix(in srgb,var(--rc) 10%,#fff);border-color:var(--rc);color:var(--rc)}
+    .react-btn i{font-size:.9rem}
+    .react-btn b{font-variant-numeric:tabular-nums;font-weight:800}
+    @media(max-width:520px){.react-btn span{display:none}.react-btn{padding:8px 13px}}
     .player-card,.list-card{
       background:var(--surface);border:1px solid var(--border);border-radius:22px;
       box-shadow:var(--shadow);overflow:hidden;
@@ -117,6 +127,9 @@
         <div class="player-meta">
           <h2 id="nowTitle">ยังไม่ได้เลือกคลิป</h2>
           <p id="nowDate"></p>
+          <!-- ปุ่มความรู้สึก: ไม่มี "ถูกใจ" โดยตั้งใจ คลิปหลายอันเป็นเรื่องผู้เสียชีวิต
+               หัวใจในความหมาย "เป็นกำลังใจ" จึงเหมาะกว่า -->
+          <div class="react-row" id="reactRow" style="display:none"></div>
         </div>
       </div>
       <div class="list-card">
@@ -246,6 +259,7 @@ function playVideo(id) {
   player.play().catch(() => {});
   document.getElementById('nowTitle').textContent = item.name;
   document.getElementById('nowDate').innerHTML = '<i class="fa-regular fa-calendar"></i> เพิ่มเมื่อ ' + thDate(item.createdTime);
+  rcRender(id);   // ปุ่มความรู้สึกของคลิปนี้
   renderPlaylist();
 }
 
@@ -269,6 +283,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s]));
+}
+
+/* ============ ปุ่มความรู้สึกในคลิป ============
+   ไม่มีปุ่ม "ถูกใจ" โดยตั้งใจ คลิปรณรงค์หลายอันเป็นเรื่องผู้เสียชีวิต
+   การกดถูกใจกับเนื้อหาแบบนั้นดูไม่เหมาะ หัวใจในความหมาย "เป็นกำลังใจ" ตรงกว่า
+
+   ความเป็นส่วนตัว: ใช้รหัสสุ่มใน sessionStorage ไม่เก็บ IP ไม่ใช้คุกกี้
+   หนึ่งการเข้าชมกดได้หนึ่งความรู้สึกต่อหนึ่งคลิป กดซ้ำอันเดิม = ยกเลิก */
+const RC_SUPABASE_URL = 'https://ftpruljwwsmvipfcedyk.supabase.co';
+const RC_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0cHJ1bGp3d3NtdmlwZmNlZHlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTM5ODgsImV4cCI6MjA5OTkyOTk4OH0.CQDf2PUO5hjsamJojOfLMuqobwL0d8EbXxMT-2EdAts';
+const rcDb = window.supabase ? window.supabase.createClient(RC_SUPABASE_URL, RC_ANON_KEY) : null;
+const RC_KINDS = [
+  { k:'heart', ic:'fa-heart',       lb:'เป็นกำลังใจ', color:'#e11d48' },
+  { k:'sad',   ic:'fa-face-sad-tear', lb:'เสียใจ',     color:'#2563eb' },
+  { k:'idea',  ic:'fa-lightbulb',   lb:'ได้ความรู้',  color:'#d97706' },
+  { k:'share', ic:'fa-share-nodes', lb:'จะแชร์ต่อ',   color:'#059669' }
+];
+let rcMine = {};   // { videoId: kind }
+
+function rcSession() {
+  let k = sessionStorage.getItem('vcSession');
+  if (!k) {
+    k = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2));
+    sessionStorage.setItem('vcSession', k);
+  }
+  return k;
+}
+
+async function rcRender(videoId) {
+  const row = document.getElementById('reactRow');
+  if (!row || !rcDb || !videoId) return;
+  let totals = {};
+  try {
+    const { data } = await rcDb.from('vc_reaction_totals').select('kind,n')
+      .eq('target_type', 'video').eq('target_id', videoId);
+    (data || []).forEach(r => totals[r.kind] = r.n);
+  } catch (e) { /* ยังไม่ได้รัน sql/voice_1_tables.sql — แสดงปุ่มเปล่าไปก่อน */ }
+  const mine = rcMine[videoId];
+  row.innerHTML = RC_KINDS.map(x =>
+    '<button type="button" class="react-btn' + (mine === x.k ? ' on' : '') + '" data-k="' + x.k + '"' +
+    ' style="--rc:' + x.color + '" aria-pressed="' + (mine === x.k) + '"' +
+    ' onclick="rcTap(\'' + videoId + '\',\'' + x.k + '\')">' +
+    '<i class="fa-solid ' + x.ic + '"></i><span>' + x.lb + '</span>' +
+    (totals[x.k] ? '<b>' + totals[x.k] + '</b>' : '') + '</button>').join('');
+  row.style.display = 'flex';
+}
+
+async function rcTap(videoId, kind) {
+  if (!rcDb) return;
+  // สลับปุ่มให้ทันทีก่อนรอเซิร์ฟเวอร์ กดแล้วต้องรู้สึกว่าตอบสนอง
+  rcMine[videoId] = rcMine[videoId] === kind ? null : kind;
+  await rcRender(videoId);
+  try {
+    const { data, error } = await rcDb.rpc('vc_react', {
+      p_target_type: 'video', p_target_id: videoId, p_kind: kind, p_session: rcSession() });
+    if (error) throw error;
+    if (data && data.success) { rcMine[videoId] = data.action === 'removed' ? null : kind; }
+    await rcRender(videoId);
+  } catch (e) { await rcRender(videoId); }
 }
 </script>
 </body>
