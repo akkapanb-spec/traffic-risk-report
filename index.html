@@ -657,6 +657,9 @@ canvas{max-width:100%!important;}
 .av-lyr.on{opacity:1;border-color:#123b7a;background:#eef4ff;box-shadow:0 3px 9px rgba(18,59,122,.14)}
 .av-lyrdot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
 .av-lyrn{font-size:.66rem;font-weight:800;background:#eef4ff;color:#123b7a;border-radius:999px;padding:1px 6px;min-width:17px;text-align:center}
+.av-heatnote{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:8px 12px;font-size:.72rem;color:#5b6b7f;background:#fff8f2;border-bottom:1px solid rgba(209,222,237,.9)}
+.av-heatkey{display:inline-flex;align-items:center;gap:3px}
+.av-heatsw{width:15px;height:11px;border-radius:2px;border:1px solid rgba(0,0,0,.14)}
 /* ชั้นที่ไม่มีข้อมูล กดแล้วแผนที่ไม่เปลี่ยน ดูเหมือนปุ่มเสีย จึงหรี่ไว้ให้เห็นว่ากดไม่ได้ */
 .av-lyr.empty{opacity:.3;cursor:not-allowed}
 .av-lyr.empty:hover{border-color:#d8e3f0}
@@ -1016,7 +1019,9 @@ canvas{max-width:100%!important;}
             <button type="button" class="av-lyr" id="avLyrRed" onclick="toggleAvoidLayer('red')"><span class="av-lyrdot" style="background:#c1122f"></span> โซนแดง</button>
             <button type="button" class="av-lyr" id="avLyrOrange" onclick="toggleAvoidLayer('orange')"><span class="av-lyrdot" style="background:#f59e0b"></span> โซนส้ม</button>
             <button type="button" class="av-lyr" id="avLyrCorr" onclick="toggleAvoidLayer('corridor')"><i class="fa-solid fa-route"></i> เส้นทางเสี่ยง</button>
+            <button type="button" class="av-lyr" id="avLyrHeat" onclick="toggleAvoidLayer('heat')" style="display:none"><i class="fa-solid fa-fire"></i> ความหนาแน่น</button>
           </div>
+          <div id="avHeatNote" class="av-heatnote" style="display:none"></div>
           <div id="avoidList" class="av-list"><div class="av-empty"><i class="fa-solid fa-circle-check"></i> ขณะนี้ไม่มีประกาศจุดหลีกเลี่ยง เดินทางได้ตามปกติ</div></div>
         </div>
 
@@ -1820,6 +1825,7 @@ function initializeDashboard() {
    อ่านตรงจาก bs_sites / bs_zones ซึ่งเปิด public read เฉพาะแถวที่ published = true
    ไม่มี PII — มีแต่พิกัด จำนวน และขอบเขตโซน */
 let bsPubSites = [], bsPubZones = [], bsLayerGroups = null, bsLayerOn = {};
+const AV_LYR_BTN = { sites:'Sites', drunk:'Drunk', red:'Red', orange:'Orange', corridor:'Corr', heat:'Heat' };
 
 function bsPeakLabel(peak) {
   if (!peak || !Array.isArray(peak.top) || !peak.top.length) return '';
@@ -1842,6 +1848,74 @@ async function loadBlackspotPublic() {
   }
   renderBlackspotStats();
   renderBlackspotLayers();
+  loadDensityLayer();
+}
+
+/* ---------- ชั้นความหนาแน่น คำนวณด้วย PostGIS ฝั่งฐานข้อมูล ---------- */
+// จุดอุบัติเหตุพันกว่าจุดวางทับกันจนบอกไม่ได้ว่าตรงไหนหนักกว่ากัน
+// จึงให้ฐานข้อมูลรวมเป็นช่องหกเหลี่ยมแล้วส่งกลับมาแค่ช่องกับจำนวน
+const HEAT_BINS = ['#fde68a', '#fbbf24', '#f97316', '#dc2626', '#7f1d1d'];
+let heatMeta = null;
+
+// ไล่สีตามสัดส่วนของช่องที่หนาที่สุด ไม่ใช่ตามจำนวนดิบ
+// เพราะช่วง 12 เดือนกับ 1 เดือนมีจำนวนต่างกันมาก ถ้าผูกกับจำนวนดิบจะจางหมดในช่วงสั้น
+function heatColor(n, max) {
+  const i = Math.min(HEAT_BINS.length - 1, Math.floor((n / Math.max(1, max)) * HEAT_BINS.length));
+  return HEAT_BINS[Math.max(0, i)];
+}
+
+async function loadDensityLayer() {
+  const btn = document.getElementById('avLyrHeat');
+  const note = document.getElementById('avHeatNote');
+  if (!btn || !ensureAvoidMap()) return;
+  let res;
+  try {
+    const { data, error } = await sb.rpc('geo_density', { p_edge_m: 250 });
+    if (error) throw error;
+    res = data;
+  } catch (e) {
+    return;   // ยังไม่ได้รัน sql/density_1_rpc.sql — ซ่อนปุ่มไว้เฉย ๆ ไม่ล้มทั้งหน้า
+  }
+  const cells = (res && res.cells) || [];
+  if (!cells.length) return;
+  heatMeta = res;
+
+  if (!bsLayerGroups) {
+    bsLayerGroups = { sites:L.layerGroup(), drunk:L.layerGroup(), red:L.layerGroup(),
+                      orange:L.layerGroup(), corridor:L.layerGroup(), heat:L.layerGroup() };
+  } else if (!bsLayerGroups.heat) {
+    bsLayerGroups.heat = L.layerGroup();
+  }
+  bsLayerGroups.heat.clearLayers();
+
+  cells.forEach(c => {
+    const poly = (c.polygon || []).map(p => [p[0], p[1]]);
+    if (poly.length < 3) return;
+    L.polygon(poly, { color:'#fff', weight:1, fillColor: heatColor(c.n, res.max_n), fillOpacity:.62 })
+      .bindTooltip('อุบัติเหตุ <b>' + c.n + '</b> ครั้งในช่องนี้', { direction:'top', opacity:.96 })
+      .addTo(bsLayerGroups.heat);
+  });
+
+  document.getElementById('avoidLayerBar').style.display = 'flex';
+  btn.style.display = '';
+  const tag = document.createElement('span');
+  tag.className = 'av-lyrn'; tag.textContent = cells.length;
+  if (!btn.querySelector('.av-lyrn')) btn.appendChild(tag);
+
+  // เปิดไว้ตั้งแต่แรก เพราะชั้นนี้มาจากอุบัติเหตุจริงที่มีข้อมูลเสมอ
+  // ต่างจากโซนแดง/ส้มที่ต้องรอเจ้าหน้าที่เผยแพร่รอบวิเคราะห์ก่อน
+  bsLayerOn.heat = true;
+  applyAvoidLayer('heat');
+
+  // บอกให้ครบว่ากำลังดูอะไรอยู่ ไม่งั้นสีเข้มสีอ่อนตีความกันไปคนละแบบ
+  const hidden = Number(res.total || 0) - Number(res.shown || 0);
+  note.innerHTML = '<b>ความหนาแน่น</b> ช่องละ ' + res.edge_m + ' ม. · ' +
+    thaiDateLabel(res.period_start) + ' ถึง ' + thaiDateLabel(res.period_end) +
+    ' · หนาที่สุด ' + res.max_n + ' ครั้ง/ช่อง' +
+    (hidden > 0 ? ' · ไม่แสดงช่องที่มีครั้งเดียว (' + hidden + ' จุด)' : '') +
+    ' <span class="av-heatkey">น้อย' +
+    HEAT_BINS.map(c => '<span class="av-heatsw" style="background:' + c + '"></span>').join('') +
+    'มาก</span>';
 }
 
 function renderBlackspotStats() {
@@ -1912,9 +1986,8 @@ function renderBlackspotLayers() {
     }
   });
 
-  const BS_BTN = { sites:'Sites', drunk:'Drunk', red:'Red', orange:'Orange', corridor:'Corr' };
   Object.keys(bsLayerGroups).forEach(k => {
-    const btn = document.getElementById('avLyr' + BS_BTN[k]);
+    const btn = document.getElementById('avLyr' + AV_LYR_BTN[k]);
     if (!btn) return;
     const n = bsLayerGroups[k].getLayers().length;
     let tag = btn.querySelector('.av-lyrn');
@@ -1939,8 +2012,13 @@ function applyAvoidLayer(name) {
   if (!g || !avoidLMap) return;
   if (on) { g.addTo(avoidLMap); if (['red','orange'].includes(name)) g.eachLayer(l => l.bringToBack && l.bringToBack()); }
   else avoidLMap.removeLayer(g);
-  const btn = document.getElementById('avLyr' + { sites:'Sites', drunk:'Drunk', red:'Red', orange:'Orange', corridor:'Corr' }[name]);
+  const btn = document.getElementById('avLyr' + AV_LYR_BTN[name]);
   if (btn) btn.classList.toggle('on', on);
+  // คำอธิบายสีของชั้นความหนาแน่น ต้องหายไปพร้อมชั้น ไม่งั้นเหลือคำอธิบายค้างของสิ่งที่ไม่ได้แสดง
+  if (name === 'heat') {
+    const note = document.getElementById('avHeatNote');
+    if (note) note.style.display = on && heatMeta ? 'flex' : 'none';
+  }
 }
 
 function toggleAvoidLayer(name) {
@@ -2673,6 +2751,13 @@ async function refreshDeathStatistics() { markDeathYearChip('custom'); loadDeath
 
 function thaiDateLabel(iso) {
   if (!iso) return '-';
+  // RPC บางตัวส่ง timestamptz เต็มรูป การ split('-') ตรง ๆ จะได้วันเป็น NaN
+  // แปลงเป็นวันตามเวลาไทยก่อน ไม่ใช่ตัดสตริง เพราะเหตุใกล้เที่ยงคืนจะเลื่อนไปหนึ่งวัน
+  if (/[T ]\d{2}:/.test(iso)) {
+    const p = bkkParts(iso);
+    if (!p) return '-';
+    iso = p.y + '-' + String(p.m + 1).padStart(2, '0') + '-' + String(p.d).padStart(2, '0');
+  }
   const [y, m, d] = iso.split('-').map(Number);
   const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
   return `${d} ${months[m - 1]} ${y + 543}`;
