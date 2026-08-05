@@ -744,6 +744,21 @@ canvas{max-width:100%!important;}
 .srow-pills{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fbfdff;border:1px solid #e6eef6;border-top:0;
   border-radius:0 0 14px 14px;padding:7px 12px 9px}
 .srow-pills-lbl{font-size:.64rem;font-weight:700;color:#5b6b7f}
+/* อัตราเสียชีวิตต่อแสนประชากร — ตัวชี้วัดตามแผนแม่บท วางท้ายการ์ดสถิติ */
+.rate-row{display:flex;align-items:center;gap:10px;margin-top:8px;padding:10px 12px;border-radius:14px;
+  background:linear-gradient(135deg,#f7fbff,#eef4ff);border:1px solid #d8e6f7}
+.rate-ic{width:30px;height:30px;flex:0 0 30px;border-radius:10px;display:grid;place-items:center;
+  background:#123b7a;color:#fff;font-size:.72rem}
+.rate-t{min-width:0;flex:1 1 auto}
+.rate-t b{display:block;font-size:.78rem;color:#132238;line-height:1.25}
+.rate-t span{display:block;font-size:.6rem;color:#5b6b7f}
+.rate-nums{display:flex;align-items:center;gap:9px;flex:0 0 auto}
+.rate-now{text-align:right}
+.rate-now b{display:block;font-size:1.25rem;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.rate-now span{display:block;font-size:.58rem;font-weight:700}
+.rate-target{text-align:center;background:#fff;border:1px solid #d8e6f7;border-radius:10px;padding:4px 9px;
+  font-size:.56rem;color:#5b6b7f;font-weight:700}
+.rate-target b{display:block;font-size:.95rem;color:#123b7a;font-variant-numeric:tabular-nums}
 .ncell span{white-space:nowrap}
 /* คอลัมน์ขวาบนจอกว้างแคบพอ ๆ กับมือถือ (~276px) ตัวเลขจึงต้องบีบด้วย
    ย่อไอคอนกับป้ายชื่อหัวข้อลง เพื่อคืนที่ให้ช่องตัวเลขทั้งสาม */
@@ -1041,6 +1056,20 @@ canvas{max-width:100%!important;}
             <!-- pills บาดเจ็บ: แสดงชุดของช่วงที่เลือก (ปี) — เดือน/วันนี้เก็บไว้ใน DOM ให้ logic เดิมเขียนได้แต่ไม่แสดง -->
             <div class="srow-pills"><span class="srow-pills-lbl">แยกอาการ:</span><span class="injury-mini" id="injPillsYear"></span></div>
             <span style="display:none" id="injPillsMonth"></span><span style="display:none" id="injPillsToday"></span>
+
+            <!-- อัตราเสียชีวิตต่อประชากรแสนคน — ตัวชี้วัดเดียวกับแผนแม่บทความปลอดภัยทางถนน
+                 ซ่อนไว้จนกว่าจะมีข้อมูลประชากร เพราะไม่มีตัวหารก็คำนวณไม่ได้
+                 แสดงเฉพาะภาพรวมทั้งเขต ไม่แยกรายตำบล เพราะพื้นที่ที่มีทางหลวงผ่าน
+                 จะมีอัตราสูงกว่าโดยธรรมชาติจากรถต่างถิ่น การชี้เป็นรายตำบลจึงทำให้เข้าใจผิด -->
+            <div class="rate-row" id="rateRow" style="display:none">
+              <span class="rate-ic"><i class="fa-solid fa-bullseye"></i></span>
+              <span class="rate-t"><b>อัตราเสียชีวิต</b><span>ต่อประชากรแสนคน</span></span>
+              <span class="rate-nums">
+                <span class="rate-now"><b id="rateNow">-</b><span id="rateTrend"></span></span>
+                <span class="rate-target">เป้าหมาย<b id="rateTarget">12</b></span>
+              </span>
+            </div>
+
             <p class="stats-hint" id="officerStatsHint" style="margin-top:8px"></p>
           </div>
         </div>
@@ -2321,7 +2350,62 @@ async function loadOfficerStyleStats() {
     setNum('injStatYear', iRange.total); document.getElementById('injPillsYear').innerHTML = pills(iRange);
     if (hInfo) hInfo.textContent = 'แสดงข้อมูลช่วง ' + thaiDateLabel(hr.s) + ' ถึง ' + thaiDateLabel(hr.e) + ' — การ์ดเดือน/วันนี้ยังเป็นค่าเรียลไทม์';
   }
+  loadDeathRate(deathDates, p, py).catch(() => {});   // ไม่ให้ล้มทั้งการ์ดถ้ายังไม่มีข้อมูลประชากร
   document.getElementById('officerStatsHint').innerHTML = '<i class="fa-regular fa-clock"></i> อัปเดตล่าสุด ' + now.toLocaleString('th-TH', { timeZone:'Asia/Bangkok', hour12:false });
+}
+
+/* อัตราเสียชีวิตต่อประชากรแสนคน
+   คำนวณฝั่งเบราว์เซอร์จากตารางที่เปิดให้อ่านสาธารณะ (pop_rows, pop_area_map, deaths, bs_settings)
+   ไม่ต้องใช้ RPC ของเจ้าหน้าที่ และไม่มีข้อมูลส่วนบุคคลเข้ามาเกี่ยว
+
+   แสดง "ค่าคาดการณ์ทั้งปี" ไม่ใช่ยอดสะสม เพราะเป้าหมาย 12 เป็นเป้ารายปี
+   เอายอดสะสมกลางปีไปเทียบจะดูเหมือนผ่านเป้าแล้วทั้งที่ยังไม่ครบปี */
+async function loadDeathRate(deathDates, p, py) {
+  const row = document.getElementById('rateRow');
+  if (!row) return;
+  const [popRes, mapRes, setRes] = await Promise.all([
+    sb.from('pop_rows').select('area_name,in_municipality,total,period_year,period_month'),
+    sb.from('pop_area_map').select('source_area,source_muni'),
+    sb.from('bs_settings').select('key,val').eq('key', 'deathRateTarget')
+  ]);
+  const rows = popRes.data || [], maps = mapRes.data || [];
+  if (!rows.length || !maps.length) return;          // ยังไม่ได้นำเข้าประชากร ซ่อนไว้ตามเดิม
+
+  // ใช้เฉพาะงวดล่าสุดที่มีข้อมูล
+  const key = r => r.period_year * 100 + (r.period_month || 0);
+  const latest = Math.max(...rows.map(key));
+  const inScope = new Set(maps.map(m => m.source_area + '|' + m.source_muni));
+  const pop = rows.filter(r => key(r) === latest && inScope.has(r.area_name + '|' + r.in_municipality))
+                  .reduce((s, r) => s + (Number(r.total) || 0), 0);
+  if (!pop) return;
+
+  const target = Number(((setRes.data || [])[0] || {}).val) || 12;
+  const year = Number(p.y);
+  const days = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 ? 366 : 365;
+  const elapsed = Math.max(1, Math.round((new Date(p.d + 'T12:00:00+07:00') - new Date(p.y + '-01-01T12:00:00+07:00')) / 86400000) + 1);
+  const deaths = (deathDates || []).length;
+  const projected = deaths / elapsed * days;
+  const rate = projected / pop * 100000;
+
+  // เทียบช่วงเวลาเดียวกันของปีก่อน ตัดผลของฤดูกาลออก เชื่อได้กว่าการคาดการณ์
+  const prevYear = String(year - 1);
+  const cut = prevYear + p.d.slice(4);
+  const prevRes = await sb.from('deaths').select('incident_datetime')
+    .gte('incident_datetime', prevYear + '-01-01T00:00:00+07:00')
+    .lte('incident_datetime', cut + 'T23:59:59+07:00');
+  const prev = (prevRes.data || []).length;
+  const diff = deaths - prev;
+
+  const good = rate <= target;
+  document.getElementById('rateNow').textContent = rate.toFixed(1);
+  document.getElementById('rateNow').style.color = good ? '#0ca30c' : '#c1122f';
+  document.getElementById('rateTarget').textContent = target.toFixed(1);
+  const tr = document.getElementById('rateTrend');
+  tr.textContent = diff === 0 ? 'เท่าปีก่อน' : diff < 0 ? '▼ ดีขึ้น ' + Math.abs(diff) + ' ราย' : '▲ เพิ่ม ' + diff + ' ราย';
+  tr.style.color = diff < 0 ? '#0ca30c' : diff > 0 ? '#c1122f' : '#5b6b7f';
+  row.title = 'คาดการณ์ทั้งปี ' + projected.toFixed(0) + ' ราย จากสะสม ' + deaths +
+              ' ราย ใน ' + elapsed + ' วัน · ประชากร ' + pop.toLocaleString('th-TH') + ' คน';
+  row.style.display = 'flex';
 }
 
 function showDeathStatistics() {
