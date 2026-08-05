@@ -1539,10 +1539,37 @@
     });
 
     /* ============ ชั้นเชื่อมต่อ Supabase ============ */
+    /* ข้อความจาก Postgres บางอันบอกอาการแต่ไม่บอกทางแก้
+       แปลเป็นภาษาที่บอกว่าต้องไปทำอะไรต่อ ไม่งั้นคนใช้ได้แค่ error ดิบที่ทำอะไรไม่ถูก */
+    const RPC_HINTS = [
+      { m:/requires a WHERE clause/i,
+        t:'ฐานข้อมูลยังเป็นฟังก์ชันรุ่นเก่า',
+        h:'ให้ลากไฟล์ <b>sql/blackspot_3_rpc.sql</b> แล้วตามด้วย <b>sql/blackspot_4_publish.sql</b> ' +
+          'ไปวางใน Supabase SQL Editor แล้วกด Run<br><span style="font-size:.8rem;color:#5b6b7f">' +
+          'รันทับได้ปลอดภัย ข้อมูลในตารางไม่หาย · แก้ไฟล์อย่างเดียวไม่พอ ต้องรันทับฐานข้อมูลด้วย</span>' },
+      { m:/does not exist|schema cache/i,
+        t:'ยังไม่ได้สร้างตารางหรือฟังก์ชันนี้',
+        h:'ยังไม่ได้รันไฟล์ SQL ที่เกี่ยวข้องใน Supabase SQL Editor — ดูชื่อไฟล์จากกรอบแดงด้านบนของหน้านั้น' }
+    ];
+    function rpcFriendly(msg) {
+      const hit = RPC_HINTS.find(x => x.m.test(msg || ''));
+      return hit ? { title: hit.t, html: hit.h } : null;
+    }
+
     async function rpc(fn, args) {
       const { data, error } = await db.rpc(fn, args || {});
-      if (error) throw new Error('ไม่สามารถเชื่อมต่อระบบได้: ' + error.message);
+      if (error) {
+        const nice = rpcFriendly(error.message);
+        if (nice) { const e = new Error(nice.title); e.friendly = nice; throw e; }
+        throw new Error('ไม่สามารถเชื่อมต่อระบบได้: ' + error.message);
+      }
       return data;
+    }
+    // เรียกแทน Swal.fire ตอนจับ error จาก rpc — ถ้ามีคำแนะนำจะโชว์เป็น html
+    function rpcAlert(e, fallbackTitle) {
+      // คืน promise ของ Swal เพราะบางจุดเรียกด้วย await เพื่อรอให้ผู้ใช้ปิดกล่องก่อนไปต่อ
+      if (e && e.friendly) return Swal.fire({ icon:'warning', title:e.friendly.title, html:e.friendly.html, width:560 });
+      return Swal.fire({ icon:'error', title:fallbackTitle || 'ทำรายการไม่สำเร็จ', text:(e && e.message) || '' });
     }
 
     async function api(action, data = {}) {
@@ -2064,7 +2091,7 @@
       if (state.deathOverlayOn) { removeDeathOverlay(); return; }
       state.deathOverlayOn = true;
       try { await buildDeathOverlay(); }
-      catch (e) { state.deathOverlayOn = false; Swal.fire({ icon:'error', title:'โหลดข้อมูลผู้เสียชีวิตไม่สำเร็จ', text:e.message }); }
+      catch (e) { state.deathOverlayOn = false; rpcAlert(e, 'โหลดข้อมูลผู้เสียชีวิตไม่สำเร็จ'); }
     }
 
     /* ============ ชั้นผลวิเคราะห์จุดเสี่ยงบนแผนที่อุบัติเหตุ ============
@@ -2784,7 +2811,7 @@
         await Swal.fire({ icon:'success', title:rpcResult.message, timer:1400, showConfirmButton:false });
         loadRiskManage();
       } catch (error) {
-        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
+        rpcAlert(error, 'เกิดข้อผิดพลาด');
       }
     }
 
@@ -2916,7 +2943,7 @@
         state.deathDates = null; state.deathFull = null; // ให้สถิติ/แผนที่โหลดใหม่
         loadDeathList();
       } catch (error) {
-        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
+        rpcAlert(error, 'เกิดข้อผิดพลาด');
       }
     }
 
@@ -3039,7 +3066,7 @@
         state.deathDates = null; state.deathFull = null;
         loadDeathList();
       } catch (error) {
-        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
+        rpcAlert(error, 'เกิดข้อผิดพลาด');
       }
     }
 
@@ -3130,7 +3157,7 @@
           timer: idChanged ? undefined : 1500, showConfirmButton: idChanged });
         loadAdminList();
       } catch (error) {
-        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
+        rpcAlert(error, 'เกิดข้อผิดพลาด');
       }
     }
 
@@ -3152,7 +3179,7 @@
         await Swal.fire({ icon:'success', title: result.message, timer: 1400, showConfirmButton: false });
         loadAdminList();
       } catch (error) {
-        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
+        rpcAlert(error, 'เกิดข้อผิดพลาด');
       }
     }
 
@@ -3177,7 +3204,7 @@
         loadAdminList();
         updateAdminBadges();
       } catch (error) {
-        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text: error.message });
+        rpcAlert(error, 'เกิดข้อผิดพลาด');
       }
     }
 
@@ -3386,7 +3413,7 @@
         Swal.close();
       } catch (error) {
         Swal.close();
-        await Swal.fire({ icon:'error', title:'ไม่สามารถอ่านรูปภาพได้', text:error.message });
+        await rpcAlert(error, 'ไม่สามารถอ่านรูปภาพได้');
       }
     }
 
@@ -3517,7 +3544,7 @@
         state.accidentRows = null; state.injuryRows = null; state.deathDates = null; state.deathFull = null;
         if (wasEditing) openPage('map', document.querySelector('[data-page="map"]'));
       } catch (error) {
-        await Swal.fire({ icon:'error', title:'บันทึกข้อมูลไม่สำเร็จ', text:error.message });
+        await rpcAlert(error, 'บันทึกข้อมูลไม่สำเร็จ');
       }
     }
 
@@ -3640,7 +3667,7 @@
         state.accidentRows = null; state.injuryRows = null; state.dashboardLoaded = false; state.mapLoaded = false; state.dashboardData = null;
         loadMapCumulative(); loadMapData();
       } catch (error) {
-        Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:error.message });
+        rpcAlert(error, 'เกิดข้อผิดพลาด');
       }
     }
 
@@ -4811,7 +4838,7 @@
         Swal.close();
       } catch (error) {
         Swal.close();
-        await Swal.fire({ icon:'error', title:'ไม่สามารถอ่านรูปภาพได้', text:error.message });
+        await rpcAlert(error, 'ไม่สามารถอ่านรูปภาพได้');
       }
       event.target.value = '';
     }
@@ -4872,7 +4899,7 @@
         resetAvoidForm();
         loadAdvisories();
       } catch (error) {
-        Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:error.message });
+        rpcAlert(error, 'บันทึกไม่สำเร็จ');
       }
     }
 
@@ -4950,7 +4977,7 @@
         const result = await rpc('advisory_close', { p_token: state.token, p_id: id });
         if (!result.success) throw new Error(result.message);
         loadAdvisories();
-      } catch (error) { Swal.fire({ icon:'error', title:'ปิดไม่สำเร็จ', text:error.message }); }
+      } catch (error) { rpcAlert(error, 'ปิดไม่สำเร็จ'); }
     }
 
     async function deleteAdvisory(id) {
@@ -4961,7 +4988,7 @@
         if (!result.success) throw new Error(result.message);
         if (state.editingAdvisory === id) resetAvoidForm();
         loadAdvisories();
-      } catch (error) { Swal.fire({ icon:'error', title:'ลบไม่สำเร็จ', text:error.message }); }
+      } catch (error) { rpcAlert(error, 'ลบไม่สำเร็จ'); }
     }
 
     function avOpenMapPicker() {
@@ -5675,7 +5702,7 @@
             'จุดเมาแล้วขับ: <b>' + t.drunkSites + '</b> · โซนแดง: <b style="color:#c1122f">' + t.red + '</b> · โซนส้ม: <b style="color:#c24e00">' + t.orange + '</b>' +
             '</div><p style="margin:10px 0 0;font-size:.78rem;color:#64748b">ยังเป็นฉบับร่าง — ตรวจแล้วกด “บันทึก + เผยแพร่” ด้านล่าง</p>' });
       } catch (e) {
-        Swal.fire({ icon:'error', title:'วิเคราะห์ไม่สำเร็จ', text:e.message });
+        rpcAlert(e, 'วิเคราะห์ไม่สำเร็จ');
       }
     }
 
@@ -5848,7 +5875,7 @@
         Swal.fire({ icon:'success', title:'สำเร็จ', text:res.message });
         state.bsDraft = null;
         await bsLoadAdminData();
-      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'บันทึกไม่สำเร็จ'); }
     }
     async function bsUnpublish() {
       const ask = await Swal.fire({ icon:'warning', title:'ถอนผลวิเคราะห์ออกจากหน้าประชาชน?',
@@ -5859,7 +5886,7 @@
         if (!res.success) throw new Error(res.message);
         Swal.fire({ icon:'success', title:'ถอนออกแล้ว', text:res.message });
         bsLoadAdminData();
-      } catch (e) { Swal.fire({ icon:'error', title:'ทำรายการไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'ทำรายการไม่สำเร็จ'); }
     }
 
     /* ---------- ตั้งค่าเกณฑ์ ---------- */
@@ -5896,7 +5923,7 @@
         if (!res.success) throw new Error(res.message);
         state.bsSettings = payload;
         Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:'มีผลกับการวิเคราะห์รอบถัดไป' });
-      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'บันทึกไม่สำเร็จ'); }
     }
     function bsResetSettings() {
       state.bsSettings = Object.assign({}, BS_DEFAULTS);
@@ -5972,7 +5999,7 @@
         Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:res.message, timer:1400, showConfirmButton:false });
         bsResetFeatureForm();
         bsLoadAdminData();
-      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'บันทึกไม่สำเร็จ'); }
     }
     async function bsDeleteFeature(id) {
       const f = (state.bsFeatures || []).find(x => x.id === id);
@@ -5982,7 +6009,7 @@
         const res = await rpc('bs_feature_delete', { p_token: state.token, p_id: id });
         if (!res.success) throw new Error(res.message);
         bsLoadAdminData();
-      } catch (e) { Swal.fire({ icon:'error', title:'ลบไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'ลบไม่สำเร็จ'); }
     }
 
     /* ---------- จุดเกิดเหตุเพิ่มเติม ---------- */
@@ -6066,7 +6093,7 @@
         Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:res.message, timer:1400, showConfirmButton:false });
         bsResetIncidentForm();
         bsLoadAdminData();
-      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'บันทึกไม่สำเร็จ'); }
     }
     async function bsDeleteIncident(id) {
       const ask = await Swal.fire({ icon:'warning', title:'ลบข้อมูลจุดเกิดเหตุนี้?', showCancelButton:true, confirmButtonText:'ลบ', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c1122f' });
@@ -6075,7 +6102,7 @@
         const res = await rpc('bs_incident_delete', { p_token: state.token, p_id: id });
         if (!res.success) throw new Error(res.message);
         bsLoadAdminData();
-      } catch (e) { Swal.fire({ icon:'error', title:'ลบไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'ลบไม่สำเร็จ'); }
     }
 
     /* ---------- โซนที่วาดเอง ---------- */
@@ -6169,14 +6196,14 @@
         Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:res.message + ' — กดปุ่มกระจายเสียงในตารางเพื่อเผยแพร่', timer:2200, showConfirmButton:false });
         bsResetZoneForm();
         bsLoadAdminData();
-      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'บันทึกไม่สำเร็จ'); }
     }
     async function bsToggleZonePublish(id, pub) {
       try {
         const res = await rpc('bs_zone_set_published', { p_token: state.token, p_id: id, p_published: pub });
         if (!res.success) throw new Error(res.message);
         bsLoadAdminData();
-      } catch (e) { Swal.fire({ icon:'error', title:'ทำรายการไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'ทำรายการไม่สำเร็จ'); }
     }
     async function bsDeleteZone(id) {
       const ask = await Swal.fire({ icon:'warning', title:'ลบโซนนี้?', showCancelButton:true, confirmButtonText:'ลบ', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c1122f' });
@@ -6185,7 +6212,7 @@
         const res = await rpc('bs_zone_delete', { p_token: state.token, p_id: id });
         if (!res.success) throw new Error(res.message);
         bsLoadAdminData();
-      } catch (e) { Swal.fire({ icon:'error', title:'ลบไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'ลบไม่สำเร็จ'); }
     }
 
     /* ---------- เลือกพิกัดบนแผนที่ (ใช้ร่วมกันทุกฟอร์มในหน้านี้) ---------- */
@@ -6286,7 +6313,7 @@
         Swal.fire({ icon:'success', title:'นำเข้าสำเร็จ', text:res.message });
         bsLoadAdminData();
       } catch (e) {
-        Swal.fire({ icon:'error', title:'นำเข้าไม่สำเร็จ', text:e.message });
+        rpcAlert(e, 'นำเข้าไม่สำเร็จ');
       }
     }
     function bsExportFeatures() {
@@ -6374,7 +6401,7 @@
         const missing = /vc_admin_data|vc_feedback|does not exist|schema cache/i.test(e.message);
         document.getElementById('vcNotReady').style.display = missing ? 'block' : 'none';
         document.getElementById('vcReady').style.display = missing ? 'none' : 'block';
-        if (!missing) Swal.fire({ icon:'error', title:'โหลดข้อมูลไม่สำเร็จ', text:e.message });
+        if (!missing) rpcAlert(e, 'โหลดข้อมูลไม่สำเร็จ');
       }
     }
 
@@ -6491,7 +6518,7 @@
         const res = await rpc('vc_feedback_update', { p_token: state.token, p_id: id, p_status: r.value.status, p_note: r.value.note });
         if (!res || !res.success) throw new Error((res && res.message) || 'บันทึกไม่สำเร็จ');
         await vcLoad();
-      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'บันทึกไม่สำเร็จ'); }
     }
 
     function vcExport() {
@@ -6543,7 +6570,7 @@
         const missing = /pop_rates|pop_rows|does not exist|schema cache/i.test(e.message);
         document.getElementById('popNotReady').style.display = missing ? 'block' : 'none';
         document.getElementById('popReady').style.display = missing ? 'none' : 'block';
-        if (!missing) Swal.fire({ icon:'error', title:'โหลดข้อมูลไม่สำเร็จ', text:e.message });
+        if (!missing) rpcAlert(e, 'โหลดข้อมูลไม่สำเร็จ');
       }
     }
 
@@ -6732,7 +6759,7 @@
         if (!res || !res.success) throw new Error((res && res.message) || 'นำเข้าไม่สำเร็จ');
         Swal.fire({ icon:'success', title:'นำเข้าแล้ว', text:res.message });
         await popLoad();
-      } catch (e) { Swal.fire({ icon:'error', title:'นำเข้าไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'นำเข้าไม่สำเร็จ'); }
     }
 
     /* ---------- ตารางสอบทาน ---------- */
@@ -6787,7 +6814,7 @@
         const res = await rpc('recon_save', { p_token: state.token, p_row: r.value });
         if (!res || !res.success) throw new Error((res && res.message) || 'บันทึกไม่สำเร็จ');
         await popLoad();
-      } catch (err) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:err.message }); }
+      } catch (err) { rpcAlert(err, 'บันทึกไม่สำเร็จ'); }
     }
 
     Object.assign(window, { initPopulationPage, popLoad, reconAdd });
@@ -6920,7 +6947,7 @@
         const missing = /rn_admin_data|rn_roads|does not exist|schema cache|postgis/i.test(e.message);
         document.getElementById('rnNotReady').style.display = missing ? 'block' : 'none';
         document.getElementById('rnReady').style.display = missing ? 'none' : 'block';
-        if (!missing) Swal.fire({ icon:'error', title:'โหลดข้อมูลไม่สำเร็จ', text:e.message });
+        if (!missing) rpcAlert(e, 'โหลดข้อมูลไม่สำเร็จ');
       }
     }
 
@@ -6996,7 +7023,7 @@
         Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:res.message, timer:2200, showConfirmButton:false });
         rnResetRoadForm();
         await rnLoadData();
-      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'บันทึกไม่สำเร็จ'); }
     }
 
     function rnEditRoad(id) {
@@ -7030,7 +7057,7 @@
         if (!res || !res.success) throw new Error((res && res.message) || 'ลบไม่สำเร็จ');
         Swal.fire({ icon:'success', title:'ลบแล้ว', timer:1500, showConfirmButton:false });
         await rnLoadData();
-      } catch (e) { Swal.fire({ icon:'error', title:'ลบไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'ลบไม่สำเร็จ'); }
     }
 
     function rnResetRoadForm() {
@@ -7185,7 +7212,7 @@
         Swal.fire({ icon:'success', title:'บันทึกแล้ว', timer:1600, showConfirmButton:false });
         rnResetPlaceForm();
         await rnLoadData();
-      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'บันทึกไม่สำเร็จ'); }
     }
 
     function rnEditPlace(id) {
@@ -7214,7 +7241,7 @@
         const res = await rpc('rn_place_delete', { p_token: state.token, p_id: id });
         if (!res || !res.success) throw new Error((res && res.message) || 'ลบไม่สำเร็จ');
         await rnLoadData();
-      } catch (e) { Swal.fire({ icon:'error', title:'ลบไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'ลบไม่สำเร็จ'); }
     }
 
     function rnResetPlaceForm() {
@@ -7380,7 +7407,7 @@
         if (!res || !res.success) throw new Error((res && res.message) || 'นำเข้าไม่สำเร็จ');
         Swal.fire({ icon:'success', title:'นำเข้าแล้ว', text:res.message });
         await rnLoadData();
-      } catch (e) { Swal.fire({ icon:'error', title:'นำเข้าไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'นำเข้าไม่สำเร็จ'); }
     }
 
     function rnExportRoads() {
@@ -7518,7 +7545,7 @@
         const missing = /cp_list|cp_checkpoints|does not exist|schema cache/i.test(e.message);
         document.getElementById('cpNotReady').style.display = missing ? 'block' : 'none';
         document.getElementById('cpReady').style.display = missing ? 'none' : 'block';
-        if (!missing) Swal.fire({ icon:'error', title:'โหลดข้อมูลไม่สำเร็จ', text:e.message });
+        if (!missing) rpcAlert(e, 'โหลดข้อมูลไม่สำเร็จ');
       }
     }
 
@@ -7543,7 +7570,7 @@
         Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:res.message, timer:2200, showConfirmButton:false });
         cpResetForm();
         await cpLoadData();
-      } catch (e) { Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'บันทึกไม่สำเร็จ'); }
     }
 
     function cpEdit(id) {
@@ -7575,7 +7602,7 @@
         const res = await rpc('cp_delete', { p_token: state.token, p_id: id });
         if (!res || !res.success) throw new Error((res && res.message) || 'ลบไม่สำเร็จ');
         await cpLoadData();
-      } catch (e) { Swal.fire({ icon:'error', title:'ลบไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'ลบไม่สำเร็จ'); }
     }
 
     function cpResetForm() {
@@ -7668,7 +7695,7 @@
         if (!res || !res.success) throw new Error((res && res.message) || 'นำเข้าไม่สำเร็จ');
         Swal.fire({ icon:'success', title:'นำเข้าแล้ว', text:res.message });
         await cpLoadData();
-      } catch (e) { Swal.fire({ icon:'error', title:'นำเข้าไม่สำเร็จ', text:e.message }); }
+      } catch (e) { rpcAlert(e, 'นำเข้าไม่สำเร็จ'); }
     }
     // รับได้ทั้ง 2569-08-05, 05/08/2569 และ 05/08/2026 — แปลง พ.ศ. เป็น ค.ศ. ให้อัตโนมัติ
     function cpToIso(v) {
