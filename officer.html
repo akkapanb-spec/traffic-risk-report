@@ -1334,6 +1334,13 @@
             <p class="hint" style="margin:0 0 12px">ตัวเลขจาก ThaiRSC / 3 ฐาน / สาธารณสุข <b>ไม่มีทางตรงกับเราเป๊ะ</b> เพราะนับคนละจังหวะ — เรานับตอนเกิดเหตุ ThaiRSC นับตอนเคลมสำเร็จ ที่ต้องจับตาคือช่องว่างที่กว้างผิดปกติ</p>
             <div id="reconTable"><div class="loading-skeleton"></div></div>
           </div>
+
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-spell-check"></i> ตรวจสอบชื่อตำบล
+              <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="geoAuditLoad()"><i class="fa-solid fa-rotate"></i> ตรวจใหม่</button></h3>
+            <p class="hint" style="margin:0 0 12px">ชื่อตำบลในระบบเก็บเป็นข้อความอิสระ เวลาเทียบกับ ThaiRSC หรือทะเบียนราษฎรต้องจับคู่ด้วยชื่อ <b>ชื่อที่เขียนไม่ตรงทะเบียนกลางจะหายไปเงียบ ๆ</b> — หน้านี้ไล่ดูว่าชื่อไหนแปลงกลับเป็นรหัสทางการไม่ได้</p>
+            <div id="geoAuditBox"><div class="loading-skeleton"></div></div>
+          </div>
         </div>
       </section>
 
@@ -1560,9 +1567,9 @@
         t:'ยังไม่ได้ติดตั้งชั้นความหนาแน่น',
         h:'ให้ลากไฟล์ <b>sql/density_1_rpc.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run<br>' +
           '<span style="font-size:.8rem;color:#5b6b7f">ต้องรัน sql/roadnet_1_tables.sql มาก่อน เพราะไฟล์นั้นเป็นตัวเปิด PostGIS</span>' },
-      { m:/geo_codes|geo_resolve_sub|geo_locate/i,
+      { m:/geo_codes|geo_resolve_sub|geo_locate|geo_audit_names|geo_alias/i,
         t:'ยังไม่ได้ติดตั้งตารางรหัสการปกครอง',
-        h:'ให้ลากไฟล์ <b>sql/geocode_1_tables.sql</b> แล้วตามด้วย <b>sql/geocode_2_nakhonsawan.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run' },
+        h:'ให้ลากไฟล์ <b>sql/geocode_1_tables.sql</b> → <b>geocode_2_nakhonsawan.sql</b> → <b>geocode_3_audit.sql</b> ไปวางใน Supabase SQL Editor ตามลำดับ แล้วกด Run ทีละไฟล์' },
       { m:/does not exist|schema cache/i,
         t:'ยังไม่ได้สร้างตารางหรือฟังก์ชันนี้',
         h:'ยังไม่ได้รันไฟล์ SQL ที่เกี่ยวข้องใน Supabase SQL Editor — ดูชื่อไฟล์จากกรอบแดงด้านบนของหน้านั้น' }
@@ -6641,12 +6648,110 @@
         popRenderRate(rates);
         await popRenderAreas(rates, year);
         reconRender();
+        geoAuditLoad();   // อิสระจากข้อมูลประชากร ล้มแล้วไม่ควรทำให้ทั้งหน้าล้ม
       } catch (e) {
         const missing = /pop_rates|pop_rows|does not exist|schema cache/i.test(e.message);
         document.getElementById('popNotReady').style.display = missing ? 'block' : 'none';
         document.getElementById('popReady').style.display = missing ? 'none' : 'block';
         if (!missing) rpcAlert(e, 'โหลดข้อมูลไม่สำเร็จ');
       }
+    }
+
+    /* ============ ตรวจสอบชื่อตำบลเทียบรหัสทางการ ============ */
+    async function geoAuditLoad() {
+      const box = document.getElementById('geoAuditBox');
+      box.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const res = await rpc('geo_audit_names', { p_token: state.token });
+        if (!res || !res.success) throw new Error((res && res.message) || 'โหลดไม่สำเร็จ');
+        state.geoAudit = res;
+        geoAuditRender();
+      } catch (e) {
+        // ยังไม่ได้รันไฟล์ geocode — บอกตรง ๆ ในการ์ด ไม่เด้งกล่องขึ้นมาขวางทั้งหน้า
+        // rpc() ใส่คำแนะนำไว้ใน e.friendly แล้ว ใช้ตัวนั้นแทนการเทียบข้อความซ้ำอีกรอบ
+        box.innerHTML = e.friendly
+          ? '<p class="hint" style="margin:0"><i class="fa-solid fa-triangle-exclamation" style="color:#c2410c"></i> <b>' +
+            escapeHtml(e.friendly.title) + '</b><br>' + e.friendly.html + '</p>'
+          : '<p class="hint" style="margin:0">' + escapeHtml(e.message) + '</p>';
+      }
+    }
+
+    function geoAuditRender() {
+      const res = state.geoAudit || {};
+      const box = document.getElementById('geoAuditBox');
+      const sources = res.sources || [];
+
+      // รวมชื่อที่แปลงไม่ได้จากทุกตาราง ชื่อเดียวกันที่โผล่หลายตารางควรแก้ครั้งเดียว
+      const bad = {};
+      let okRows = 0, badRows = 0;
+      sources.forEach(s => (s.values || []).forEach(v => {
+        if (v.sub_code) { okRows += v.rows; return; }
+        badRows += v.rows;
+        if (!bad[v.name]) bad[v.name] = { name: v.name, rows: 0, where: [] };
+        bad[v.name].rows += v.rows;
+        bad[v.name].where.push(s.label + ' ' + v.rows);
+      }));
+      const list = Object.values(bad).sort((a, b) => b.rows - a.rows);
+
+      let html = '<div class="filter-bar" style="margin-bottom:12px">' +
+        '<span class="pill" style="background:#e7f6ee;color:#0f6e56">แปลงเป็นรหัสได้ ' + okRows.toLocaleString('th-TH') + ' แถว</span>' +
+        '<span class="pill" style="background:' + (badRows ? '#fdecec;color:#a32d2d' : '#f1f3f6;color:#5b6b7f') + '">แปลงไม่ได้ ' + badRows.toLocaleString('th-TH') + ' แถว</span>' +
+        '</div>';
+
+      if (!list.length) {
+        html += '<p class="hint" style="margin:0"><i class="fa-solid fa-circle-check" style="color:#16834b"></i> ชื่อตำบลทุกชื่อในระบบแปลงกลับเป็นรหัสทางการได้ครบ</p>';
+      } else {
+        html += '<table class="data-table"><thead><tr><th>ชื่อที่ใช้อยู่</th><th>พบใน</th><th style="text-align:right">แถว</th><th></th></tr></thead><tbody>' +
+          list.map(b => '<tr>' +
+            '<td><b>' + escapeHtml(b.name) + '</b></td>' +
+            '<td class="hint" style="margin:0">' + escapeHtml(b.where.join(' · ')) + '</td>' +
+            '<td style="text-align:right"><b style="color:#a32d2d">' + b.rows.toLocaleString('th-TH') + '</b></td>' +
+            '<td style="text-align:right"><button class="btn btn-soft btn-sm" type="button" onclick="geoAliasBind(' + JSON.stringify(b.name).replace(/"/g, '&quot;') + ')"><i class="fa-solid fa-link"></i> ผูกกับตำบล</button></td>' +
+          '</tr>').join('') + '</tbody></table>';
+      }
+
+      const aliases = res.aliases || [];
+      if (aliases.length) {
+        html += '<h4 style="margin:18px 0 8px;font-size:.9rem">ชื่อพ้องที่ผูกไว้แล้ว</h4>' +
+          '<table class="data-table"><thead><tr><th>ชื่อที่ใช้จริง</th><th>ชื่อทางการ</th><th></th></tr></thead><tbody>' +
+          aliases.map(a => '<tr><td><b>' + escapeHtml(a.alias) + '</b></td>' +
+            '<td>' + escapeHtml(a.sub_name) + ' <span class="hint">' + a.sub_code + '</span></td>' +
+            '<td style="text-align:right"><button class="btn btn-soft btn-sm" type="button" style="color:#a32d2d" onclick="geoAliasRemove(' + JSON.stringify(a.alias).replace(/"/g, '&quot;') + ')"><i class="fa-solid fa-trash"></i></button></td></tr>').join('') +
+          '</tbody></table>';
+      }
+      box.innerHTML = html;
+    }
+
+    async function geoAliasBind(name) {
+      const tambon = (state.geoAudit && state.geoAudit.tambon) || [];
+      if (!tambon.length) { Swal.fire({ icon:'warning', title:'ยังไม่มีรายชื่อตำบล', text:'ต้องรัน sql/geocode_2_nakhonsawan.sql ก่อน' }); return; }
+      const opts = tambon.map(t => '<option value="' + t.code + '">' + escapeHtml(t.name) + ' — อ.' + escapeHtml(t.dist) + '</option>').join('');
+      const { value: code } = await Swal.fire({
+        title: 'ผูก "' + escapeHtml(name) + '" กับตำบลใด',
+        html: '<p style="font-size:.86rem;color:#5b6b7f;margin:0 0 10px">ไม่ได้แก้ชื่อที่บันทึกไว้ เพียงบอกระบบว่าชื่อนี้หมายถึงตำบลไหน</p>' +
+              '<select id="swalTambon" class="swal2-select" style="width:100%">' + opts + '</select>',
+        showCancelButton: true, confirmButtonText: 'ผูก', cancelButtonText: 'ยกเลิก',
+        preConfirm: () => document.getElementById('swalTambon').value
+      });
+      if (!code) return;
+      try {
+        const res = await rpc('geo_alias_save', { p_token: state.token, p_alias: name, p_sub_code: Number(code) });
+        if (!res || !res.success) throw new Error((res && res.message) || 'ผูกไม่สำเร็จ');
+        await Swal.fire({ icon:'success', title:res.message, timer:1600, showConfirmButton:false });
+        geoAuditLoad();
+      } catch (e) { rpcAlert(e, 'ผูกไม่สำเร็จ'); }
+    }
+
+    async function geoAliasRemove(alias) {
+      const ok = await Swal.fire({ icon:'warning', title:'ลบชื่อพ้อง ' + escapeHtml(alias) + '?',
+        text:'ชื่อนี้จะกลับไปแปลงเป็นรหัสไม่ได้', showCancelButton:true,
+        confirmButtonText:'ลบ', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c1122f' });
+      if (!ok.isConfirmed) return;
+      try {
+        const res = await rpc('geo_alias_delete', { p_token: state.token, p_alias: alias });
+        if (!res || !res.success) throw new Error((res && res.message) || 'ลบไม่สำเร็จ');
+        geoAuditLoad();
+      } catch (e) { rpcAlert(e, 'ลบไม่สำเร็จ'); }
     }
 
     function popRenderRate(r) {
