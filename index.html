@@ -656,6 +656,11 @@ canvas{max-width:100%!important;}
 .av-lyr:hover{border-color:#123b7a}
 .av-lyr.on{opacity:1;border-color:#123b7a;background:#eef4ff;box-shadow:0 3px 9px rgba(18,59,122,.14)}
 .av-lyrdot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.av-lyrn{font-size:.66rem;font-weight:800;background:#eef4ff;color:#123b7a;border-radius:999px;padding:1px 6px;min-width:17px;text-align:center}
+/* ชั้นที่ไม่มีข้อมูล กดแล้วแผนที่ไม่เปลี่ยน ดูเหมือนปุ่มเสีย จึงหรี่ไว้ให้เห็นว่ากดไม่ได้ */
+.av-lyr.empty{opacity:.3;cursor:not-allowed}
+.av-lyr.empty:hover{border-color:#d8e3f0}
+.av-lyr.empty .av-lyrn{background:#f1f3f6;color:#8a97a6}
 @media(max-width:860px){.av-lyrbar{display:none!important}}
 /* แถวสถิติจุดเสี่ยงจากการวิเคราะห์ */
 .bs-row-hint{font-size:.72rem;color:#5b6b7f;padding-left:2px}
@@ -1907,8 +1912,24 @@ function renderBlackspotLayers() {
     }
   });
 
-  // เปิดโซนแดงไว้ตั้งแต่แรกเพราะเป็นข้อมูลที่ประชาชนควรเห็นที่สุด ที่เหลือให้กดเปิดเอง
-  if (!Object.keys(bsLayerOn).length) bsLayerOn = { red: true };
+  const BS_BTN = { sites:'Sites', drunk:'Drunk', red:'Red', orange:'Orange', corridor:'Corr' };
+  Object.keys(bsLayerGroups).forEach(k => {
+    const btn = document.getElementById('avLyr' + BS_BTN[k]);
+    if (!btn) return;
+    const n = bsLayerGroups[k].getLayers().length;
+    let tag = btn.querySelector('.av-lyrn');
+    if (!tag) { tag = document.createElement('span'); tag.className = 'av-lyrn'; btn.appendChild(tag); }
+    tag.textContent = n;
+    btn.classList.toggle('empty', n === 0);
+    btn.title = n ? '' : 'รอบวิเคราะห์ล่าสุดไม่มีข้อมูลชั้นนี้';
+  });
+
+  // เปิดโซนแดงไว้ก่อนเพราะเป็นข้อมูลที่ประชาชนควรเห็นที่สุด แต่ถ้ารอบนั้นไม่มีโซนแดง
+  // การเปิดชั้นว่างไว้จะได้แผนที่เปล่า แล้วดูเหมือนปุ่มทั้งแถบกดไม่ติด จึงไล่หาชั้นแรกที่มีข้อมูลจริง
+  if (!Object.keys(bsLayerOn).length) {
+    const first = ['red', 'orange', 'sites', 'drunk', 'corridor'].find(k => bsLayerGroups[k].getLayers().length);
+    if (first) bsLayerOn = { [first]: true };
+  }
   Object.keys(bsLayerGroups).forEach(k => applyAvoidLayer(k));
 }
 
@@ -1923,6 +1944,8 @@ function applyAvoidLayer(name) {
 }
 
 function toggleAvoidLayer(name) {
+  const g = bsLayerGroups && bsLayerGroups[name];
+  if (g && !g.getLayers().length) return;   // ชั้นว่าง กดติดก็ไม่มีอะไรขึ้น ไม่ให้กดจะสับสนน้อยกว่า
   bsLayerOn[name] = !bsLayerOn[name];
   applyAvoidLayer(name);
 }
