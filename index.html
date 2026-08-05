@@ -339,6 +339,16 @@ a.promo-card:hover .promo-open{background:#1d4ed8;color:#fff}
   .store-btn{flex:0 0 44px;width:44px;min-height:40px;gap:0;border-radius:10px}
   .store-btn .store-lb{display:none}
   .store-btn i{font-size:1.05rem}
+  /* การ์ดเป็นแนวนอนบนมือถือ ถ้าไม่ให้ห่อบรรทัด แถวเบอร์โทรจะไปเบียดอยู่ในแถวเดียวกับ
+     ไอคอนและชื่อ แล้วดันความกว้างจนทั้งหน้าเลื่อนซ้ายขวาได้ */
+  .promo-card{flex-wrap:wrap}
+  .call-row{flex:1 0 100%;margin-top:2px;padding-top:8px;gap:6px}
+  .call-btn{flex:1 1 0;min-width:0;padding:6px 9px;gap:7px}
+  .call-t{font-size:.64rem}
+  .call-t b{font-size:.78rem}
+  /* กันพลาดซ้ำในอนาคต: grid คอลัมน์เดียวต้องเป็น minmax(0,1fr)
+     1fr เปล่า ๆ ไม่ยอมหดต่ำกว่าเนื้อหา แล้วดันจนล้นจอ */
+  .promo-grid{grid-template-columns:minmax(0,1fr)}
 }
 
 /* ปุ่มสลับชั้นบนแผนที่ผู้เสียชีวิต (เขตตำบล / จุดเสี่ยง) + หมุดจุดเสี่ยง */
