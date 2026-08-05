@@ -750,7 +750,15 @@
             <button type="button" class="legend-item legend-filter lyr" id="mapLyrRed"    onclick="toggleRiskLayer('red')"><span class="dot" style="background:#c1122f"></span> โซนแดง</button>
             <button type="button" class="legend-item legend-filter lyr" id="mapLyrOrange" onclick="toggleRiskLayer('orange')"><span class="dot" style="background:#e07000"></span> โซนส้ม</button>
             <button type="button" class="legend-item legend-filter lyr" id="mapLyrCorr"   onclick="toggleRiskLayer('corridor')"><i class="fa-solid fa-route" style="font-size:.75rem"></i> Red Corridor</button>
+            <button type="button" class="legend-item legend-filter lyr" id="mapLyrHeat"  onclick="toggleHeatLayer()"><i class="fa-solid fa-fire" style="font-size:.75rem"></i> ความหนาแน่น</button>
+            <select id="mapHeatSize" class="input" style="display:none;width:auto;padding:4px 9px;font-size:.75rem" onchange="toggleHeatLayer(true)">
+              <option value="150">ช่องละ 150 ม.</option>
+              <option value="250" selected>ช่องละ 250 ม.</option>
+              <option value="500">ช่องละ 500 ม.</option>
+              <option value="1000">ช่องละ 1 กม.</option>
+            </select>
           </div>
+          <div id="mapHeatNote" class="hint" style="display:none;margin:-2px 0 6px"></div>
           <div id="accidentMap" class="map-main"></div>
         </div>
         <div class="card"><h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการจุดเกิดเหตุ
@@ -1501,6 +1509,7 @@
       accidentRows: null, injuryRows: null, deathDates: null,
       pickerMap: null, pickerMarker: null, selectedLocation: null,
       accidentMap: null, accidentLayer: null, mapItems: [], mapMarkers: [],
+      heatLayer: null, heatOn: false,
       charts: {}
     };
 
@@ -1547,6 +1556,13 @@
         h:'ให้ลากไฟล์ <b>sql/blackspot_3_rpc.sql</b> แล้วตามด้วย <b>sql/blackspot_4_publish.sql</b> ' +
           'ไปวางใน Supabase SQL Editor แล้วกด Run<br><span style="font-size:.8rem;color:#5b6b7f">' +
           'รันทับได้ปลอดภัย ข้อมูลในตารางไม่หาย · แก้ไฟล์อย่างเดียวไม่พอ ต้องรันทับฐานข้อมูลด้วย</span>' },
+      { m:/geo_density/i,
+        t:'ยังไม่ได้ติดตั้งชั้นความหนาแน่น',
+        h:'ให้ลากไฟล์ <b>sql/density_1_rpc.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run<br>' +
+          '<span style="font-size:.8rem;color:#5b6b7f">ต้องรัน sql/roadnet_1_tables.sql มาก่อน เพราะไฟล์นั้นเป็นตัวเปิด PostGIS</span>' },
+      { m:/geo_codes|geo_resolve_sub|geo_locate/i,
+        t:'ยังไม่ได้ติดตั้งตารางรหัสการปกครอง',
+        h:'ให้ลากไฟล์ <b>sql/geocode_1_tables.sql</b> แล้วตามด้วย <b>sql/geocode_2_nakhonsawan.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run' },
       { m:/does not exist|schema cache/i,
         t:'ยังไม่ได้สร้างตารางหรือฟังก์ชันนี้',
         h:'ยังไม่ได้รันไฟล์ SQL ที่เกี่ยวข้องใน Supabase SQL Editor — ดูชื่อไฟล์จากกรอบแดงด้านบนของหน้านั้น' }
@@ -2169,6 +2185,65 @@
         Swal.fire({ icon:'error', title:'โหลดชั้นข้อมูลไม่สำเร็จ',
           text: /bs_sites|bs_zones|does not exist|schema cache/i.test(e.message)
             ? 'ยังไม่ได้รันไฟล์ sql/blackspot_1..4_*.sql ใน Supabase SQL Editor' : e.message });
+      }
+    }
+
+    /* ============ ชั้นความหนาแน่น คำนวณด้วย PostGIS ============ */
+    // ฝั่งเจ้าหน้าที่ส่ง token ไปด้วย จึงเห็นช่องที่มีอุบัติเหตุครั้งเดียว
+    // ต่างจากหน้าประชาชนที่ตัดช่องเหล่านั้นออกเพราะชี้เหตุการณ์เดียวได้แคบเกินไป
+    const HEAT_BINS = ['#fde68a', '#fbbf24', '#f97316', '#dc2626', '#7f1d1d'];
+    function heatColor(n, max) {
+      const i = Math.floor((n / Math.max(1, max)) * HEAT_BINS.length);
+      return HEAT_BINS[Math.max(0, Math.min(HEAT_BINS.length - 1, i))];
+    }
+
+    async function toggleHeatLayer(reload) {
+      const btn = document.getElementById('mapLyrHeat');
+      const sel = document.getElementById('mapHeatSize');
+      const note = document.getElementById('mapHeatNote');
+      const on = reload === true ? true : !state.heatOn;
+
+      if (!on) {
+        if (state.heatLayer && state.accidentMap) state.accidentMap.removeLayer(state.heatLayer);
+        state.heatOn = false; btn.classList.remove('on');
+        sel.style.display = 'none'; note.style.display = 'none';
+        return;
+      }
+      initAccidentMap();
+      const endDate = valueOf('mapEndDate');
+      try {
+        const res = await rpc('geo_density', {
+          p_token:  state.token,
+          p_from:   valueOf('mapStartDate') || null,
+          // ช่องวันที่สิ้นสุดหมายถึงทั้งวัน แต่ฟังก์ชันตัดที่ < p_to จึงต้องบวกไปถึงเที่ยงคืนวันถัดไป
+          p_to:     endDate ? endDate + 'T23:59:59.999' : null,
+          p_edge_m: Number(sel.value) || 250
+        });
+        const cells = (res && res.cells) || [];
+        if (state.heatLayer && state.accidentMap) state.accidentMap.removeLayer(state.heatLayer);
+        state.heatLayer = L.layerGroup();
+        cells.forEach(c => {
+          const poly = (c.polygon || []).map(p => [p[0], p[1]]);
+          if (poly.length < 3) return;
+          L.polygon(poly, { color:'#fff', weight:1, fillColor: heatColor(c.n, res.max_n), fillOpacity:.55 })
+            .bindTooltip('อุบัติเหตุ <b>' + c.n + '</b> ครั้งในช่องนี้', { direction:'top', opacity:.96 })
+            .addTo(state.heatLayer);
+        });
+        state.heatLayer.addTo(state.accidentMap);
+        // ต้องอยู่หลังหมุด ไม่งั้นบังการคลิกจุดอุบัติเหตุ เหมือนที่โซนแดง/ส้มทำ
+        state.heatLayer.eachLayer(l => l.bringToBack && l.bringToBack());
+        state.heatOn = true; btn.classList.add('on'); sel.style.display = '';
+
+        note.style.display = '';
+        note.innerHTML = '<i class="fa-solid fa-fire" style="color:#dc2626"></i> ' +
+          cells.length.toLocaleString('th-TH') + ' ช่อง · ' +
+          Number(res.total || 0).toLocaleString('th-TH') + ' จุด · หนาที่สุด <b>' + res.max_n + '</b> ครั้ง/ช่อง · ' +
+          'ตัดช่องบนระบบพิกัดเมตร (EPSG:32647) ' +
+          HEAT_BINS.map(c => '<span style="display:inline-block;width:15px;height:10px;border-radius:2px;background:' + c + ';border:1px solid rgba(0,0,0,.14)"></span>').join('') +
+          ' น้อย→มาก';
+      } catch (e) {
+        state.heatOn = false; btn.classList.remove('on'); sel.style.display = 'none';
+        rpcAlert(e, 'โหลดชั้นความหนาแน่นไม่สำเร็จ');
       }
     }
 
