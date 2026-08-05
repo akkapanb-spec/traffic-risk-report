@@ -17,6 +17,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- รุ่นเดียวกับที่ cctv.html ใช้อยู่ เล่นสตรีม HLS จากเกตเวย์กล้องของหน่วย -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
   <style>
     :root {
       --navy:#123b7a; --blue:#1d4ed8; --blue2:#3b82f6; --red:#c1122f;
@@ -551,6 +553,7 @@
         <button class="nav-btn" data-page="accident" onclick="openPage('accident',this)"><i class="fa-solid fa-file-pen"></i> บันทึกข้อมูลอุบัติเหตุ</button>
         <button class="nav-btn" data-page="dashboard" onclick="openPage('dashboard',this)"><i class="fa-solid fa-chart-line"></i> สถิติอุบัติเหตุ สภ.เมืองนครสวรรค์</button>
         <button class="nav-btn" data-page="map" onclick="openPage('map',this)"><i class="fa-solid fa-map-location-dot"></i> แผนที่พิกัดจุดเกิดอุบัติเหตุ</button>
+        <button class="nav-btn" data-page="camera" onclick="openPage('camera',this)"><i class="fa-solid fa-video"></i> กล้องวงจรปิดของหน่วย</button>
         <div class="drawer-section" id="adminSection" style="display:none"><i class="fa-solid fa-shield-halved"></i> เมนูผู้ดูแลระบบ</div>
         <button class="nav-btn admin-item" data-page="admin" id="adminNavBtn" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน <span class="menu-badge" id="badgeApprove" style="display:none"></span></button>
         <button class="nav-btn admin-item" data-page="riskmanage" id="riskNavBtn" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง <span class="menu-badge" id="badgeRisk" style="display:none"></span></button>
@@ -765,6 +768,32 @@
           <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="exportMapCsv()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button></h3>
           <input id="mapTableSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: สถานที่, ถนน, ตำบล, สาเหตุ, อาการ, วันที่..." oninput="state.mapTablePage=1;renderMapTable()">
           <div id="mapTable"></div></div>
+      </section>
+
+      <!-- กล้องวงจรปิดของหน่วย — ดูได้เฉพาะเจ้าหน้าที่ที่ล็อกอินแล้ว -->
+      <section id="page-camera" class="page">
+        <div class="page-head"><div class="page-icon" style="background:linear-gradient(135deg,#38bdf8,#0369a1)"><i class="fa-solid fa-video"></i></div><div><h2>กล้องวงจรปิดของหน่วย</h2><p>ภาพสดจากกล้องที่ติดตั้งไว้ตามจุดเสี่ยง</p></div></div>
+
+        <div class="card">
+          <div id="camStage" style="display:none">
+            <div style="position:relative;padding-top:56.25%;border-radius:16px;overflow:hidden;background:#000">
+              <video id="camPlayer" muted playsinline controls style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000"></video>
+            </div>
+            <div class="legend" style="margin-top:10px">
+              <b id="camNowName" style="align-self:center"></b>
+              <button type="button" class="legend-item legend-filter" id="camLensWide" onclick="camPlay(state.camNowId,'wide')"><i class="fa-solid fa-expand"></i> มุมกว้าง</button>
+              <button type="button" class="legend-item legend-filter" id="camLensZoom" onclick="camPlay(state.camNowId,'zoom')"><i class="fa-solid fa-magnifying-glass-plus"></i> เลนส์ซูม</button>
+              <button type="button" class="legend-item legend-filter" style="margin-left:auto" onclick="camStop()"><i class="fa-solid fa-xmark"></i> ปิดภาพ</button>
+            </div>
+            <p class="hint" id="camStageHint" style="margin:8px 0 0"></p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-list"></i> รายการกล้อง <span id="camCount" class="pill">0 ตัว</span>
+            <button class="btn btn-soft btn-sm" id="camAddBtn" style="margin-left:auto;display:none" type="button" onclick="camEdit(null)"><i class="fa-solid fa-plus"></i> เพิ่มกล้อง</button></h3>
+          <div id="camList"><div class="loading-skeleton"></div></div>
+        </div>
       </section>
 
       <!-- ADMIN: อนุมัติสิทธิ์ผู้ลงทะเบียน -->
@@ -1517,6 +1546,7 @@
       pickerMap: null, pickerMarker: null, selectedLocation: null,
       accidentMap: null, accidentLayer: null, mapItems: [], mapMarkers: [],
       heatLayer: null, heatOn: false,
+      cameras: [], camHls: null, camNowId: null, camIsAdmin: false,
       charts: {}
     };
 
@@ -1563,6 +1593,10 @@
         h:'ให้ลากไฟล์ <b>sql/blackspot_3_rpc.sql</b> แล้วตามด้วย <b>sql/blackspot_4_publish.sql</b> ' +
           'ไปวางใน Supabase SQL Editor แล้วกด Run<br><span style="font-size:.8rem;color:#5b6b7f">' +
           'รันทับได้ปลอดภัย ข้อมูลในตารางไม่หาย · แก้ไฟล์อย่างเดียวไม่พอ ต้องรันทับฐานข้อมูลด้วย</span>' },
+      { m:/cam_list|cam_save|cam_delete|cam_sources/i,
+        t:'ยังไม่ได้ติดตั้งระบบกล้องวงจรปิด',
+        h:'ให้ลากไฟล์ <b>sql/camera_1_tables.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run<br>' +
+          '<span style="font-size:.8rem;color:#5b6b7f">และต้องติดตั้งเกตเวย์แปลงสัญญาณก่อน วิธีทำอยู่ที่ cctv/README.md</span>' },
       { m:/geo_density/i,
         t:'ยังไม่ได้ติดตั้งชั้นความหนาแน่น',
         h:'ให้ลากไฟล์ <b>sql/density_1_rpc.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run<br>' +
@@ -2195,6 +2229,161 @@
       }
     }
 
+    /* ============ กล้องวงจรปิดของหน่วย ============ */
+    // ตารางเก็บแค่ที่อยู่ของสตรีม รหัสผ่านกล้องอยู่ที่เครื่องเกตเวย์เท่านั้น
+    // หน้านี้เป็นไฟล์เปิด ใครกด View Source ก็อ่านได้ จึงห้ามมีรหัสอะไรผ่านมาทางนี้
+    const camUrl = (c, lens) => {
+      const path = lens === 'zoom' ? c.path_zoom : c.path_wide;
+      return path ? c.gateway_url + '/' + path + '/index.m3u8' : null;
+    };
+
+    async function camLoad() {
+      const box = document.getElementById('camList');
+      box.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const res = await rpc('cam_list', { p_token: state.token });
+        if (!res || !res.success) throw new Error((res && res.message) || 'โหลดไม่สำเร็จ');
+        state.cameras = res.cameras || [];
+        state.camIsAdmin = !!res.isAdmin;
+        camRender();
+      } catch (e) {
+        box.innerHTML = e.friendly
+          ? '<p class="hint" style="margin:0"><i class="fa-solid fa-triangle-exclamation" style="color:#c2410c"></i> <b>' +
+            escapeHtml(e.friendly.title) + '</b><br>' + e.friendly.html + '</p>'
+          : '<p class="hint" style="margin:0">' + escapeHtml(e.message) + '</p>';
+      }
+    }
+
+    function camRender() {
+      const box = document.getElementById('camList');
+      const list = state.cameras;
+      document.getElementById('camCount').textContent = list.length + ' ตัว';
+      document.getElementById('camAddBtn').style.display = state.camIsAdmin ? '' : 'none';
+
+      if (!list.length) {
+        box.innerHTML = '<p class="hint" style="margin:0"><i class="fa-solid fa-circle-info"></i> ยังไม่มีกล้องในระบบ' +
+          (state.camIsAdmin ? ' — กดปุ่มเพิ่มกล้องด้านบน' : ' — ให้ผู้ดูแลระบบเพิ่มให้') +
+          '<br><span style="font-size:.82rem">ต้องติดตั้งเกตเวย์แปลงสัญญาณก่อน วิธีทำอยู่ที่ <b>cctv/README.md</b></span></p>';
+        return;
+      }
+      box.innerHTML = '<table class="data-table"><thead><tr><th>กล้อง</th><th>ตำแหน่ง</th><th>เลนส์</th><th></th></tr></thead><tbody>' +
+        list.map(c => '<tr' + (c.active ? '' : ' style="opacity:.5"') + '>' +
+          '<td><b>' + escapeHtml(c.name) + '</b>' + (c.active ? '' : ' <span class="pill">ปิดใช้งาน</span>') + '</td>' +
+          '<td class="hint" style="margin:0">' + escapeHtml(c.place || c.subdistrict || '-') + '</td>' +
+          '<td>' + (c.path_zoom ? 'มุมกว้าง + ซูม' : 'มุมกว้าง') + '</td>' +
+          '<td style="text-align:right;white-space:nowrap">' +
+            '<button class="btn btn-soft btn-sm" type="button" onclick="camPlay(' + c.id + ',\'wide\')"><i class="fa-solid fa-play"></i> ดูภาพ</button>' +
+            (state.camIsAdmin ? ' <button class="btn btn-soft btn-sm" type="button" onclick="camEdit(' + c.id + ')"><i class="fa-solid fa-pen"></i></button>' +
+              ' <button class="btn btn-soft btn-sm" style="color:#a32d2d" type="button" onclick="camRemove(' + c.id + ')"><i class="fa-solid fa-trash"></i></button>' : '') +
+          '</td></tr>').join('') + '</tbody></table>';
+    }
+
+    function camStop() {
+      const v = document.getElementById('camPlayer');
+      // ต้องทำลาย hls instance ทุกครั้ง ไม่งั้นมันดึงสตรีมต่อไปเบื้องหลังทั้งที่ปิดหน้าไปแล้ว
+      if (state.camHls) { state.camHls.destroy(); state.camHls = null; }
+      if (v) { v.pause(); v.removeAttribute('src'); v.load(); }
+      state.camNowId = null;
+      const stage = document.getElementById('camStage');
+      if (stage) stage.style.display = 'none';
+    }
+
+    function camPlay(id, lens) {
+      const c = state.cameras.find(x => x.id === id);
+      if (!c) return;
+      const url = camUrl(c, lens);
+      if (!url) { Swal.fire({ icon:'info', title:'กล้องตัวนี้ไม่มีเลนส์ซูม' }); return; }
+
+      camStop();
+      state.camNowId = id;
+      document.getElementById('camStage').style.display = '';
+      document.getElementById('camNowName').textContent = c.name + (lens === 'zoom' ? ' · เลนส์ซูม' : ' · มุมกว้าง');
+      document.getElementById('camLensWide').classList.toggle('on', lens !== 'zoom');
+      document.getElementById('camLensZoom').classList.toggle('on', lens === 'zoom');
+      document.getElementById('camLensZoom').style.display = c.path_zoom ? '' : 'none';
+      const hint = document.getElementById('camStageHint');
+      hint.textContent = '';
+
+      const v = document.getElementById('camPlayer');
+      const fail = msg => { hint.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#c2410c"></i> ' + msg; };
+
+      if (window.Hls && Hls.isSupported()) {
+        const hls = new Hls({ lowLatencyMode: true, backBufferLength: 10 });
+        state.camHls = hls;
+        hls.on(Hls.Events.ERROR, (_e, data) => {
+          if (!data.fatal) return;
+          // แยกสาเหตุให้ชัด เพราะจอดำเฉย ๆ ไม่บอกอะไรเลยว่าต้องไปแก้ตรงไหน
+          fail(data.type === Hls.ErrorTypes.NETWORK_ERROR
+            ? 'ต่อเกตเวย์ไม่ได้ — ตรวจว่าเครื่องนี้อยู่ในวงเครือข่ายที่อนุญาต และที่อยู่เกตเวย์เป็น https ที่ใบรับรองถูกต้อง'
+            : 'สัญญาณมีปัญหา — ตรวจว่าชื่อสตรีมตรงกับที่ตั้งไว้ใน mediamtx.yml');
+          hls.destroy(); state.camHls = null;
+        });
+        hls.loadSource(url);
+        hls.attachMedia(v);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => v.play().catch(() => {}));
+      } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
+        v.src = url;                       // Safari เล่น HLS ได้เอง ไม่ต้องใช้ hls.js
+        v.addEventListener('error', () => fail('ต่อเกตเวย์ไม่ได้'), { once:true });
+        v.play().catch(() => {});
+      } else {
+        fail('เบราว์เซอร์นี้เล่นสตรีมไม่ได้');
+      }
+    }
+
+    async function camEdit(id) {
+      const c = id ? state.cameras.find(x => x.id === id) || {} : {};
+      const f = (k, v) => escapeHtml(c[k] == null ? (v || '') : c[k]);
+      const { value: row } = await Swal.fire({
+        title: id ? 'แก้ไขกล้อง' : 'เพิ่มกล้อง',
+        width: 620,
+        html:
+          '<div style="text-align:left;display:grid;gap:9px">' +
+          '<label class="swal-lbl">ชื่อกล้อง<input id="cfName" class="swal2-input" style="margin:4px 0 0;width:100%" value="' + f('name') + '" placeholder="เช่น แยกสวรรค์วิถี"></label>' +
+          '<label class="swal-lbl">ตำแหน่ง<input id="cfPlace" class="swal2-input" style="margin:4px 0 0;width:100%" value="' + f('place') + '"></label>' +
+          '<label class="swal-lbl">ที่อยู่เกตเวย์<input id="cfGw" class="swal2-input" style="margin:4px 0 0;width:100%" value="' + f('gateway_url') + '" placeholder="https://โดเมน:8888"></label>' +
+          '<label class="swal-lbl">ชื่อสตรีมมุมกว้าง<input id="cfWide" class="swal2-input" style="margin:4px 0 0;width:100%" value="' + f('path_wide') + '" placeholder="cam1_wide"></label>' +
+          '<label class="swal-lbl">ชื่อสตรีมเลนส์ซูม (ไม่มีก็เว้นว่าง)<input id="cfZoom" class="swal2-input" style="margin:4px 0 0;width:100%" value="' + f('path_zoom') + '" placeholder="cam1_zoom"></label>' +
+          '<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px">' +
+            '<label class="swal-lbl">ละติจูด<input id="cfLat" class="swal2-input" style="margin:4px 0 0;width:100%" value="' + f('latitude') + '"></label>' +
+            '<label class="swal-lbl">ลองจิจูด<input id="cfLng" class="swal2-input" style="margin:4px 0 0;width:100%" value="' + f('longitude') + '"></label>' +
+          '</div>' +
+          '<label class="swal-lbl" style="display:flex;align-items:center;gap:8px"><input id="cfActive" type="checkbox" ' + (id && !c.active ? '' : 'checked') + '> เปิดใช้งาน</label>' +
+          '<p style="font-size:.78rem;color:#5b6b7f;margin:2px 0 0">ชื่อสตรีมต้องตรงกับที่ตั้งไว้ใน <b>mediamtx.yml</b> เป๊ะ ๆ พิมพ์ผิดตัวเดียวภาพจะไม่ขึ้น</p>' +
+          '</div>',
+        showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก',
+        preConfirm: () => ({
+          name: document.getElementById('cfName').value.trim(),
+          place: document.getElementById('cfPlace').value.trim(),
+          gateway_url: document.getElementById('cfGw').value.trim(),
+          path_wide: document.getElementById('cfWide').value.trim(),
+          path_zoom: document.getElementById('cfZoom').value.trim(),
+          latitude: document.getElementById('cfLat').value.trim(),
+          longitude: document.getElementById('cfLng').value.trim(),
+          active: document.getElementById('cfActive').checked
+        })
+      });
+      if (!row) return;
+      try {
+        const res = await rpc('cam_save', { p_token: state.token, p_id: id || null, p_row: row });
+        if (!res || !res.success) throw new Error((res && res.message) || 'บันทึกไม่สำเร็จ');
+        camLoad();
+      } catch (e) { rpcAlert(e, 'บันทึกไม่สำเร็จ'); }
+    }
+
+    async function camRemove(id) {
+      const c = state.cameras.find(x => x.id === id) || {};
+      const ok = await Swal.fire({ icon:'warning', title:'ลบกล้อง ' + escapeHtml(c.name || '') + '?',
+        text:'ลบเฉพาะรายการในระบบ ไม่ได้ไปแตะตัวกล้องหรือเกตเวย์', showCancelButton:true,
+        confirmButtonText:'ลบ', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c1122f' });
+      if (!ok.isConfirmed) return;
+      try {
+        const res = await rpc('cam_delete', { p_token: state.token, p_id: id });
+        if (!res || !res.success) throw new Error((res && res.message) || 'ลบไม่สำเร็จ');
+        if (state.camNowId === id) camStop();
+        camLoad();
+      } catch (e) { rpcAlert(e, 'ลบไม่สำเร็จ'); }
+    }
+
     /* ============ ชั้นความหนาแน่น คำนวณด้วย PostGIS ============ */
     // ฝั่งเจ้าหน้าที่ส่ง token ไปด้วย จึงเห็นช่องที่มีอุบัติเหตุครั้งเดียว
     // ต่างจากหน้าประชาชนที่ตัดช่องเหล่านั้นออกเพราะชี้เหตุการณ์เดียวได้แคบเกินไป
@@ -2404,6 +2593,7 @@
       if (page === 'dashboard') loadDashboard();
       if (page === 'map') { loadMapCumulative(); loadMapData(); }
       if (page === 'map' && state.accidentMap) setTimeout(() => state.accidentMap.invalidateSize(), 250);
+      if (page === 'camera') camLoad(); else camStop();   // ออกจากหน้าแล้วต้องหยุดดึงภาพ ไม่งั้นกินเน็ตทิ้งไว้เบื้องหลัง
       if (page === 'admin') loadAdminList();
       if (page === 'riskmanage') loadRiskManage();
       if (page === 'deaths') initDeathPage();
