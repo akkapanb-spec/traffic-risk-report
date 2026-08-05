@@ -2527,11 +2527,17 @@ async function fbSubmit() {
 /* บันทึกการใช้งาน — สะสมไว้ในหน่วยความจำ ส่งทีเดียวตอนออกจากหน้า
    ถ้ายิงทุกเหตุการณ์ทันที ฐานข้อมูลจะเต็มเร็วและเปลืองเน็ตผู้ใช้ */
 const vcQueue = [];
-const vcSeen = new Set();
+const vcSeen = new Map();
+/* หัวข้อเดียวกันนับซ้ำได้ แต่ต้องห่างกันอย่างน้อย 30 วินาที
+   เลื่อนขึ้นลงหาข้อมูลติด ๆ กันจะนับครั้งเดียว ไม่งั้นหัวข้อที่ "หายาก"
+   จะดูเหมือนได้รับความนิยม ทั้งที่คนกำลังหาไม่เจอ
+   แต่ถ้าเลื่อนไปที่อื่นแล้วกลับมาดูใหม่จริง ๆ นับเพิ่ม = รู้ว่าเนื้อหาไหนคนกลับมาดูซ้ำ */
+const VC_REPEAT_GAP = 30000;
 function vcTrack(event, page, section, meta) {
   const key = event + '|' + page + '|' + section;
-  if (event === 'reach' && vcSeen.has(key)) return;   // หัวข้อเดียวนับครั้งเดียวต่อการเข้าชม
-  vcSeen.add(key);
+  const now = Date.now();
+  if (event === 'reach' && now - (vcSeen.get(key) || 0) < VC_REPEAT_GAP) return;
+  vcSeen.set(key, now);
   if (vcQueue.length < 50) vcQueue.push({ event, page, section, meta });
 }
 function vcFlush() {
