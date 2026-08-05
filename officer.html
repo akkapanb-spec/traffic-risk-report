@@ -1026,7 +1026,7 @@
               <p><b>ข้อ 1 — จุดกายภาพเสี่ยง</b> จุดเกิดเหตุที่อยู่ห่างจากทางแยก/ทางร่วม/จุดกลับรถ/สะพาน/ทางโค้ง/เนินเขา/ทางลอด ไม่เกิน <b>200 ม. ในเขตเทศบาล</b> หรือ <b>500 ม. นอกเขต</b> นับเป็นของจุดกายภาพนั้น เมื่อคะแนนรวมถึงเกณฑ์จึงขึ้นเป็นจุดเสี่ยง (อุบัติเหตุมีผู้เสียชีวิตคิดคะแนนเป็น 2 เท่า) ถ้ายังไม่ได้บันทึกจุดกายภาพไว้ ระบบจะอนุมานตำแหน่งจากช่อง “ลักษณะทาง” ของตัวเหตุเอง โดยจับกลุ่มด้วยระยะ BLACK_SPOT_DISTANCE</p>
               <p><b>ข้อ 2 — ช่วงถนนเสี่ยง</b> จุดเกิดเหตุตั้งแต่ 2 จุดบนถนนและทิศทางเดียวกัน ที่อยู่ห่างจาก<b>กึ่งกลางของทุกจุดในกลุ่ม</b>ไม่เกินเกณฑ์เดียวกับข้อ 1</p>
               <p><b>ข้อ 3 — เมาแล้วขับ</b> นับจุดเมาแล้วขับ<b>ทุกราย</b> แล้วจับกลุ่ม: กลุ่มที่เกาะกันภายใน RED_CLUSTER_DISTANCE และมีจำนวนถึงเกณฑ์ = <b>โซนแดง</b> พร้อมลาก <b>Red Corridor</b> เชื่อมจุดในกลุ่ม · ขยายด้วยจุดที่อยู่ในระยะ PATROL_ZONE_DISTANCE = <b>โซนส้ม</b> (เขตวางกำลัง/ตั้งจุดตรวจ) · ทุกโซนสรุปช่วงเวลาเกิดเหตุแบบถัง 2 ชั่วโมงไว้ให้ด้วย</p>
-              <p class="bs-warn"><i class="fa-solid fa-triangle-exclamation"></i> <b>ข้อจำกัดที่ต้องรู้</b> เกณฑ์ข้อ 1/2 กำหนดให้วัดด้วย <b>ระยะทางตามถนน</b> แต่ระบบไม่มี routing engine จึงประมาณจากระยะเส้นตรงคูณด้วยตัวคูณอ้อม (detourFactor) ตัวเลขที่ได้จึงเป็นค่าประมาณ ไม่ใช่ระยะทางจริงบนถนน · ส่วน “ทิศทางเดินรถ” ตารางอุบัติเหตุเดิมไม่ได้เก็บไว้ ระบบจะจับกลุ่มตามชื่อถนนอย่างเดียว เว้นแต่ระบุทิศทางเองในแท็บจุดเกิดเหตุเพิ่มเติม</p>
+              <p class="bs-warn"><i class="fa-solid fa-circle-info"></i> <b>เรื่องระยะทาง</b> เกณฑ์ข้อ 1/2 กำหนดให้วัดด้วย <b>ระยะทางตามถนน</b> ไม่ใช่ระยะขจัด — จุดที่อยู่บน<b>ถนนที่บันทึกไว้ในโครงข่ายแล้ว</b> ระบบวัดตามแนวถนนจริง (เอาระยะจากต้นสายของสองจุดมาลบกัน) ส่วนจุดที่ยังไม่มีถนนรองรับ จะถอยไปประมาณจากเส้นตรงคูณตัวคูณอ้อม (detourFactor) · <b>ยิ่งบันทึกถนนครบ ผลยิ่งแม่น</b> ดูสัดส่วนที่วัดได้จริงในผลวิเคราะห์แต่ละรอบ · ส่วน “ทิศทางเดินรถ” ตารางอุบัติเหตุเดิมไม่ได้เก็บไว้ ระบบจะจับกลุ่มตามชื่อถนนอย่างเดียว เว้นแต่ระบุทิศทางเองในแท็บจุดเกิดเหตุเพิ่มเติม</p>
             </div>
           </div>
         </div>
@@ -4803,9 +4803,30 @@
         Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
       return 2 * BS_EARTH_KM * Math.asin(Math.min(1, Math.sqrt(h)));
     }
-    // เกณฑ์ข้อ 1/2 พูดถึง "ระยะทาง" (ตามถนน) ไม่ใช่ระยะขจัด แต่เราไม่มี routing engine
-    // จึงประมาณด้วยเส้นตรง x ตัวคูณอ้อม (detourFactor) ที่ปรับได้ในหน้าตั้งค่า
-    function bsRoadKm(a, b, cfg) { return bsHav(a, b) * (cfg.detourFactor || 1); }
+    /* ระยะทางตามถนน ตามที่เกณฑ์ข้อ 1/2 กำหนด (ไม่ใช่ระยะขจัด)
+       วัดสองแบบ เลือกตามข้อมูลที่มี:
+
+       แบบที่ 1 — วัดตามแนวถนนจริง ใช้เมื่อจุดทั้งสองถูกจับเข้าถนนสายเดียวกันแล้ว
+         rn_locate คืน offset_m = ระยะจากต้นสายของแต่ละจุด เอามาลบกันได้ระยะจริง
+         ไม่ใช่ค่าประมาณอีกต่อไป
+
+       แบบที่ 2 — เส้นตรงคูณตัวคูณอ้อม ใช้เมื่อจุดยังไม่มีถนนรองรับ
+         (ยังไม่ได้วาดถนนสายนั้น หรือจุดอยู่ห่างแนวถนนเกินรัศมีที่ตั้งไว้)
+
+       ยิ่งบันทึกถนนครบ ระบบยิ่งใช้แบบที่ 1 มากขึ้นเอง โดยไม่ต้องแก้อะไร */
+    function bsRoadKm(a, b, cfg) {
+      if (cfg.useRoadDistance !== false &&
+          a.roadId != null && a.roadId === b.roadId &&
+          a.offsetM != null && b.offsetM != null) {
+        return Math.abs(a.offsetM - b.offsetM) / 1000;
+      }
+      return bsHav(a, b) * (cfg.detourFactor || 1);
+    }
+    // สัดส่วนคู่จุดที่วัดตามถนนจริงได้ ใช้บอกผู้ใช้ว่าผลรอบนี้แม่นแค่ไหน
+    function bsRoadCoverage(points) {
+      const onRoad = points.filter(p => p.roadId != null).length;
+      return { onRoad, total: points.length, pct: points.length ? onRoad * 100 / points.length : 0 };
+    }
     function bsRadiusKm(p, cfg) { return p.muni ? cfg.muniRadiusKm : cfg.ruralRadiusKm; }
     function bsCentroid(pts) {
       const n = pts.length || 1;
@@ -5154,6 +5175,32 @@
       return Object.assign({}, BS_DEFAULTS, state.bsSettings || {});
     }
 
+    /* จับจุดเกิดเหตุเข้าโครงข่ายถนน แล้วติด roadId/offsetM ไว้กับจุด
+       ส่งเป็นก้อนละ 400 จุด เพราะ jsonb ก้อนใหญ่เกินไปทำให้ PostgREST ปฏิเสธ
+       ถ้าเรียกไม่สำเร็จ (ยังไม่ได้รัน roadnet SQL) ปล่อยผ่านเงียบ ๆ
+       การวิเคราะห์ยังเดินต่อได้ด้วยวิธีประมาณแบบเดิม */
+    async function bsAttachRoads(points, cfg) {
+      if (cfg.useRoadDistance === false || !points.length) return;
+      const CHUNK = 400;
+      try {
+        for (let i = 0; i < points.length; i += CHUNK) {
+          const slice = points.slice(i, i + CHUNK);
+          const res = await rpc('rn_locate', { p_token: state.token, p_points: slice.map(p => [p.lat, p.lng]) });
+          if (!res || !res.success) return;
+          (res.points || []).forEach(hit => {
+            if (!hit || hit.road_id == null) return;
+            const p = slice[hit.i];
+            if (!p) return;
+            p.roadId = hit.road_id;
+            p.offsetM = hit.offset_m == null ? null : Number(hit.offset_m);
+            p.segmentCode = hit.segment_code || '';
+            if (!p.road && hit.road_name) p.road = hit.road_name;   // ชื่อถนนมาตรฐานจากโครงข่าย
+            if (hit.in_municipality != null) p.muni = !!hit.in_municipality;
+          });
+        }
+      } catch (e) { /* ยังไม่มีโครงข่ายถนน — ใช้วิธีประมาณเดิม */ }
+    }
+
     async function bsAnalyze(asOfDate) {
       const cfg = bsCfg();
       const asOf = asOfDate ? new Date(asOfDate + 'T12:00:00+07:00') : new Date();
@@ -5178,6 +5225,11 @@
         .filter(p => Number.isFinite(p.t) && p.t >= ctx.confirmStart && p.t <= ctx.asOfTime);
       // หน้าต่างวิเคราะห์หลัก 12 เดือน — ส่วน 36 เดือนใช้ตีธง confirmed เท่านั้น
       const main = all.filter(p => p.t >= ctx.windowStart);
+
+      // จับทุกจุดเข้าโครงข่ายถนนก่อนวิเคราะห์ เพื่อให้เกณฑ์ข้อ 1/2 วัดระยะตามถนนจริง
+      // ถ้ายังไม่มีถนนในระบบ ทุกจุดจะไม่มี roadId แล้วถอยไปใช้เส้นตรงคูณตัวคูณอ้อมเหมือนเดิม
+      await bsAttachRoads(main, cfg);
+      ctx.roadCoverage = bsRoadCoverage(main);
 
       const r1 = bsRule1(main, state.bsFeatures || [], cfg, ctx);
       const r2 = bsRule2(main, cfg, ctx, r1.claimed);
@@ -5204,6 +5256,7 @@
           }
         },
         sites, zones: r3.zones,
+        roadCoverage: ctx.roadCoverage,   // วัดตามถนนจริงได้กี่จุด ใช้บอกความน่าเชื่อถือของรอบนี้
         stats: {
           accPts: accPts.length, deathPts: deathPts.length, extPts: extPts.length,
           used: main.length, older: older.length
@@ -5393,6 +5446,15 @@
         (d.stats ? '<p class="hint" style="margin:12px 0 0">ข้อมูลนำเข้า: อุบัติเหตุ ' + d.stats.accPts +
           ' · ผู้เสียชีวิต (ไม่ซ้ำกับอุบัติเหตุ) ' + d.stats.deathPts + ' · นำเข้าเพิ่ม ' + d.stats.extPts +
           ' — ใช้ในหน้าต่างวิเคราะห์ ' + d.stats.used + ' จุด' + (t.points ? '' : '') + '</p>' : '') +
+        // บอกตรง ๆ ว่ารอบนี้วัดระยะตามถนนจริงได้กี่จุด ผู้ใช้จะได้รู้ว่าเชื่อผลได้แค่ไหน
+        (d.roadCoverage ? (function (rc) {
+          const ok = rc.pct >= 80;
+          return '<p class="hint" style="margin:8px 0 0;padding:8px 11px;border-radius:9px;background:' +
+            (ok ? '#f0fdf4;border:1px solid #bbf7d0' : '#fffbeb;border:1px solid #fde68a') + '">' +
+            '<i class="fa-solid fa-' + (ok ? 'road-circle-check' : 'road-circle-exclamation') + '"></i> ' +
+            '<b>วัดระยะตามถนนจริงได้ ' + rc.onRoad + ' จาก ' + rc.total + ' จุด (' + rc.pct.toFixed(0) + '%)</b>' +
+            (ok ? '' : ' — ส่วนที่เหลือใช้เส้นตรงคูณตัวคูณอ้อมแทน เพิ่มถนนในเมนู “โครงข่ายถนนและสถานที่” แล้ววิเคราะห์ใหม่ ผลจะแม่นขึ้น') + '</p>';
+        })(d.roadCoverage) : '') +
         (d.saved ? '<p class="hint" style="margin:8px 0 0"><i class="fa-solid fa-database"></i> นี่คือผลที่บันทึกไว้ในฐานข้อมูล — กด “วิเคราะห์” เพื่อคำนวณใหม่</p>' : '');
       bsRenderSites();
       bsRenderZoneTable();
