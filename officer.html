@@ -191,6 +191,22 @@
     .hm-legend{display:flex;flex-wrap:wrap;gap:11px;margin-top:12px;font-size:.7rem;color:#5b6b7f}
     .hm-legend span{display:inline-flex;align-items:center;gap:5px}
     .hm-legend i{width:10px;height:10px;border-radius:3px;flex:0 0 10px}
+    /* แผนที่สำหรับวาดแนวถนน — สัดส่วนใกล้จัตุรัสอ่านง่ายกว่าแถบยาวเตี้ยเต็มจอ
+       ตอนลากแนวถนนต้องเห็นทั้งต้นสายปลายสายและถนนรอบข้างพร้อมกัน */
+    .map-draw{height:clamp(360px,52vh,540px);max-width:880px;margin-inline:auto}
+    /* เลือกปี/ช่วงวันที่ในหน้าวิเคราะห์ */
+    .bs-period{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:14px;
+      padding-top:13px;border-top:1px dashed #e2e8f0}
+    @media(max-width:760px){.bs-period{grid-template-columns:1fr;gap:13px}}
+    .bs-period-lb{display:block;font-size:.76rem;font-weight:700;color:#34445a;margin-bottom:7px}
+    .bs-period-chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:6px}
+    .bs-year-chip{padding:7px 4px;border-radius:9999px;border:1px solid #dbe6f2;background:#fff;color:#475569;
+      font-family:inherit;font-weight:600;font-size:.78rem;cursor:pointer;transition:.14s;min-width:0}
+    .bs-year-chip:hover{border-color:#9ec5f4}
+    .bs-year-chip.on{background:#2a78d6;border-color:#2a78d6;color:#fff}
+    .bs-period-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .bs-period-dates label{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:.72rem;color:#64748b;font-weight:600}
+    .bs-period-dates .input{padding:7px 9px;font-size:.8rem;min-width:0}
     .hm-ref{margin:0 0 10px;padding:7px 11px;border-radius:9px;background:#faf5ff;border:1px solid #e9d5ff;
       font-size:.72rem;color:#5b21b6;line-height:1.45}
     .hm-ref b{font-weight:800}
@@ -856,6 +872,23 @@
               <button class="btn btn-primary" type="button" onclick="bsRun()"><i class="fa-solid fa-play"></i> วิเคราะห์</button>
               <button class="btn btn-soft" type="button" onclick="bsSampleTest()"><i class="fa-solid fa-flask"></i> ทดสอบด้วยพิกัดสมมุติ</button>
             </div>
+            <!-- เลือกปีหรือช่วงวันที่แบบเดียวกับหน้าอื่น ตั้งค่าให้ช่อง "วิเคราะห์ ณ วันที่"
+                 กับหน้าต่างย้อนหลังพร้อมกัน จะได้ไม่ต้องไปแก้ที่แท็บตั้งค่าเกณฑ์ทุกครั้ง -->
+            <div class="bs-period">
+              <div class="bs-period-block">
+                <span class="bs-period-lb">ดูตามปี</span>
+                <div class="bs-period-chips" id="bsYearChips"></div>
+              </div>
+              <div class="bs-period-block">
+                <span class="bs-period-lb">หรือกำหนดช่วงเอง</span>
+                <div class="bs-period-dates">
+                  <label>ตั้งแต่<input id="bsFrom" class="input" type="date"></label>
+                  <label>ถึง<input id="bsTo" class="input" type="date"></label>
+                </div>
+                <button class="btn btn-soft btn-sm" type="button" style="margin-top:8px" onclick="bsApplyRange()"><i class="fa-solid fa-filter"></i> ใช้ช่วงนี้</button>
+              </div>
+            </div>
+            <p class="hint" id="bsPeriodInfo" style="margin:10px 0 0;font-weight:700;color:#1c5cab"></p>
             <p class="hint" style="margin:10px 0 0">ใช้ข้อมูลอุบัติเหตุ + ผู้เสียชีวิต + จุดเกิดเหตุที่นำเข้าเพิ่ม ย้อนหลังตามหน้าต่างวิเคราะห์ในแท็บตั้งค่าเกณฑ์ · ผลจะยังเป็น <b>ฉบับร่าง</b> จนกดเผยแพร่</p>
             <div id="bsRunSummary" style="margin-top:14px"></div>
           </div>
@@ -1075,7 +1108,9 @@
                 <div class="field span-12"><label>หมายเหตุ</label><input id="rnNote" class="input" maxlength="200"></div>
                 <div class="field span-12">
                   <label>แนวกลางถนน <span class="req">*</span> <span class="pill" id="rnLinePill">ยังไม่ได้วาด</span></label>
-                  <div id="rnDrawMap" class="map-main" style="height:340px"></div>
+                  <!-- จำกัดความกว้าง ไม่ปล่อยเต็มการ์ด — บนจอกว้างแผนที่จะกลายเป็นแถบยาวเตี้ย
+                       ซึ่งวาดแนวถนนลำบาก เลื่อนแล้วมองไม่เห็นบริบทรอบข้าง -->
+                  <div id="rnDrawMap" class="map-main map-draw"></div>
                   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
                     <button class="btn btn-soft btn-sm" type="button" onclick="rnLineUndo()"><i class="fa-solid fa-rotate-left"></i> ถอยจุดล่าสุด</button>
                     <button class="btn btn-soft btn-sm" type="button" onclick="rnLineClear()"><i class="fa-solid fa-eraser"></i> ล้างแนวเส้น</button>
@@ -4099,6 +4134,74 @@
         }
       }] : []);
     }
+    /* เลือกช่วงเวลาที่จะวิเคราะห์
+       เดิมมีแค่ช่อง "วิเคราะห์ ณ วันที่" ส่วนความยาวหน้าต่างย้อนหลังอยู่คนละแท็บ
+       อยากดูเฉพาะปีใดปีหนึ่งจึงต้องไปแก้ค่าเกณฑ์แล้วกลับมา ซึ่งไม่มีใครทำ
+       ปุ่มปีตั้งทั้งวันสิ้นสุดและความยาวหน้าต่างให้พร้อมกันในคลิกเดียว */
+    function bsBuildYearChips() {
+      const wrap = document.getElementById('bsYearChips');
+      if (!wrap) return;
+      const now = Number(bkkStamp(new Date(), 'year'));
+      let html = '<button type="button" class="bs-year-chip on" data-y="default" onclick="bsSetYear(\'default\')">ล่าสุด</button>';
+      for (let y = now; y >= 2023; y--) {
+        html += '<button type="button" class="bs-year-chip" data-y="' + y + '" onclick="bsSetYear(' + y + ')">' + (y + 543) + '</button>';
+      }
+      wrap.innerHTML = html;
+      bsShowPeriod();
+    }
+
+    function bsMarkYear(key) {
+      document.querySelectorAll('#bsYearChips .bs-year-chip')
+        .forEach(b => b.classList.toggle('on', b.dataset.y === String(key)));
+    }
+
+    // เลือกปี = วิเคราะห์ ณ 31 ธ.ค. ของปีนั้น ย้อนหลัง 12 เดือน จึงได้ทั้งปีพอดี
+    // ปีปัจจุบันใช้วันนี้เป็นวันสิ้นสุด เพราะอนาคตยังไม่มีข้อมูล
+    function bsSetYear(y) {
+      const today = bkkStamp(new Date(), 'day');
+      const nowYear = Number(bkkStamp(new Date(), 'year'));
+      if (y === 'default') {
+        document.getElementById('bsAsOf').value = today;
+        state.bsWindowMonths = null;
+      } else {
+        const end = Number(y) === nowYear ? today : y + '-12-31';
+        document.getElementById('bsAsOf').value = end;
+        state.bsWindowMonths = 12;
+      }
+      document.getElementById('bsFrom').value = '';
+      document.getElementById('bsTo').value = '';
+      bsMarkYear(y);
+      bsShowPeriod();
+    }
+
+    // ช่วงกำหนดเอง: แปลงเป็นวันสิ้นสุด + จำนวนเดือนย้อนหลัง ให้เครื่องวิเคราะห์ใช้ได้เลย
+    function bsApplyRange() {
+      const from = valueOf('bsFrom'), to = valueOf('bsTo');
+      if (!from || !to) { Swal.fire({ icon:'warning', title:'กรุณาเลือกทั้งวันเริ่มต้นและวันสิ้นสุด' }); return; }
+      if (from > to) { Swal.fire({ icon:'warning', title:'วันเริ่มต้นอยู่หลังวันสิ้นสุด' }); return; }
+      const days = Math.max(1, Math.round((new Date(to + 'T12:00:00+07:00') - new Date(from + 'T12:00:00+07:00')) / 86400000) + 1);
+      document.getElementById('bsAsOf').value = to;
+      state.bsWindowMonths = Math.max(1, Math.ceil(days / 30.44));
+      bsMarkYear('__range__');
+      bsShowPeriod();
+    }
+
+    function bsShowPeriod() {
+      const el = document.getElementById('bsPeriodInfo');
+      if (!el) return;
+      const asOf = valueOf('bsAsOf') || bkkStamp(new Date(), 'day');
+      const months = state.bsWindowMonths || bsCfg().analysisMonths;
+      const start = new Date(asOf + 'T12:00:00+07:00');
+      start.setMonth(start.getMonth() - months);
+      el.textContent = 'ช่วงที่จะวิเคราะห์: ' + thaiDayLabel(bkkStamp(start, 'day')) + ' ถึง ' + thaiDayLabel(asOf) +
+        ' (ย้อนหลัง ' + months + ' เดือน)';
+    }
+    function thaiDayLabel(iso) {
+      if (!iso) return '-';
+      return new Date(iso + 'T12:00:00+07:00')
+        .toLocaleDateString('th-TH', { timeZone:'Asia/Bangkok', day:'numeric', month:'short', year:'numeric' });
+    }
+
     /* ค่าอ้างอิงจากภายนอกที่แอดมินกรอกไว้ (เช่น DDC/IS)
        คืน null ถ้ายังไม่กรอก กราฟจะไม่วาดเส้นอ้างอิง ไม่ใช่วาดเส้นศูนย์ */
     function bsRefHelmet() {
@@ -5306,7 +5409,10 @@
     async function bsAnalyze(asOfDate) {
       const cfg = bsCfg();
       const asOf = asOfDate ? new Date(asOfDate + 'T12:00:00+07:00') : new Date();
-      const windowStart = new Date(asOf); windowStart.setMonth(windowStart.getMonth() - cfg.analysisMonths);
+      // ปุ่มปีหรือช่วงกำหนดเองทับความยาวหน้าต่างจากแท็บตั้งค่าเกณฑ์เฉพาะรอบนี้
+      // ไม่ได้แก้ค่าเกณฑ์ถาวร กดปุ่ม "ล่าสุด" ก็กลับไปใช้ค่าที่ตั้งไว้
+      const months = state.bsWindowMonths || cfg.analysisMonths;
+      const windowStart = new Date(asOf); windowStart.setMonth(windowStart.getMonth() - months);
       const confirmStart = new Date(asOf); confirmStart.setMonth(confirmStart.getMonth() - cfg.confirmMonths);
       // เทียบเวลาด้วยตัวเลข ไม่ใช่สตริง ISO — Supabase คืน '+00:00' ส่วน toISOString() คืน 'Z'
       // ถ้าเทียบเป็นสตริงจะเพี้ยนตรงวินาทีที่ตรงขอบพอดี
@@ -5440,6 +5546,7 @@
         state.bsEditFeature = null; state.bsEditIncident = null; state.bsEditZone = null;
         state.bsDrawPts = [];
         state.bsLayers = { sites:true, drunk:true, red:true, orange:true, corridor:true };
+        bsBuildYearChips();
         // เติมตัวเลือกในฟอร์ม (ใช้ชุดเดียวกับฟอร์มอุบัติเหตุ ค่าจะได้ตรงกันตอนวิเคราะห์)
         const opt = (v, t) => '<option value="' + escapeHtml(v) + '">' + escapeHtml(t || v) + '</option>';
         document.getElementById('bsFeatKind').innerHTML =
@@ -7453,6 +7560,7 @@
 
     Object.assign(window, {
       initBlackspotPage, bsTab, bsRun, bsSave, bsUnpublish, bsSampleTest, bsToggleLayer,
+      bsSetYear, bsApplyRange,
       bsRenderSites, bsLoadAdminData, bsSaveSettings, bsResetSettings,
       bsSaveFeature, bsEditFeature, bsDeleteFeature, bsResetFeatureForm, bsRenderFeatures,
       bsSaveIncident, bsEditIncident, bsDeleteIncident, bsResetIncidentForm, bsRenderIncidents,
