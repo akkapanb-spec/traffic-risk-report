@@ -108,6 +108,10 @@
     .cp-arrest label{display:flex;flex-direction:column;gap:3px;font-size:.66rem;color:#5b6b7f;font-weight:700;min-width:0}
     .cp-arrest .input,.cp-arrest .select{padding:6px 8px;font-size:.8rem;min-width:0}
     @media(max-width:820px){.cp-arrest{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    /* บอกที่มาของข้อมูลที่ระบบเติมให้ ใต้ช่องพิกัด */
+    .loc-note{margin-top:6px;padding:6px 10px;border-radius:9px;background:#f0fdf4;
+      border:1px solid #bbf7d0;color:#14532d;font-size:.68rem;line-height:1.45}
+    .loc-note b{color:#0ca30c}
     /* ---- เสียงจากประชาชน ---- */
     .vc-bars{display:grid;gap:7px}
     .vc-bar-head,.vc-bar-row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.3fr) 38px 38px 48px 60px;align-items:center;gap:9px}
@@ -612,7 +616,7 @@
               <div class="field"><label for="district">อำเภอ</label><input id="district" class="input" value="เมืองนครสวรรค์" readonly></div>
               <div class="field"><label for="locationProvince">จังหวัด</label><input id="locationProvince" class="input" value="นครสวรรค์" readonly></div>
               <div class="field span-6"><label for="cause">สาเหตุเบื้องต้น (ไม่ใช่ความเห็นทางคดี) <span class="req">*</span></label><select id="cause" class="select" required></select></div>
-              <div class="field span-6"><label>โลเคชั่น <span class="req">*</span></label><div class="field-actions"><input id="coordinates" class="input" type="text" readonly placeholder="ยังไม่ได้เลือกพิกัด"><button class="btn btn-soft" type="button" onclick="openLocationPicker()"><i class="fa-solid fa-map-pin"></i> เลือกพิกัด</button></div><input id="latitude" type="hidden"><input id="longitude" type="hidden"></div>
+              <div class="field span-6"><label>โลเคชั่น <span class="req">*</span></label><div class="field-actions"><input id="coordinates" class="input" type="text" readonly placeholder="ยังไม่ได้เลือกพิกัด"><button class="btn btn-soft" type="button" onclick="openLocationPicker()"><i class="fa-solid fa-map-pin"></i> เลือกพิกัด</button></div><input id="latitude" type="hidden"><input id="longitude" type="hidden"><div class="hint loc-note" id="locSourceNote" style="display:none"></div></div>
               <div class="field span-12"><label for="details">รายละเอียดอื่นๆ</label><textarea id="details" class="textarea" maxlength="80" placeholder="กรอกข้อมูลเพิ่มเติม ไม่เกิน 80 ตัวอักษร"></textarea><div class="hint"><span id="detailCount">0</span>/80 ตัวอักษร</div></div>
 
               <!-- แยกสาเหตุสันนิษฐาน ออกจากข้อหาที่แจ้งจริง
@@ -3578,23 +3582,70 @@
       document.getElementById('pickerStatus').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
       if (reverse) await reverseGeocode(lat,lng);
     }
+    /* หาชื่อถนนและตำบลจากพิกัด
+       ลำดับความน่าเชื่อถือ: ข้อมูลของเราก่อน แล้วค่อยถอยไป OpenStreetMap
+
+       ทำไมของเราต้องมาก่อน — เกณฑ์ข้อ 2 จับกลุ่มจุดเกิดเหตุด้วย "ชื่อถนน"
+       ถ้าถนนสายเดียวถูกบันทึกหลายชื่อ (ถ.สวรรค์วิถี / สวรรค์วิถี / ถนนสวรรค์วิถี)
+       ระบบจะมองเป็นคนละถนน จุดที่ควรรวมเป็นช่วงเสี่ยงเดียวกันเลยแตกกระจาย
+       ชื่อจาก OSM มาจากอาสาสมัครทั่วโลก ไม่ได้ยึดชื่อในทะเบียนของเรา
+       ส่วนตำบล ขอบเขตใน tambon_muang.json คือแนวเขตจริงที่เราใช้ทั้งระบบอยู่แล้ว */
+    async function locateFromOurData(lat, lng) {
+      const out = { road:'', subdistrict:'', detail:'', source:'' };
+      // ตำบลจากขอบเขตของเราเอง
+      try {
+        if (!state.tbGeo) state.tbGeo = await (await fetch('data/tambon_muang.json')).json();
+        const f = state.tbGeo.features.find(f => pointInFeature([lat, lng], f));
+        if (f) {
+          const nm = f.properties.tambon;
+          // ชั้นแผนที่เก็บเทศบาลเป็นพื้นที่เดียว แต่ช่องตำบลในฟอร์มต้องเป็นชื่อตำบล
+          out.subdistrict = nm === 'เทศบาลนครนครสวรรค์' ? 'ปากน้ำโพ' : nm;
+          out.source = 'เขตตำบลของระบบ';
+        }
+      } catch (e) { /* เปิดผ่าน file:// จะโหลดไม่ได้ ปล่อยให้ถอยไปใช้ OSM */ }
+
+      // ถนนจากโครงข่ายที่บันทึกไว้
+      try {
+        const res = await rpc('rn_locate', { p_token: state.token, p_points: [[lat, lng]] });
+        const hit = res && res.success && (res.points || [])[0];
+        if (hit && hit.road_name) {
+          out.road = hit.road_name;
+          out.detail = 'ห่างแนวถนน ' + hit.dist_m + ' ม.' +
+            (hit.segment_code ? ' · ช่วง ' + hit.segment_code : '') +
+            (hit.offset_m != null ? ' · กม.ที่ ' + (hit.offset_m / 1000).toFixed(3) + ' จากต้นสาย' : '');
+          out.source = 'โครงข่ายถนนของระบบ';
+        }
+      } catch (e) { /* ยังไม่ได้รัน roadnet SQL หรือยังไม่มีถนน — ถอยไปใช้ OSM */ }
+      return out;
+    }
+
     async function reverseGeocode(lat,lng) {
       const status = document.getElementById('pickerStatus');
-      status.textContent = 'กำลังค้นหาชื่อถนนจาก OpenStreetMap...';
-      try {
-        const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng) + '&zoom=18&addressdetails=1&extratags=1&accept-language=th';
-        const response = await fetch(url, { headers:{ 'Accept':'application/json' } });
-        if (!response.ok) throw new Error('reverse geocoding failed');
-        const data = await response.json();
-        const address = data.address || {};
-        const road = formatRoadName(data);
-        const subdistrict = detectSubdistrict(address);
-        state.selectedLocation = { latitude:lat, longitude:lng, road, subdistrict, displayName:data.display_name || '' };
-        status.textContent = road ? lat.toFixed(6) + ', ' + lng.toFixed(6) + ' · ' + road : lat.toFixed(6) + ', ' + lng.toFixed(6) + ' · ไม่พบชื่อถนน กรุณากรอกเอง';
-      } catch (error) {
-        state.selectedLocation = { latitude:lat, longitude:lng, road:'', subdistrict:'' };
-        status.textContent = lat.toFixed(6) + ', ' + lng.toFixed(6) + ' · ไม่สามารถดึงชื่อถนน กรุณากรอกเอง';
+      status.textContent = 'กำลังค้นหาชื่อถนน...';
+      const mine = await locateFromOurData(lat, lng);
+      let road = mine.road, subdistrict = mine.subdistrict, from = mine.source, display = '';
+
+      // เรียก OSM เฉพาะเมื่อข้อมูลของเรายังขาด จะได้ไม่รบกวนบริการฟรีของเขาโดยไม่จำเป็น
+      if (!road || !subdistrict) {
+        try {
+          const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng) + '&zoom=18&addressdetails=1&extratags=1&accept-language=th';
+          const response = await fetch(url, { headers:{ 'Accept':'application/json' } });
+          if (!response.ok) throw new Error('reverse geocoding failed');
+          const data = await response.json();
+          display = data.display_name || '';
+          if (!road) { road = formatRoadName(data); if (road) from = from || 'OpenStreetMap'; }
+          if (!subdistrict) subdistrict = detectSubdistrict(data.address || {});
+        } catch (e) { /* ออฟไลน์หรือ OSM ล่ม — ยังใช้ของเราที่หาได้ */ }
       }
+
+      state.selectedLocation = { latitude:lat, longitude:lng, road, subdistrict,
+        displayName:display, locDetail:mine.detail, locSource:from };
+      const coord = lat.toFixed(6) + ', ' + lng.toFixed(6);
+      status.innerHTML = road
+        ? coord + ' · <b>' + escapeHtml(road) + '</b>' + (subdistrict ? ' · ต.' + escapeHtml(subdistrict) : '') +
+          (from ? '<br><span style="color:#0ca30c">จาก' + escapeHtml(from) + '</span>' : '') +
+          (mine.detail ? ' <span style="color:#5b6b7f">' + escapeHtml(mine.detail) + '</span>' : '')
+        : coord + ' · ไม่พบชื่อถนน กรุณากรอกเอง';
     }
     function formatRoadName(data) {
       const address = data.address || {};
@@ -3626,6 +3677,19 @@
       document.getElementById('coordinates').value = Number(loc.latitude).toFixed(6) + ', ' + Number(loc.longitude).toFixed(6);
       if (loc.road) document.getElementById('road').value = loc.road.slice(0,60);
       if (loc.subdistrict && subdistricts.includes(loc.subdistrict)) document.getElementById('subdistrict').value = loc.subdistrict;
+      // อำเภอ/จังหวัด คงที่ตามพื้นที่รับผิดชอบ เติมให้เลยไม่ต้องเลือกซ้ำทุกเคส
+      const dis = document.getElementById('district'), prov = document.getElementById('locationProvince');
+      if (dis && !dis.value) dis.value = 'เมืองนครสวรรค์';
+      if (prov && !prov.value) prov.value = 'นครสวรรค์';
+      // บอกที่มาไว้ใต้ช่องพิกัด ทุกช่องยังพิมพ์ทับได้ ระบบแค่ช่วยกรอก ไม่ได้ล็อก
+      const note = document.getElementById('locSourceNote');
+      if (note) {
+        note.innerHTML = loc.locSource
+          ? '<i class="fa-solid fa-wand-magic-sparkles"></i> เติมให้จาก<b>' + escapeHtml(loc.locSource) + '</b>' +
+            (loc.locDetail ? ' · ' + escapeHtml(loc.locDetail) : '') + ' — แก้ไขทับได้'
+          : '';
+        note.style.display = loc.locSource ? 'block' : 'none';
+      }
       closeLocationPicker();
     }
 
