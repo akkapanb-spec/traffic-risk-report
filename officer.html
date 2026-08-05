@@ -1362,7 +1362,11 @@
       surface:'#ffffff', ink:'#0b0b0b', ink2:'#52514e', muted:'#898781',
       grid:'#e8e8e3', axis:'#c3c2b7',
       series:['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948'],
-      seq:['#cde2fb','#9ec5f4','#6da7ec','#3987e5','#2a78d6','#256abf','#184f95','#0d366b'],
+      // ไล่เฉดสำหรับกราฟ วางบนพื้นขาวจึงต้องเข้มพอ 5 เฉดคือเพดานที่ตายังแยกออก
+      seq:['#86b6ef','#5598e7','#2a78d6','#1c5cab','#104281'],
+      // ไล่เฉดสำหรับพื้นบนแผนที่ ใช้ฝั่งอ่อนเพราะทับบนภาพแผนที่ที่มีรายละเอียดอยู่แล้ว
+      // ถ้าใช้ชุดกราฟจะทึบจนกลบถนนและหมุดที่อยู่ข้างใต้
+      seqMap:['#e8eef5','#cde2fb','#9ec5f4','#6da7ec','#3987e5'],
       status:{ good:'#0ca30c', warning:'#fab219', serious:'#ec835a', critical:'#d03b3b' }
     };
     // magnitude = เทียบปริมาณ ใช้สีเดียว · identity = คนละสิ่ง ใช้สีประจำสลอต · severity = ระดับความรุนแรง
@@ -1866,10 +1870,16 @@
       });
       const max = Math.max(1, ...Object.values(counts));
       // สเกลเรดาร์อากาศชุดเดียวกับหน้าประชาชน: ชมพู→ม่วง→ฟ้า→เหลือง→เขียว(0)
-      const colorOf = n => n === 0 ? '#30cf7f' : n >= max * .75 ? '#ec1fa8' : n >= max * .45 ? '#a855f7' : n >= max * .2 ? '#38a8ff' : '#e8d81e';
+      /* ไล่เฉดสีเดียว ไม่ใช่สเกลรุ้ง — จำนวนอุบัติเหตุคือปริมาณ มาก-น้อย
+         สีต่างเฉด (ชมพู/ม่วง/ฟ้า/เหลือง) ทำให้คนอ่านนึกว่าแต่ละสีมีความหมายต่างกัน
+         ใช้ชุดเดียวกับกราฟ และจางลงเพื่อไม่ให้กลบหมุดอุบัติเหตุกับโซนเสี่ยงที่ทับอยู่ */
+      const colorOf = n => n === 0 ? VIZ.seqMap[0]
+        : n >= max * .75 ? VIZ.seqMap[4] : n >= max * .5 ? VIZ.seqMap[3]
+        : n >= max * .25 ? VIZ.seqMap[2] : VIZ.seqMap[1];
       if (state.tbLayer) state.accidentMap.removeLayer(state.tbLayer);
       state.tbLayer = L.geoJSON(state.tbGeo, {
-        style: f => ({ color:'#3a2b52', weight:1.6, fillColor:colorOf(counts[f.properties.tambon] || 0), fillOpacity:.32 }),
+        style: f => ({ color:'#64748b', weight:1.3, opacity:.7,
+          fillColor:colorOf(counts[f.properties.tambon] || 0), fillOpacity:.22 }),
         onEachFeature: (f, layer) => {
           const name = f.properties.tambon;
           const isMuni = name === 'เทศบาลนครนครสวรรค์';
