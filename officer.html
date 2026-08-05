@@ -191,6 +191,10 @@
     .hm-legend{display:flex;flex-wrap:wrap;gap:11px;margin-top:12px;font-size:.7rem;color:#5b6b7f}
     .hm-legend span{display:inline-flex;align-items:center;gap:5px}
     .hm-legend i{width:10px;height:10px;border-radius:3px;flex:0 0 10px}
+    .hm-ref{margin:0 0 10px;padding:7px 11px;border-radius:9px;background:#faf5ff;border:1px solid #e9d5ff;
+      font-size:.72rem;color:#5b21b6;line-height:1.45}
+    .hm-ref b{font-weight:800}
+    .hm-ref span{color:#8b6fc4}
     .hm-age-row{display:grid;grid-template-columns:56px minmax(0,1fr) 42px 66px;align-items:center;gap:9px;padding:5px 0}
     .hm-age-lb{font-size:.75rem;font-weight:700;color:#34445a}
     .hm-age-track{position:relative;height:16px;border-radius:999px;background:#eef2f7;overflow:hidden}
@@ -4095,6 +4099,15 @@
         }
       }] : []);
     }
+    /* ค่าอ้างอิงจากภายนอกที่แอดมินกรอกไว้ (เช่น DDC/IS)
+       คืน null ถ้ายังไม่กรอก กราฟจะไม่วาดเส้นอ้างอิง ไม่ใช่วาดเส้นศูนย์ */
+    function bsRefHelmet() {
+      const cfg = bsCfg();
+      const pct = Number(cfg.refNoHelmetPct);
+      if (!Number.isFinite(pct) || pct <= 0) return null;
+      return { pct, src: String(cfg.refSource || 'ค่าอ้างอิงภายนอก').slice(0, 40) };
+    }
+
     /* สัดส่วนผู้ไม่สวมหมวกนิรภัย แยกตามช่วงเวลา
        เดิมเป็นแท่งคู่นับหัว ซึ่งตอบคำถามผิด — ช่วงที่มีอุบัติเหตุเยอะแท่งสูงทั้งคู่
        จึงมองไม่ออกว่าช่วงไหน "สัดส่วน" ไม่สวมแย่กว่ากัน
@@ -4122,7 +4135,12 @@
             pointBorderColor: VIZ.status.critical, pointBorderWidth:2 },
           { label:'ค่าเฉลี่ยทั้งวัน ' + avg.toFixed(0) + '%', data:labels.map(() => avg),
             borderColor:VIZ.muted, borderDash:[5,4], pointRadius:0, fill:false }
-        ]
+        ].concat(bsRefHelmet() ? [{
+          // เส้นอ้างอิงจากภายนอก คนละฐานข้อมูลกับเรา จึงใช้เส้นประคนละแบบและบอกที่มาในชื่อ
+          label:'อ้างอิง ' + bsRefHelmet().pct.toFixed(0) + '% · ' + bsRefHelmet().src,
+          data:labels.map(() => bsRefHelmet().pct),
+          borderColor:'#7c3aed', borderDash:[2,3], borderWidth:1.5, pointRadius:0, fill:false
+        }] : [])
       }, {
         responsive:true, maintainAspectRatio:false,
         interaction:{ mode:'index', intersect:false },
@@ -4164,7 +4182,10 @@
       const avg = grand ? grandNo*100/grand : 0;
       if (!grand) { el.innerHTML = '<p class="dashboard-note" style="margin:0">ยังไม่มีข้อมูลการสวมหมวกนิรภัยในช่วงที่เลือก</p>'; return; }
 
-      el.innerHTML = '<div class="hm-age">' + rows.map(r => {
+      const ref = bsRefHelmet();
+      el.innerHTML = (ref ? '<p class="hm-ref"><i class="fa-solid fa-flag"></i> ค่าอ้างอิงภายนอก <b>' + ref.pct.toFixed(0) + '%</b> · ' +
+          escapeHtml(ref.src) + ' <span>— คนละฐานข้อมูล ใช้ดูทิศทาง ไม่ใช่ตัดสินแพ้ชนะ</span></p>' : '') +
+        '<div class="hm-age">' + rows.map(r => {
         const thin = r.total > 0 && r.total < 5;
         const w = r.pct == null ? 0 : r.pct;
         // สีตามระดับ: เกินค่าเฉลี่ยมาก = วิกฤต, ใกล้เคียง = เฝ้าระวัง, ต่ำกว่า = ปกติ
@@ -4859,7 +4880,9 @@
       analysisMonths: 12, confirmMonths: 36,
       muniRadiusKm: 0.20, ruralRadiusKm: 0.50, detourFactor: 1.30,
       siteMinScore: 2, fatalWeight: 2, redMinPoints: 3, orangeMinPoints: 2,
-      redBufferKm: 0.20, orangeBufferKm: 0.50
+      redBufferKm: 0.20, orangeBufferKm: 0.50,
+      // ค่าอ้างอิงภายนอก ว่างไว้จนกว่าแอดมินจะกรอก ไม่มีผลกับการคำนวณ
+      refNoHelmetPct: null, refSource: ''
     };
     const BS_FEATURE_KINDS = {
       junction:'ทางแยก (ไม่มีสัญญาณไฟ)', junction_signal:'ทางแยกมีสัญญาณไฟ', merge:'ทางร่วม',
@@ -5404,7 +5427,10 @@
       { k:'redMinPoints',    label:'จำนวนจุดขั้นต่ำของโซนแดง', step:1 },
       { k:'orangeMinPoints', label:'จำนวนจุดขั้นต่ำของโซนส้ม', step:1 },
       { k:'redBufferKm',     label:'ระยะกันชนตอนวาดโซนแดง (กม.)', step:0.05 },
-      { k:'orangeBufferKm',  label:'ระยะกันชนตอนวาดโซนส้ม (กม.)', step:0.05 }
+      { k:'orangeBufferKm',  label:'ระยะกันชนตอนวาดโซนส้ม (กม.)', step:0.05 },
+      // ค่าอ้างอิงจากภายนอก กรอกมือ ไม่มีผลกับการคำนวณ ใช้วาดเส้นเทียบในกราฟเท่านั้น
+      { k:'refNoHelmetPct',  label:'ค่าอ้างอิง: ร้อยละไม่สวมหมวกนิรภัย (DDC/IS)', step:1, optional:true },
+      { k:'refSource',       label:'ที่มาและงวดของค่าอ้างอิง', text:true }
     ];
     let bsPickerMap = null, bsPickerMarker = null;
 
@@ -5695,13 +5721,26 @@
       const cfg = bsCfg();
       document.getElementById('bsSettingsForm').innerHTML = BS_SETTING_FIELDS.map(f =>
         '<div class="field span-6"><label for="bsSet_' + f.k + '">' + escapeHtml(f.label) + '</label>' +
-        '<input id="bsSet_' + f.k + '" class="input" type="number" step="' + f.step + '" min="0" value="' + cfg[f.k] + '"></div>').join('');
+        (f.text
+          ? '<input id="bsSet_' + f.k + '" class="input" maxlength="80" placeholder="เช่น DDC/IS จังหวัดนครสวรรค์ ปี 2569" value="' + escapeHtml(cfg[f.k] == null ? '' : cfg[f.k]) + '">'
+          : '<input id="bsSet_' + f.k + '" class="input" type="number" step="' + f.step + '" min="0" value="' + (cfg[f.k] == null ? '' : cfg[f.k]) + '">') +
+        '</div>').join('') +
+        '<p class="hint span-12" style="margin:2px 0 0;padding:9px 12px;border-radius:10px;background:#fffbeb;border:1px solid #fde68a">' +
+        '<i class="fa-solid fa-circle-info"></i> <b>ค่าอ้างอิงสองช่องท้าย ไม่มีผลกับการคำนวณ</b> ใช้วาดเส้นประเทียบในกราฟหมวกนิรภัยเท่านั้น · ' +
+        'เปิด <a href="https://dip.ddc.moph.go.th/new/dashboard/is-helmet-head-injury" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:700">แดชบอร์ด DDC</a> ' +
+        'เลือกจังหวัดนครสวรรค์ อ่านตัวเลขแล้วพิมพ์ใส่ (เดือนละครั้งพอ)<br>' +
+        '<b style="color:#c2410c">ระวังการตีความ:</b> ข้อมูล IS เก็บจาก<b>ผู้บาดเจ็บที่มาถึงโรงพยาบาล</b> ส่วนของเรานับทุกคนในที่เกิดเหตุรวมคนไม่บาดเจ็บ ' +
+        'อัตราไม่สวมหมวกของเขาจะสูงกว่าเราเป็นธรรมดา เพราะคนไม่สวมหมวกบาดเจ็บหนักกว่าจึงถูกนำส่งมากกว่าตามสัดส่วน — ' +
+        'เลขเราต่ำกว่า<b>ไม่ได้แปลว่าคนในพื้นที่สวมหมวกดีกว่า</b></p>';
     }
     async function bsSaveSettings() {
       const payload = {};
       let bad = '';
       BS_SETTING_FIELDS.forEach(f => {
-        const n = Number(valueOf('bsSet_' + f.k));
+        const raw = valueOf('bsSet_' + f.k);
+        if (f.text) { payload[f.k] = raw || ''; return; }       // ช่องข้อความ ปล่อยว่างได้
+        if (f.optional && raw === '') { payload[f.k] = null; return; }  // ค่าอ้างอิง ไม่กรอกก็ได้
+        const n = Number(raw);
         if (!Number.isFinite(n) || n <= 0) { bad = bad || f.label; return; }
         payload[f.k] = n;
       });
