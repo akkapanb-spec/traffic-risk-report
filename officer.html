@@ -911,7 +911,7 @@
               <div class="field span-6"><label>เขตการปกครอง <span class="req">*</span></label>
                 <select id="bsFeatMuni" class="select">
                   <option value="true">ในเขตเทศบาล — ใช้เกณฑ์ 200 ม.</option>
-                  <option value="false">นอกเขตเทศบาล — ใช้เกณฑ์ 500 ม.</option>
+                  <option value="false">อบต. (นอกเขตเทศบาล) — ใช้เกณฑ์ 500 ม.</option>
                 </select></div>
               <div class="field span-12"><label>หมายเหตุ</label><input id="bsFeatNote" class="input" maxlength="200" placeholder="เช่น ทัศนวิสัยจำกัด มีเสาไฟบัง"></div>
               <div class="field span-12" style="display:flex;gap:10px;flex-wrap:wrap">
@@ -947,7 +947,7 @@
               <div class="field span-6"><label>ถนน</label><input id="bsIncRoad" class="input" maxlength="120"></div>
               <div class="field span-6"><label>ตำบล</label><select id="bsIncSub" class="select"><option value="">เลือกตำบล</option></select></div>
               <div class="field span-6"><label>เขตการปกครอง</label>
-                <select id="bsIncMuni" class="select"><option value="true">ในเขตเทศบาล (200 ม.)</option><option value="false">นอกเขตเทศบาล (500 ม.)</option></select></div>
+                <select id="bsIncMuni" class="select"><option value="true">ในเขตเทศบาล (200 ม.)</option><option value="false">อบต. (นอกเขตเทศบาล) 500 ม.</option></select></div>
               <div class="field span-6"><label>ทิศทางเดินรถ</label><input id="bsIncDir" class="input" list="bsDirList" maxlength="60" placeholder="เช่น ขาเข้าเมือง">
                 <datalist id="bsDirList"><option value="ขาเข้าเมือง"></option><option value="ขาออกเมือง"></option><option value="ขาขึ้น (เหนือ)"></option><option value="ขาล่อง (ใต้)"></option><option value="ฝั่งขาไป"></option><option value="ฝั่งขากลับ"></option></datalist>
                 <div class="hint">ใช้ในเกณฑ์ข้อ 2 — เว้นว่างได้ ระบบจะจับกลุ่มตามถนนอย่างเดียว</div></div>
@@ -1059,7 +1059,7 @@
                 <div class="field span-6"><label>ประเภททาง</label><select id="rnHighwayType" class="select"><option value="">เลือกประเภท</option><option>ทล.แผ่นดิน</option><option>ทล.ชนบท</option><option>ทล.อปท.</option><option>ถนนเทศบาล</option><option>ซอย</option></select></div>
                 <div class="field span-6"><label>ตำบล</label><select id="rnSubdistrict" class="select"><option value="">เลือกตำบล</option></select></div>
                 <div class="field span-6"><label>องค์กรปกครองส่วนท้องถิ่น</label><input id="rnLocalAuthority" class="input" maxlength="80" placeholder="เช่น เทศบาลนครนครสวรรค์"></div>
-                <div class="field span-6"><label>เขตพื้นที่ <span class="req">*</span></label><select id="rnInMuni" class="select"><option value="true">ในเขตเทศบาล — ใช้รัศมี 200 ม.</option><option value="false">นอกเขตเทศบาล — ใช้รัศมี 500 ม.</option></select></div>
+                <div class="field span-6"><label>เขตพื้นที่ <span class="req">*</span></label><select id="rnInMuni" class="select"><option value="true">ในเขตเทศบาล — ใช้รัศมี 200 ม.</option><option value="false">อบต. (นอกเขตเทศบาล) — ใช้รัศมี 500 ม.</option></select></div>
                 <div class="field span-6"><label>จุดเริ่มต้น</label><input id="rnStartName" class="input" maxlength="80" placeholder="เช่น สี่แยกสวรรค์วิถี"></div>
                 <div class="field span-6"><label>จุดสิ้นสุด</label><input id="rnEndName" class="input" maxlength="80" placeholder="เช่น สะพานเดชาติวงศ์"></div>
                 <div class="field span-6"><label>ทิศทางเดินรถ</label><select id="rnDirMode" class="select"><option value="two_way">เดินรถสองทาง</option><option value="one_way">เดินรถทางเดียว</option></select></div>
@@ -1133,7 +1133,7 @@
                 <div class="field span-6"><label>ชื่อสถานที่ <span class="req">*</span></label><input id="rnPlName" class="input" maxlength="120" placeholder="เช่น โรงเรียนนครสวรรค์"></div>
                 <div class="field span-6"><label>ถนนที่ตั้ง</label><select id="rnPlRoad" class="select"><option value="">ไม่ระบุ / ยังไม่มีในโครงข่าย</option></select></div>
                 <div class="field span-6"><label>ตำบล</label><select id="rnPlSubdistrict" class="select"><option value="">เลือกตำบล</option></select></div>
-                <div class="field span-6"><label>เขตพื้นที่</label><select id="rnPlInMuni" class="select"><option value="true">ในเขตเทศบาล</option><option value="false">นอกเขตเทศบาล</option></select></div>
+                <div class="field span-6"><label>เขตพื้นที่</label><select id="rnPlInMuni" class="select"><option value="true">ในเขตเทศบาล</option><option value="false">อบต. (นอกเขตเทศบาล)</option></select></div>
                 <div class="field span-6"><label>ฝั่งถนน</label><select id="rnPlSide" class="select"><option value="">ไม่ระบุ</option><option>ฝั่งซ้าย</option><option>ฝั่งขวา</option><option>สองฝั่ง</option></select></div>
                 <div class="field span-6"><label>ระดับความเสี่ยง</label><select id="rnPlRisk" class="select"><option>ปกติ</option><option>เฝ้าระวัง</option><option>เสี่ยงสูง</option></select></div>
                 <div class="field span-6"><label>ช่วงเวลาที่คนพลุกพล่าน</label><input id="rnPlHours" class="input" maxlength="80" placeholder="เช่น 07:00-08:30, 15:00-16:30"></div>
@@ -1280,7 +1280,7 @@
               <div class="field span-6"><label>สถานที่ตั้งจุด</label><input id="cpPlace" class="input" maxlength="120" placeholder="เช่น หน้าโรงพยาบาลสวรรค์ประชารักษ์"></div>
               <div class="field span-6"><label>ถนน</label><select id="cpRoad" class="select"><option value="">ไม่ระบุ / ยังไม่มีในโครงข่าย</option></select></div>
               <div class="field span-6"><label>ตำบล</label><select id="cpSubdistrict" class="select"><option value="">เลือกตำบล</option></select></div>
-              <div class="field span-6"><label>เขตพื้นที่</label><select id="cpInMuni" class="select"><option value="true">ในเขตเทศบาล</option><option value="false">นอกเขตเทศบาล</option></select></div>
+              <div class="field span-6"><label>เขตพื้นที่</label><select id="cpInMuni" class="select"><option value="true">ในเขตเทศบาล</option><option value="false">อบต. (นอกเขตเทศบาล)</option></select></div>
               <div class="field span-6"><label>พิกัด (ละติจูด, ลองจิจูด)</label>
                 <div style="display:flex;gap:8px"><input id="cpCoords" class="input" style="flex:1;min-width:0" placeholder="15.7051, 100.1372">
                   <button class="btn btn-soft" type="button" onclick="cpPickCoords()" title="จิ้มเลือกบนแผนที่"><i class="fa-solid fa-map-location-dot"></i></button>
@@ -1369,11 +1369,29 @@
       seqMap:['#e8eef5','#cde2fb','#9ec5f4','#6da7ec','#3987e5'],
       status:{ good:'#0ca30c', warning:'#fab219', serious:'#ec835a', critical:'#d03b3b' }
     };
-    // magnitude = เทียบปริมาณ ใช้สีเดียว · identity = คนละสิ่ง ใช้สีประจำสลอต · severity = ระดับความรุนแรง
-    function vizColors(job, n) {
+    // magnitude = เทียบปริมาณ ไล่เฉดตามค่า · identity = คนละสิ่ง ใช้สีประจำสลอต · severity = ระดับความรุนแรง
+    function vizColors(job, n, opts) {
       if (job === 'severity') return [VIZ.status.critical, VIZ.status.serious, VIZ.status.warning, '#cbd5e1', '#e6ebf2'].slice(0, n);
       if (job === 'identity') return VIZ.series.slice(0, n);
-      return Array(n).fill(VIZ.series[0]);
+      return vizRamp((opts || {}).values, n);
+    }
+    /* ไล่เฉดตามค่าของข้อมูล ไม่ใช่ตามลำดับที่วาด
+       ค่ามาก = เข้ม ค่าน้อย = อ่อน ดูปราดเดียวรู้ว่าอันไหนหนัก
+       ถ้าไล่ตามลำดับเฉย ๆ สีจะไม่มีความหมาย และแท่งที่ค่าเท่ากันจะได้คนละสี */
+    function vizRamp(values, n) {
+      const N = n || (values || []).length || 1;
+      const v = (values || []).map(x => Number(x) || 0);
+      if (!v.length) return Array(N).fill(VIZ.seq[2]);
+      const lo = Math.min(...v), hi = Math.max(...v), span = hi - lo, last = VIZ.seq.length - 1;
+      return v.map(x => VIZ.seq[span ? Math.round((x - lo) / span * last) : last]);
+    }
+    // แกนมาตรฐาน: เส้นตารางจาง ไม่มีเส้นกรอบ ไม่มีเส้นตารางแนวตั้ง
+    function vizScales(horizontal) {
+      const val = { beginAtZero:true, ticks:{ precision:0, color:VIZ.muted, font:{size:11} },
+        grid:{ color:VIZ.grid, drawTicks:false }, border:{ display:false } };
+      const cat = { ticks:{ autoSkip:false, color:VIZ.ink2, font:{size:11} },
+        grid:{ display:false }, border:{ color:VIZ.axis } };
+      return horizontal ? { x:val, y:cat } : { y:val, x:cat };
     }
     if (window.Chart) {
       Chart.defaults.font.family = "system-ui,-apple-system,'Segoe UI',sans-serif";
@@ -1585,7 +1603,22 @@
     function normalizeInjury(v){ v = clean(v); if (v === 'บาดเจ็บเล็กน้อย') return 'เล็กน้อย'; return v; }
     function normalizeBodyPart(v){ v = clean(v); if (!v) return ''; if (v.indexOf('ศรีษะ') !== -1 || v.indexOf('ศีรษะ') !== -1 || v.indexOf('ลำคอ') !== -1) return 'ศรีษะ-ลำคอ'; if (v.indexOf('ลำตัว') !== -1 || v.indexOf('เอว') !== -1) return 'ลำตัว-เอว'; if (v.indexOf('แขน') !== -1 || v.indexOf('มือ') !== -1) return 'แขน-มือ'; if (v.indexOf('ขา') !== -1 || v.indexOf('เท้า') !== -1) return 'ขา-เท้า'; if (v.indexOf('หลาย') !== -1) return 'หลายส่วน'; return 'หลายส่วน'; }
     function normalizeRoadCharacter(v){ v = clean(v); if (!v) return ''; if (v.indexOf('ทางร่วม') !== -1) return 'ทางร่วม'; if (v.indexOf('ทางแยก') !== -1) return 'ทางแยก'; if (v.indexOf('จุดกลับรถ') !== -1) return 'จุดกลับรถ'; if (v.indexOf('ทางตรง') !== -1) return 'ทางตรง'; if (v.indexOf('ทางโค้ง') !== -1) return 'ทางโค้ง'; if (v.indexOf('สะพาน') !== -1) return 'สะพาน'; if (v.indexOf('ทางม้าลาย') !== -1) return 'ทางม้าลาย'; return 'อื่นๆ'; }
-    function normalizeLocalAuthority(v){ v = clean(v); if (!v) return ''; if (v.indexOf('เทศบาล') !== -1 || v.indexOf('ในเขต') !== -1) return 'ในเขตเทศบาล'; if (v.indexOf('อบต') !== -1 || v.indexOf('อปท') !== -1 || v.indexOf('นอกเขต') !== -1) return 'นอกเขตเทศบาล'; return v; }
+    // เรียกฝั่งนอกเขตเทศบาลว่า "อบต." ตามชื่อหน่วยงานจริงที่ดูแลพื้นที่นั้น
+    // ชัดกว่าการนิยามด้วยสิ่งที่มันไม่ใช่ และตรงกับที่เจ้าหน้าที่ใช้เรียกกันจริง
+    /* ลำดับการตรวจสำคัญมาก — ต้องดัก "นอกเขต" ก่อนเสมอ
+       เดิมตรวจ 'เทศบาล' ก่อน ซึ่งคำว่า "นอกเขตเทศบาล" ก็มีคำว่า "เทศบาล" อยู่ข้างใน
+       ผลคือพื้นที่นอกเขตถูกนับเป็นในเขต สลับกันคนละขั้ว กระทบทั้งกราฟ อปท.
+       และการเลือกรัศมี 200/500 ม. ของเกณฑ์ข้อ 1/2
+
+       ส่วน 'อปท' ต้องตรวจ *หลัง* 'เทศบาล' เพราะค่าอย่าง "อปท.เทศบาลนคร" มีทั้งสองคำ
+       และของจริงคืออยู่ในเขตเทศบาล */
+    function normalizeLocalAuthority(v){
+      v = clean(v); if (!v) return '';
+      if (v.indexOf('นอกเขต') !== -1) return 'อบต.';
+      if (v.indexOf('เทศบาล') !== -1 || v.indexOf('ในเขต') !== -1) return 'ในเขตเทศบาล';
+      if (v.indexOf('อบต') !== -1 || v.indexOf('อปท') !== -1) return 'อบต.';
+      return v;
+    }
     /* สาเหตุ: ยึดรายการของฟอร์มบันทึกอุบัติเหตุ (ตัวแปร causes) เป็นมาตรฐานเดียวของทั้งระบบ
        เดิมมีสามรายการที่ไม่ตรงกัน (ฟอร์มอุบัติเหตุ / ฟอร์มผู้เสียชีวิต / ป้ายในกราฟ)
        รวมสถิติข้ามฟอร์มไม่ได้ และตัวแปลงค่ายังเปลี่ยนชื่อเป็นคำที่ไม่มีอยู่จริง
@@ -1709,7 +1742,7 @@
         bodyParts: zeroCounts(['ศรีษะ-ลำคอ','ลำตัว-เอว','แขน-มือ','ขา-เท้า','หลายส่วน']),
         roads: {},
         roadCharacters: zeroCounts(['ทางตรง','ทางโค้ง','ทางแยก','ทางร่วม','จุดกลับรถ','สะพาน','ทางม้าลาย','อื่นๆ']),
-        localAuthorities: zeroCounts(['ในเขตเทศบาล','นอกเขตเทศบาล']),
+        localAuthorities: zeroCounts(['ในเขตเทศบาล','อบต.']),
         subdistricts: zeroCounts(subdistricts),
         causes: zeroCounts(causes)   // ใช้รายการมาตรฐานชุดเดียว ไม่ประกาศซ้ำให้หลุดกัน
       };
@@ -3877,7 +3910,7 @@
             chartCardHtml('relationChart', 'ความสัมพันธ์อุปกรณ์นิรภัยกับอาการบาดเจ็บ', 'fa-link', 'เปรียบเทียบอาการบาดเจ็บตามการใช้อุปกรณ์นิรภัย') +
             chartCardHtml('roadChart', 'ถนนสูงสุด 7 ลำดับ', 'fa-road', 'เลือกเฉพาะถนนที่เกิดอุบัติเหตุสูงสุด 7 ลำดับ') +
             chartCardHtml('roadCharacterChart', 'ลักษณะทาง', 'fa-route', 'ทางตรง/ทางโค้ง/ทางแยก/ทางร่วม/จุดกลับรถ/สะพาน/ทางม้าลาย/อื่นๆ') +
-            chartCardHtml('localAuthorityChart', 'อปท.', 'fa-city', 'ในเขตเทศบาล/นอกเขตเทศบาล') +
+            chartCardHtml('localAuthorityChart', 'อปท.', 'fa-city', 'เทศบาล / อบต.') +
             chartCardHtml('subdistrictChart', 'ตำบล', 'fa-location-dot', '7 ตำบลในเขตพื้นที่') +
             chartCardHtml('causeChart', 'สาเหตุเบื้องต้น', 'fa-triangle-exclamation', 'ไม่ใช่ความเห็นทางคดี') +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-helmet-safety"></i> หมวกนิรภัย: สวม vs ไม่สวม ผลต่างกันแค่ไหน</h3><div class="custom-visual" id="helmetOutcome"></div><div class="dashboard-note">แถบยาวเท่ากันทั้งคู่ (100%) จึงเทียบสัดส่วนความรุนแรงต่อสีได้ตรง ๆ แม้สองกลุ่มมีจำนวนคนไม่เท่ากัน</div></div>' +
@@ -4015,17 +4048,52 @@
         })
       },{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,ticks:{autoSkip:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0}}}});
     }
+    /* กราฟแจกแจง — ทุกตัวบอกร้อยละคู่กับจำนวนเสมอ
+       จำนวนดิบอย่างเดียวตอบไม่ได้ว่า "เยอะ" แปลว่าเยอะแค่ไหนเมื่อเทียบกับทั้งหมด
+       โดนัทใส่ % ในป้ายชื่อ ส่วนแท่งใส่ท้ายแท่ง เพราะโดนัทอ่านสัดส่วนจากมุมได้ยาก
+
+       สีเลือกตามหน้าที่ของข้อมูล ไม่วนสีไปตามลำดับเหมือนเดิม
+       โดนัท = คนละสิ่งกัน ใช้สีประจำสลอต · แท่งอันดับ = ปริมาณ ใช้ไล่เฉดสีเดียวตามค่า */
     function createDistributionChart(id,type,object,horizontal) {
       const entries = Object.entries(object||{}).filter(function(item){ return item[0] !== ''; });
-      const colors = ['#1d4ed8','#c1122f','#f59e0b','#16a34a','#7c3aed','#0891b2','#ea580c','#475569','#db2777','#65a30d','#0f766e','#9333ea'];
+      const labels = entries.map(x => x[0]);
+      const values = entries.map(x => Number(x[1]) || 0);
+      const total = values.reduce((a,b) => a + b, 0);
+      const pctOf = v => total ? (v * 100 / total) : 0;
+      const isDoughnut = type === 'doughnut';
+      const bg = vizColors(isDoughnut ? 'identity' : 'magnitude', labels.length, { values });
+
       createChart(id,type,{
-        labels:entries.map(function(x){ return x[0]; }),
-        datasets:[{label:'จำนวน',data:entries.map(function(x){ return x[1]; }),backgroundColor:entries.map(function(_,i){ return colors[i%colors.length]; }),borderWidth:type==='doughnut'?2:0,borderColor:'#fff',borderRadius:type==='bar'?7:0}]
+        labels: isDoughnut ? labels.map((l,i) => l + '  ' + pctOf(values[i]).toFixed(1) + '%') : labels,
+        datasets:[{ label:'จำนวน', data:values, backgroundColor:bg,
+          borderWidth: isDoughnut ? 2 : 0, borderColor: VIZ.surface }]
       },{
-        responsive:true,maintainAspectRatio:false,indexAxis:horizontal?'y':'x',
-        plugins:{legend:{display:type==='doughnut',position:'bottom'}},
-        scales:type==='bar'?{x:{beginAtZero:true,ticks:{precision:0}},y:{ticks:{autoSkip:false}}}:{}
-      });
+        responsive:true, maintainAspectRatio:false, indexAxis: horizontal ? 'y' : 'x',
+        layout:{ padding:{ right: horizontal ? 46 : 4, top:4 } },
+        plugins:{
+          legend:{ display:isDoughnut, position:'bottom' },
+          tooltip:{ callbacks:{ label: c => {
+            const v = Number(c.parsed.y ?? c.parsed.x ?? c.parsed) || 0;
+            return ' ' + v.toLocaleString('th-TH') + ' (' + pctOf(v).toFixed(1) + '%)';
+          } } }
+        },
+        scales: type === 'bar' ? vizScales(horizontal) : {}
+      },
+      // ป้ายท้ายแท่งแนวนอน: จำนวน + ร้อยละ
+      horizontal ? [{
+        id:'distLabels',
+        afterDatasetsDraw(ch){
+          const { ctx } = ch;
+          ctx.save();
+          ctx.font = "600 11px system-ui,-apple-system,'Segoe UI',sans-serif";
+          ctx.fillStyle = VIZ.ink2; ctx.textBaseline = 'middle';
+          ch.getDatasetMeta(0).data.forEach((bar,i) => {
+            if (!values[i]) return;
+            ctx.fillText(values[i].toLocaleString('th-TH') + '  ' + pctOf(values[i]).toFixed(1) + '%', bar.x + 6, bar.y);
+          });
+          ctx.restore();
+        }
+      }] : []);
     }
     /* สัดส่วนผู้ไม่สวมหมวกนิรภัย แยกตามช่วงเวลา
        เดิมเป็นแท่งคู่นับหัว ซึ่งตอบคำถามผิด — ช่วงที่มีอุบัติเหตุเยอะแท่งสูงทั้งคู่
@@ -4212,11 +4280,12 @@
       }
       return options;
     }
-    function createChart(id,type,data,options) {
+    function createChart(id,type,data,options,plugins) {
       const canvas = document.getElementById(id);
       if (!canvas) return;
       if (state.charts[id]) state.charts[id].destroy();
-      state.charts[id] = new Chart(canvas.getContext('2d'),{type:type,data:data,options:compactDashboardChartOptions(options)});
+      state.charts[id] = new Chart(canvas.getContext('2d'),
+        { type:type, data:data, options:compactDashboardChartOptions(options), plugins: plugins || [] });
     }
 
     /* ============ แผนที่ ============ */
@@ -5328,7 +5397,7 @@
       { k:'analysisMonths',  label:'ANALYSIS_WINDOW — หน้าต่างวิเคราะห์ (เดือน)', step:1 },
       { k:'confirmMonths',   label:'CONFIRMATION_WINDOW — ยืนยันระยะยาว (เดือน)', step:1 },
       { k:'muniRadiusKm',    label:'รัศมีเกณฑ์ข้อ 1/2 ในเขตเทศบาล (กม.)', step:0.05 },
-      { k:'ruralRadiusKm',   label:'รัศมีเกณฑ์ข้อ 1/2 นอกเขตเทศบาล (กม.)', step:0.05 },
+      { k:'ruralRadiusKm',   label:'รัศมีเกณฑ์ข้อ 1/2 เขต อบต. (กม.)', step:0.05 },
       { k:'detourFactor',    label:'ตัวคูณอ้อม — แปลงเส้นตรงเป็นระยะทางถนน', step:0.05 },
       { k:'siteMinScore',    label:'คะแนนขั้นต่ำที่ถือว่าเป็นจุดเสี่ยง', step:1 },
       { k:'fatalWeight',     label:'น้ำหนักคะแนนของเหตุที่มีผู้เสียชีวิต', step:1 },
@@ -6464,7 +6533,7 @@
         const sum = a => a.reduce((s, r) => s + r.total, 0);
         document.getElementById('popPreview').innerHTML =
           '<div class="table-wrap"><table class="data-table"><thead><tr><th>ส่วน</th><th>จำนวนแถว</th><th>ประชากรรวม</th></tr></thead><tbody>' +
-          '<tr><td>นอกเขตเทศบาล</td><td>' + outM.length + '</td><td>' + sum(outM).toLocaleString('th-TH') + '</td></tr>' +
+          '<tr><td>อบต. (นอกเขตเทศบาล)</td><td>' + outM.length + '</td><td>' + sum(outM).toLocaleString('th-TH') + '</td></tr>' +
           '<tr><td>ในเขตเทศบาล</td><td>' + inM.length + '</td><td>' + sum(inM).toLocaleString('th-TH') + '</td></tr>' +
           '<tr><td><b>รวม</b></td><td><b>' + parsed.length + '</b></td><td><b>' + sum(parsed).toLocaleString('th-TH') + '</b></td></tr>' +
           '</tbody></table></div>';
