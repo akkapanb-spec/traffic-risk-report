@@ -191,9 +191,31 @@
     .hm-legend{display:flex;flex-wrap:wrap;gap:11px;margin-top:12px;font-size:.7rem;color:#5b6b7f}
     .hm-legend span{display:inline-flex;align-items:center;gap:5px}
     .hm-legend i{width:10px;height:10px;border-radius:3px;flex:0 0 10px}
+    /* แถบเปลี่ยนหน้าตาราง */
+    .pg-bar{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:11px;flex-wrap:wrap}
+    .pg-info{margin-right:auto;font-size:.72rem;color:#5b6b7f;font-weight:600}
+    .pg-btn{width:32px;height:32px;border:1px solid #dbe6f2;background:#fff;border-radius:9px;cursor:pointer;
+      color:#1c5cab;font-size:.72rem;display:grid;place-items:center;transition:.14s}
+    .pg-btn:hover:not(:disabled){background:#eef4ff;border-color:#9ec5f4}
+    .pg-btn:disabled{opacity:.35;cursor:default}
+    .pg-now{font-size:.76rem;font-weight:800;color:#132238;padding:0 8px;font-variant-numeric:tabular-nums}
+    /* ช่วงเวลาที่คนพลุกพล่าน — เลือกจากนาฬิกา ไม่ให้พิมพ์เอง */
+    .rn-hours{display:flex;gap:9px;align-items:flex-end;flex-wrap:wrap}
+    .rn-hours label{display:flex;flex-direction:column;gap:4px;font-size:.72rem;color:#64748b;font-weight:600}
+    .rn-hours .input{width:auto;min-width:120px}
+    .rn-hour-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+    .rn-hour-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #c7d8f5;background:#eef4ff;
+      color:#1c5cab;font-family:inherit;font-size:.76rem;font-weight:700;padding:5px 11px;border-radius:999px;cursor:pointer}
+    .rn-hour-chip:hover{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
+    .rn-hour-chip:hover .rn-hour-x:before{content:"\f00d"}
+    .rn-hour-x{font-family:"Font Awesome 6 Free";font-weight:900;font-size:.6rem;opacity:.6}
+    .rn-hour-x:before{content:"\f017"}
     /* แผนที่สำหรับวาดแนวถนน — สัดส่วนใกล้จัตุรัสอ่านง่ายกว่าแถบยาวเตี้ยเต็มจอ
        ตอนลากแนวถนนต้องเห็นทั้งต้นสายปลายสายและถนนรอบข้างพร้อมกัน */
-    .map-draw{height:clamp(360px,52vh,540px);max-width:880px;margin-inline:auto}
+    /* ต้องเขียน .map-main.map-draw ให้ความเฉพาะเจาะจงสูงกว่า .map-main เดี่ยว ๆ
+       ซึ่งถูกประกาศไว้ทีหลังในไฟล์และมี height ของตัวเอง ถ้าใช้ .map-draw เฉย ๆ จะโดนทับ */
+    .map-main.map-draw{height:clamp(360px,52vh,540px);max-width:880px;margin-inline:auto}
+    @media(max-width:900px){ .map-main.map-draw{max-width:100%} }
     /* เลือกปี/ช่วงวันที่ในหน้าวิเคราะห์ */
     .bs-period{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:14px;
       padding-top:13px;border-top:1px dashed #e2e8f0}
@@ -868,24 +890,23 @@
           <div class="card">
             <h3 class="card-title"><i class="fa-solid fa-wand-magic-sparkles"></i> รันการวิเคราะห์</h3>
             <div class="filter-bar">
-              <div class="field"><label for="bsAsOf">วิเคราะห์ ณ วันที่</label><input id="bsAsOf" class="input" type="date"></div>
               <button class="btn btn-primary" type="button" onclick="bsRun()"><i class="fa-solid fa-play"></i> วิเคราะห์</button>
               <button class="btn btn-soft" type="button" onclick="bsSampleTest()"><i class="fa-solid fa-flask"></i> ทดสอบด้วยพิกัดสมมุติ</button>
             </div>
-            <!-- เลือกปีหรือช่วงวันที่แบบเดียวกับหน้าอื่น ตั้งค่าให้ช่อง "วิเคราะห์ ณ วันที่"
-                 กับหน้าต่างย้อนหลังพร้อมกัน จะได้ไม่ต้องไปแก้ที่แท็บตั้งค่าเกณฑ์ทุกครั้ง -->
+            <!-- ช่วงเวลาระบุด้วยวันที่ถึงวันที่อย่างเดียว
+                 เดิมมีช่อง "วิเคราะห์ ณ วันที่" คู่กับความยาวหน้าต่างที่อยู่คนละแท็บ
+                 ต้องคิดในหัวว่ารวมกันแล้วได้ช่วงไหน · ปุ่มปีแค่เติมสองช่องนี้ให้ ไม่ได้เก็บค่าอื่น -->
             <div class="bs-period">
               <div class="bs-period-block">
-                <span class="bs-period-lb">ดูตามปี</span>
+                <span class="bs-period-lb">เลือกปี (กดแล้วเติมวันที่ให้)</span>
                 <div class="bs-period-chips" id="bsYearChips"></div>
               </div>
               <div class="bs-period-block">
-                <span class="bs-period-lb">หรือกำหนดช่วงเอง</span>
+                <span class="bs-period-lb">หรือกำหนดวันที่เอง</span>
                 <div class="bs-period-dates">
-                  <label>ตั้งแต่<input id="bsFrom" class="input" type="date"></label>
-                  <label>ถึง<input id="bsTo" class="input" type="date"></label>
+                  <label>ตั้งแต่<input id="bsFrom" class="input" type="date" onchange="bsOnDateEdit()"></label>
+                  <label>ถึง<input id="bsTo" class="input" type="date" onchange="bsOnDateEdit()"></label>
                 </div>
-                <button class="btn btn-soft btn-sm" type="button" style="margin-top:8px" onclick="bsApplyRange()"><i class="fa-solid fa-filter"></i> ใช้ช่วงนี้</button>
               </div>
             </div>
             <p class="hint" id="bsPeriodInfo" style="margin:10px 0 0;font-weight:700;color:#1c5cab"></p>
@@ -1128,7 +1149,7 @@
               <h3 class="card-title"><i class="fa-solid fa-list"></i> ถนนทั้งหมด <span id="rnRoadTotal" class="pill">0 สาย</span>
                 <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="rnExportRoads()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
                 <button class="btn btn-soft btn-sm" type="button" onclick="rnLoadData()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
-              <input id="rnRoadSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อถนน, รหัส, ตำบล..." oninput="rnRenderRoads()">
+              <input id="rnRoadSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อถนน, รหัส, ตำบล..." oninput="pageReset('roads');rnRenderRoads()">
               <div id="rnRoadTable"><div class="loading-skeleton"></div></div>
             </div>
           </div>
@@ -1157,7 +1178,7 @@
               <h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการช่วงถนน
                 <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="rnExportSegments()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
                 <button class="btn btn-soft btn-sm" style="color:#1d4ed8" type="button" onclick="rnExportGeoJson()"><i class="fa-solid fa-map-location-dot"></i> ส่งออก GeoJSON</button></h3>
-              <input id="rnSegSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: รหัสช่วง, ชื่อถนน..." oninput="rnRenderSegments()">
+              <input id="rnSegSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: รหัสช่วง, ชื่อถนน..." oninput="pageReset('segments');rnRenderSegments()">
               <div id="rnSegTable"><div class="loading-skeleton"></div></div>
             </div>
           </div>
@@ -1173,9 +1194,23 @@
                 <div class="field span-6"><label>ถนนที่ตั้ง</label><select id="rnPlRoad" class="select"><option value="">ไม่ระบุ / ยังไม่มีในโครงข่าย</option></select></div>
                 <div class="field span-6"><label>ตำบล</label><select id="rnPlSubdistrict" class="select"><option value="">เลือกตำบล</option></select></div>
                 <div class="field span-6"><label>เขตพื้นที่</label><select id="rnPlInMuni" class="select"><option value="true">ในเขตเทศบาล</option><option value="false">อบต. (นอกเขตเทศบาล)</option></select></div>
-                <div class="field span-6"><label>ฝั่งถนน</label><select id="rnPlSide" class="select"><option value="">ไม่ระบุ</option><option>ฝั่งซ้าย</option><option>ฝั่งขวา</option><option>สองฝั่ง</option></select></div>
-                <div class="field span-6"><label>ระดับความเสี่ยง</label><select id="rnPlRisk" class="select"><option>ปกติ</option><option>เฝ้าระวัง</option><option>เสี่ยงสูง</option></select></div>
-                <div class="field span-6"><label>ช่วงเวลาที่คนพลุกพล่าน</label><input id="rnPlHours" class="input" maxlength="80" placeholder="เช่น 07:00-08:30, 15:00-16:30"></div>
+                <!-- ระบุด้วยทิศทางเดินรถ ไม่ใช่ซ้าย/ขวา เพราะซ้ายขวาขึ้นกับว่าคนพูดหันหน้าไปทางไหน
+                     ส่วนขาเข้า/ขาออก ตรงกับที่เจ้าหน้าที่ใช้สื่อสารกันหน้างานอยู่แล้ว -->
+                <div class="field span-6"><label>ทิศทางเดินรถฝั่งที่ตั้ง</label><select id="rnPlSide" class="select"><option value="">ไม่ระบุ</option><option>ขาเข้า</option><option>ขาออก</option><option>ขาขึ้น</option><option>ขาล่อง</option><option>ทั้งสองฝั่ง</option></select></div>
+                <div class="field span-6"><label>ระดับความเสี่ยง</label><select id="rnPlRisk" class="select"><option>ปกติ</option><option>เฝ้าระวัง</option><option>เสี่ยงสูง</option></select>
+                  <div class="hint" id="rnPlRiskLock" style="display:none"></div></div>
+                <!-- เลือกเวลาจากนาฬิกา ไม่ให้พิมพ์เอง — พิมพ์เองแล้วได้ 7.00 / 07:00 / 7โมง ปนกัน
+                     จนเอาไปเทียบกับช่วงเวลาเกิดเหตุไม่ได้ -->
+                <div class="field span-12"><label>ช่วงเวลาที่คนพลุกพล่าน</label>
+                  <div class="rn-hours">
+                    <label>ตั้งแต่<input id="rnPlHFrom" class="input" type="time"></label>
+                    <label>ถึง<input id="rnPlHTo" class="input" type="time"></label>
+                    <button class="btn btn-soft btn-sm" type="button" onclick="rnAddHours()"><i class="fa-solid fa-clock"></i> เพิ่มช่วงเวลา</button>
+                  </div>
+                  <div class="rn-hour-chips" id="rnPlHourChips"></div>
+                  <input id="rnPlHours" type="hidden">
+                  <div class="hint" style="margin-top:5px">เพิ่มได้หลายช่วง เช่น ตอนเข้าเรียนกับตอนเลิกเรียน · กดที่ช่วงเวลาเพื่อลบ</div>
+                </div>
                 <div class="field span-6"><label>จำนวนนักเรียน (เฉพาะโรงเรียน)</label><input id="rnPlStudents" class="input" type="number" min="0" inputmode="numeric"></div>
                 <div class="field span-6"><label>พิกัด (ละติจูด, ลองจิจูด) <span class="req">*</span></label>
                   <div style="display:flex;gap:8px"><input id="rnPlCoords" class="input" style="flex:1;min-width:0" placeholder="15.7051, 100.1372">
@@ -1195,7 +1230,7 @@
               <h3 class="card-title"><i class="fa-solid fa-list"></i> สถานที่ทั้งหมด <span id="rnPlaceTotal" class="pill">0 แห่ง</span>
                 <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="rnExportPlaces()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
                 <button class="btn btn-soft btn-sm" type="button" onclick="rnLoadData()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
-              <input id="rnPlaceSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อ, ประเภท, ถนน, ตำบล..." oninput="rnRenderPlaces()">
+              <input id="rnPlaceSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อ, ประเภท, ถนน, ตำบล..." oninput="pageReset('places');rnRenderPlaces()">
               <div id="rnPlaceTable"><div class="loading-skeleton"></div></div>
             </div>
           </div>
@@ -1240,8 +1275,8 @@
           <div class="card">
             <h3 class="card-title"><i class="fa-solid fa-comments"></i> ความคิดเห็นทั้งหมด <span id="vcFbTotal" class="pill">0 รายการ</span></h3>
             <div class="filter-bar" style="margin-bottom:12px">
-              <input id="vcSearch" class="input" placeholder="🔍 ค้นหาข้อความ, หัวข้อ..." oninput="vcRenderFeedback()">
-              <select id="vcStatus" class="select" style="max-width:170px" onchange="vcRenderFeedback()">
+              <input id="vcSearch" class="input" placeholder="🔍 ค้นหาข้อความ, หัวข้อ..." oninput="pageReset('feedback');vcRenderFeedback()">
+              <select id="vcStatus" class="select" style="max-width:170px" onchange="pageReset('feedback');vcRenderFeedback()">
                 <option value="">ทุกสถานะ</option><option>ใหม่</option><option>รับทราบ</option><option>ดำเนินการแล้ว</option><option>ปิดเรื่อง</option>
               </select>
             </div>
@@ -1361,7 +1396,7 @@
             <h3 class="card-title"><i class="fa-solid fa-table-list"></i> จุดตรวจทั้งหมด <span id="cpTotal" class="pill">0 จุด</span>
               <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="cpExport()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
               <button class="btn btn-soft btn-sm" type="button" onclick="cpLoadData()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
-            <input id="cpSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: สถานที่, ถนน, หัวหน้าชุด, ข้อหา..." oninput="cpRender()">
+            <input id="cpSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: สถานที่, ถนน, หัวหน้าชุด, ข้อหา..." oninput="pageReset('checkpoints');cpRender()">
             <div id="cpTable"><div class="loading-skeleton"></div></div>
           </div>
         </div>
@@ -4155,46 +4190,50 @@
         .forEach(b => b.classList.toggle('on', b.dataset.y === String(key)));
     }
 
-    // เลือกปี = วิเคราะห์ ณ 31 ธ.ค. ของปีนั้น ย้อนหลัง 12 เดือน จึงได้ทั้งปีพอดี
-    // ปีปัจจุบันใช้วันนี้เป็นวันสิ้นสุด เพราะอนาคตยังไม่มีข้อมูล
+    /* ปุ่มปีทำหน้าที่เดียว: เติมช่องวันที่สองช่องให้
+       ปีที่ผ่านมาแล้วได้ 1 ม.ค. ถึง 31 ธ.ค. ส่วนปีปัจจุบันสิ้นสุดที่วันนี้ เพราะอนาคตยังไม่มีข้อมูล */
     function bsSetYear(y) {
       const today = bkkStamp(new Date(), 'day');
       const nowYear = Number(bkkStamp(new Date(), 'year'));
+      let from, to;
       if (y === 'default') {
-        document.getElementById('bsAsOf').value = today;
-        state.bsWindowMonths = null;
+        // ล่าสุด = ย้อนหลังตามหน้าต่างที่ตั้งไว้ในแท็บตั้งค่าเกณฑ์
+        const s = new Date(today + 'T12:00:00+07:00');
+        s.setMonth(s.getMonth() - bsCfg().analysisMonths);
+        from = bkkStamp(s, 'day'); to = today;
       } else {
-        const end = Number(y) === nowYear ? today : y + '-12-31';
-        document.getElementById('bsAsOf').value = end;
-        state.bsWindowMonths = 12;
+        from = y + '-01-01';
+        to = Number(y) === nowYear ? today : y + '-12-31';
       }
-      document.getElementById('bsFrom').value = '';
-      document.getElementById('bsTo').value = '';
+      document.getElementById('bsFrom').value = from;
+      document.getElementById('bsTo').value = to;
       bsMarkYear(y);
       bsShowPeriod();
     }
 
-    // ช่วงกำหนดเอง: แปลงเป็นวันสิ้นสุด + จำนวนเดือนย้อนหลัง ให้เครื่องวิเคราะห์ใช้ได้เลย
-    function bsApplyRange() {
-      const from = valueOf('bsFrom'), to = valueOf('bsTo');
-      if (!from || !to) { Swal.fire({ icon:'warning', title:'กรุณาเลือกทั้งวันเริ่มต้นและวันสิ้นสุด' }); return; }
-      if (from > to) { Swal.fire({ icon:'warning', title:'วันเริ่มต้นอยู่หลังวันสิ้นสุด' }); return; }
+    // แก้วันที่เองแล้วปุ่มปีต้องเลิกไฮไลต์ ไม่งั้นจะเข้าใจผิดว่ายังเป็นช่วงของปีนั้น
+    function bsOnDateEdit() { bsMarkYear('__range__'); bsShowPeriod(); }
+
+    // ช่วงที่เลือกไว้ แปลงเป็นวันสิ้นสุด + จำนวนเดือนย้อนหลัง ให้เครื่องวิเคราะห์ใช้
+    function bsPeriod() {
+      const today = bkkStamp(new Date(), 'day');
+      let from = valueOf('bsFrom'), to = valueOf('bsTo') || today;
+      if (!from) {
+        const s = new Date(to + 'T12:00:00+07:00');
+        s.setMonth(s.getMonth() - bsCfg().analysisMonths);
+        from = bkkStamp(s, 'day');
+      }
+      if (from > to) { const t = from; from = to; to = t; }
       const days = Math.max(1, Math.round((new Date(to + 'T12:00:00+07:00') - new Date(from + 'T12:00:00+07:00')) / 86400000) + 1);
-      document.getElementById('bsAsOf').value = to;
-      state.bsWindowMonths = Math.max(1, Math.ceil(days / 30.44));
-      bsMarkYear('__range__');
-      bsShowPeriod();
+      return { from, to, months: Math.max(1, Math.ceil(days / 30.44)), days };
     }
 
     function bsShowPeriod() {
       const el = document.getElementById('bsPeriodInfo');
       if (!el) return;
-      const asOf = valueOf('bsAsOf') || bkkStamp(new Date(), 'day');
-      const months = state.bsWindowMonths || bsCfg().analysisMonths;
-      const start = new Date(asOf + 'T12:00:00+07:00');
-      start.setMonth(start.getMonth() - months);
-      el.textContent = 'ช่วงที่จะวิเคราะห์: ' + thaiDayLabel(bkkStamp(start, 'day')) + ' ถึง ' + thaiDayLabel(asOf) +
-        ' (ย้อนหลัง ' + months + ' เดือน)';
+      const p = bsPeriod();
+      el.textContent = 'ช่วงที่จะวิเคราะห์: ' + thaiDayLabel(p.from) + ' ถึง ' + thaiDayLabel(p.to) +
+        ' (' + p.days.toLocaleString('th-TH') + ' วัน)';
     }
     function thaiDayLabel(iso) {
       if (!iso) return '-';
@@ -5408,11 +5447,11 @@
 
     async function bsAnalyze(asOfDate) {
       const cfg = bsCfg();
-      const asOf = asOfDate ? new Date(asOfDate + 'T12:00:00+07:00') : new Date();
-      // ปุ่มปีหรือช่วงกำหนดเองทับความยาวหน้าต่างจากแท็บตั้งค่าเกณฑ์เฉพาะรอบนี้
-      // ไม่ได้แก้ค่าเกณฑ์ถาวร กดปุ่ม "ล่าสุด" ก็กลับไปใช้ค่าที่ตั้งไว้
-      const months = state.bsWindowMonths || cfg.analysisMonths;
-      const windowStart = new Date(asOf); windowStart.setMonth(windowStart.getMonth() - months);
+      // ช่วงมาจากช่องวันที่บนหน้าจอโดยตรง ไม่ต้องคำนวณจากหน้าต่างย้อนหลังอีกชั้น
+      // ที่เห็นในบรรทัดสรุปคือช่วงที่ใช้จริง ไม่มีการตีความซ้อน
+      const per = asOfDate ? { from:asOfDate.from, to:asOfDate.to } : bsPeriod();
+      const asOf = new Date(per.to + 'T23:59:59+07:00');
+      const windowStart = new Date(per.from + 'T00:00:00+07:00');
       const confirmStart = new Date(asOf); confirmStart.setMonth(confirmStart.getMonth() - cfg.confirmMonths);
       // เทียบเวลาด้วยตัวเลข ไม่ใช่สตริง ISO — Supabase คืน '+00:00' ส่วน toISOString() คืน 'Z'
       // ถ้าเทียบเป็นสตริงจะเพี้ยนตรงวินาทีที่ตรงขอบพอดี
@@ -5558,7 +5597,7 @@
         ['bsFeatSub','bsIncSub'].forEach(id => {
           document.getElementById(id).innerHTML = '<option value="">เลือกตำบล</option>' + subdistrictsFull.map(v => opt(v)).join('');
         });
-        document.getElementById('bsAsOf').value = bkkStamp(new Date(), 'day');
+        bsSetYear('default');   // เติมช่วงวันที่ตั้งต้นจากหน้าต่างที่ตั้งไว้
         document.getElementById('bsFeatFile').addEventListener('change', e => bsImportCsv(e, 'features'));
         document.getElementById('bsIncFile').addEventListener('change', e => bsImportCsv(e, 'incidents'));
         bsRenderSettingsForm();
@@ -5623,7 +5662,7 @@
     async function bsRun() {
       Swal.fire({ title:'กำลังวิเคราะห์...', text:'ดึงข้อมูลและจับกลุ่มเชิงพื้นที่', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
       try {
-        const draft = await bsAnalyze(valueOf('bsAsOf'));
+        const draft = await bsAnalyze();
         draft.saved = false;
         Swal.close();
         bsRenderResults();
@@ -6414,9 +6453,10 @@
       const rows = all.filter(f => (!st || f.status === st) &&
         (!q || [f.message, f.topic, f.contact].join(' ').toLowerCase().includes(q)));
       document.getElementById('vcFbTotal').textContent = rows.length + ' รายการ';
+      const pg = pageSlice('feedback', rows);
       document.getElementById('vcFeedback').innerHTML = !rows.length
         ? '<p class="hint" style="margin:0">ยังไม่มีความคิดเห็น</p>'
-        : rows.map(f => {
+        : pg.rows.map(f => {
             const st2 = f.status || 'ใหม่';
             const tone = st2 === 'ใหม่' ? '#c1122f' : st2 === 'ดำเนินการแล้ว' ? '#0ca30c' : '#5b6b7f';
             return '<div class="vc-fb">' +
@@ -6430,7 +6470,7 @@
               (f.admin_note ? '<p class="vc-fb-note"><b>บันทึก:</b> ' + escapeHtml(f.admin_note) + (f.handled_by ? ' — ' + escapeHtml(f.handled_by) : '') + '</p>' : '') +
               '<div class="vc-fb-actions"><button class="btn btn-soft btn-sm" type="button" onclick="vcHandle(' + f.id + ')"><i class="fa-solid fa-pen"></i> บันทึกผล</button></div>' +
             '</div>';
-          }).join('');
+          }).join('') + pageBar('feedback', pg, 'vcRenderFeedback');
     }
 
     async function vcHandle(id) {
@@ -6827,7 +6867,7 @@
        ระยะทางตามถนนคำนวณที่ฝั่ง Postgres ด้วย PostGIS (rn_locate)
        ฝั่งนี้ทำหน้าที่วาดแนวเส้นและจัดการข้อมูลอย่างเดียว
        ============================================================ */
-    const RN_PLACE_KINDS = ['โรงเรียน','สถานบันเทิง','ตลาด','โรงพยาบาล','วัด','สวนสาธารณะ','ห้างสรรพสินค้า','สถานที่ราชการ','โรงงาน','อื่นๆ'];
+    const RN_PLACE_KINDS = ['โรงเรียน','สถานบันเทิง','ร้านอาหาร','ตลาด','โรงพยาบาล','วัด','สวนสาธารณะ','ห้างสรรพสินค้า','สถานที่ราชการ','โรงงาน','อื่นๆ'];
     const RN_ROAD_COLS  = ['ชื่อถนน','รหัส/หมายเลข','ประเภททาง','ตำบล','อปท.','ในเขตเทศบาล','จุดเริ่มต้น','จุดสิ้นสุด','ระยะทาง(กม.)','ทิศทาง','เกาะกลาง','ช่องจราจร','จำกัดความเร็ว','จำนวนช่วง','หมายเหตุ'];
     const RN_SEG_COLS   = ['รหัสช่วง','ถนน','ลำดับ','เริ่ม(ม.)','ถึง(ม.)','ยาว(ม.)','ละติจูด','ลองจิจูด','อุบัติเหตุ','เสียชีวิต','เมาขับ','อุบัติเหตุ/กม.'];
     const RN_PLACE_COLS = ['ประเภท','ชื่อสถานที่','ถนน','ตำบล','ในเขตเทศบาล','ฝั่งถนน','ระดับเสี่ยง','ช่วงเวลาพลุกพล่าน','จำนวนนักเรียน','ละติจูด','ลองจิจูด','หมายเหตุ'];
@@ -6838,6 +6878,7 @@
         rnFillOptions('rnSubdistrict', subdistrictsFull);
         rnFillOptions('rnPlSubdistrict', subdistrictsFull);
         rnFillOptions('rnPlKind', RN_PLACE_KINDS);
+        document.getElementById('rnPlKind').addEventListener('change', rnApplyRiskLock);
         document.getElementById('rnPlaceImportFile').addEventListener('change', ev => rnImportPlaces(ev));
         ['rnRoadSearch','rnSegSearch','rnPlaceSearch'].forEach(id => {
           const el = document.getElementById(id); if (el) el.value = '';
@@ -7010,10 +7051,11 @@
       const rows = (state.rnRoads || []).filter(r => !q ||
         [r.name, r.code, r.subdistrict, r.highway_type].join(' ').toLowerCase().includes(q));
       document.getElementById('rnRoadTotal').textContent = rows.length + ' สาย';
+      const pg = pageSlice('roads', rows);
       document.getElementById('rnRoadTable').innerHTML = !rows.length
         ? '<p class="hint" style="margin:0">ยังไม่มีถนนในระบบ — วาดแนวกลางถนนด้านบนแล้วกดบันทึก</p>'
         : '<div class="table-wrap"><table class="data-table"><thead><tr><th>ถนน</th><th>ประเภท</th><th>ตำบล</th><th>ระยะทาง</th><th>ช่วง</th><th>เขต</th><th></th></tr></thead><tbody>' +
-          rows.map(r => '<tr><td><b>' + escapeHtml(r.name) + '</b>' + (r.code ? '<br><span class="hint">' + escapeHtml(r.code) + '</span>' : '') +
+          pg.rows.map(r => '<tr><td><b>' + escapeHtml(r.name) + '</b>' + (r.code ? '<br><span class="hint">' + escapeHtml(r.code) + '</span>' : '') +
             (r.start_name || r.end_name ? '<br><span class="hint">' + escapeHtml(r.start_name || '?') + ' → ' + escapeHtml(r.end_name || '?') + '</span>' : '') + '</td>' +
             '<td>' + escapeHtml(r.highway_type || '-') + '</td><td>' + escapeHtml(r.subdistrict || '-') + '</td>' +
             '<td><b>' + (r.length_km == null ? '-' : Number(r.length_km).toFixed(2)) + '</b> กม.</td>' +
@@ -7021,7 +7063,7 @@
             '<td>' + (r.in_municipality ? '<span class="pill">ในเขต</span>' : '<span class="pill">นอกเขต</span>') + '</td>' +
             '<td style="white-space:nowrap"><button class="btn btn-soft btn-sm" type="button" onclick="rnEditRoad(' + r.id + ')"><i class="fa-solid fa-pen"></i></button> ' +
             '<button class="btn btn-soft btn-sm" style="color:#c1122f" type="button" onclick="rnDeleteRoad(' + r.id + ')"><i class="fa-solid fa-trash"></i></button></td></tr>').join('') +
-          '</tbody></table></div>';
+          '</tbody></table></div>' + pageBar('roads', pg, 'rnRenderRoads');
     }
 
     /* ---------- ตัดช่วง / จับจุด / นับ ---------- */
@@ -7062,16 +7104,17 @@
         // เรียงจากช่วงที่อันตรายที่สุดลงมา: ตาย -> เมาขับ -> อุบัติเหตุต่อ กม.
         .sort((a, b) => b.fatal_count - a.fatal_count || b.drunk_count - a.drunk_count || b.perKm - a.perKm);
       document.getElementById('rnSegTotal').textContent = all.length + ' ช่วง';
+      const pg = pageSlice('segments', rows);
       document.getElementById('rnSegTable').innerHTML = !rows.length
         ? '<p class="hint" style="margin:0">ยังไม่มีช่วงถนน — กด “ตัดช่วงถนน” ด้านบน</p>'
         : '<div class="table-wrap"><table class="data-table"><thead><tr><th>รหัสช่วง</th><th>ถนน</th><th>ช่วง (ม.)</th><th>อุบัติเหตุ</th><th>เสียชีวิต</th><th>เมาขับ</th><th>ต่อ กม.</th></tr></thead><tbody>' +
-          rows.slice(0, 300).map(s => '<tr><td><b>' + escapeHtml(s.code) + '</b></td><td>' + escapeHtml(s.roadName) + '</td>' +
+          pg.rows.map(s => '<tr><td><b>' + escapeHtml(s.code) + '</b></td><td>' + escapeHtml(s.roadName) + '</td>' +
             '<td>' + Math.round(s.start_m) + '–' + Math.round(s.end_m) + '</td>' +
             '<td>' + s.acc_count + '</td>' +
             '<td>' + (s.fatal_count ? '<b style="color:#c1122f">' + s.fatal_count + '</b>' : '0') + '</td>' +
             '<td>' + (s.drunk_count ? '<b style="color:#c2410c">' + s.drunk_count + '</b>' : '0') + '</td>' +
             '<td><b>' + s.perKm.toFixed(1) + '</b></td></tr>').join('') +
-          '</tbody></table></div>' + (rows.length > 300 ? '<p class="hint">แสดง 300 ช่วงแรกจาก ' + rows.length + ' ช่วง — ใช้ช่องค้นหาเพื่อกรอง</p>' : '');
+          '</tbody></table></div>' + pageBar('segments', pg, 'rnRenderSegments');
     }
 
     function rnRenderSegMap() {
@@ -7131,7 +7174,9 @@
         road_id: valueOf('rnPlRoad'), subdistrict: valueOf('rnPlSubdistrict'),
         in_municipality: valueOf('rnPlInMuni') === 'true',
         latitude: c.lat, longitude: c.lng, side: valueOf('rnPlSide'),
-        risk_level: valueOf('rnPlRisk'), open_hours: valueOf('rnPlHours'),
+        // บังคับซ้ำตอนบันทึก ไม่พึ่งช่องที่ถูก disable อย่างเดียว
+        risk_level: RN_RISK_LOCK[valueOf('rnPlKind')] || valueOf('rnPlRisk'),
+        open_hours: valueOf('rnPlHours'),
         student_count: valueOf('rnPlStudents'), note: valueOf('rnPlNote')
       };
       try {
@@ -7151,6 +7196,8 @@
       set('rnPlKind', p.kind); set('rnPlName', p.name); set('rnPlRoad', p.road_id || '');
       set('rnPlSubdistrict', p.subdistrict); set('rnPlInMuni', String(!!p.in_municipality));
       set('rnPlSide', p.side); set('rnPlRisk', p.risk_level); set('rnPlHours', p.open_hours);
+      rnRenderHours();
+      rnApplyRiskLock();   // ประเภทที่ล็อกไว้ต้องล็อกตอนเปิดแก้ไขด้วย ไม่ใช่เฉพาะตอนเปลี่ยนประเภท
       set('rnPlStudents', p.student_count); set('rnPlNote', p.note);
       set('rnPlCoords', Number(p.latitude).toFixed(6) + ', ' + Number(p.longitude).toFixed(6));
       document.getElementById('rnPlaceFormTitle').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> แก้ไขสถานที่: ' + escapeHtml(p.name);
@@ -7176,6 +7223,9 @@
       ['rnPlRoad','rnPlSubdistrict','rnPlSide'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
       document.getElementById('rnPlInMuni').value = 'true';
       document.getElementById('rnPlRisk').value = 'ปกติ';
+      ['rnPlHFrom','rnPlHTo'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
+      rnRenderHours();
+      rnApplyRiskLock();   // ปลดล็อกช่องระดับเสี่ยงถ้าประเภทกลับเป็นอันที่เลือกได้
       document.getElementById('rnPlaceFormTitle').innerHTML = '<i class="fa-solid fa-map-pin"></i> เพิ่มสถานที่';
       document.getElementById('rnPlaceCancelBtn').style.display = 'none';
     }
@@ -7189,10 +7239,11 @@
         .filter(p => !q || [p.name, p.kind, p.roadName, p.subdistrict].join(' ').toLowerCase().includes(q))
         .sort((a, b) => (rank[a.risk_level] ?? 3) - (rank[b.risk_level] ?? 3) || String(a.kind).localeCompare(String(b.kind), 'th'));
       document.getElementById('rnPlaceTotal').textContent = rows.length + ' แห่ง';
+      const pg = pageSlice('places', rows);
       document.getElementById('rnPlaceTable').innerHTML = !rows.length
         ? '<p class="hint" style="margin:0">ยังไม่มีสถานที่ในระบบ</p>'
         : '<div class="table-wrap"><table class="data-table"><thead><tr><th>ประเภท</th><th>ชื่อ</th><th>ถนน</th><th>ตำบล</th><th>ความเสี่ยง</th><th>ช่วงเวลา</th><th></th></tr></thead><tbody>' +
-          rows.map(p => '<tr><td>' + escapeHtml(p.kind) + '</td><td><b>' + escapeHtml(p.name) + '</b>' +
+          pg.rows.map(p => '<tr><td>' + escapeHtml(p.kind) + '</td><td><b>' + escapeHtml(p.name) + '</b>' +
             (p.student_count ? '<br><span class="hint">นักเรียน ' + Number(p.student_count).toLocaleString('th-TH') + ' คน</span>' : '') + '</td>' +
             '<td>' + escapeHtml(p.roadName || '-') + '</td><td>' + escapeHtml(p.subdistrict || '-') + '</td>' +
             '<td>' + (p.risk_level === 'เสี่ยงสูง' ? '<span class="pill" style="background:#fee2e2;color:#991b1b">เสี่ยงสูง</span>'
@@ -7201,7 +7252,108 @@
             '<td>' + escapeHtml(p.open_hours || '-') + '</td>' +
             '<td style="white-space:nowrap"><button class="btn btn-soft btn-sm" type="button" onclick="rnEditPlace(' + p.id + ')"><i class="fa-solid fa-pen"></i></button> ' +
             '<button class="btn btn-soft btn-sm" style="color:#c1122f" type="button" onclick="rnDeletePlace(' + p.id + ')"><i class="fa-solid fa-trash"></i></button></td></tr>').join('') +
-          '</tbody></table></div>';
+          '</tbody></table></div>' + pageBar('places', pg, 'rnRenderPlaces');
+    }
+
+    /* ============================================================
+       แบ่งหน้าตาราง — ตัวเดียวใช้ทุกที่
+       ตารางยาว ๆ ทำให้หน้าเลื่อนไม่จบและมือถือค้าง จำกัดหน้าละ 10 รายการ
+       เก็บเลขหน้าไว้ใน state.pager ตาม key ของแต่ละตาราง
+       ถ้ากรองแล้วรายการเหลือน้อยกว่าหน้าที่ค้างอยู่ ให้ถอยกลับหน้าสุดท้ายที่มีจริง
+       ไม่งั้นจะเห็นตารางว่างทั้งที่มีข้อมูล
+       ============================================================ */
+    const PAGE_SIZE = 10;
+    function pageSlice(key, rows) {
+      state.pager = state.pager || {};
+      const total = rows.length;
+      const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      let p = Math.min(state.pager[key] || 1, pages);
+      if (p < 1) p = 1;
+      state.pager[key] = p;
+      return { rows: rows.slice((p - 1) * PAGE_SIZE, p * PAGE_SIZE), page: p, pages, total };
+    }
+    function pageBar(key, info, renderFn) {
+      if (info.pages <= 1) return '';
+      const from = (info.page - 1) * PAGE_SIZE + 1;
+      const to = Math.min(info.page * PAGE_SIZE, info.total);
+      const btn = (p, icon, disabled) =>
+        '<button type="button" class="pg-btn" ' + (disabled ? 'disabled' : '') +
+        ' onclick="pageGo(\'' + key + '\',' + p + ',' + renderFn + ')"><i class="fa-solid ' + icon + '"></i></button>';
+      return '<div class="pg-bar">' +
+        '<span class="pg-info">' + from + '–' + to + ' จาก ' + info.total.toLocaleString('th-TH') + ' รายการ</span>' +
+        btn(1, 'fa-angles-left', info.page === 1) +
+        btn(info.page - 1, 'fa-angle-left', info.page === 1) +
+        '<span class="pg-now">' + info.page + ' / ' + info.pages + '</span>' +
+        btn(info.page + 1, 'fa-angle-right', info.page === info.pages) +
+        btn(info.pages, 'fa-angles-right', info.page === info.pages) +
+        '</div>';
+    }
+    function pageGo(key, p, renderFn) {
+      state.pager = state.pager || {};
+      state.pager[key] = p;
+      if (typeof renderFn === 'function') renderFn();
+    }
+    // พิมพ์ค้นหาแล้วต้องกลับหน้า 1 ไม่งั้นค้างอยู่หน้า 5 ของผลลัพธ์ที่เหลือ 3 รายการ
+    function pageReset(key) { state.pager = state.pager || {}; state.pager[key] = 1; }
+    Object.assign(window, { pageGo, pageReset });
+
+    /* ช่วงเวลาที่คนพลุกพล่าน — เก็บเป็นรายการ แล้วรวมเป็นข้อความตอนบันทึก
+       รูปแบบคงที่ HH:MM-HH:MM เสมอ จะได้เอาไปเทียบกับช่วงเวลาเกิดเหตุได้ */
+    function rnHoursList() {
+      const v = valueOf('rnPlHours');
+      return v ? v.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
+    function rnRenderHours() {
+      document.getElementById('rnPlHourChips').innerHTML = rnHoursList().map((h, i) =>
+        '<button type="button" class="rn-hour-chip" onclick="rnRemoveHours(' + i + ')">' +
+        '<i class="rn-hour-x"></i>' + escapeHtml(h) + '</button>').join('');
+    }
+    function rnAddHours() {
+      const a = valueOf('rnPlHFrom'), b = valueOf('rnPlHTo');
+      if (!a || !b) { Swal.fire({ icon:'warning', title:'กรุณาเลือกทั้งเวลาเริ่มและเวลาสิ้นสุด' }); return; }
+      const list = rnHoursList();
+      const item = a + '-' + b;
+      if (list.includes(item)) { Swal.fire({ icon:'info', title:'ช่วงเวลานี้มีอยู่แล้ว' }); return; }
+      list.push(item);
+      // เรียงตามเวลาเริ่ม อ่านง่ายกว่าเรียงตามลำดับที่กด
+      list.sort();
+      document.getElementById('rnPlHours').value = list.join(', ');
+      document.getElementById('rnPlHFrom').value = '';
+      document.getElementById('rnPlHTo').value = '';
+      rnRenderHours();
+    }
+    function rnRemoveHours(i) {
+      const list = rnHoursList();
+      list.splice(i, 1);
+      document.getElementById('rnPlHours').value = list.join(', ');
+      rnRenderHours();
+    }
+
+    /* บางประเภทสถานที่มีระดับความเสี่ยงตายตัว ไม่ให้เลือกเอง
+       สถานบันเทิงคือต้นทางของเมาแล้วขับซึ่งเป็นเกณฑ์ข้อ 3 ทั้งข้อ
+       ร้านอาหารเสี่ยงรองลงมาเพราะมีทั้งที่ขายและไม่ขายเครื่องดื่มแอลกอฮอล์
+       ล็อกไว้เพื่อให้ทุกคนที่กรอกได้ผลเหมือนกัน ไม่ขึ้นกับดุลพินิจรายคน */
+    const RN_RISK_LOCK = { 'สถานบันเทิง':'เสี่ยงสูง', 'ร้านอาหาร':'เฝ้าระวัง' };
+    const RN_RISK_LEVELS = ['ปกติ','เฝ้าระวัง','เสี่ยงสูง'];
+    /* ล็อกด้วยการเหลือตัวเลือกเดียว ไม่ใช่ disabled
+       เพราะ valueOf() ของระบบคืนค่าว่างให้ช่องที่ disable (ตั้งใจให้ช่องปิดไม่ส่งค่า)
+       ถ้า disable ไว้ ค่าที่บังคับจะอ่านกลับไม่ได้ */
+    function rnApplyRiskLock() {
+      const kind = valueOf('rnPlKind');
+      const sel = document.getElementById('rnPlRisk');
+      const note = document.getElementById('rnPlRiskLock');
+      const forced = RN_RISK_LOCK[kind];
+      const opts = forced ? [forced] : RN_RISK_LEVELS;
+      const keep = sel.value;
+      sel.innerHTML = opts.map(v => '<option>' + escapeHtml(v) + '</option>').join('');
+      sel.value = forced || (opts.includes(keep) ? keep : 'ปกติ');
+      if (forced) {
+        note.style.display = 'block';
+        note.innerHTML = '<i class="fa-solid fa-lock"></i> ประเภท <b>' + escapeHtml(kind) + '</b> กำหนดเป็น <b>' +
+          forced + '</b> เสมอ' + (kind === 'สถานบันเทิง' ? ' — เป็นต้นทางของเมาแล้วขับ' : ' — บางแห่งขายเครื่องดื่มแอลกอฮอล์');
+      } else {
+        note.style.display = 'none';
+      }
     }
 
     function rnPickPlaceCoords() { bsPickCoords('rnPlCoords'); }
@@ -7444,10 +7596,11 @@
         [r.place, r.road_name, r.commander, r.subdistrict, r.kind, (r.arrests || []).map(a => a.charge).join(' ')]
           .join(' ').toLowerCase().includes(q));
       document.getElementById('cpTotal').textContent = rows.length + ' จุด';
+      const pg = pageSlice('checkpoints', rows);
       document.getElementById('cpTable').innerHTML = !rows.length
         ? '<p class="hint" style="margin:0">ยังไม่มีจุดตรวจในช่วงวันที่ที่เลือก</p>'
         : '<div class="table-wrap"><table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>สถานที่</th><th>เรียกตรวจ</th><th>เป่าวัด</th><th>ผู้ถูกจับ</th><th>ข้อหาที่พบ</th><th></th></tr></thead><tbody>' +
-          rows.map(r => {
+          pg.rows.map(r => {
             const byCharge = {};
             (r.arrests || []).forEach(a => byCharge[a.charge] = (byCharge[a.charge] || 0) + 1);
             const chips = Object.keys(byCharge).sort((a, b) => byCharge[b] - byCharge[a])
@@ -7461,7 +7614,7 @@
               '<td>' + (chips || '<span class="hint">-</span>') + '</td>' +
               '<td style="white-space:nowrap"><button class="btn btn-soft btn-sm" type="button" onclick="cpEdit(' + r.id + ')"><i class="fa-solid fa-pen"></i></button> ' +
               '<button class="btn btn-soft btn-sm" style="color:#c1122f" type="button" onclick="cpDelete(' + r.id + ')"><i class="fa-solid fa-trash"></i></button></td></tr>';
-          }).join('') + '</tbody></table></div>';
+          }).join('') + '</tbody></table></div>' + pageBar('checkpoints', pg, 'cpRender');
     }
 
     function cpRenderSummary() {
@@ -7555,12 +7708,13 @@
       initRoadnetPage, rnTab, rnLoadData, rnSaveRoad, rnEditRoad, rnDeleteRoad, rnResetRoadForm, rnRenderRoads,
       rnLineUndo, rnLineClear, rnResegment, rnSnapFeatures, rnRefreshCounts, rnRenderSegments, rnToggleTambon,
       rnSavePlace, rnEditPlace, rnDeletePlace, rnResetPlaceForm, rnRenderPlaces, rnPickPlaceCoords, rnUsePlaceGps,
+      rnAddHours, rnRemoveHours, rnApplyRiskLock,
       rnExportRoads, rnExportSegments, rnExportPlaces, rnExportGeoJson
     });
 
     Object.assign(window, {
       initBlackspotPage, bsTab, bsRun, bsSave, bsUnpublish, bsSampleTest, bsToggleLayer,
-      bsSetYear, bsApplyRange,
+      bsSetYear, bsOnDateEdit,
       bsRenderSites, bsLoadAdminData, bsSaveSettings, bsResetSettings,
       bsSaveFeature, bsEditFeature, bsDeleteFeature, bsResetFeatureForm, bsRenderFeatures,
       bsSaveIncident, bsEditIncident, bsDeleteIncident, bsResetIncidentForm, bsRenderIncidents,
