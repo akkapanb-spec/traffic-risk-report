@@ -1886,8 +1886,46 @@
     function increment(object, key){ const k = clean(key); if (!k || k === 'ไม่มี') return; object[k] = (object[k] || 0) + 1; }
     function topCounts(object, limit){ const result = {}; Object.keys(object||{}).filter(k => clean(k) !== '').sort((a,b) => Number(object[b]||0)-Number(object[a]||0)).slice(0, limit||7).forEach(k => result[k] = Number(object[k]||0)); return result; }
 
+    /* ผู้เสียชีวิตบางรายมีอยู่เฉพาะในทะเบียนผู้เสียชีวิต ไม่มีแถวอุบัติเหตุคู่กัน
+       ทั้งข้อมูลที่นำเข้าจากระบบเดิม และรายที่เสียชีวิตภายหลังที่โรงพยาบาลหลังปิดเคสไปแล้ว
+       ถ้าไม่ดึงมารวม กราฟอาการบาดเจ็บจะไม่มีแถบเสียชีวิตเลย ทั้งที่มีคนตายจริง
+
+       แต่เคสยุคใหม่ officer_save_accident แตกผู้เสียชีวิตลงตาราง deaths ให้อยู่แล้ว
+       บวกตรง ๆ จะนับคนเดียวกันสองรอบ จึงจับคู่ด้วยเวลาห่างไม่เกิน 2 นาที และระยะไม่เกิน 60 ม.
+       เกณฑ์เดียวกับที่เครื่องวิเคราะห์จุดเสี่ยงใช้ (bsDedupeDeaths)
+
+       จับคู่ระดับคน ไม่ใช่ระดับเหตุการณ์ เพราะเหตุเดียวอาจตายหลายราย
+       เคสที่บันทึกผู้เสียชีวิตไว้ 1 คน แต่ทะเบียนมี 2 แถว แปลว่ามีอีกรายที่เคสยังไม่ได้บันทึก */
+    function mergeDeathRegister(deathRows, accPts, startDate, endDate, distributions, matrix) {
+      (deathRows || []).forEach(d => {
+        // ต้องเช็คค่าว่างเองก่อน เพราะ new Date(null) ได้ปี 1970 ซึ่งผ่าน isNaN ไปได้
+        if (!d.incident_datetime) return;
+        const day = bkkStamp(d.incident_datetime, 'day');
+        if (!day) return;
+        if (startDate && day < startDate) return;
+        if (endDate && day > endDate) return;
+
+        const m = String(d.coordinates || '').match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+        const pt = m ? { lat:Number(m[1]), lng:Number(m[2]) } : null;
+        if (pt) {
+          // ยังเหลือโควตาอยู่แปลว่าเคสนั้นบันทึกผู้เสียชีวิตไว้แล้ว ข้ามแถวนี้ไป
+          const hit = accPts.find(a => a.matched < a.fatal &&
+            Math.abs(new Date(a.ts) - new Date(d.incident_datetime)) <= 120000 && bsHav(a, pt) <= 0.06);
+          if (hit) { hit.matched++; return; }
+        }
+
+        increment(distributions.injuries, 'เสียชีวิต');
+        const sKey = normalizeSafety(d.safety_equipment);
+        if (matrix[sKey]) matrix[sKey]['เสียชีวิต']++;
+      });
+    }
+
     async function computeDashboardData(startDate, endDate) {
       const rows = await fetchAccidents(true);
+      // ทะเบียนผู้เสียชีวิตอ่านแยก ล้มแล้วไม่ควรทำให้แดชบอร์ดทั้งหน้าล้ม
+      let deathRows = [];
+      try { deathRows = await fetchDeathsFull(); }
+      catch (e) { console.warn('อ่านทะเบียนผู้เสียชีวิตไม่ได้ กราฟอาการบาดเจ็บจะขาดผู้เสียชีวิตที่ไม่มีเคสคู่กัน:', e.message); }
       const dashboardYear = Number(bkkStamp(new Date(), 'year'));
       // ไม่ระบุช่วง = ปีปัจจุบันทั้งปี (พฤติกรรมเดิมของหน้า dashboard)
       if (!startDate && !endDate) { startDate = dashboardYear + '-01-01'; endDate = dashboardYear + '-12-31'; }
@@ -1917,6 +1955,9 @@
       };
       const safetyInjuryMatrix = {};
       safetyOptions.forEach(s => safetyInjuryMatrix[s] = zeroCounts(injuries));
+      // เก็บอุบัติเหตุที่อยู่ในช่วง พร้อมจำนวนผู้เสียชีวิตที่นับได้จากตัวเคสเอง
+      // ใช้จับคู่กับทะเบียนผู้เสียชีวิตทีหลัง จะได้ไม่นับคนเดียวกันสองรอบ
+      const inRangeAcc = [];
 
       rows.forEach(row => {
         const ym = bkkYearMonth(row.recorded_at || row.incident_datetime);
@@ -1946,7 +1987,9 @@
         increment(distributions.subdistricts, clean(row.subdistrict));
         increment(distributions.causes, normalizeCause(row.cause));
 
+        let fatalInRow = 0;
         personsFromRow(row).forEach(person => {
+          if (normalizeInjury(person.injury) === 'เสียชีวิต') fatalInRow++;
           increment(distributions.status, normalizePersonStatus(person.status));
           increment(distributions.genders, normalizeGender(person.gender));
           increment(distributions.licenses, normalizeLicense(person.license));
@@ -1968,7 +2011,14 @@
             else if (sKey === 'ไม่สวมหมวกนิรภัย') helmetAge[aKey].noWear++;
           }
         });
+
+        if (Number(row.latitude) && Number(row.longitude)) {
+          inRangeAcc.push({ lat:Number(row.latitude), lng:Number(row.longitude),
+                            ts:row.incident_datetime, fatal:fatalInRow, matched:0 });
+        }
       });
+
+      mergeDeathRegister(deathRows, inRangeAcc, startDate, endDate, distributions, safetyInjuryMatrix);
 
       distributions.roads = topCounts(distributions.roads, 7);
 
@@ -4290,9 +4340,9 @@
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-id-card"></i> ใบอนุญาตขับขี่</h3><div id="licenseCards" class="custom-visual"></div></div>' +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-car-side"></i> ยานพาหนะ</h3><div id="vehicleBars" class="custom-visual"></div><div class="dashboard-note">แผนภูมิแท่งสามมิติแนวตั้ง พร้อมลูกศรและสีใหม่</div></div>' +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-helmet-safety"></i> อุปกรณ์นิรภัย</h3><div id="safetyBars" class="custom-visual"></div><div class="dashboard-note">แยกร้อยละคนละกลุ่ม เพราะหมวกนิรภัยเป็นเรื่องของคนขี่จักรยานยนต์ ส่วนเข็มขัดเป็นเรื่องของคนใช้รถยนต์ — รวมเป็นตัวหารเดียวกันไม่ได้</div></div>' +
-            chartCardHtml('injuryChart', 'อาการบาดเจ็บ', 'fa-user-injured', 'เสียชีวิต/สาหัส/หมดสติ/เล็กน้อย/ไม่บาดเจ็บ') +
+            chartCardHtml('injuryChart', 'อาการบาดเจ็บ', 'fa-user-injured', 'เสียชีวิต/สาหัส/หมดสติ/เล็กน้อย/ไม่บาดเจ็บ · ผู้เสียชีวิตรวมรายที่มีเฉพาะในทะเบียนผู้เสียชีวิต ไม่มีเคสอุบัติเหตุคู่กัน โดยตัดรายที่ซ้ำกับเคสออกแล้ว') +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-person"></i> อวัยวะบาดเจ็บ</h3><div id="bodyPartFigure" class="custom-visual"></div></div>' +
-            chartCardHtml('relationChart', 'ความสัมพันธ์อุปกรณ์นิรภัยกับอาการบาดเจ็บ', 'fa-link', 'เลื่อนเมาส์ดูร้อยละ ซึ่งคิดจากคนในกลุ่มนั้น ไม่ใช่จากคนทั้งหมด — แต่ละกลุ่มมีคนไม่เท่ากัน จำนวนคนของกลุ่มบอกไว้ใต้ชื่อแกนแล้ว') +
+            chartCardHtml('relationChart', 'ความสัมพันธ์อุปกรณ์นิรภัยกับอาการบาดเจ็บ', 'fa-link', 'เลื่อนเมาส์ดูร้อยละ ซึ่งคิดจากคนในกลุ่มนั้น ไม่ใช่จากคนทั้งหมด — แต่ละกลุ่มมีคนไม่เท่ากัน จำนวนคนของกลุ่มบอกไว้ใต้ชื่อแกนแล้ว · รวมผู้เสียชีวิตจากทะเบียนที่ระบุอุปกรณ์นิรภัยไว้ด้วย') +
             chartCardHtml('roadChart', 'ถนนสูงสุด 7 ลำดับ', 'fa-road', 'เลือกเฉพาะถนนที่เกิดอุบัติเหตุสูงสุด 7 ลำดับ') +
             chartCardHtml('roadCharacterChart', 'ลักษณะทาง', 'fa-route', 'ทางตรง/ทางโค้ง/ทางแยก/ทางร่วม/จุดกลับรถ/สะพาน/ทางม้าลาย/อื่นๆ') +
             chartCardHtml('localAuthorityChart', 'อปท.', 'fa-city', 'เทศบาล / อบต.') +
