@@ -1917,6 +1917,9 @@
         increment(distributions.injuries, 'เสียชีวิต');
         const sKey = normalizeSafety(d.safety_equipment);
         if (matrix[sKey]) matrix[sKey]['เสียชีวิต']++;
+        // col_h คือช่องอวัยวะบาดเจ็บของทะเบียนผู้เสียชีวิต ไม่ได้ตั้งชื่อคอลัมน์ไว้ตอนนำเข้าจากระบบเดิม
+        // ปล่อยว่างไว้ก็ได้ increment ข้ามค่าว่างให้เอง จะได้ไม่มีแท่งไร้ชื่อโผล่มา
+        increment(distributions.bodyParts, normalizeBodyPart(d.col_h));
       });
     }
 
@@ -4341,7 +4344,7 @@
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-car-side"></i> ยานพาหนะ</h3><div id="vehicleBars" class="custom-visual"></div><div class="dashboard-note">แผนภูมิแท่งสามมิติแนวตั้ง พร้อมลูกศรและสีใหม่</div></div>' +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-helmet-safety"></i> อุปกรณ์นิรภัย</h3><div id="safetyBars" class="custom-visual"></div><div class="dashboard-note">แยกร้อยละคนละกลุ่ม เพราะหมวกนิรภัยเป็นเรื่องของคนขี่จักรยานยนต์ ส่วนเข็มขัดเป็นเรื่องของคนใช้รถยนต์ — รวมเป็นตัวหารเดียวกันไม่ได้</div></div>' +
             chartCardHtml('injuryChart', 'อาการบาดเจ็บ', 'fa-user-injured', 'เสียชีวิต/สาหัส/หมดสติ/เล็กน้อย/ไม่บาดเจ็บ · ผู้เสียชีวิตรวมรายที่มีเฉพาะในทะเบียนผู้เสียชีวิต ไม่มีเคสอุบัติเหตุคู่กัน โดยตัดรายที่ซ้ำกับเคสออกแล้ว') +
-            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-person"></i> อวัยวะบาดเจ็บ</h3><div id="bodyPartFigure" class="custom-visual"></div></div>' +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-person"></i> อวัยวะบาดเจ็บ</h3><div id="bodyPartFigure" class="custom-visual"></div><div class="dashboard-note">รวมผู้เสียชีวิตจากทะเบียนที่ระบุอวัยวะไว้ด้วย โดยตัดรายที่ซ้ำกับเคสออกแล้ว · ร้อยละหารด้วยทุกค่าที่มี รวม อื่นๆ ที่ไม่ได้วาดบนรูป</div></div>' +
             chartCardHtml('relationChart', 'ความสัมพันธ์อุปกรณ์นิรภัยกับอาการบาดเจ็บ', 'fa-link', 'เลื่อนเมาส์ดูร้อยละ ซึ่งคิดจากคนในกลุ่มนั้น ไม่ใช่จากคนทั้งหมด — แต่ละกลุ่มมีคนไม่เท่ากัน จำนวนคนของกลุ่มบอกไว้ใต้ชื่อแกนแล้ว · รวมผู้เสียชีวิตจากทะเบียนที่ระบุอุปกรณ์นิรภัยไว้ด้วย') +
             chartCardHtml('roadChart', 'ถนนสูงสุด 7 ลำดับ', 'fa-road', 'เลือกเฉพาะถนนที่เกิดอุบัติเหตุสูงสุด 7 ลำดับ') +
             chartCardHtml('roadCharacterChart', 'ลักษณะทาง', 'fa-route', 'ทางตรง/ทางโค้ง/ทางแยก/ทางร่วม/จุดกลับรถ/สะพาน/ทางม้าลาย/อื่นๆ') +
