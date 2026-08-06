@@ -295,7 +295,13 @@
 
     .chart-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.chart-card{min-height:360px}.chart-wrap{height:285px;position:relative}.chart-wide{grid-column:1/-1}.dashboard-detail-grid{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:16px;align-items:stretch}.dashboard-detail-grid .chart-card{min-height:330px}.age-tall{grid-row:span 2}.dashboard-full{grid-column:1/-1}.custom-visual{height:285px;overflow:auto}.pyramid-list{display:flex;flex-direction:column;gap:10px;padding:8px 2px}.pyramid-row{display:grid;grid-template-columns:55px 1fr 52px;align-items:center;gap:8px;font-size:.82rem}.pyramid-track{height:20px;border-radius:999px;background:#edf3fa;overflow:hidden;display:flex;justify-content:center}.pyramid-fill{height:100%;min-width:4px;border-radius:999px;background:linear-gradient(90deg,#c1122f,#1d4ed8);box-shadow:0 5px 12px rgba(29,78,216,.22)}.bar3d-list{display:grid;gap:11px;padding:8px 0}.bar3d-label{display:flex;justify-content:space-between;gap:8px;font-size:.8rem;font-weight:700;color:#34445a}.bar3d-track{height:18px;border-radius:6px;background:#eef4fb;position:relative;overflow:visible}.bar3d-fill{height:18px;border-radius:6px;background:linear-gradient(90deg,#123b7a,#f59e0b,#c1122f);box-shadow:6px 6px 0 rgba(15,23,42,.13);position:relative}.bar3d-fill:after{content:"";position:absolute;right:-12px;top:2px;border-left:13px solid #1d4ed8;border-top:7px solid transparent;border-bottom:7px solid transparent}.gender-cards,.license-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;height:285px;align-content:center}.gender-card,.license-card{border:1px solid #d8e5f2;border-radius:18px;padding:18px 12px;text-align:center;background:linear-gradient(180deg,#fff,#f7fbff);box-shadow:0 12px 25px rgba(22,44,77,.08)}.gender-card i{font-size:3rem}.gender-card.male i{color:#1d4ed8}.gender-card.female i{color:#db2777}.gender-card .num,.license-card .num{font-size:2rem;font-weight:900;color:#0f2a4a}.gender-card .label,.license-card .label{font-size:.82rem;color:var(--muted);font-weight:700}.license-icon{width:66px;height:44px;margin:0 auto 10px;border-radius:9px;background:linear-gradient(135deg,#e0f2fe,#dbeafe);border:2px solid #93c5fd;display:grid;place-items:center;color:#1d4ed8;font-size:1.5rem;box-shadow:4px 6px 0 rgba(29,78,216,.12)}.license-card.no .license-icon{background:linear-gradient(135deg,#fee2e2,#fff1f2);border-color:#fca5a5;color:#c1122f}.body-visual{height:285px;display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center}.human-parts{position:relative;width:105px;height:225px;margin:auto}.part-head{position:absolute;left:37px;top:6px;width:32px;height:32px;border-radius:50%;background:#c1122f}.part-torso{position:absolute;left:31px;top:45px;width:45px;height:78px;border-radius:18px 18px 10px 10px;background:#1d4ed8}.part-arm{position:absolute;left:8px;top:54px;width:90px;height:22px;border-radius:999px;background:#f59e0b}.part-leg{position:absolute;left:23px;top:126px;width:60px;height:82px;border-radius:12px;background:#16a34a}.part-multi{position:absolute;right:0;bottom:6px;width:30px;height:30px;border-radius:50%;background:#7c3aed;box-shadow:0 0 0 7px rgba(124,58,237,.12)}.body-legend{display:grid;gap:8px}.body-item{display:grid;grid-template-columns:12px 1fr 46px;align-items:center;gap:8px;font-size:.78rem}.body-color{width:12px;height:12px;border-radius:4px}.body-count{font-weight:900;text-align:right}.dashboard-note{font-size:.75rem;color:var(--muted);margin-top:8px}
     /* ร้อยละกำกับใต้จำนวนในการ์ดที่วาดเอง — เป็น block เพื่อไม่ต้องขยายคอลัมน์จนตัวเลขเบียดกัน */
-    .dash-pct{display:block;font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.01em;white-space:nowrap}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:15px}.data-table{width:100%;border-collapse:collapse;min-width:720px;background:#fff}.data-table th,.data-table td{padding:11px 12px;border-bottom:1px solid #e6edf5;text-align:left;font-size:.83rem;vertical-align:top}.data-table th{background:#eff5fc;color:#294361;position:sticky;top:0}.data-table tr:last-child td{border-bottom:0}
+    .dash-pct{display:block;font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.01em;white-space:nowrap}
+    /* อุปกรณ์นิรภัยแยกเป็นกลุ่ม แต่ละกลุ่มมีตัวหารของตัวเอง */
+    .safety-group{margin-bottom:14px}.safety-group:last-child{margin-bottom:0}
+    .safety-head{font-size:.78rem;font-weight:800;color:#0f2a4a;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:baseline}
+    .safety-head span{font-weight:600;font-size:.68rem;color:var(--muted)}
+    .bar3d-fill.danger{background:linear-gradient(90deg,#7f1d1d,#c1122f)}
+    .bar3d-fill.danger:after{border-left-color:#c1122f}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:15px}.data-table{width:100%;border-collapse:collapse;min-width:720px;background:#fff}.data-table th,.data-table td{padding:11px 12px;border-bottom:1px solid #e6edf5;text-align:left;font-size:.83rem;vertical-align:top}.data-table th{background:#eff5fc;color:#294361;position:sticky;top:0}.data-table tr:last-child td{border-bottom:0}
     .severity-badge{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:.74rem;font-weight:700;background:#eef2f7}.severity-badge.red{background:#fee2e2;color:#991b1b}.severity-badge.yellow{background:#fef9c3;color:#854d0e}.severity-badge.green{background:#dcfce7;color:#166534}
 
     .filter-bar{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}.legend{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0 15px;font-size:.8rem}.legend-item{display:flex;align-items:center;gap:6px}.dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}.dot.red{background:#dc2626}.dot.orange{background:#f97316}.dot.yellow{background:#facc15}.dot.green{background:#22c55e}.dot.gray{background:#64748b}
@@ -4283,7 +4289,7 @@
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-people-arrows"></i> อายุ <span class="card-sub">ปี</span></h3><div id="agePyramid" class="custom-visual"></div></div>' +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-id-card"></i> ใบอนุญาตขับขี่</h3><div id="licenseCards" class="custom-visual"></div></div>' +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-car-side"></i> ยานพาหนะ</h3><div id="vehicleBars" class="custom-visual"></div><div class="dashboard-note">แผนภูมิแท่งสามมิติแนวตั้ง พร้อมลูกศรและสีใหม่</div></div>' +
-            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-helmet-safety"></i> อุปกรณ์นิรภัย</h3><div id="safetyBars" class="custom-visual"></div><div class="dashboard-note">แท่งเชิงเดี่ยว 3 มิติ แนวนอน</div></div>' +
+            '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-helmet-safety"></i> อุปกรณ์นิรภัย</h3><div id="safetyBars" class="custom-visual"></div><div class="dashboard-note">แยกร้อยละคนละกลุ่ม เพราะหมวกนิรภัยเป็นเรื่องของคนขี่จักรยานยนต์ ส่วนเข็มขัดเป็นเรื่องของคนใช้รถยนต์ — รวมเป็นตัวหารเดียวกันไม่ได้</div></div>' +
             chartCardHtml('injuryChart', 'อาการบาดเจ็บ', 'fa-user-injured', 'เสียชีวิต/สาหัส/หมดสติ/เล็กน้อย/ไม่บาดเจ็บ') +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-person"></i> อวัยวะบาดเจ็บ</h3><div id="bodyPartFigure" class="custom-visual"></div></div>' +
             chartCardHtml('relationChart', 'ความสัมพันธ์อุปกรณ์นิรภัยกับอาการบาดเจ็บ', 'fa-link', 'เลื่อนเมาส์ดูร้อยละ ซึ่งคิดจากคนในกลุ่มนั้น ไม่ใช่จากคนทั้งหมด — แต่ละกลุ่มมีคนไม่เท่ากัน จำนวนคนของกลุ่มบอกไว้ใต้ชื่อแกนแล้ว') +
@@ -4345,7 +4351,7 @@
       renderAgePyramid('agePyramid', data.distributions.ageGroups);
       renderLicenseCards('licenseCards', data.distributions.licenses);
       renderVehicleVerticalBars('vehicleBars', data.distributions.vehicles);
-      renderBar3d('safetyBars', data.distributions.safety, true);
+      renderSafetyGroups('safetyBars', data.distributions.safety);
       createDistributionChart('injuryChart','bar',data.distributions.injuries);
       renderBodyPartFigure('bodyPartFigure', data.distributions.bodyParts);
       createDistributionChart('roadChart','bar',data.distributions.roads,true);
@@ -4378,16 +4384,45 @@
         return '<div class="pyramid-row"><b>' + escapeHtml(item[0]) + '</b><div class="pyramid-track"><div class="pyramid-fill" style="width:' + width + '%"></div></div><b>' + Number(item[1] || 0) + ' <span class="dash-pct">' + dashPct(item[1], total) + '</span></b></div>';
       }).join('') + '</div>';
     }
-    function renderBar3d(id, object) {
+    /* หมวกนิรภัยกับเข็มขัดนิรภัยเป็นคนละกลุ่มประชากร คนขี่จักรยานยนต์ กับ คนนั่งรถยนต์
+       เอามารวมเป็นตัวหารเดียวกันแล้วร้อยละไม่มีความหมาย เช่นถ้าปีไหนอุบัติเหตุรถยนต์เยอะขึ้น
+       สัดส่วนคนไม่สวมหมวกจะดูลดลงเองทั้งที่คนขี่จักรยานยนต์ไม่ได้สวมหมวกมากขึ้นเลย
+       จึงแยกเป็นสองกลุ่ม แต่ละกลุ่มหารด้วยคนในกลุ่มนั้นเอง */
+    const SAFETY_GROUPS = [
+      { title:'หมวกนิรภัย',   hint:'เฉพาะผู้ใช้รถจักรยานยนต์', bad:'ไม่สวมหมวกนิรภัย',   good:'สวมหมวกนิรภัย' },
+      { title:'เข็มขัดนิรภัย', hint:'เฉพาะผู้ใช้รถยนต์',        bad:'ไม่คาดเข็มขัดนิรภัย', good:'คาดเข็มขัดนิรภัย' }
+    ];
+    function renderSafetyGroups(id, object) {
       const container = document.getElementById(id);
       if (!container) return;
-      const entries = objectEntriesSorted(object, false);
-      const total = entries.reduce((a, item) => a + (Number(item[1]) || 0), 0);
-      const max = Math.max.apply(null, entries.map(function(item){ return Number(item[1] || 0); }).concat([1]));
-      container.innerHTML = '<div class="bar3d-list">' + entries.map(function(item) {
-        const width = Math.max(Number(item[1] || 0) ? 8 : 0, Math.round((Number(item[1] || 0) / max) * 92));
-        return '<div><div class="bar3d-label"><span>' + escapeHtml(item[0]) + '</span><b>' + Number(item[1] || 0) + ' <span class="dash-pct">' + dashPct(item[1], total) + '</span></b></div><div class="bar3d-track"><div class="bar3d-fill" style="width:' + width + '%"></div></div></div>';
-      }).join('') + '</div>';
+      const src = object || {};
+      const used = {};
+      const row = (label, n, total, danger) => {
+        const width = total ? Math.max(n ? 8 : 0, Math.round(n / total * 92)) : 0;
+        return '<div><div class="bar3d-label"><span>' + escapeHtml(label) + '</span><b>' + n +
+          ' <span class="dash-pct">' + dashPct(n, total) + '</span></b></div>' +
+          '<div class="bar3d-track"><div class="bar3d-fill' + (danger ? ' danger' : '') + '" style="width:' + width + '%"></div></div></div>';
+      };
+
+      let html = SAFETY_GROUPS.map(g => {
+        used[g.bad] = used[g.good] = true;
+        const bad = Number(src[g.bad] || 0), good = Number(src[g.good] || 0), total = bad + good;
+        return '<div class="safety-group"><div class="safety-head">' + escapeHtml(g.title) +
+          '<span>' + escapeHtml(g.hint) + ' · ' + total.toLocaleString('th-TH') + ' คน</span></div>' +
+          (total ? '<div class="bar3d-list">' + row(g.bad, bad, total, true) + row(g.good, good, total, false) + '</div>'
+                 : '<p class="hint" style="margin:0">ไม่มีข้อมูลในช่วงนี้</p>') + '</div>';
+      }).join('');
+
+      // ค่าที่ไม่เข้าสองกลุ่ม เช่น อื่นๆ หรือค่าที่กรอกไว้แบบเก่า บอกจำนวนไว้แต่ไม่ใส่ร้อยละ
+      // เพราะไม่รู้ว่าตัวหารควรเป็นอะไร ใส่ไปก็เป็นตัวเลขที่ตีความไม่ได้
+      const other = Object.entries(src).filter(([k, v]) => !used[k] && Number(v) > 0);
+      if (other.length) {
+        html += '<div class="safety-group"><div class="safety-head">อื่นๆ<span>ไม่ได้นับรวมในสองกลุ่มข้างบน</span></div>' +
+          '<div class="bar3d-list">' + other.map(([k, v]) =>
+            // ค่าว่างต้องมีป้ายกำกับ ไม่งั้นขึ้นเป็นตัวเลขลอย ๆ ที่ไม่รู้ว่าคืออะไร
+            '<div class="bar3d-label"><span>' + escapeHtml(k || '(ไม่ได้กรอก)') + '</span><b>' + Number(v) + '</b></div>').join('') + '</div></div>';
+      }
+      container.innerHTML = html;
     }
     function renderVehicleVerticalBars(id, object) {
       const container = document.getElementById(id);
