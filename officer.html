@@ -1593,6 +1593,9 @@
         h:'ให้ลากไฟล์ <b>sql/blackspot_3_rpc.sql</b> แล้วตามด้วย <b>sql/blackspot_4_publish.sql</b> ' +
           'ไปวางใน Supabase SQL Editor แล้วกด Run<br><span style="font-size:.8rem;color:#5b6b7f">' +
           'รันทับได้ปลอดภัย ข้อมูลในตารางไม่หาย · แก้ไฟล์อย่างเดียวไม่พอ ต้องรันทับฐานข้อมูลด้วย</span>' },
+      { m:/acc_cause_quality|acc_cause_save|acc_cause_detail|acc_cause_list/i,
+        t:'ยังไม่ได้ติดตั้งส่วนคุณภาพข้อมูลสาเหตุ',
+        h:'ให้ลากไฟล์ <b>sql/cause_quality.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run' },
       { m:/cam_list|cam_save|cam_delete|cam_sources/i,
         t:'ยังไม่ได้ติดตั้งระบบกล้องวงจรปิด',
         h:'ให้ลากไฟล์ <b>sql/camera_1_tables.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run<br>' +
@@ -3854,6 +3857,7 @@
       openPage('accident', document.querySelector('[data-page="accident"]'));
       resetAccidentForm();
       state.editingAccident = row;
+      cqLoadForCase(row.accident_code);   // เติมหลักฐาน/ข้อหาที่เคยบันทึกไว้กลับเข้าฟอร์ม
       const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v == null ? '' : v; };
 
       set('occurredAt', bkkDatetimeLocal(row.incident_datetime));
@@ -4290,8 +4294,11 @@
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-clock"></i> สัดส่วนผู้ไม่สวมหมวกนิรภัย ตามช่วงเวลา</h3><div class="chart-wrap"><canvas id="helmetTimeChart"></canvas></div><div class="dashboard-note">แสดงเป็นร้อยละ ไม่ใช่จำนวนดิบ เพราะช่วงที่เกิดเหตุเยอะจะสูงทั้งสองฝั่งจนดูไม่ออกว่าช่วงไหนแย่กว่า · เลื่อนเมาส์ดูจำนวนจริง</div></div>' +
             '<div class="card chart-card"><h3 class="card-title"><i class="fa-solid fa-users"></i> สัดส่วนผู้ไม่สวมหมวกนิรภัย ตามช่วงอายุ</h3><div class="custom-visual" id="helmetAge"></div></div>' +
           '</div>' +
+          '<div class="card" style="margin-top:16px"><h3 class="card-title"><i class="fa-solid fa-scale-balanced"></i> คุณภาพข้อมูลสาเหตุ — สันนิษฐาน เทียบกับ ข้อหาที่แจ้งจริง</h3>' +
+            '<div id="cqQualityBox"><div class="loading-skeleton"></div></div></div>' +
           '<div class="card dashboard-recent-card" style="margin-top:16px"><h3 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> รายการล่าสุด</h3>' + recentTable(result.recent) + '</div>';
         renderDashboardCharts(result);
+        cqLoadQuality(sEl.value, eEl.value);   // อิสระจากแดชบอร์ด ล้มแล้วไม่ควรทำให้ทั้งหน้าล้ม
       } catch (error) {
         container.innerHTML = errorBlock(error.message, 'loadDashboard()');
       }
@@ -7248,6 +7255,19 @@
       }
       cqUpdateState();
     }
+    // cqFill มีมาตั้งแต่แรกแต่ไม่เคยมีใครเรียก เปิดเคสเก่ามาแก้จึงเห็นชิปว่างทุกครั้ง
+    // ทั้งที่เคยกรอกไว้ แล้วก็ถอนข้อหาที่ใส่ผิดไม่ได้เลยเพราะไม่รู้ว่ามีอะไรอยู่
+    async function cqLoadForCase(code) {
+      if (!code) return;
+      try {
+        const res = await rpc('acc_cause_list', { p_token: state.token, p_codes: [code] });
+        const row = res && res.success && res.rows && res.rows[code];
+        if (row) cqFill(row);
+      } catch (e) {
+        console.warn('ยังอ่านรายละเอียดสาเหตุไม่ได้ (อาจยังไม่ได้รัน sql/cause_quality.sql):', e.message);
+      }
+    }
+
     // บันทึกแยกจาก officer_save_accident เพื่อไม่ต้องแตะฟังก์ชันที่แตกข้อมูลตาย/เจ็บ
     // ถ้าตารางยังไม่ถูกสร้าง ให้เงียบไป ไม่ขวางการบันทึกเคสหลักซึ่งสำคัญกว่า
     async function cqSave(code) {
@@ -7255,6 +7275,80 @@
       if (!row.evidence.length && !row.charges.length && !row.no_charge) return;
       try { await rpc('acc_cause_save', { p_token: state.token, p_code: code, p_row: row }); }
       catch (e) { console.warn('ยังบันทึกรายละเอียดสาเหตุไม่ได้ (อาจยังไม่ได้รัน sql/cause_quality.sql):', e.message); }
+    }
+
+    // ============ รายงานคุณภาพข้อมูลสาเหตุ ============
+    // ช่องว่างระหว่าง "สันนิษฐานว่าเป็นสาเหตุ" กับ "แจ้งข้อหานั้นจริง" คือตัวชี้วัดว่าสถิติสาเหตุเชื่อได้แค่ไหน
+    // สาเหตุที่ถูกเลือกบ่อยแต่แทบไม่เคยถูกแจ้งเป็นข้อหา แปลว่าคนกรอกเลือกไปตามความเคยชิน ไม่ได้ดูจากหลักฐาน
+    async function cqLoadQuality(from, to) {
+      const box = document.getElementById('cqQualityBox');
+      if (!box) return;
+      try {
+        const res = await rpc('acc_cause_quality', { p_token: state.token, p_from: from || null, p_to: to || null });
+        if (!res || !res.success) throw new Error((res && res.message) || 'โหลดไม่สำเร็จ');
+        cqRenderQuality(res);
+      } catch (e) {
+        box.innerHTML = e.friendly
+          ? '<p class="hint" style="margin:0"><i class="fa-solid fa-triangle-exclamation" style="color:#c2410c"></i> <b>' +
+            escapeHtml(e.friendly.title) + '</b><br>' + e.friendly.html + '</p>'
+          : '<p class="hint" style="margin:0">' + escapeHtml(e.message) + '</p>';
+      }
+    }
+
+    function cqRenderQuality(res) {
+      const box = document.getElementById('cqQualityBox');
+      const total = Number(res.total) || 0;
+      const detailed = Number(res.detailed) || 0;
+      const gap = (res.gap || []).filter(g => Number(g.presumed) > 0);
+      const pct = (n, d) => d > 0 ? Math.round(n / d * 100) : 0;
+
+      let html = '<div class="filter-bar" style="margin-bottom:12px">' +
+        '<span class="pill">เคสทั้งหมด ' + total.toLocaleString('th-TH') + '</span>' +
+        '<span class="pill" style="background:' + (pct(detailed, total) >= 50 ? '#e7f6ee;color:#0f6e56' : '#fdecec;color:#a32d2d') + '">' +
+          'กรอกรายละเอียดสาเหตุแล้ว ' + detailed.toLocaleString('th-TH') + ' (' + pct(detailed, total) + '%)</span>' +
+        Object.entries(res.byConfidence || {}).map(([k, v]) =>
+          '<span class="pill">' + escapeHtml(k) + ' ' + Number(v).toLocaleString('th-TH') + '</span>').join('') +
+        '</div>';
+
+      if (detailed === 0) {
+        html += '<p class="hint" style="margin:0"><i class="fa-solid fa-circle-info"></i> ยังไม่มีเคสไหนกรอกหลักฐานหรือข้อหาไว้ ตารางเทียบจึงยังว่าง' +
+          '<br><span style="font-size:.82rem">กรอกได้ตอนบันทึกเคส ที่แถบ <b>หลักฐานและข้อหา</b> ในหน้าบันทึกข้อมูลอุบัติเหตุ</span></p>';
+        box.innerHTML = html;
+        return;
+      }
+
+      html += '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+        '<th>สาเหตุที่บันทึก</th><th style="text-align:right">สันนิษฐาน</th>' +
+        '<th style="text-align:right">แจ้งข้อหาตรงกัน</th><th style="text-align:right">มีหลักฐาน</th>' +
+        '<th style="min-width:150px">ช่องว่าง</th></tr></thead><tbody>' +
+        gap.map(g => {
+          const presumed = Number(g.presumed) || 0, charged = Number(g.charged) || 0;
+          const rate = pct(charged, presumed);
+          // แถบยาวตามสัดส่วนที่แจ้งข้อหาจริง สั้นมาก = สาเหตุนี้เขียนไว้แต่ไม่เคยเอาไปใช้ทางคดี
+          const col = rate >= 50 ? '#1d9e75' : rate >= 20 ? '#ba7517' : '#c1122f';
+          return '<tr>' +
+            '<td><b>' + escapeHtml(g.cause) + '</b></td>' +
+            '<td style="text-align:right">' + presumed.toLocaleString('th-TH') + '</td>' +
+            '<td style="text-align:right;color:' + col + ';font-weight:700">' + charged.toLocaleString('th-TH') + '</td>' +
+            '<td style="text-align:right">' + Number(g.evidenced || 0).toLocaleString('th-TH') + '</td>' +
+            '<td><div style="display:flex;align-items:center;gap:7px">' +
+              '<div style="flex:1;min-width:0;height:9px;border-radius:99px;background:#eef1f5;overflow:hidden">' +
+                '<div style="width:' + rate + '%;height:100%;background:' + col + '"></div></div>' +
+              '<span style="font-size:.76rem;font-weight:700;color:' + col + ';white-space:nowrap">' + rate + '%</span>' +
+            '</div></td></tr>';
+        }).join('') + '</tbody></table></div>';
+
+      // สรุปเป็นประโยคเดียว เพราะตารางอย่างเดียวยังต้องตีความเอง
+      const worst = gap.filter(g => Number(g.presumed) >= 5)
+        .sort((a, b) => pct(a.charged, a.presumed) - pct(b.charged, b.presumed))[0];
+      html += '<div class="dashboard-note" style="margin-top:10px"><i class="fa-solid fa-circle-info"></i> ' +
+        'ช่องว่างกว้างไม่ได้แปลว่าบันทึกผิดเสมอไป หลายเรื่องไม่ได้แจ้งข้อหาเพราะยอมความหรือไม่มีคู่กรณี ' +
+        'แต่<b>สาเหตุที่ถูกเลือกบ่อยมากและแทบไม่เคยถูกแจ้งเป็นข้อหาเลย</b> คือสัญญาณว่ากรอกไปตามความเคยชิน' +
+        (worst ? '<br>ในช่วงนี้ที่ห่างที่สุดคือ <b>' + escapeHtml(worst.cause) + '</b> — สันนิษฐาน ' +
+          Number(worst.presumed).toLocaleString('th-TH') + ' ครั้ง แจ้งข้อหาตรงกัน ' +
+          Number(worst.charged).toLocaleString('th-TH') + ' ครั้ง (' + pct(worst.charged, worst.presumed) + '%)' : '') +
+        '</div>';
+      box.innerHTML = html;
     }
 
     Object.assign(window, { cqToggle, cqUpdateState });
