@@ -1419,7 +1419,7 @@
 
               <div class="field span-12">
                 <label>ผลการดำเนินการ — รายละเอียดผู้ถูกจับ <span class="pill" id="cpArrestCount">0 รายการ</span></label>
-                <p class="hint" style="margin:0 0 8px">คนเดียวโดนหลายข้อหาให้เพิ่มหลายแถว แล้วใส่ “รหัสอ้างอิงคน” ให้ตรงกัน ระบบจะนับเป็นคนเดียว</p>
+                <p class="hint" style="margin:0 0 8px">คนเดียวโดนหลายข้อหาให้เพิ่มหลายแถว — <b>หนึ่งแถวคือหนึ่งข้อหา</b> และระบบจะนับเป็นคนละราย</p>
                 <div id="cpArrestRows"></div>
                 <button class="btn btn-soft btn-sm" type="button" style="margin-top:8px" onclick="cpAddArrest()"><i class="fa-solid fa-plus"></i> เพิ่มรายการผู้ถูกจับ</button>
               </div>
@@ -8044,7 +8044,6 @@
        จุดตรวจกวดขันวินัยจราจร และชุดตรวจวัดแอลกอฮอล์
        วันที่เก็บเป็น ค.ศ. ตามทั้งระบบ แสดงผลเป็น พ.ศ. เท่านั้น
        ============================================================ */
-    const CP_VEHICLES = ['จักรยานยนต์','รถยนต์เก๋ง','รถยนต์กระบะ','รถตู้','รถบรรทุก 6 ล้อขึ้นไป','รถบรรทุกพ่วง/เทรลเลอร์','อื่นๆ'];
     const CP_COLS = ['ประเภทจุดตรวจ','วันที่ (พ.ศ.)','เวลาเริ่ม','เวลาสิ้นสุด','สถานที่','ถนน','ตำบล','ในเขตเทศบาล',
       'ละติจูด','ลองจิจูด','หัวหน้าชุด','กำลังพล','เรียกตรวจ(คัน)','เป่าวัด(ราย)','ผู้ถูกจับ(คน)','ข้อหาที่พบ','หมายเหตุ'];
 
@@ -8081,12 +8080,9 @@
       const div = document.createElement('div');
       div.className = 'cp-arrest';
       div.innerHTML =
-        '<label>รหัสอ้างอิงคน<input class="input cp-ref" maxlength="20" placeholder="เช่น A1" value="' + escapeHtml(d.person_ref || '') + '"></label>' +
         '<label>เพศ<select class="select cp-gender"><option value="">-</option>' +
           ['ชาย','หญิง'].map(g => '<option' + (d.gender === g ? ' selected' : '') + '>' + g + '</option>').join('') + '</select></label>' +
         '<label>อายุ<input class="input cp-age" type="number" min="0" max="120" inputmode="numeric" value="' + (d.age == null ? '' : d.age) + '"></label>' +
-        '<label>ยานพาหนะ<select class="select cp-veh"><option value="">-</option>' +
-          CP_VEHICLES.map(v => '<option' + (d.vehicle === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></label>' +
         '<label>ข้อหา<select class="select cp-charge">' +
           charges.map(c => '<option value="' + escapeHtml(c.name) + '"' + (d.charge === c.name ? ' selected' : '') + '>' + escapeHtml(c.name) + '</option>').join('') +
           '<option value="__other"' + (d.charge && !charges.some(c => c.name === d.charge) ? ' selected' : '') + '>อื่นๆ ระบุเอง...</option></select></label>' +
@@ -8110,8 +8106,9 @@
       return [...document.querySelectorAll('#cpArrestRows .cp-arrest')].map(r => {
         const sel = r.querySelector('.cp-charge').value;
         const charge = sel === '__other' ? r.querySelector('.cp-other').value.trim() : sel;
-        return { person_ref: r.querySelector('.cp-ref').value.trim(), gender: r.querySelector('.cp-gender').value,
-          age: r.querySelector('.cp-age').value, vehicle: r.querySelector('.cp-veh').value,
+        // ไม่ส่ง person_ref กับ vehicle แล้ว คอลัมน์ยังอยู่ในตารางเพื่อเก็บของเก่าไว้
+        return { gender: r.querySelector('.cp-gender').value,
+          age: r.querySelector('.cp-age').value,
           charge, alcohol_mg: r.querySelector('.cp-mg').value };
       }).filter(a => a.charge);
     }
