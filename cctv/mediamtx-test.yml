@@ -58,8 +58,10 @@ paths:
 
   cam1_wide:
     source: rtsp://ชื่อผู้ใช้:รหัสผ่าน@192.168.1.153:554/stream2
+    rtspTransport: tcp        # ดึงผ่าน TCP ไม่ใช่ UDP ที่เป็นค่าเริ่มต้น เพราะ UDP ทำแพ็กเก็ตหายจนภาพ H264 แตก
     sourceOnDemand: yes
 
   cam1_zoom:
     source: rtsp://ชื่อผู้ใช้:รหัสผ่าน@192.168.1.153:554/stream7
+    rtspTransport: tcp        # ดึงผ่าน TCP ไม่ใช่ UDP ที่เป็นค่าเริ่มต้น เพราะ UDP ทำแพ็กเก็ตหายจนภาพ H264 แตก
     sourceOnDemand: yes
