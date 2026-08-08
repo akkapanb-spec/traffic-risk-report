@@ -178,6 +178,20 @@
     /* รายละเอียดข้อหาที่เลือก แสดงใต้ช่องเพื่อยืนยันว่าเลือกถูกตัว */
     .cp-charge-info{font-size:.72rem;color:#5b6b7f;font-weight:600;margin-top:5px;min-height:1em}
     .cp-charge-info.warn{color:#c2410c}
+    /* ค้นหาข้อหา — datalist ของเบราว์เซอร์จำกัดจำนวนที่แสดงและค้นจากต้นคำ ใช้กับ 561 ข้อหาไม่ได้ */
+    .cp-ac-wrap{position:relative}
+    .cp-ac{position:absolute;z-index:60;left:0;right:0;top:100%;margin-top:4px;background:#fff;
+      border:1px solid #cfdcec;border-radius:13px;box-shadow:0 16px 38px rgba(23,52,88,.2);
+      max-height:330px;overflow:auto;display:none}
+    .cp-ac.open{display:block}
+    .cp-ac-head{position:sticky;top:0;background:#f2f7ff;padding:7px 11px;font-size:.7rem;font-weight:800;
+      color:#33475f;border-bottom:1px solid #e2ecf8}
+    .cp-ac-item{padding:9px 11px;cursor:pointer;border-bottom:1px solid #f2f6fa;font-size:.8rem;line-height:1.5}
+    .cp-ac-item:last-child{border-bottom:0}
+    .cp-ac-item:hover,.cp-ac-item.sel{background:#eaf2ff}
+    .cp-ac-item mark{background:#fde68a;color:#7c3a00;padding:0 1px;border-radius:2px}
+    .cp-ac-meta{display:block;font-size:.68rem;color:#5b6b7f;font-weight:700;margin-top:3px}
+    .cp-ac-empty{padding:13px 11px;font-size:.78rem;color:#5b6b7f}
     .cq-nocharge{display:flex;align-items:center;gap:7px;margin-top:9px;font-size:.74rem;color:#5b6b7f;cursor:pointer}
     .cq-nocharge input{width:auto!important;min-height:0!important;margin:0}
     /* ---- กราฟหมวกนิรภัย ---- */
@@ -1427,7 +1441,6 @@
                 <p class="hint" style="margin:0 0 8px" id="cpArrestHint"></p>
                 <div id="cpArrestRows"></div>
                 <button class="btn btn-soft btn-sm" type="button" style="margin-top:8px" onclick="cpAddArrest()"><i class="fa-solid fa-plus"></i> เพิ่มรายการผู้ถูกจับ</button>
-                <datalist id="cpChargeList"></datalist>
               </div>
 
               <div class="field span-12" style="display:flex;gap:10px;flex-wrap:wrap">
@@ -8129,15 +8142,90 @@
       });
     }
 
+    // ข้อหาที่ใช้บ่อยขึ้นก่อน ที่เหลือเรียงตามลำดับใน PTM — เรียงครั้งเดียวตอนโหลด
     function cpFillChargeList() {
-      const dl = document.getElementById('cpChargeList');
-      if (!dl) return;
-      const charges = state.cpCharges || [];
-      // ข้อหาที่ใช้บ่อยขึ้นก่อน ที่เหลือเรียงตามลำดับใน PTM
-      // 561 ข้อหาเลื่อนหาทีละอันไม่ไหว ช่องนี้จึงเป็นแบบพิมพ์แล้วกรอง
-      const sorted = charges.slice().sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0));
-      dl.innerHTML = sorted.map(c =>
-        '<option value="' + escapeHtml(c.name) + '">' + escapeHtml([c.code, c.section].filter(Boolean).join(' · ')) + '</option>').join('');
+      state.cpCharges = (state.cpCharges || []).slice()
+        .sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0));
+    }
+
+    /* ค้นหาข้อหาจากคำที่พิมพ์
+       datalist ของเบราว์เซอร์ใช้กับรายการขนาดนี้ไม่ได้ — Chrome จำกัดจำนวนที่แสดง
+       และบางเบราว์เซอร์เทียบจากต้นข้อความ ซึ่งชื่อข้อหาไทยขึ้นต้นซ้ำกันเป็นสิบ ๆ อัน
+       ตัวนี้เทียบแบบมีคำนั้นอยู่ที่ไหนก็ได้ พิมพ์หลายคำคั่นเว้นวรรคจะต้องเจอครบทุกคำ */
+    const cpEscRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    function cpChargeMatches(q) {
+      const all = state.cpCharges || [];
+      const terms = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      if (!terms.length) return all.slice();
+      return all.filter(c => {
+        const hay = (c.name + ' ' + (c.code || '') + ' ' + (c.section || '')).toLowerCase();
+        return terms.every(t => hay.includes(t));
+      });
+    }
+
+    function cpHighlight(text, q) {
+      let out = escapeHtml(text);
+      q.trim().split(/\s+/).filter(Boolean).forEach(t => {
+        out = out.replace(new RegExp('(' + cpEscRe(escapeHtml(t)) + ')', 'gi'), '<mark>$1</mark>');
+      });
+      return out;
+    }
+
+    function cpBindChargeSearch(row, input, onPick) {
+      const box = row.querySelector('.cp-ac');
+      let items = [], cursor = -1;
+
+      const close = () => { box.classList.remove('open'); cursor = -1; };
+      const pick = i => {
+        if (!items[i]) return;
+        input.value = items[i].name;
+        close(); onPick();
+      };
+      const mark = () => {
+        [...box.querySelectorAll('.cp-ac-item')].forEach((el, i) => el.classList.toggle('sel', i === cursor));
+        const sel = box.querySelector('.cp-ac-item.sel');
+        if (sel) sel.scrollIntoView({ block: 'nearest' });
+      };
+      const open = () => {
+        const q = input.value;
+        items = cpChargeMatches(q);
+        if (!(state.cpCharges || []).length) {
+          box.innerHTML = '<div class="cp-ac-empty">ยังไม่ได้รันไฟล์ <b>sql/checkpoint_3_ptm_charges.sql</b> จึงยังไม่มีรายการข้อหา</div>';
+          box.classList.add('open'); return;
+        }
+        if (!items.length) {
+          box.innerHTML = '<div class="cp-ac-empty">ไม่พบข้อหาที่มีคำว่า “' + escapeHtml(q.trim()) + '”<br>' +
+            'กดออกจากช่องได้เลยถ้าต้องการบันทึกเป็นข้อความที่พิมพ์เอง</div>';
+          box.classList.add('open'); return;
+        }
+        box.innerHTML = '<div class="cp-ac-head">พบ ' + items.length.toLocaleString('th-TH') + ' ข้อหา' +
+            (q.trim() ? '' : ' — พิมพ์คำเพื่อกรองให้แคบลง') + '</div>' +
+          items.map((c, i) =>
+            '<div class="cp-ac-item" data-i="' + i + '">' + cpHighlight(c.name, q) +
+              '<span class="cp-ac-meta">' + escapeHtml([c.code, c.section,
+                c.fine != null ? 'ปรับ ' + Number(c.fine).toLocaleString('th-TH') + ' บาท' : ''
+              ].filter(Boolean).join(' · ') || 'ไม่มีรหัส/ค่าปรับในไฟล์ PTM') + '</span></div>').join('');
+        box.classList.add('open');
+        cursor = -1;
+      };
+
+      input.addEventListener('input', () => { open(); onPick(); });
+      input.addEventListener('focus', open);
+      // mousedown ไม่ใช่ click เพราะ blur ของช่องจะปิดกล่องไปก่อนที่ click จะทำงาน
+      box.addEventListener('mousedown', e => {
+        const it = e.target.closest('.cp-ac-item');
+        if (!it) return;
+        e.preventDefault(); pick(Number(it.dataset.i));
+      });
+      input.addEventListener('blur', () => setTimeout(close, 120));
+      input.addEventListener('keydown', e => {
+        if (!box.classList.contains('open')) { if (e.key === 'ArrowDown') open(); return; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); cursor = Math.min(items.length - 1, cursor + 1); mark(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); cursor = Math.max(0, cursor - 1); mark(); }
+        else if (e.key === 'Enter' && cursor >= 0) { e.preventDefault(); pick(cursor); }
+        else if (e.key === 'Escape') close();
+      });
     }
 
     function cpAddArrest(data) {
@@ -8148,7 +8236,10 @@
       const ages = Array.isArray(d.ages) ? d.ages : (d.age == null || d.age === '' ? [] : [d.age]);
       div.innerHTML =
         '<label class="span-6" style="grid-column:1/-1">ข้อหา' +
-          '<input class="input cp-charge" list="cpChargeList" maxlength="300" placeholder="พิมพ์คำในข้อหาเพื่อค้นหา เช่น หมวก, เมาสุรา, ความเร็ว" value="' + escapeHtml(d.charge || '') + '">' +
+          '<div class="cp-ac-wrap">' +
+            '<input class="input cp-charge" autocomplete="off" maxlength="300" placeholder="พิมพ์คำในข้อหา เช่น หมวก · เมาสุรา · ความเร็ว · ย้อนศร" value="' + escapeHtml(d.charge || '') + '">' +
+            '<div class="cp-ac"></div>' +
+          '</div>' +
           '<div class="cp-charge-info"></div></label>' +
         '<label>เพศ<select class="select cp-gender"><option value="">-</option>' +
           ['ผู้ชาย','ผู้หญิง'].map(g => '<option' + (d.gender === g ? ' selected' : '') + '>' + g + '</option>').join('') + '</select></label>' +
@@ -8203,9 +8294,9 @@
           c.fine != null ? 'ค่าปรับ <b>' + Number(c.fine).toLocaleString('th-TH') + '</b> บาท' : 'ไม่มีค่าปรับในไฟล์ PTM'
         ].filter(Boolean).join(' · ');
       };
-      chg.addEventListener('input', showInfo);
       chg.addEventListener('change', showInfo);
       showInfo();
+      cpBindChargeSearch(div, chg, showInfo);
       cpKindSync();
       cpCountArrests();
     }
