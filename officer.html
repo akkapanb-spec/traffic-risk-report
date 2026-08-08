@@ -1424,6 +1424,13 @@
           </div>
 
           <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-database"></i> ค่าอ้างอิงจากกรมทางหลวงชนบท <span id="tvDrrCount" class="pill">0 สาย</span></h3>
+            <p class="hint" style="margin:0 0 10px">นำเข้าจาก <b>datagov.mot.go.th</b> ปีงบประมาณ 2569 — <b>มีเฉพาะทางหลวงชนบท (ทช.)</b> ไม่มี ทล.1 พหลโยธิน ไม่มี ทล.117 และไม่มีถนนในเขตเทศบาล เพราะเป็นคนละกรม</p>
+            <input id="tvDrrSearch" class="input" style="margin-bottom:10px" placeholder="🔍 ค้นหา: รหัสสายทาง หรือชื่อหมู่บ้าน เช่น นว.1111, โกรกพระ, บางม่วง" oninput="tvRenderDrr()">
+            <div id="tvDrrTable"><div class="loading-skeleton"></div></div>
+          </div>
+
+          <div class="card">
             <h3 class="card-title"><i class="fa-solid fa-spell-check"></i> ชื่อถนนที่จับคู่กับโครงข่ายไม่ได้
               <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="tvLoad()"><i class="fa-solid fa-rotate"></i> ตรวจใหม่</button></h3>
             <p class="hint" style="margin:0 0 12px">ชื่อถนนในเคสเป็นข้อความอิสระ ถนนสายเดียวกันเขียนหลายแบบ — <b>ชื่อที่จับคู่ไม่ได้จะไม่ถูกนับในตารางอัตราด้านบน</b> ทำให้ตัวเลขต่ำกว่าความจริง</p>
@@ -1654,6 +1661,9 @@
         h:'ให้ลากไฟล์ <b>sql/blackspot_3_rpc.sql</b> แล้วตามด้วย <b>sql/blackspot_4_publish.sql</b> ' +
           'ไปวางใน Supabase SQL Editor แล้วกด Run<br><span style="font-size:.8rem;color:#5b6b7f">' +
           'รันทับได้ปลอดภัย ข้อมูลในตารางไม่หาย · แก้ไฟล์อย่างเดียวไม่พอ ต้องรันทับฐานข้อมูลด้วย</span>' },
+      { m:/tv_drr_list|tv_use_drr|tv_drr_volume/i,
+        t:'ยังไม่ได้นำเข้าค่าอ้างอิงกรมทางหลวงชนบท',
+        h:'ให้ลากไฟล์ <b>sql/traffic_3_drr_import.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run' },
       { m:/tv_admin_data|tv_road_rates|tv_save|tv_alias|rn_traffic_volume|rn_resolve_road/i,
         t:'ยังไม่ได้ติดตั้งส่วนปริมาณจราจร',
         h:'ให้ลากไฟล์ <b>sql/traffic_1_volume.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run' },
@@ -2366,6 +2376,7 @@
         tvRenderRates();
         tvRenderVolumes();
         tvRenderAudit();
+        tvLoadDrr();   // ตารางอ้างอิงมาจากไฟล์คนละตัว ยังไม่รันก็ไม่ควรทำให้ทั้งหน้าล้ม
       } catch (e) {
         const missing = /tv_admin_data|tv_road_rates|rn_traffic_volume|does not exist|schema cache/i.test(e.message) || !!e.friendly;
         document.getElementById('tvNotReady').style.display = missing ? 'block' : 'none';
@@ -2552,6 +2563,74 @@
         if (!res || !res.success) throw new Error((res && res.message) || 'ลบไม่สำเร็จ');
         tvLoad();
       } catch (e) { rpcAlert(e, 'ลบไม่สำเร็จ'); }
+    }
+
+    async function tvLoadDrr() {
+      const box = document.getElementById('tvDrrTable');
+      try {
+        const res = await rpc('tv_drr_list', { p_token: state.token });
+        if (!res || !res.success) throw new Error((res && res.message) || 'โหลดไม่สำเร็จ');
+        state.tvDrr = res.rows || [];
+        tvRenderDrr();
+      } catch (e) {
+        state.tvDrr = null;
+        box.innerHTML = '<p class="hint" style="margin:0"><i class="fa-solid fa-triangle-exclamation" style="color:#c2410c"></i> ' +
+          'ยังไม่ได้รันไฟล์ <b>sql/traffic_3_drr_import.sql</b> ใน Supabase SQL Editor</p>';
+        document.getElementById('tvDrrCount').textContent = '0 สาย';
+      }
+    }
+
+    function tvRenderDrr() {
+      const box = document.getElementById('tvDrrTable');
+      const all = state.tvDrr;
+      if (!all) return;
+      const q = (valueOf('tvDrrSearch') || '').trim().toLowerCase();
+      const rows = !q ? all : all.filter(r =>
+        (r.road_code + ' ' + r.road_name).toLowerCase().includes(q));
+      document.getElementById('tvDrrCount').textContent = all.length + ' สาย';
+
+      if (!rows.length) { box.innerHTML = '<p class="hint" style="margin:0">ไม่พบสายทางที่ค้นหา</p>'; return; }
+      box.innerHTML = (q ? '<p class="hint" style="margin:0 0 8px">พบ ' + rows.length + ' จาก ' + all.length + ' สาย</p>' : '') +
+        '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+        '<th>รหัส</th><th>สายทาง</th><th style="text-align:right">จักรยานยนต์</th>' +
+        '<th style="text-align:right">รวม (คัน/วัน)</th><th></th></tr></thead><tbody>' +
+        rows.slice(0, 60).map(r => {
+          // สัดส่วนจักรยานยนต์บอกได้ว่าสายทางนั้นเป็นถนนแบบไหน สูงมากมักเป็นถนนชุมชน
+          const pct = r.sum_aadt ? Math.round((r.mc || 0) * 100 / r.sum_aadt) : 0;
+          return '<tr>' +
+            '<td><b>' + escapeHtml(r.road_code) + '</b></td>' +
+            '<td style="font-size:.78rem">' + escapeHtml(r.road_name) + '</td>' +
+            '<td style="text-align:right">' + Number(r.mc || 0).toLocaleString('th-TH') +
+              ' <span class="hint">' + pct + '%</span></td>' +
+            '<td style="text-align:right"><b>' + Number(r.sum_aadt).toLocaleString('th-TH') + '</b></td>' +
+            '<td style="text-align:right;white-space:nowrap">' +
+              '<button class="btn btn-soft btn-sm" type="button" onclick="tvUseDrr(' + JSON.stringify(r.road_code).replace(/"/g, '&quot;') + ')">' +
+              '<i class="fa-solid fa-arrow-right-to-bracket"></i> ใช้ค่านี้</button></td>' +
+          '</tr>';
+        }).join('') + '</tbody></table></div>' +
+        (rows.length > 60 ? '<p class="hint" style="margin:8px 0 0">แสดง 60 จาก ' + rows.length + ' สาย — พิมพ์ค้นหาเพื่อกรองให้แคบลง</p>' : '');
+    }
+
+    async function tvUseDrr(code) {
+      const roads = (state.tv || {}).roads || [];
+      if (!roads.length) { Swal.fire({ icon:'warning', title:'ยังไม่มีถนนในโครงข่าย', text:'ต้องวาดแนวถนนที่หน้าโครงข่ายถนนก่อน' }); return; }
+      const d = (state.tvDrr || []).find(x => x.road_code === code) || {};
+      const { value: id } = await Swal.fire({
+        title: 'ใช้ค่า ' + Number(d.sum_aadt || 0).toLocaleString('th-TH') + ' คัน/วัน กับถนนสายใด',
+        html: '<p style="font-size:.84rem;color:#5b6b7f;margin:0 0 10px;text-align:left">' +
+              '<b>' + escapeHtml(code) + '</b> ' + escapeHtml(d.road_name || '') + '<br>' +
+              'สายทางของกรมทางหลวงชนบทกับถนนที่เราวาด <b>ไม่ได้ตรงกันหนึ่งต่อหนึ่ง</b> — เลือกเฉพาะเมื่อแน่ใจว่าเป็นถนนสายเดียวกันจริง</p>' +
+              '<select id="tvDrrSel" class="swal2-select" style="width:100%">' + tvRoadOptions(d.road_id) + '</select>',
+        showCancelButton: true, confirmButtonText: 'ใช้ค่านี้', cancelButtonText: 'ยกเลิก',
+        preConfirm: () => document.getElementById('tvDrrSel').value
+      });
+      if (!id) return;
+      try {
+        const res = await rpc('tv_use_drr', { p_token: state.token, p_road_code: code, p_road_id: Number(id) });
+        if (!res || !res.success) throw new Error((res && res.message) || 'ไม่สำเร็จ');
+        await Swal.fire({ icon:'success', title:res.message, timer:1900, showConfirmButton:false });
+        tvLoad();
+      } catch (e) { rpcAlert(e, 'ใช้ค่าไม่สำเร็จ'); }
     }
 
     function tvRenderAudit() {
