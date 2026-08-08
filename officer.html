@@ -1395,7 +1395,7 @@
             <h3 class="card-title" id="cpFormTitle"><i class="fa-solid fa-file-circle-plus"></i> บันทึกจุดตรวจใหม่</h3>
             <form id="cpForm" class="form-grid" onsubmit="return false">
               <div class="field span-6"><label>ประเภทจุดตรวจ <span class="req">*</span></label>
-                <select id="cpKind" class="select">
+                <select id="cpKind" class="select" onchange="cpKindSync()">
                   <option>จุดตรวจกวดขันวินัยจราจร</option>
                   <option>ชุดตรวจวัดปริมาณแอลกอฮอล์</option>
                 </select></div>
@@ -1411,17 +1411,20 @@
                 <div style="display:flex;gap:8px"><input id="cpCoords" class="input" style="flex:1;min-width:0" placeholder="15.7051, 100.1372">
                   <button class="btn btn-soft" type="button" onclick="cpPickCoords()" title="จิ้มเลือกบนแผนที่"><i class="fa-solid fa-map-location-dot"></i></button>
                   <button class="btn btn-soft" type="button" onclick="cpUseGps()" title="ใช้ตำแหน่งปัจจุบัน"><i class="fa-solid fa-crosshairs"></i></button></div></div>
-              <div class="field span-6"><label>หัวหน้าชุด</label><input id="cpCommander" class="input" maxlength="90" placeholder="ยศ ชื่อ สกุล"></div>
-              <div class="field span-4"><label>กำลังพล (นาย)</label><input id="cpOfficers" class="input" type="number" min="0" inputmode="numeric"></div>
-              <div class="field span-4"><label>เรียกตรวจ (คัน)</label><input id="cpVehicles" class="input" type="number" min="0" inputmode="numeric"></div>
-              <div class="field span-4"><label>เป่าวัดแอลกอฮอล์ (ราย)</label><input id="cpBreath" class="input" type="number" min="0" inputmode="numeric"></div>
+              <div class="field span-6"><label>หัวหน้าชุด</label>
+                <select id="cpCommander" class="select" onchange="cpCommanderSync()"></select>
+                <input id="cpCommanderOther" class="input" style="display:none;margin-top:7px" maxlength="90" placeholder="ยศ ชื่อ สกุล"></div>
+              <div class="field span-6"><label>กำลังพล (นาย)</label><input id="cpOfficers" class="input" type="number" min="0" inputmode="numeric"></div>
+              <div class="field span-6"><label>เรียกตรวจ (คัน)</label><input id="cpVehicles" class="input" type="number" min="0" inputmode="numeric"></div>
+              <div class="field span-6" id="cpBreathWrap"><label>เป่าวัดแอลกอฮอล์ (ราย)</label><input id="cpBreath" class="input" type="number" min="0" inputmode="numeric"></div>
               <div class="field span-12"><label>หมายเหตุ</label><input id="cpNote" class="input" maxlength="200"></div>
 
               <div class="field span-12">
                 <label>ผลการดำเนินการ — รายละเอียดผู้ถูกจับ <span class="pill" id="cpArrestCount">0 รายการ</span></label>
-                <p class="hint" style="margin:0 0 8px">คนเดียวโดนหลายข้อหาให้เพิ่มหลายแถว — <b>หนึ่งแถวคือหนึ่งข้อหา</b> และระบบจะนับเป็นคนละราย</p>
+                <p class="hint" style="margin:0 0 8px" id="cpArrestHint"></p>
                 <div id="cpArrestRows"></div>
                 <button class="btn btn-soft btn-sm" type="button" style="margin-top:8px" onclick="cpAddArrest()"><i class="fa-solid fa-plus"></i> เพิ่มรายการผู้ถูกจับ</button>
+                <datalist id="cpChargeList"></datalist>
               </div>
 
               <div class="field span-12" style="display:flex;gap:10px;flex-wrap:wrap">
@@ -8073,44 +8076,149 @@
     const cpBE = iso => !iso ? '-' :
       new Date(iso + 'T00:00:00+07:00').toLocaleDateString('th-TH', { timeZone:'Asia/Bangkok', day:'2-digit', month:'short', year:'numeric' });
 
+    // หัวหน้าชุดที่ปฏิบัติจริงในหน่วย เลือกจากรายชื่อแทนพิมพ์เอง ชื่อจะได้ไม่เขียนไม่ตรงกันจนสรุปยอดรายคนไม่ได้
+    const CP_COMMANDERS = [
+      '613 ร.ต.อ.สมเกียรติ สามล',
+      '615 ร.ต.อ.สิทธิศักดิ์ เข็มจัด',
+      '621 ร.ต.อ.ณัฐธนพล สุวรรณชัย',
+      '623 ร.ต.ต.อัครพล คงเกาะ'
+    ];
+    const CP_ENFORCE = 'จุดตรวจกวดขันวินัยจราจร';
+    const cpIsEnforce = () => valueOf('cpKind') === CP_ENFORCE;
+
+    function cpFillCommanders(current) {
+      const sel = document.getElementById('cpCommander');
+      if (!sel) return;
+      const known = CP_COMMANDERS.includes(current);
+      sel.innerHTML = '<option value="">-</option>' +
+        CP_COMMANDERS.map(n => '<option' + (n === current ? ' selected' : '') + '>' + escapeHtml(n) + '</option>').join('') +
+        '<option value="__other"' + (current && !known ? ' selected' : '') + '>อื่นๆ ระบุเอง...</option>';
+      const other = document.getElementById('cpCommanderOther');
+      other.value = current && !known ? current : '';
+      cpCommanderSync();
+    }
+    function cpCommanderSync() {
+      const sel = document.getElementById('cpCommander'), other = document.getElementById('cpCommanderOther');
+      if (sel && other) other.style.display = sel.value === '__other' ? '' : 'none';
+    }
+    const cpCommanderValue = () => {
+      const sel = document.getElementById('cpCommander');
+      return sel && sel.value === '__other' ? valueOf('cpCommanderOther') : (sel ? sel.value : '');
+    };
+
+    // จุดตรวจสองประเภทเก็บคนละอย่าง ชุดแอลกอฮอล์สนใจรายคนกับค่าที่เป่าได้
+    // ส่วนกวดขันวินัยจราจรสนใจว่าออกใบสั่งข้อหาไหนไปกี่ราย ไม่ได้ไล่เก็บรายคน
+    function cpKindSync() {
+      const enforce = cpIsEnforce();
+      const bw = document.getElementById('cpBreathWrap');
+      if (bw) bw.style.display = enforce ? 'none' : '';
+      if (enforce) document.getElementById('cpBreath').value = '';
+      const hint = document.getElementById('cpArrestHint');
+      if (hint) hint.innerHTML = enforce
+        ? 'หนึ่งแถวคือหนึ่งข้อหา — เลือกข้อหา เลือกเพศ ใส่จำนวนราย แล้วกรอกอายุให้ครบตามจำนวน'
+        : 'หนึ่งแถวคือหนึ่งราย — ใส่ค่าแอลกอฮอล์ที่เป่าได้ของคนนั้น';
+      document.querySelectorAll('#cpArrestRows .cp-arrest').forEach(r => {
+        r.querySelector('.cp-mg-wrap').style.display = enforce ? 'none' : '';
+        r.querySelector('.cp-count-wrap').style.display = enforce ? '' : 'none';
+        r.querySelector('.cp-ages-wrap').style.display = enforce ? '' : 'none';
+        r.querySelector('.cp-age-wrap').style.display = enforce ? 'none' : '';
+      });
+    }
+
+    function cpFillChargeList() {
+      const dl = document.getElementById('cpChargeList');
+      if (!dl) return;
+      const charges = state.cpCharges || [];
+      // ข้อหาที่ใช้บ่อยขึ้นก่อน ที่เหลือเรียงตามลำดับใน PTM
+      // 561 ข้อหาเลื่อนหาทีละอันไม่ไหว ช่องนี้จึงเป็นแบบพิมพ์แล้วกรอง
+      const sorted = charges.slice().sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0));
+      dl.innerHTML = sorted.map(c =>
+        '<option value="' + escapeHtml(c.name) + '">' + escapeHtml([c.code, c.section].filter(Boolean).join(' · ')) + '</option>').join('');
+    }
+
     function cpAddArrest(data) {
       const d = data || {};
-      const charges = state.cpCharges || [];
       const wrap = document.getElementById('cpArrestRows');
       const div = document.createElement('div');
       div.className = 'cp-arrest';
+      const ages = Array.isArray(d.ages) ? d.ages : (d.age == null || d.age === '' ? [] : [d.age]);
       div.innerHTML =
+        '<label class="span-6" style="grid-column:1/-1">ข้อหา' +
+          '<input class="input cp-charge" list="cpChargeList" maxlength="300" placeholder="พิมพ์คำในข้อหาเพื่อค้นหา เช่น หมวก, เมาสุรา, ความเร็ว" value="' + escapeHtml(d.charge || '') + '"></label>' +
         '<label>เพศ<select class="select cp-gender"><option value="">-</option>' +
-          ['ชาย','หญิง'].map(g => '<option' + (d.gender === g ? ' selected' : '') + '>' + g + '</option>').join('') + '</select></label>' +
-        '<label>อายุ<input class="input cp-age" type="number" min="0" max="120" inputmode="numeric" value="' + (d.age == null ? '' : d.age) + '"></label>' +
-        '<label>ข้อหา<select class="select cp-charge">' +
-          charges.map(c => '<option value="' + escapeHtml(c.name) + '"' + (d.charge === c.name ? ' selected' : '') + '>' + escapeHtml(c.name) + '</option>').join('') +
-          '<option value="__other"' + (d.charge && !charges.some(c => c.name === d.charge) ? ' selected' : '') + '>อื่นๆ ระบุเอง...</option></select></label>' +
-        '<label>แอลกอฮอล์ (มก.%)<div style="display:flex;gap:5px">' +
+          ['ผู้ชาย','ผู้หญิง'].map(g => '<option' + (d.gender === g ? ' selected' : '') + '>' + g + '</option>').join('') + '</select></label>' +
+        '<label class="cp-count-wrap">จำนวน (ราย)<div style="display:flex;gap:5px">' +
+          '<input class="input cp-count" type="number" min="1" max="99" inputmode="numeric" style="min-width:0" value="' + (ages.length || 1) + '">' +
+          '<button class="btn btn-soft btn-sm" type="button" style="color:#c1122f;flex:0 0 auto" onclick="this.closest(\'.cp-arrest\').remove();cpCountArrests()"><i class="fa-solid fa-trash"></i></button></div></label>' +
+        '<label class="cp-age-wrap">อายุ<input class="input cp-age" type="number" min="0" max="120" inputmode="numeric" value="' + escapeHtml(ages[0] == null ? '' : ages[0]) + '"></label>' +
+        '<label class="cp-mg-wrap">แอลกอฮอล์ (มก.%)<div style="display:flex;gap:5px">' +
           '<input class="input cp-mg" type="number" min="0" step="1" inputmode="numeric" style="min-width:0" value="' + (d.alcohol_mg == null ? '' : d.alcohol_mg) + '">' +
           '<button class="btn btn-soft btn-sm" type="button" style="color:#c1122f;flex:0 0 auto" onclick="this.closest(\'.cp-arrest\').remove();cpCountArrests()"><i class="fa-solid fa-trash"></i></button></div></label>' +
-        '<label class="cp-other-wrap span-6" style="grid-column:1/-1;display:none">ระบุข้อหาเอง<input class="input cp-other" maxlength="120" value="' +
-          escapeHtml(d.charge && !charges.some(c => c.name === d.charge) ? d.charge : '') + '"></label>';
+        '<label class="cp-ages-wrap span-6" style="grid-column:1/-1">อายุรายคน<div class="cp-ages" style="display:flex;flex-wrap:wrap;gap:6px"></div></label>';
       wrap.appendChild(div);
-      const sel = div.querySelector('.cp-charge'), other = div.querySelector('.cp-other-wrap');
-      const sync = () => { other.style.display = sel.value === '__other' ? 'flex' : 'none'; };
-      sel.addEventListener('change', sync);
-      sync();
+
+      const cnt = div.querySelector('.cp-count');
+      const box = div.querySelector('.cp-ages');
+      // ช่องอายุขึ้นตามจำนวนราย ค่าที่กรอกไว้แล้วต้องไม่หายตอนเพิ่ม/ลดจำนวน
+      const drawAges = () => {
+        const n = Math.max(1, Math.min(99, Number(cnt.value) || 1));
+        const keep = [...box.querySelectorAll('input')].map(i => i.value);
+        box.innerHTML = '';
+        for (let i = 0; i < n; i++) {
+          const inp = document.createElement('input');
+          inp.className = 'input'; inp.type = 'number'; inp.min = 0; inp.max = 120;
+          inp.inputMode = 'numeric'; inp.style.width = '78px';
+          inp.placeholder = 'คนที่ ' + (i + 1);
+          inp.value = keep[i] != null ? keep[i] : (ages[i] == null ? '' : ages[i]);
+          box.appendChild(inp);
+        }
+      };
+      // ต้องนับใหม่ด้วย ไม่ใช่แค่วาดช่องอายุ ยอดบนหัวข้อจะได้ตรงกับจำนวนรายจริง
+      cnt.addEventListener('input', () => { drawAges(); cpCountArrests(); });
+      drawAges();
+      cpKindSync();
       cpCountArrests();
     }
-    function cpCountArrests() {
-      const n = document.querySelectorAll('#cpArrestRows .cp-arrest').length;
-      document.getElementById('cpArrestCount').textContent = n + ' รายการ';
+
+    // ยุบรายคนกลับเป็นแถวละ ข้อหา+เพศ พร้อมอายุของแต่ละคน
+    function cpGroupArrests(arrests) {
+      const map = new Map();
+      (arrests || []).forEach(a => {
+        const key = (a.charge || '') + '|' + (a.gender || '');
+        if (!map.has(key)) map.set(key, { charge: a.charge || '', gender: a.gender || '', ages: [] });
+        map.get(key).ages.push(a.age == null ? '' : a.age);
+      });
+      return [...map.values()];
     }
+
+    function cpCountArrests() {
+      const rows = [...document.querySelectorAll('#cpArrestRows .cp-arrest')];
+      // กวดขันวินัยจราจรนับเป็นราย ไม่ใช่นับแถว เพราะหนึ่งแถวแทนได้หลายคน
+      const n = cpIsEnforce()
+        ? rows.reduce((s, r) => s + Math.max(1, Number(r.querySelector('.cp-count').value) || 1), 0)
+        : rows.length;
+      document.getElementById('cpArrestCount').textContent = n + (cpIsEnforce() ? ' ราย' : ' รายการ');
+    }
+
     function cpCollectArrests() {
-      return [...document.querySelectorAll('#cpArrestRows .cp-arrest')].map(r => {
-        const sel = r.querySelector('.cp-charge').value;
-        const charge = sel === '__other' ? r.querySelector('.cp-other').value.trim() : sel;
-        // ไม่ส่ง person_ref กับ vehicle แล้ว คอลัมน์ยังอยู่ในตารางเพื่อเก็บของเก่าไว้
-        return { gender: r.querySelector('.cp-gender').value,
-          age: r.querySelector('.cp-age').value,
-          charge, alcohol_mg: r.querySelector('.cp-mg').value };
-      }).filter(a => a.charge);
+      const enforce = cpIsEnforce();
+      const out = [];
+      document.querySelectorAll('#cpArrestRows .cp-arrest').forEach(r => {
+        const charge = r.querySelector('.cp-charge').value.trim();
+        if (!charge) return;
+        const gender = r.querySelector('.cp-gender').value;
+        if (!enforce) {
+          out.push({ gender, age: r.querySelector('.cp-age').value, charge,
+                     alcohol_mg: r.querySelector('.cp-mg').value });
+          return;
+        }
+        // เก็บลงฐานข้อมูลเป็นรายคนเหมือนเดิม หน้าจอแค่กรอกแบบรวบให้เร็วขึ้น
+        // ถ้าเก็บเป็นแถวรวม สถิติเพศ/อายุที่มีอยู่จะอ่านไม่ได้ทั้งหมด
+        const ages = [...r.querySelectorAll('.cp-ages input')].map(i => i.value);
+        const n = Math.max(1, Number(r.querySelector('.cp-count').value) || 1);
+        for (let i = 0; i < n; i++) out.push({ gender, age: ages[i] || '', charge, alcohol_mg: '' });
+      });
+      return out;
     }
 
     async function cpLoadData() {
@@ -8119,6 +8227,7 @@
         if (!res || !res.success) throw new Error((res && res.message) || 'โหลดข้อมูลไม่สำเร็จ');
         state.cpCharges = res.charges || [];
         state.cpRows = res.rows || [];
+        cpFillChargeList();
         document.getElementById('cpNotReady').style.display = 'none';
         document.getElementById('cpReady').style.display = 'block';
         rnFillRoadSelects();
@@ -8142,7 +8251,7 @@
         road_name: (document.getElementById('cpRoad').selectedOptions[0] || {}).text || '',
         subdistrict: valueOf('cpSubdistrict'), in_municipality: valueOf('cpInMuni') === 'true',
         latitude: c ? c.lat : '', longitude: c ? c.lng : '',
-        commander: valueOf('cpCommander'), officer_count: valueOf('cpOfficers'),
+        commander: cpCommanderValue(), officer_count: valueOf('cpOfficers'),
         vehicles_checked: valueOf('cpVehicles'), breath_tested: valueOf('cpBreath'),
         note: valueOf('cpNote'), arrests: cpCollectArrests()
       };
@@ -8164,13 +8273,17 @@
       set('cpKind', r.kind); set('cpDate', r.duty_date);
       set('cpStart', (r.start_time || '').slice(0, 5)); set('cpEnd', (r.end_time || '').slice(0, 5));
       set('cpPlace', r.place); set('cpRoad', r.road_id || ''); set('cpSubdistrict', r.subdistrict);
-      set('cpInMuni', String(!!r.in_municipality)); set('cpCommander', r.commander);
+      set('cpInMuni', String(!!r.in_municipality)); cpFillCommanders(r.commander || '');
       set('cpOfficers', r.officer_count); set('cpVehicles', r.vehicles_checked);
       set('cpBreath', r.breath_tested); set('cpNote', r.note);
       set('cpCoords', r.latitude == null ? '' : Number(r.latitude).toFixed(6) + ', ' + Number(r.longitude).toFixed(6));
       document.getElementById('cpArrestRows').innerHTML = '';
-      (r.arrests || []).forEach(a => cpAddArrest(a));
-      if (!(r.arrests || []).length) cpAddArrest();
+      cpKindSync();
+      // เคสกวดขันวินัยจราจรเก็บเป็นรายคนในฐานข้อมูล ตอนเปิดมาแก้จึงยุบกลับเป็นแถวละข้อหา+เพศ
+      // ไม่งั้นจับ 20 รายจะได้ 20 แถวให้ไล่แก้ทีละแถว
+      const list = cpIsEnforce() ? cpGroupArrests(r.arrests || []) : (r.arrests || []);
+      list.forEach(a => cpAddArrest(a));
+      if (!list.length) cpAddArrest();
       cpShowBE();
       document.getElementById('cpFormTitle').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> แก้ไขจุดตรวจ ' + cpBE(r.duty_date);
       document.getElementById('cpCancelBtn').style.display = 'inline-flex';
@@ -8190,11 +8303,13 @@
 
     function cpResetForm() {
       state.cpEditId = null;
-      ['cpStart','cpEnd','cpPlace','cpCommander','cpOfficers','cpVehicles','cpBreath','cpNote','cpCoords']
+      ['cpStart','cpEnd','cpPlace','cpOfficers','cpVehicles','cpBreath','cpNote','cpCoords']
         .forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
+      cpFillCommanders('');
       ['cpRoad','cpSubdistrict'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
       document.getElementById('cpInMuni').value = 'true';
       document.getElementById('cpArrestRows').innerHTML = '';
+      cpKindSync();
       cpAddArrest();
       document.getElementById('cpFormTitle').innerHTML = '<i class="fa-solid fa-file-circle-plus"></i> บันทึกจุดตรวจใหม่';
       document.getElementById('cpCancelBtn').style.display = 'none';
