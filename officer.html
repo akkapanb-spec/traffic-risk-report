@@ -2411,35 +2411,60 @@
         box.innerHTML = html + '<p class="hint" style="margin:0">ยังไม่มีถนนที่จับคู่กับเคสได้ — ดูหัวข้อล่างสุดของหน้านี้</p>';
         return;
       }
-      const max = Math.max.apply(null, withRate.map(r => Number(r.rate)).concat([1]));
+      // ยังไม่มี AADT ก็ยังเทียบกันได้ด้วยความยาวถนน ซึ่งเรามีครบทุกสายที่วาดไว้แล้ว
+      // ไม่ดีเท่าอัตราต่อคัน-กม. เพราะยังไม่ได้หารด้วยปริมาณรถ แต่ดีกว่านับดิบมาก
+      // เพราะอย่างน้อยถนนยาวกับถนนสั้นก็ไม่ถูกเอามาเทียบกันตรง ๆ อีกต่อไป
+      const perKm = r => (!r.length_km || Number(r.length_km) === 0) ? null
+        : Number(r.accidents) / Number(r.length_km);
+      const anyRate = withRate.length > 0;
+      const sorted = anyRate ? rows
+        : rows.slice().sort((a, b) => (perKm(b) || 0) - (perKm(a) || 0));
+      const maxRate = Math.max.apply(null, withRate.map(r => Number(r.rate)).concat([1]));
+      const maxKm = Math.max.apply(null, rows.map(r => perKm(r) || 0).concat([1]));
+
       html += '<div class="table-wrap"><table class="data-table"><thead><tr>' +
-        '<th>ถนน</th><th style="text-align:right">อุบัติเหตุ</th><th style="text-align:right">AADT</th>' +
-        '<th style="text-align:right">ยาว (กม.)</th><th style="text-align:right">อัตรา</th><th style="min-width:130px"></th>' +
+        '<th>ถนน</th><th style="text-align:right">อุบัติเหตุ</th><th style="text-align:right">ยาว (กม.)</th>' +
+        '<th style="text-align:right">ต่อ กม.</th><th style="text-align:right">AADT</th>' +
+        '<th style="text-align:right">อัตราต่อคัน-กม.</th><th style="min-width:120px"></th>' +
         '</tr></thead><tbody>' +
-        rows.map(r => {
+        sorted.map(r => {
           const rate = r.rate == null ? null : Number(r.rate);
-          const w = rate == null ? 0 : Math.max(3, Math.round(rate / max * 100));
-          const col = rate == null ? '#b4b2a9' : rate >= max * 0.6 ? '#c1122f' : rate >= max * 0.3 ? '#ba7517' : '#1d9e75';
+          const km = perKm(r);
+          // แถบยาวตามตัวชี้วัดที่ใช้จัดอันดับอยู่จริง ไม่งั้นแถบกับลำดับจะขัดกันเอง
+          const v = anyRate ? rate : km, mx = anyRate ? maxRate : maxKm;
+          const w = v == null ? 0 : Math.max(3, Math.round(v / mx * 100));
+          const col = v == null ? '#b4b2a9' : v >= mx * 0.6 ? '#c1122f' : v >= mx * 0.3 ? '#ba7517' : '#1d9e75';
           return '<tr>' +
             '<td><b>' + escapeHtml(r.road_name) + '</b>' + (r.road_code && r.road_code !== '-' ? ' <span class="hint">' + escapeHtml(r.road_code) + '</span>' : '') + '</td>' +
             '<td style="text-align:right">' + Number(r.accidents).toLocaleString('th-TH') + '</td>' +
-            '<td style="text-align:right">' + (r.aadt == null ? '<span class="hint">ยังไม่กรอก</span>' : Number(r.aadt).toLocaleString('th-TH')) + '</td>' +
             '<td style="text-align:right">' + (r.length_km == null ? '-' : Number(r.length_km).toFixed(2)) + '</td>' +
-            '<td style="text-align:right;font-weight:800;color:' + col + '">' + (rate == null ? '-' : rate.toLocaleString('th-TH')) + '</td>' +
-            '<td>' + (rate == null ? '<span class="hint">ต้องมี AADT ก่อน</span>' :
+            '<td style="text-align:right;font-weight:800' + (anyRate ? '' : ';color:' + col) + '">' + (km == null ? '-' : km.toFixed(1)) + '</td>' +
+            '<td style="text-align:right">' + (r.aadt == null ? '<span class="hint">ยังไม่กรอก</span>' : Number(r.aadt).toLocaleString('th-TH')) + '</td>' +
+            '<td style="text-align:right;font-weight:800' + (anyRate ? ';color:' + col : '') + '">' + (rate == null ? '-' : rate.toLocaleString('th-TH')) + '</td>' +
+            '<td>' + (v == null ? '' :
               '<div style="height:9px;border-radius:99px;background:#eef1f5;overflow:hidden"><div style="width:' + w + '%;height:100%;background:' + col + '"></div></div>') + '</td>' +
           '</tr>';
         }).join('') + '</tbody></table></div>';
 
+      if (!anyRate) {
+        html += '<div class="dashboard-note" style="margin-top:10px"><i class="fa-solid fa-circle-info"></i> ' +
+          '<b>ยังไม่มี AADT สักสาย</b> ตารางจึงเรียงตาม <b>อุบัติเหตุต่อกิโลเมตร</b> ไปก่อน ' +
+          'ซึ่งแก้เรื่องถนนยาว-ถนนสั้นได้แล้ว แต่<b>ยังไม่ได้หารด้วยปริมาณรถ</b> — ' +
+          'ถนนที่รถเยอะจึงยังดูแย่กว่าความจริงอยู่ กรอก AADT เมื่อไหร่ คอลัมน์ขวาสุดจะคำนวณให้เอง</div>';
+      }
+
       // ถนนที่อุบัติเหตุเยอะที่สุด กับถนนที่อัตราสูงที่สุด มักไม่ใช่สายเดียวกัน นั่นคือประเด็นทั้งหมดของหน้านี้
       // เรียงเองทั้งสองตัว ไม่พึ่งลำดับที่ฐานข้อมูลส่งมา เผลอเปลี่ยน order by เมื่อไหร่ประโยคนี้จะผิดทันที
       const byCount = rows.slice().sort((a, b) => b.accidents - a.accidents)[0];
-      const byRate = withRate.slice().sort((a, b) => Number(b.rate) - Number(a.rate))[0];
-      if (byRate && byCount && byRate.road_id !== byCount.road_id) {
+      // ใช้ตัวชี้วัดเดียวกับที่จัดอันดับอยู่ ถ้ายังไม่มี AADT ก็เทียบด้วยต่อกิโลเมตรไปก่อน
+      const byWorst = anyRate ? withRate.slice().sort((a, b) => Number(b.rate) - Number(a.rate))[0] : sorted[0];
+      if (byWorst && byCount && byWorst.road_id !== byCount.road_id) {
         html += '<div class="dashboard-note" style="margin-top:10px"><i class="fa-solid fa-circle-info"></i> ' +
-          'เกิดเยอะที่สุดคือ <b>' + escapeHtml(byCount.road_name) + '</b> (' + byCount.accidents + ' ครั้ง) ' +
-          'แต่อัตราสูงที่สุดคือ <b>' + escapeHtml(byRate.road_name) + '</b> — คนละสายกัน ' +
-          'จุดที่ควรลงไปแก้คือสายหลัง ไม่ใช่สายแรก</div>';
+          'เกิดเยอะที่สุดคือ <b>' + escapeHtml(byCount.road_name) + '</b> (' + byCount.accidents + ' ครั้ง · ' +
+          (perKm(byCount) == null ? '-' : perKm(byCount).toFixed(1)) + ' ต่อ กม.) ' +
+          'แต่หนักที่สุดเมื่อคิดตาม' + (anyRate ? 'ปริมาณจราจร' : 'ความยาวถนน') + 'คือ <b>' + escapeHtml(byWorst.road_name) + '</b> (' +
+          (anyRate ? Number(byWorst.rate).toLocaleString('th-TH') : (perKm(byWorst) == null ? '-' : perKm(byWorst).toFixed(1)) + ' ต่อ กม.') + ') ' +
+          '— คนละสายกัน จุดที่ควรลงไปแก้คือสายหลัง ไม่ใช่สายแรก</div>';
       }
       if (res.unmatched) {
         html += '<div class="dashboard-note" style="color:#a32d2d"><i class="fa-solid fa-triangle-exclamation"></i> ' +
