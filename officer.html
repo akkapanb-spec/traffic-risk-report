@@ -175,6 +175,9 @@
     .cq-chip:hover{border-color:#a5b8d0}
     .cq-chip.on{background:#eef4ff;border-color:#2a78d6;color:#1c5cab}
     .cq-chip.on:before{content:"\f00c";font-family:"Font Awesome 6 Free";font-weight:900;font-size:.6rem}
+    /* รายละเอียดข้อหาที่เลือก แสดงใต้ช่องเพื่อยืนยันว่าเลือกถูกตัว */
+    .cp-charge-info{font-size:.72rem;color:#5b6b7f;font-weight:600;margin-top:5px;min-height:1em}
+    .cp-charge-info.warn{color:#c2410c}
     .cq-nocharge{display:flex;align-items:center;gap:7px;margin-top:9px;font-size:.74rem;color:#5b6b7f;cursor:pointer}
     .cq-nocharge input{width:auto!important;min-height:0!important;margin:0}
     /* ---- กราฟหมวกนิรภัย ---- */
@@ -8083,6 +8086,7 @@
       '621 ร.ต.อ.ณัฐธนพล สุวรรณชัย',
       '623 ร.ต.ต.อัครพล คงเกาะ'
     ];
+    const CP_VEHICLES = ['จักรยานยนต์','รถยนต์เก๋ง','รถยนต์กระบะ','รถตู้','รถบรรทุก 6 ล้อขึ้นไป','รถบรรทุกพ่วง/เทรลเลอร์','อื่นๆ'];
     const CP_ENFORCE = 'จุดตรวจกวดขันวินัยจราจร';
     const cpIsEnforce = () => valueOf('cpKind') === CP_ENFORCE;
 
@@ -8144,13 +8148,16 @@
       const ages = Array.isArray(d.ages) ? d.ages : (d.age == null || d.age === '' ? [] : [d.age]);
       div.innerHTML =
         '<label class="span-6" style="grid-column:1/-1">ข้อหา' +
-          '<input class="input cp-charge" list="cpChargeList" maxlength="300" placeholder="พิมพ์คำในข้อหาเพื่อค้นหา เช่น หมวก, เมาสุรา, ความเร็ว" value="' + escapeHtml(d.charge || '') + '"></label>' +
+          '<input class="input cp-charge" list="cpChargeList" maxlength="300" placeholder="พิมพ์คำในข้อหาเพื่อค้นหา เช่น หมวก, เมาสุรา, ความเร็ว" value="' + escapeHtml(d.charge || '') + '">' +
+          '<div class="cp-charge-info"></div></label>' +
         '<label>เพศ<select class="select cp-gender"><option value="">-</option>' +
           ['ผู้ชาย','ผู้หญิง'].map(g => '<option' + (d.gender === g ? ' selected' : '') + '>' + g + '</option>').join('') + '</select></label>' +
         '<label class="cp-count-wrap">จำนวน (ราย)<div style="display:flex;gap:5px">' +
           '<input class="input cp-count" type="number" min="1" max="99" inputmode="numeric" style="min-width:0" value="' + (ages.length || 1) + '">' +
           '<button class="btn btn-soft btn-sm" type="button" style="color:#c1122f;flex:0 0 auto" onclick="this.closest(\'.cp-arrest\').remove();cpCountArrests()"><i class="fa-solid fa-trash"></i></button></div></label>' +
         '<label class="cp-age-wrap">อายุ<input class="input cp-age" type="number" min="0" max="120" inputmode="numeric" value="' + escapeHtml(ages[0] == null ? '' : ages[0]) + '"></label>' +
+        '<label>ยานพาหนะ<select class="select cp-veh"><option value="">-</option>' +
+          CP_VEHICLES.map(v => '<option' + (d.vehicle === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></label>' +
         '<label class="cp-mg-wrap">แอลกอฮอล์ (มก.%)<div style="display:flex;gap:5px">' +
           '<input class="input cp-mg" type="number" min="0" step="1" inputmode="numeric" style="min-width:0" value="' + (d.alcohol_mg == null ? '' : d.alcohol_mg) + '">' +
           '<button class="btn btn-soft btn-sm" type="button" style="color:#c1122f;flex:0 0 auto" onclick="this.closest(\'.cp-arrest\').remove();cpCountArrests()"><i class="fa-solid fa-trash"></i></button></div></label>' +
@@ -8176,6 +8183,29 @@
       // ต้องนับใหม่ด้วย ไม่ใช่แค่วาดช่องอายุ ยอดบนหัวข้อจะได้ตรงกับจำนวนรายจริง
       cnt.addEventListener('input', () => { drawAges(); cpCountArrests(); });
       drawAges();
+
+      // ช่องข้อหาเก็บแค่ชื่อ ส่วนมาตราและค่าปรับอยู่ในตาราง เอามาแสดงใต้ช่องให้ตรวจได้ทันทีว่าเลือกถูกตัว
+      // ชื่อข้อหาหลายอันต่างกันแค่คำท้าย ๆ เห็นมาตราคู่กันจะจับผิดได้เร็วกว่ารออ่านตอนออกใบสั่ง
+      const chg = div.querySelector('.cp-charge'), info = div.querySelector('.cp-charge-info');
+      const showInfo = () => {
+        const name = chg.value.trim();
+        if (!name) { info.textContent = ''; info.className = 'cp-charge-info'; return; }
+        const c = (state.cpCharges || []).find(x => x.name === name);
+        if (!c) {
+          info.className = 'cp-charge-info warn';
+          info.textContent = 'ไม่อยู่ในรายการ PTM — จะบันทึกเป็นข้อความที่พิมพ์เอง';
+          return;
+        }
+        info.className = 'cp-charge-info';
+        info.innerHTML = [
+          c.code ? 'รหัส <b>' + escapeHtml(c.code) + '</b>' : '',
+          c.section ? 'มาตรา <b>' + escapeHtml(c.section) + '</b>' : '',
+          c.fine != null ? 'ค่าปรับ <b>' + Number(c.fine).toLocaleString('th-TH') + '</b> บาท' : 'ไม่มีค่าปรับในไฟล์ PTM'
+        ].filter(Boolean).join(' · ');
+      };
+      chg.addEventListener('input', showInfo);
+      chg.addEventListener('change', showInfo);
+      showInfo();
       cpKindSync();
       cpCountArrests();
     }
@@ -8184,8 +8214,9 @@
     function cpGroupArrests(arrests) {
       const map = new Map();
       (arrests || []).forEach(a => {
-        const key = (a.charge || '') + '|' + (a.gender || '');
-        if (!map.has(key)) map.set(key, { charge: a.charge || '', gender: a.gender || '', ages: [] });
+        // ยานพาหนะต้องอยู่ในกุญแจด้วย ไม่งั้นจักรยานยนต์กับรถเก๋งข้อหาเดียวกันจะถูกยุบรวมเป็นแถวเดียว
+        const key = (a.charge || '') + '|' + (a.gender || '') + '|' + (a.vehicle || '');
+        if (!map.has(key)) map.set(key, { charge: a.charge || '', gender: a.gender || '', vehicle: a.vehicle || '', ages: [] });
         map.get(key).ages.push(a.age == null ? '' : a.age);
       });
       return [...map.values()];
@@ -8207,8 +8238,9 @@
         const charge = r.querySelector('.cp-charge').value.trim();
         if (!charge) return;
         const gender = r.querySelector('.cp-gender').value;
+        const vehicle = r.querySelector('.cp-veh').value;
         if (!enforce) {
-          out.push({ gender, age: r.querySelector('.cp-age').value, charge,
+          out.push({ gender, age: r.querySelector('.cp-age').value, charge, vehicle,
                      alcohol_mg: r.querySelector('.cp-mg').value });
           return;
         }
@@ -8216,7 +8248,7 @@
         // ถ้าเก็บเป็นแถวรวม สถิติเพศ/อายุที่มีอยู่จะอ่านไม่ได้ทั้งหมด
         const ages = [...r.querySelectorAll('.cp-ages input')].map(i => i.value);
         const n = Math.max(1, Number(r.querySelector('.cp-count').value) || 1);
-        for (let i = 0; i < n; i++) out.push({ gender, age: ages[i] || '', charge, alcohol_mg: '' });
+        for (let i = 0; i < n; i++) out.push({ gender, age: ages[i] || '', charge, vehicle, alcohol_mg: '' });
       });
       return out;
     }
