@@ -8165,11 +8165,11 @@
     }
 
     function cpHighlight(text, q) {
-      let out = escapeHtml(text);
-      q.trim().split(/\s+/).filter(Boolean).forEach(t => {
-        out = out.replace(new RegExp('(' + cpEscRe(escapeHtml(t)) + ')', 'gi'), '<mark>$1</mark>');
-      });
-      return out;
+      const out = escapeHtml(text);
+      // เลือกข้อหาไปแล้ว ช่องจะมีชื่อเต็มอยู่ ถ้าไฮไลต์ตามคำในช่องจะเหลืองทั้งบรรทัด อ่านไม่ออก
+      if (q.trim() === text.trim()) return out;
+      return q.trim().split(/\s+/).filter(Boolean).reduce((s, t) =>
+        s.replace(new RegExp('(' + cpEscRe(escapeHtml(t)) + ')', 'gi'), '<mark>$1</mark>'), out);
     }
 
     function cpBindChargeSearch(row, input, onPick) {
@@ -8201,11 +8201,13 @@
         }
         box.innerHTML = '<div class="cp-ac-head">พบ ' + items.length.toLocaleString('th-TH') + ' ข้อหา' +
             (q.trim() ? '' : ' — พิมพ์คำเพื่อกรองให้แคบลง') + '</div>' +
-          items.map((c, i) =>
-            '<div class="cp-ac-item" data-i="' + i + '">' + cpHighlight(c.name, q) +
-              '<span class="cp-ac-meta">' + escapeHtml([c.code, c.section,
-                c.fine != null ? 'ปรับ ' + Number(c.fine).toLocaleString('th-TH') + ' บาท' : ''
-              ].filter(Boolean).join(' · ') || 'ไม่มีรหัส/ค่าปรับในไฟล์ PTM') + '</span></div>').join('');
+          items.map((c, i) => {
+            const meta = [c.code, c.section,
+              c.fine != null ? 'ปรับ ' + Number(c.fine).toLocaleString('th-TH') + ' บาท' : ''
+            ].filter(Boolean).join(' · ');
+            return '<div class="cp-ac-item" data-i="' + i + '">' + cpHighlight(c.name, q) +
+              (meta ? '<span class="cp-ac-meta">' + escapeHtml(meta) + '</span>' : '') + '</div>';
+          }).join('');
         box.classList.add('open');
         cursor = -1;
       };
@@ -8287,11 +8289,12 @@
           info.textContent = 'ไม่อยู่ในรายการ PTM — จะบันทึกเป็นข้อความที่พิมพ์เอง';
           return;
         }
+        // ช่องไหนไม่มีในไฟล์ PTM ก็ไม่ต้องขึ้น ไม่ต้องเขียนว่าไม่มี
         info.className = 'cp-charge-info';
         info.innerHTML = [
           c.code ? 'รหัส <b>' + escapeHtml(c.code) + '</b>' : '',
           c.section ? 'มาตรา <b>' + escapeHtml(c.section) + '</b>' : '',
-          c.fine != null ? 'ค่าปรับ <b>' + Number(c.fine).toLocaleString('th-TH') + '</b> บาท' : 'ไม่มีค่าปรับในไฟล์ PTM'
+          c.fine != null ? 'ค่าปรับ <b>' + Number(c.fine).toLocaleString('th-TH') + '</b> บาท' : ''
         ].filter(Boolean).join(' · ');
       };
       chg.addEventListener('change', showInfo);
