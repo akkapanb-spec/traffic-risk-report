@@ -1661,6 +1661,10 @@
         h:'ให้ลากไฟล์ <b>sql/blackspot_3_rpc.sql</b> แล้วตามด้วย <b>sql/blackspot_4_publish.sql</b> ' +
           'ไปวางใน Supabase SQL Editor แล้วกด Run<br><span style="font-size:.8rem;color:#5b6b7f">' +
           'รันทับได้ปลอดภัย ข้อมูลในตารางไม่หาย · แก้ไฟล์อย่างเดียวไม่พอ ต้องรันทับฐานข้อมูลด้วย</span>' },
+      { m:/rn_locate_public/i,
+        t:'ยังไม่ได้ติดตั้งการกรอกอัตโนมัติจากโครงข่ายถนน',
+        h:'ให้ลากไฟล์ <b>sql/roadnet_4_locate_public.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run<br>' +
+          '<span style="font-size:.8rem;color:#5b6b7f">ไม่รันก็ใช้งานได้ตามปกติ เพียงแต่ต้องกรอกถนนกับตำบลเอง</span>' },
       { m:/tv_ref_list|tv_use_ref|tv_ref_volume/i,
         t:'ยังไม่ได้นำเข้าค่าอ้างอิงปริมาณจราจร',
         h:'ให้ลากไฟล์ <b>sql/traffic_4_doh_import.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run' },
@@ -3838,17 +3842,20 @@
         // อ่านพิกัดตอนกดยืนยัน (ก่อน willClose ล้างตัวหมุด) — อ่านทีหลังจะได้ null เสมอ
         preConfirm: () => dfPickerMarker ? dfPickerMarker.getLatLng() : null,
         willClose: () => { if (dfPickerMap) { dfPickerMap.remove(); dfPickerMap = null; dfPickerMarker = null; } }
-      }).then(result => {
-        if (result.isConfirmed && result.value) {
-          document.getElementById('dfCoords').value = result.value.lat.toFixed(6) + ', ' + result.value.lng.toFixed(6);
-        }
+      }).then(async result => {
+        if (!(result.isConfirmed && result.value)) return;
+        document.getElementById('dfCoords').value = result.value.lat.toFixed(6) + ', ' + result.value.lng.toFixed(6);
+        rnAutoFillToast(await rnAutoFill(result.value.lat, result.value.lng, RN_AUTOFILL.dfCoords));
       });
     }
 
-    function dfUseCurrentLocation() {
+    async function dfUseCurrentLocation() {
       if (!navigator.geolocation) { Swal.fire({ icon:'error', title:'เบราว์เซอร์ไม่รองรับ GPS' }); return; }
       navigator.geolocation.getCurrentPosition(
-        pos => { document.getElementById('dfCoords').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6); },
+        async pos => {
+          document.getElementById('dfCoords').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6);
+          rnAutoFillToast(await rnAutoFill(pos.coords.latitude, pos.coords.longitude, RN_AUTOFILL.dfCoords));
+        },
         () => Swal.fire({ icon:'error', title:'ไม่สามารถดึงตำแหน่งได้', text:'โปรดอนุญาตการเข้าถึงตำแหน่ง หรือกรอกพิกัดเอง' })
       );
     }
@@ -5822,17 +5829,31 @@
         },
         preConfirm: () => avPickerMarker ? avPickerMarker.getLatLng() : null,
         willClose: () => { if (avPickerMap) { avPickerMap.remove(); avPickerMap = null; avPickerMarker = null; } }
-      }).then(result => {
-        if (result.isConfirmed && result.value) {
-          document.getElementById('avCoords').value = result.value.lat.toFixed(6) + ', ' + result.value.lng.toFixed(6);
-        }
+      }).then(async result => {
+        if (!(result.isConfirmed && result.value)) return;
+        document.getElementById('avCoords').value = result.value.lat.toFixed(6) + ', ' + result.value.lng.toFixed(6);
+        avAutoFillPlace(result.value.lat, result.value.lng);
       });
     }
 
-    function avUseCurrentLocation() {
+    /* ฟอร์มประกาศไม่มีช่องถนนกับตำบลแยกกัน มีแต่ "สถานที่" ช่องเดียว
+       จึงรวมเป็นข้อความเดียวใส่ให้ ตามรูปแบบที่ placeholder บอกไว้ */
+    async function avAutoFillPlace(lat, lng) {
+      const el = document.getElementById('avPlace');
+      if (!el || String(el.value || '').trim() !== '') return;
+      const res = await rnAutoFill(lat, lng, {});
+      if (!res) return;
+      el.value = res.label + (res.r.subdistrict ? ' ต.' + res.r.subdistrict : '');
+      rnAutoFillToast({ r: res.r, label: res.label, done: ['สถานที่'] });
+    }
+
+    async function avUseCurrentLocation() {
       if (!navigator.geolocation) { Swal.fire({ icon:'error', title:'เบราว์เซอร์ไม่รองรับ GPS' }); return; }
       navigator.geolocation.getCurrentPosition(
-        pos => { document.getElementById('avCoords').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6); },
+        pos => {
+          document.getElementById('avCoords').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6);
+          avAutoFillPlace(pos.coords.latitude, pos.coords.longitude);
+        },
         () => Swal.fire({ icon:'error', title:'ไม่สามารถดึงตำแหน่งได้', text:'โปรดอนุญาตการเข้าถึงตำแหน่ง หรือกรอกพิกัดเอง' })
       );
     }
@@ -7024,6 +7045,66 @@
     }
 
     /* ---------- เลือกพิกัดบนแผนที่ (ใช้ร่วมกันทุกฟอร์มในหน้านี้) ---------- */
+    /* เติมชื่อถนน ตำบล อปท. ให้อัตโนมัติจากพิกัดที่ปัก
+       ข้อมูลมาจากโครงข่ายถนนที่เจ้าหน้าที่วาดไว้เอง ซึ่งแม่นกว่าแหล่งภายนอกในพื้นที่นี้
+
+       เติมเฉพาะช่องที่ยังว่าง ไม่ทับของที่คนกรอกไว้แล้ว
+       เพราะคนกรอกอาจรู้ดีกว่าระบบ เช่นจุดอยู่หัวมุมที่คาบเกี่ยวสองถนน
+
+       ปักไกลจากแนวถนนเกิน 120 ม. จะไม่เติมอะไรเลย เดาผิดแย่กว่าไม่เดา
+       เพราะคนกรอกมักเชื่อค่าที่ระบบเติมให้โดยไม่ตรวจซ้ำ */
+    /* ช่องพิกัดของแต่ละฟอร์ม คู่กับช่องที่ให้เติมอัตโนมัติ
+       เก็บรวมไว้ที่เดียว ทั้งปุ่มจิ้มแผนที่และปุ่ม GPS จะได้ใช้ชุดเดียวกัน
+       ไม่ต้องไล่แก้ onclick ทีละปุ่มตอนเพิ่มฟอร์มใหม่ */
+    const RN_AUTOFILL = {
+      bsFeatCoords: { road:'bsFeatRoad', subdistrict:'bsFeatSub', inMunicipality:'bsFeatMuni' },
+      bsIncCoords:  { road:'bsIncRoad',  subdistrict:'bsIncSub',  inMunicipality:'bsIncMuni' },
+      rnPlCoords:   { roadId:'rnPlRoad', subdistrict:'rnPlSubdistrict', inMunicipality:'rnPlInMuni' },
+      cpCoords:     { roadId:'cpRoad',   subdistrict:'cpSubdistrict',   inMunicipality:'cpInMuni' },
+      dfCoords:     { road:'dfRoadName', subdistrict:'dfSubdistrict' }   // ทะเบียนผู้เสียชีวิตไม่มีช่องเขตเทศบาลแยก
+    };
+
+    async function rnAutoFill(lat, lng, fields) {
+      // เติมเฉพาะช่องที่ยังว่าง
+      const set = (id, val) => {
+        if (!id || val == null || val === '') return false;
+        const el = document.getElementById(id);
+        if (!el) return false;
+        if (String(el.value || '').trim() !== '') return false;   // มีคนกรอกไว้แล้ว ไม่แตะ
+        el.value = val;
+        // select ที่ไม่มีตัวเลือกนั้น จะกลายเป็นค่าว่างเงียบ ๆ ต้องเช็คแล้วคืนของเดิม
+        if (el.tagName === 'SELECT' && el.value !== String(val)) { el.value = ''; return false; }
+        return true;
+      };
+      // เขตเทศบาลเขียนทับได้ เพราะเป็นค่าที่ผูกกับตำแหน่งล้วน ๆ ไม่ใช่สิ่งที่คนกรอกรู้ดีกว่า
+      // และ select พวกนี้มีค่าเริ่มต้นติดมาเสมอ ถ้าใช้กติกา "เติมเฉพาะช่องว่าง" จะไม่มีวันได้เติม
+      const setAlways = (id, val) => {
+        if (!id || val == null) return false;
+        const el = document.getElementById(id);
+        if (!el) return false;
+        el.value = String(val);
+        return true;
+      };
+      try {
+        const r = await rpc('rn_locate_public', { p_lat: lat, p_lng: lng });
+        if (!r || !r.success || !r.found) return null;
+        const done = [];
+        const label = (r.road_code && r.road_code !== '-' ? r.road_code + ' ' : '') + r.road_name;
+        if (set(fields.road, label)) done.push('ถนน');
+        if (set(fields.roadId, r.road_id)) done.push('ถนน');       // ช่องที่เป็น select อ้างด้วย road_id
+        if (set(fields.subdistrict, r.subdistrict)) done.push('ตำบล');
+        if (set(fields.localAuthority, r.local_authority)) done.push('อปท.');
+        if (setAlways(fields.inMunicipality, r.in_municipality)) done.push('เขตพื้นที่');
+        return { r, label, done };
+      } catch (e) {
+        // การกรอกอัตโนมัติเป็นแค่ตัวช่วย พังแล้วต้องไม่ขวางการบันทึกข้อมูล
+        // แต่ถ้ายังไม่ได้รัน SQL ก็ควรบอกสักครั้ง ไม่ใช่เงียบไปเลยจนไม่มีใครรู้ว่ามีฟีเจอร์นี้
+        if (e && e.friendly && !rnAutoFillWarned) { rnAutoFillWarned = true; rpcAlert(e); }
+        return null;
+      }
+    }
+    let rnAutoFillWarned = false;
+
     function bsPickCoords(targetId) {
       Swal.fire({
         title: 'จิ้มเลือกพิกัดบนแผนที่', width: 720,
@@ -7042,14 +7123,28 @@
         // อ่านตำแหน่งตอน preConfirm — willClose ทำลาย marker ไปแล้ว
         preConfirm: () => bsPickerMarker ? bsPickerMarker.getLatLng() : null,
         willClose: () => { if (bsPickerMap) { bsPickerMap.remove(); bsPickerMap = null; bsPickerMarker = null; } }
-      }).then(r => {
-        if (r.isConfirmed && r.value) document.getElementById(targetId).value = r.value.lat.toFixed(6) + ', ' + r.value.lng.toFixed(6);
+      }).then(async r => {
+        if (!(r.isConfirmed && r.value)) return;
+        document.getElementById(targetId).value = r.value.lat.toFixed(6) + ', ' + r.value.lng.toFixed(6);
+        if (RN_AUTOFILL[targetId]) rnAutoFillToast(await rnAutoFill(r.value.lat, r.value.lng, RN_AUTOFILL[targetId]));
       });
+    }
+
+    // บอกให้รู้ว่าระบบเติมอะไรให้บ้าง ไม่ใช่เติมเงียบ ๆ แล้วคนกรอกไม่ทันสังเกต
+    function rnAutoFillToast(res) {
+      if (!res) return;
+      if (!res.done.length) return;
+      Swal.fire({ toast:true, position:'top-end', icon:'success', timer:3200, showConfirmButton:false,
+        title:'เติมให้อัตโนมัติ: ' + res.done.join(' · '),
+        text:'จาก ' + res.label + ' · ห่างแนวถนน ' + res.r.dist_m + ' ม.' });
     }
     function bsUseGps(targetId) {
       if (!navigator.geolocation) { Swal.fire({ icon:'error', title:'เบราว์เซอร์ไม่รองรับ GPS' }); return; }
       navigator.geolocation.getCurrentPosition(
-        pos => { document.getElementById(targetId).value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6); },
+        async pos => {
+          document.getElementById(targetId).value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6);
+          if (RN_AUTOFILL[targetId]) rnAutoFillToast(await rnAutoFill(pos.coords.latitude, pos.coords.longitude, RN_AUTOFILL[targetId]));
+        },
         () => Swal.fire({ icon:'error', title:'ไม่สามารถดึงตำแหน่งได้', text:'โปรดอนุญาตการเข้าถึงตำแหน่ง หรือกรอกพิกัดเอง' })
       );
     }
@@ -8376,7 +8471,9 @@
       }
     }
 
-    function rnPickPlaceCoords() { bsPickCoords('rnPlCoords'); }
+    function rnPickPlaceCoords() {
+      bsPickCoords('rnPlCoords');
+    }
     function rnUsePlaceGps() { bsUseGps('rnPlCoords'); }
 
     async function rnImportPlaces(ev) {
@@ -8883,7 +8980,9 @@
           '</div>' : '');
     }
 
-    function cpPickCoords() { bsPickCoords('cpCoords'); }
+    function cpPickCoords() {
+      bsPickCoords('cpCoords');
+    }
     function cpUseGps() { bsUseGps('cpCoords'); }
 
     async function cpImport(ev) {

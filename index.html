@@ -1463,9 +1463,9 @@ function getCurrentGPS() {
   Swal.fire({ title: 'กำลังดึงพิกัด GPS...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      pos => {
+      async pos => {
         document.getElementById('coordinates').value = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
-        Swal.fire({ icon: 'success', title: 'ดึงพิกัดสำเร็จ', timer: 1500, showConfirmButton: false });
+        await autoFillFromRoad(pos.coords.latitude, pos.coords.longitude);
       },
       err => Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'โปรดอนุญาตการเข้าถึงตำแหน่ง หรือเลือกใช้แผนที่แทน' })
     );
@@ -3657,12 +3657,51 @@ function showMapPicker() {
     // อ่านพิกัดตอนกดยืนยัน ก่อน dialog ปิด (willClose ล้างแผนที่ทิ้งแล้ว อ่านทีหลังไม่ได้)
     preConfirm: () => mapMarker ? mapMarker.getLatLng() : null,
     willClose: () => { if (mapInstance) { mapInstance.remove(); mapInstance = null; mapMarker = null; } }
-  }).then((result) => {
+  }).then(async (result) => {
     if (result.isConfirmed && result.value) {
       document.getElementById('coordinates').value = `${result.value.lat.toFixed(6)}, ${result.value.lng.toFixed(6)}`;
-      Swal.fire({ icon: 'success', title: 'ระบุพิกัดสำเร็จ', timer: 1500, showConfirmButton: false });
+      await autoFillFromRoad(result.value.lat, result.value.lng);
     }
   });
+}
+
+/* เติมถนน ตำบล อำเภอ จังหวัด ให้อัตโนมัติจากพิกัดที่เลือก
+   ตรงนี้ช่วยได้มากกับหน้าของประชาชน เพราะคนแจ้งมักไม่รู้ชื่อถนนตามทะเบียน
+   และชื่อที่พิมพ์มาเองหลากหลายจนเอาไปจับกลุ่มวิเคราะห์จุดเสี่ยงต่อไม่ได้
+
+   เติมเฉพาะช่องที่ยังว่าง คนแจ้งแก้ทับได้เสมอ
+   ปักไกลจากแนวถนนเกิน 120 ม. ระบบจะไม่เดาให้ ต้องกรอกเอง */
+async function autoFillFromRoad(lat, lng) {
+  const ok = (id, val) => {
+    if (!val) return false;
+    const el = document.getElementById(id);
+    if (!el || String(el.value || '').trim() !== '') return false;
+    el.value = val;
+    if (el.tagName === 'SELECT' && el.value !== String(val)) { el.value = ''; return false; }
+    return true;
+  };
+  let filled = [], road = null;
+  try {
+    const { data, error } = await sb.rpc('rn_locate_public', { p_lat: lat, p_lng: lng });
+    if (!error && data && data.success && data.found) road = data;
+  } catch (e) { /* ยังไม่ได้รัน roadnet_4 — ให้กรอกเองตามปกติ */ }
+
+  if (road) {
+    const name = (road.road_code && road.road_code !== '-' ? road.road_code + ' ' : '') + road.road_name;
+    if (ok('road', name)) filled.push('ถนน');
+    if (ok('subdistrict', road.subdistrict)) filled.push('ตำบล');
+    // โครงข่ายถนนครอบคลุมเฉพาะเขตเมืองนครสวรรค์ เจอถนนแล้วก็รู้อำเภอกับจังหวัดแน่นอน
+    if (ok('district', 'เมืองนครสวรรค์')) filled.push('อำเภอ');
+    if (ok('province', 'นครสวรรค์')) filled.push('จังหวัด');
+  }
+
+  if (filled.length) {
+    Swal.fire({ icon: 'success', title: 'ระบุพิกัดสำเร็จ',
+      html: 'กรอกให้อัตโนมัติแล้ว: <b>' + filled.join(' · ') + '</b><br><small>แก้ไขได้หากไม่ตรง</small>',
+      timer: 3000, showConfirmButton: false });
+  } else {
+    Swal.fire({ icon: 'success', title: 'ระบุพิกัดสำเร็จ', timer: 1500, showConfirmButton: false });
+  }
 }
 
 // ปรับ active ของ bottom navigation เมื่อกลับจากหน้าสถิติผู้เสียชีวิต
