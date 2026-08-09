@@ -992,7 +992,7 @@
           <div class="card">
             <h3 class="card-title"><i class="fa-solid fa-table-list"></i> จุดเสี่ยงที่วิเคราะห์ได้ <span id="bsSiteTotal" class="pill">0 จุด</span>
               <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="bsExportSites()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button></h3>
-            <input id="bsSiteSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อจุด, ถนน, ตำบล, ระดับ..." oninput="bsRenderSites()">
+            <input id="bsSiteSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อจุด, ถนน หรือหมายเลขทางหลวง (ทล.1), ตำบล, ระดับ..." oninput="bsRenderSites()">
             <div id="bsSiteTable"><div class="hint">ยังไม่มีผลวิเคราะห์ — กดปุ่ม “วิเคราะห์” ด้านบน</div></div>
           </div>
 
@@ -1048,7 +1048,7 @@
               <label class="btn btn-soft btn-sm" for="bsFeatFile" style="margin:0"><i class="fa-solid fa-file-import"></i> นำเข้า CSV</label>
               <input id="bsFeatFile" class="sr-only" type="file" accept=".csv,text/csv">
               <button class="btn btn-soft btn-sm" type="button" onclick="bsLoadAdminData()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
-            <input id="bsFeatSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อจุด, ถนน, ตำบล, ชนิด..." oninput="bsRenderFeatures()">
+            <input id="bsFeatSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อจุด, ถนน หรือหมายเลขทางหลวง (ทล.1), ตำบล, ชนิด..." oninput="bsRenderFeatures()">
             <div id="bsFeatTable"><div class="loading-skeleton"></div></div>
           </div>
         </div>
@@ -1093,7 +1093,7 @@
               <label class="btn btn-soft btn-sm" for="bsIncFile" style="margin:0"><i class="fa-solid fa-file-import"></i> นำเข้า CSV</label>
               <input id="bsIncFile" class="sr-only" type="file" accept=".csv,text/csv">
               <button class="btn btn-soft btn-sm" type="button" onclick="bsLoadAdminData()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
-            <input id="bsIncSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: สถานที่, ถนน, ตำบล, ที่มา, ปี..." oninput="bsRenderIncidents()">
+            <input id="bsIncSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: สถานที่, ถนน หรือหมายเลขทางหลวง (ทล.1), ตำบล, ที่มา, ปี..." oninput="bsRenderIncidents()">
             <div id="bsIncTable"><div class="loading-skeleton"></div></div>
           </div>
         </div>
@@ -1212,7 +1212,7 @@
               <h3 class="card-title"><i class="fa-solid fa-list"></i> ถนนทั้งหมด <span id="rnRoadTotal" class="pill">0 สาย</span>
                 <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="rnExportRoads()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
                 <button class="btn btn-soft btn-sm" type="button" onclick="rnLoadData()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
-              <input id="rnRoadSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อถนน, รหัส, ตำบล..." oninput="pageReset('roads');rnRenderRoads()">
+              <input id="rnRoadSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อถนน หรือหมายเลขทางหลวง (ทล.1), ตำบล..." oninput="pageReset('roads');rnRenderRoads()">
               <div id="rnRoadTable"><div class="loading-skeleton"></div></div>
             </div>
           </div>
@@ -1241,7 +1241,7 @@
               <h3 class="card-title"><i class="fa-solid fa-table-list"></i> รายการช่วงถนน
                 <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="rnExportSegments()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
                 <button class="btn btn-soft btn-sm" style="color:#1d4ed8" type="button" onclick="rnExportGeoJson()"><i class="fa-solid fa-map-location-dot"></i> ส่งออก GeoJSON</button></h3>
-              <input id="rnSegSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: รหัสช่วง, ชื่อถนน..." oninput="pageReset('segments');rnRenderSegments()">
+              <input id="rnSegSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: รหัสช่วง, ชื่อถนน หรือหมายเลขทางหลวง (ทล.1)..." oninput="pageReset('segments');rnRenderSegments()">
               <div id="rnSegTable"><div class="loading-skeleton"></div></div>
             </div>
           </div>
@@ -1293,7 +1293,7 @@
               <h3 class="card-title"><i class="fa-solid fa-list"></i> สถานที่ทั้งหมด <span id="rnPlaceTotal" class="pill">0 แห่ง</span>
                 <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="rnExportPlaces()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
                 <button class="btn btn-soft btn-sm" type="button" onclick="rnLoadData()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
-              <input id="rnPlaceSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อ, ประเภท, ถนน, ตำบล..." oninput="pageReset('places');rnRenderPlaces()">
+              <input id="rnPlaceSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: ชื่อ, ประเภท, ถนน หรือหมายเลขทางหลวง (ทล.1), ตำบล..." oninput="pageReset('places');rnRenderPlaces()">
               <div id="rnPlaceTable"><div class="loading-skeleton"></div></div>
             </div>
           </div>
@@ -1508,7 +1508,7 @@
             <h3 class="card-title"><i class="fa-solid fa-table-list"></i> จุดตรวจทั้งหมด <span id="cpTotal" class="pill">0 จุด</span>
               <button class="btn btn-soft btn-sm" style="margin-left:auto;color:#16834b" type="button" onclick="cpExport()"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
               <button class="btn btn-soft btn-sm" type="button" onclick="cpLoadData()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
-            <input id="cpSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: สถานที่, ถนน, หัวหน้าชุด, ข้อหา..." oninput="pageReset('checkpoints');cpRender()">
+            <input id="cpSearch" class="input" style="margin-bottom:12px" placeholder="🔍 ค้นหา: สถานที่, ถนน หรือหมายเลขทางหลวง (ทล.1), หัวหน้าชุด, ข้อหา..." oninput="pageReset('checkpoints');cpRender()">
             <div id="cpTable"><div class="loading-skeleton"></div></div>
           </div>
         </div>
@@ -1661,6 +1661,11 @@
         h:'ให้ลากไฟล์ <b>sql/blackspot_3_rpc.sql</b> แล้วตามด้วย <b>sql/blackspot_4_publish.sql</b> ' +
           'ไปวางใน Supabase SQL Editor แล้วกด Run<br><span style="font-size:.8rem;color:#5b6b7f">' +
           'รันทับได้ปลอดภัย ข้อมูลในตารางไม่หาย · แก้ไฟล์อย่างเดียวไม่พอ ต้องรันทับฐานข้อมูลด้วย</span>' },
+      { m:/rn_road_index/i,
+        t:'ยังไม่ได้ติดตั้งรายชื่อถนนแบบย่อ',
+        h:'ให้ลากไฟล์ <b>sql/roadnet_5_road_index.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run<br>' +
+          '<span style="font-size:.8rem;color:#5b6b7f">ไม่รันก็ใช้งานได้ แต่จะค้นด้วยหมายเลขทางหลวงไม่ได้ ' +
+          'และช่องถนนในหน้าจุดตรวจจะว่างจนกว่าจะเปิดหน้าโครงข่ายถนนก่อน</span>' },
       { m:/rn_locate_public/i,
         t:'ยังไม่ได้ติดตั้งการกรอกอัตโนมัติจากโครงข่ายถนน',
         h:'ให้ลากไฟล์ <b>sql/roadnet_4_locate_public.sql</b> ไปวางใน Supabase SQL Editor แล้วกด Run<br>' +
@@ -6474,6 +6479,7 @@
 
     async function bsLoadAdminData() {
       try {
+        await rnEnsureIndex();   // ให้ค้นหาด้วยหมายเลขทางหลวงได้ในตารางจุดเสี่ยง/จุดกายภาพ/จุดเกิดเหตุ
         const res = await rpc('bs_admin_data', { p_token: state.token });
         if (!res.success) throw new Error(res.message || 'โหลดข้อมูลไม่สำเร็จ');
         // ค่าใน bs_settings เก็บเป็น jsonb ตัวเลข — แปลงเป็น number ให้เครื่องวิเคราะห์ใช้ได้ตรงๆ
@@ -6575,7 +6581,8 @@
       const d = state.bsDraft;
       const all = (d && d.sites) || [];
       const q = valueOf('bsSiteSearch').toLowerCase();
-      const rows = q ? all.filter(s => JSON.stringify([s.title, s.road, s.subdistrict, s.level, s.rule]).toLowerCase().includes(q)) : all;
+      const terms = rnQueryTerms(q);   // พิมพ์ ทล.1 ต้องเจอ ถนนพหลโยธิน ด้วย
+      const rows = q ? all.filter(s => rnHit(terms, [s.title, s.road, s.subdistrict, s.level, s.rule])) : all;
       document.getElementById('bsSiteTotal').textContent = all.length + ' จุด';
       if (!rows.length) {
         document.getElementById('bsSiteTable').innerHTML = '<div class="hint">' + (all.length ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีผลวิเคราะห์ — กดปุ่ม “วิเคราะห์” ด้านบน') + '</div>';
@@ -6772,7 +6779,8 @@
     function bsRenderFeatures() {
       const all = state.bsFeatures || [];
       const q = valueOf('bsFeatSearch').toLowerCase();
-      const rows = q ? all.filter(f => JSON.stringify([f.name, f.road, f.subdistrict, BS_FEATURE_KINDS[f.kind]]).toLowerCase().includes(q)) : all;
+      const terms = rnQueryTerms(q);
+      const rows = q ? all.filter(f => rnHit(terms, [f.name, f.road, f.subdistrict, BS_FEATURE_KINDS[f.kind]])) : all;
       document.getElementById('bsFeatTotal').textContent = all.length + ' จุด';
       if (!rows.length) {
         document.getElementById('bsFeatTable').innerHTML = '<div class="hint">' + (all.length ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีจุดกายภาพ — เพิ่มจากฟอร์มด้านบน หรือนำเข้า CSV') + '</div>';
@@ -6848,7 +6856,8 @@
     function bsRenderIncidents() {
       const all = state.bsIncidents || [];
       const q = valueOf('bsIncSearch').toLowerCase();
-      const rows = q ? all.filter(r => JSON.stringify([r.place, r.road, r.subdistrict, r.source, r.cause, bkkStamp(r.occurred_at, 'day')]).toLowerCase().includes(q)) : all;
+      const terms = rnQueryTerms(q);
+      const rows = q ? all.filter(r => rnHit(terms, [r.place, r.road, r.subdistrict, r.source, r.cause, bkkStamp(r.occurred_at, 'day')])) : all;
       document.getElementById('bsIncTotal').textContent = all.length + ' แถว';
       if (!rows.length) {
         document.getElementById('bsIncTable').innerHTML = '<div class="hint">' + (all.length ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีข้อมูล — เพิ่มจากฟอร์มด้านบน หรือนำเข้า CSV') + '</div>';
@@ -8042,9 +8051,68 @@
       }
     }
 
+    /* ---------- รายชื่อถนน: ชื่อ กับ หมายเลขทางหลวง ใช้แทนกันได้ ---------- */
+    /* ถนนหนึ่งสายมีสองชื่อเสมอ — "ถนนพหลโยธิน" กับ "ทล.1" คือสายเดียวกัน
+       คนกรอกข้อมูลคนละคนเรียกคนละอย่าง ทะเบียนผู้เสียชีวิตเขียน "ทล.1 /ในเขตเทศบาลนคร"
+       แต่โครงข่ายถนนบันทึกชื่อว่า "ถนนพหลโยธิน" แล้วแยกรหัสไว้อีกช่อง
+       ถ้าค้นด้วยชื่อได้อย่างเดียว คนที่พิมพ์ "ทล.1" จะไม่เจออะไรเลย
+       ทั้งที่ในระบบมีถนนสายนั้นอยู่ */
+    function rnIndexRoads() {
+      // หน้าโครงข่ายถนนโหลดรายละเอียดครบอยู่แล้ว หน้าอื่นใช้รายชื่อย่อ
+      return (state.rnRoads && state.rnRoads.length) ? state.rnRoads : (state.rnIndex || []);
+    }
+    /* โหลดรายชื่อถนนแบบย่อครั้งเดียวต่อการเข้าใช้งาน
+       หน้าจุดตรวจกับหน้าสถานที่เคยได้ช่องถนนว่างเปล่า ถ้าไม่ได้แวะหน้าโครงข่ายถนนมาก่อน
+       เพราะรายชื่อถนนถูกโหลดที่หน้านั้นหน้าเดียว */
+    async function rnEnsureIndex() {
+      if (state.rnIndex || (state.rnRoads && state.rnRoads.length)) return;
+      try {
+        const res = await rpc('rn_road_index', {});
+        state.rnIndex = (res && res.success) ? (res.roads || []) : [];
+      } catch (e) { state.rnIndex = []; }   // ยังไม่ได้รัน roadnet_5 — ค้นด้วยข้อความล้วนต่อไปได้
+    }
+    const rnCode = r => { const c = String((r && r.code) || '').trim(); return (c && c !== '-') ? c : ''; };
+
+    /* แปลงคำค้นเป็นชุดคำที่ยอมรับได้ทั้งหมด
+       พิมพ์รหัสมา → เพิ่มชื่อถนนของรหัสนั้นเข้าไปด้วย และกลับกัน
+       คำนวณครั้งเดียวต่อการ render ไม่ใช่ต่อแถว */
+    /* คำค้นมีรหัสนี้อยู่จริงไหม โดยรหัสต้องจบตรงนั้น ไม่ใช่เป็นต้นของรหัสที่ยาวกว่า
+       "ทล.1 /ในเขตเทศบาลนคร" มี ทล.1 จริง — ตัวถัดไปเป็นช่องว่าง
+       "ทล.117" ไม่ได้มี ทล.1 ในความหมายนี้ — ตัวถัดไปเป็นเลข 1 แปลว่ายังเป็นรหัสเดียวกันอยู่ */
+    function rnQHasCode(q, code) {
+      const i = q.indexOf(code);
+      if (i < 0) return false;
+      const after = q.charAt(i + code.length);
+      return after === '' || '0123456789'.indexOf(after) < 0;
+    }
+    function rnQueryTerms(q) {
+      const terms = [q];
+      if (!q || q.length < 2) return terms;      // คำสั้นเกินไปจะลากถนนเข้ามาทั้งหมด
+      for (const r of rnIndexRoads()) {
+        const name = String(r.name || '').toLowerCase(), code = rnCode(r).toLowerCase();
+        if (!name || !code) continue;
+
+        /* รหัสต้องตรงทั้งก้อน หรือคำค้นมีรหัสนั้นอยู่เต็ม ๆ
+           ห้ามใช้ code.includes(q) เพราะ "ทล.117" มี "ทล.1" อยู่ข้างใน
+           พิมพ์ ทล.1 แล้วจะลากถนนรังสิโยทัยกับถนนเลี่ยงเมืองมาด้วย
+           ทั้งที่ในแถวนั้นไม่มีคำว่า ทล.1 ให้เห็นเลยสักตัว คนค้นจะงงว่ามาได้ยังไง
+
+           ที่ยอมให้คำค้นมีรหัสอยู่ข้างใน เพราะทะเบียนผู้เสียชีวิตเขียนว่า
+           "ทล.1 /ในเขตเทศบาลนคร" ซึ่งต้องหาเจอเหมือนกัน */
+        if ((code === q || rnQHasCode(q, code)) && !terms.includes(name)) terms.push(name);
+        // ชื่อถนนไม่ได้ซ้อนกันแบบรหัส จับบางส่วนได้ พิมพ์ "พหลโยธิน" ต้องเจอแถวที่เขียนว่า ทล.1
+        if (name.includes(q) && !terms.includes(code)) terms.push(code);
+      }
+      return terms;
+    }
+    const rnHit = (terms, fields) => {
+      const hay = fields.filter(Boolean).join(' ').toLowerCase();
+      return terms.some(t => hay.includes(t));
+    };
+
     function rnFillRoadSelects() {
-      const opts = (state.rnRoads || []).map(r =>
-        '<option value="' + r.id + '">' + escapeHtml(r.name + (r.code ? ' (' + r.code + ')' : '')) + '</option>').join('');
+      const opts = rnIndexRoads().map(r =>
+        '<option value="' + r.id + '">' + escapeHtml(r.name + (rnCode(r) ? ' (' + rnCode(r) + ')' : '')) + '</option>').join('');
       [['rnSegRoad','ทุกสาย'], ['rnPlRoad','ไม่ระบุ / ยังไม่มีในโครงข่าย'], ['cpRoad','ไม่ระบุ / ยังไม่มีในโครงข่าย']].forEach(([id, first]) => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -8211,6 +8279,7 @@
       (state.rnRoads || []).forEach(r => byRoad[r.id] = r);
       return (state.rnSegments || []).map(s => Object.assign({}, s, {
         roadName: (byRoad[s.road_id] || {}).name || '-',
+        roadCode: rnCode(byRoad[s.road_id]),        // ค้นด้วยหมายเลขทางหลวงได้ด้วย
         perKm: Number(s.length_m) > 0 ? (s.acc_count * 1000 / Number(s.length_m)) : 0
       }));
     }
@@ -8218,7 +8287,8 @@
     function rnRenderSegments() {
       const q = (valueOf('rnSegSearch') || '').toLowerCase();
       const all = rnSegRows();
-      const rows = all.filter(s => !q || [s.code, s.roadName].join(' ').toLowerCase().includes(q))
+      const terms = rnQueryTerms(q);
+      const rows = all.filter(s => !q || rnHit(terms, [s.code, s.roadName, s.roadCode]))
         // เรียงจากช่วงที่อันตรายที่สุดลงมา: ตาย -> เมาขับ -> อุบัติเหตุต่อ กม.
         .sort((a, b) => b.fatal_count - a.fatal_count || b.drunk_count - a.drunk_count || b.perKm - a.perKm);
       document.getElementById('rnSegTotal').textContent = all.length + ' ช่วง';
@@ -8837,6 +8907,8 @@
 
     async function cpLoadData() {
       try {
+        // ต้องมีรายชื่อถนนก่อน ไม่งั้นช่องถนนว่างเปล่าเมื่อเข้าหน้านี้โดยไม่ได้แวะหน้าโครงข่ายถนน
+        await rnEnsureIndex();
         const res = await rpc('cp_list', { p_token: state.token, p_from: valueOf('cpFrom') || null, p_to: valueOf('cpTo') || null });
         if (!res || !res.success) throw new Error((res && res.message) || 'โหลดข้อมูลไม่สำเร็จ');
         state.cpCharges = res.charges || [];
@@ -8931,9 +9003,13 @@
 
     function cpRender() {
       const q = (valueOf('cpSearch') || '').toLowerCase();
-      const rows = (state.cpRows || []).filter(r => !q ||
-        [r.place, r.road_name, r.commander, r.subdistrict, r.kind, (r.arrests || []).map(a => a.charge).join(' ')]
-          .join(' ').toLowerCase().includes(q));
+      const terms = rnQueryTerms(q);
+      // cp_checkpoints เก็บ road_id กับ road_name แต่ไม่ได้เก็บรหัส หาจากรายชื่อถนนแทน
+      const codeById = {};
+      rnIndexRoads().forEach(r => { codeById[r.id] = rnCode(r); });
+      const rows = (state.cpRows || []).filter(r => !q || rnHit(terms,
+        [r.place, r.road_name, codeById[r.road_id], r.commander, r.subdistrict, r.kind,
+         (r.arrests || []).map(a => a.charge).join(' ')]));
       document.getElementById('cpTotal').textContent = rows.length + ' จุด';
       const pg = pageSlice('checkpoints', rows);
       document.getElementById('cpTable').innerHTML = !rows.length
