@@ -1335,7 +1335,8 @@ canvas{max-width:100%!important;}
         <!-- แถวที่ 3: Safety, Time, Cause -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-helmet-safety i-green"></i> การใช้เครื่องป้องกัน</h3><div class="dt-visual dt-auto" id="safetyVisual"></div><p class="text-xs text-gray-500 mt-2">แยกหมวกนิรภัยกับเข็มขัดนิรภัยเป็นคนละกลุ่ม ร้อยละคิดจากคนในกลุ่มนั้นเอง</p></div>
-          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-clock i-purple"></i> แยกตามเวลา</h3><div class="h-[250px]"><canvas id="timeChart"></canvas></div></div>
+          <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-clock i-purple"></i> แยกตามเวลา</h3><div class="h-[300px]"><canvas id="timeChart"></canvas></div>
+            <p class="text-xs text-gray-500 mt-2">เรียงตามเวลาครบทั้ง 12 ช่วง ไม่ยุบรวม จะได้เห็นว่าช่วงไหนของวันอันตราย</p></div>
           <div class="glass-effect rounded-xl p-6"><h3 class="dt-title"><i class="fa-solid fa-triangle-exclamation i-red"></i> สาเหตุที่ทำให้เกิดอุบัติเหตุ</h3><div class="h-[250px]"><canvas id="causeChart"></canvas></div></div>
         </div>
 
@@ -3287,15 +3288,28 @@ async function createDeathCharts(data) {
        - หมวดเยอะ หรือชื่อหมวดยาว → แท่งแนวนอน (ป้ายอ่านออก ไม่ต้องเอียงหัว)
        - ค่าห่างกันมาก (อันดับ 1 สูงกว่าอันดับท้าย > 8 เท่า) → แนวนอน + ป้ายตัวเลขทุกแท่ง
          เพราะแท่งเตี้ยจะกลายเป็นขีดบาง ๆ มองไม่ออกว่าเท่าไหร่
-       - หมวดเกิน 8 → เก็บ 7 อันดับแรก ที่เหลือยุบเป็น "อื่นๆ" ไม่งั้นหางยาวรกจนอ่านไม่ไหว */
-    function vizShape(labels, values, forceHorizontal) {
+       - หมวดเกิน 8 → เก็บ 7 อันดับแรก ที่เหลือยุบเป็น "อื่นๆ" ไม่งั้นหางยาวรกจนอ่านไม่ไหว
+
+       ยกเว้นหมวดที่เป็น "ลำดับ" เช่นช่วงเวลา ให้ส่ง ordered = true
+       ช่วงเวลา 12 ช่วงคือทั้งวันครบถ้วน ไม่มีเวลาไหนที่เป็น "อื่นๆ" ได้
+       และการเรียงตามจำนวนทำให้อ่านรูปร่างของวันไม่ออก ซึ่งเป็นเหตุผลเดียว
+       ที่ดูกราฟเวลา — จะรู้ได้อย่างไรว่าช่วงดึกอันตรายกว่าช่วงบ่าย
+       ถ้าเรียงตามจำนวนแล้วเอา 5 ช่วงไปซ่อนไว้ในถังเดียว */
+    function vizShape(labels, values, forceHorizontal, ordered) {
       let L = labels.slice(), V = (values || []).map(v => Number(v) || 0);
-      if (L.length > 8) {
+      if (L.length > 8 && !ordered) {
         const idx = L.map((_, i) => i).sort((a, b) => V[b] - V[a]);
         const keep = idx.slice(0, 7), rest = idx.slice(7);
         const other = rest.reduce((a, i) => a + V[i], 0);
-        L = keep.map(i => labels[i]).concat(other ? ['อื่นๆ (' + rest.length + ' รายการ)'] : []);
-        V = keep.map(i => V[i]).concat(other ? [other] : []);
+        L = keep.map(i => labels[i]);
+        V = keep.map(i => V[i]);
+        if (other) {
+          // ถ้ามีหมวด "อื่นๆ" จริงอยู่แล้ว ให้รวมเข้าไปเลย
+          // ไม่งั้นจะมีสองแท่งชื่อคล้ายกันจนแยกไม่ออกว่าอันไหนคือหมวดจริง
+          const existing = L.indexOf('อื่นๆ');
+          if (existing >= 0) V[existing] += other;
+          else { L.push('อื่นๆ (' + rest.length + ' รายการ)'); V.push(other); }
+        }
       }
       const longest = Math.max(...L.map(s => String(s).length));
       const nonZero = V.filter(v => v > 0);
@@ -3306,11 +3320,11 @@ async function createDeathCharts(data) {
 
     /* job = หน้าที่ของข้อมูล ไม่ใช่สี — magnitude | identity | severity
        magnitude ไล่เฉดสีเดียวตามค่า · identity ใช้สีประจำตัว · severity ใช้สีสถานะ */
-    const generateChart = (id, type, labels, chartData, job, title, horizontal) => {
+    const generateChart = (id, type, labels, chartData, job, title, horizontal, ordered) => {
       const el = document.getElementById(id);
       if (!el) return;
       const isPie = type === 'pie' || type === 'doughnut';
-      const shaped = isPie ? { labels, values:chartData, horizontal:false } : vizShape(labels, chartData, horizontal);
+      const shaped = isPie ? { labels, values:chartData, horizontal:false } : vizShape(labels, chartData, horizontal, ordered);
       labels = shaped.labels; chartData = shaped.values; horizontal = shaped.horizontal;
       const bg = vizColors(job || (isPie ? 'identity' : 'magnitude'), labels.length, { values: chartData });
       const total = (chartData || []).reduce((a, b) => a + (Number(b) || 0), 0);
@@ -3366,7 +3380,8 @@ async function createDeathCharts(data) {
     renderDtLicenseCards('licenseVisual', data.licenseGroups || [0, 0], data.licenseNA, dtUnknown.license);
 
     renderDtSafetyGroups('safetyVisual', data.safetyEquipment || [0,0,0,0], data.safetyOther, dtUnknown.safety);
-    generateChart('timeChart', 'bar', data.timeLabels, data.timeGroups, 'magnitude', 'ช่วงเวลา');
+    // ช่วงเวลาเรียงตามนาฬิกาเสมอ ครบทั้ง 12 ช่วง — ordered = true
+    generateChart('timeChart', 'bar', data.timeLabels, data.timeGroups, 'magnitude', 'ช่วงเวลา', true, true);
     // ป้ายชื่อยาว → แท่งแนวนอนอ่านง่าย แบบเดียวกับหน้าสถิติอุบัติเหตุ
     generateChart('causeChart', 'bar', data.causeLabels, data.causes, 'magnitude', 'สาเหตุอุบัติเหตุ', true);
 
