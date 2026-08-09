@@ -2682,13 +2682,30 @@ function vcFlush() {
   if (!vcQueue.length) return;
   const batch = vcQueue.splice(0, vcQueue.length);
   const payload = { p_session: vcSession(), p_device: vcDevice(), p_events: batch };
-  // sendBeacon ส่งได้แม้หน้ากำลังปิด ซึ่ง fetch ปกติมักถูกยกเลิก
+  /* ใช้ fetch + keepalive แทน sendBeacon
+     keepalive ทำให้คำขอเดินทางต่อได้แม้หน้ากำลังปิด ซึ่งเป็นเหตุผลเดียวที่เคยใช้ sendBeacon
+
+     ทำไมต้องเลิกใช้ sendBeacon
+       มันแนบ credentials ไปด้วยเสมอและปิดไม่ได้ ส่วน Supabase ตอบกลับด้วย
+       Access-Control-Allow-Origin: * ซึ่งเบราว์เซอร์ห้ามใช้คู่กับคำขอที่แนบ credentials
+       ทุกคำขอจึงถูกบล็อกที่ CORS
+
+       และที่แย่กว่านั้น sendBeacon คืน true ตั้งแต่ตอนเข้าคิว ไม่ได้รอผลจริง
+       โค้ดเดิมจึง return ทิ้งไปเลย ไม่เคยตกลงมาถึง rpc สำรอง
+       ผลคือไม่เคยบันทึกอะไรได้สักครั้ง โดยไม่มีอะไรฟ้อง
+
+     credentials:'omit' ทำให้ * ใช้ได้ตามปกติ */
   try {
-    const url = SUPABASE_URL + '/rest/v1/rpc/vc_events_add?apikey=' + SUPABASE_ANON_KEY;
-    const blob = new Blob([JSON.stringify(payload)], { type:'application/json' });
-    if (navigator.sendBeacon && navigator.sendBeacon(url, blob)) return;
-  } catch (e) { /* ไม่รองรับก็ถอยไปใช้ rpc ปกติ */ }
-  sb.rpc('vc_events_add', payload).catch(() => {});
+    fetch(SUPABASE_URL + '/rest/v1/rpc/vc_events_add', {
+      method: 'POST', keepalive: true, credentials: 'omit',
+      headers: { 'Content-Type': 'application/json',
+                 apikey: SUPABASE_ANON_KEY,
+                 Authorization: 'Bearer ' + SUPABASE_ANON_KEY },
+      body: JSON.stringify(payload)
+    }).catch(() => {});
+  } catch (e) {
+    sb.rpc('vc_events_add', payload).catch(() => {});   // เบราว์เซอร์เก่าที่ไม่รู้จัก keepalive
+  }
 }
 function vcInit() {
   fbBuild();
