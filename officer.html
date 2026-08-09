@@ -4981,8 +4981,11 @@
         layout:{ padding:{ right: horizontal ? 46 : 4, top:4 } },
         plugins:{
           legend:{ display:isDoughnut, position:'bottom' },
+          /* อ่านค่าจาก c.raw ซึ่งเป็นตัวเลขต้นฉบับในชุดข้อมูล
+             ห้ามใช้ c.parsed.y — สำหรับแท่งแนวนอน (indexAxis:'y') ค่าจะอยู่ที่แกน x
+             ส่วน .y กลายเป็นลำดับของหมวด ทำให้ tooltip ขึ้นเลขลำดับแทนจำนวนจริง */
           tooltip:{ callbacks:{ label: c => {
-            const v = Number(c.parsed.y ?? c.parsed.x ?? c.parsed) || 0;
+            const v = Number(c.raw ?? 0) || 0;
             return ' ' + v.toLocaleString('th-TH') + ' (' + pctOf(v).toFixed(1) + '%)';
           } } }
         },
