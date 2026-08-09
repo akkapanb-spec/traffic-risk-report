@@ -3325,10 +3325,14 @@ async function createDeathCharts(data) {
           layout:{ padding:{ top:4, right: horizontal ? 26 : 4 } },
           plugins: {
             legend: { display:isPie, position:'bottom' },
+            /* อ่านค่าจาก c.raw ซึ่งเป็นตัวเลขต้นฉบับในชุดข้อมูล
+               ห้ามใช้ c.parsed.y — สำหรับแท่งแนวนอน (indexAxis:'y') ค่าจะอยู่ที่แกน x
+               ส่วน .y กลายเป็นลำดับของหมวด ทำให้ tooltip ขึ้นเลขลำดับแทนจำนวนจริง
+               เช่น "ขับรถเร็ว" ที่มี 6 ราย แต่อยู่อันดับแรก จะขึ้นว่า 0 ราย */
             tooltip: { callbacks: { label: c => {
-              const v = Number(c.parsed.y ?? c.parsed.x ?? c.parsed) || 0;
+              const v = Number(c.raw ?? 0) || 0;
               const pct = total ? ' · ' + (v / total * 100).toFixed(1) + '%' : '';
-              return ' ' + v.toLocaleString('th-TH') + ' ราย' + (isPie ? pct : '');
+              return ' ' + v.toLocaleString('th-TH') + ' ราย' + pct;
             } } }
           },
           scales: type === 'bar' ? vizScales(horizontal) : {}
