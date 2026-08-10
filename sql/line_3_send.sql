@@ -174,7 +174,7 @@ create or replace function line_send_daily()
 returns jsonb language plpgsql security definer set search_path = public, extensions as $$
 declare v_day date := line_today() - 1; v_n int;
 begin
-  v_n := line_broadcast('daily', line_msg_daily(v_day), 'daily-' || v_day::text);
+  v_n := line_broadcast('daily', line_msg_acc_day(v_day), 'daily-' || v_day::text);
   return jsonb_build_object('success', true, 'targets', v_n, 'day', v_day);
 end $$;
 
@@ -252,7 +252,7 @@ select cron.schedule('line-new-deaths', '*/5 * * * *', $job$ select line_send_ne
 -- ตรวจผลหลังทำครบ
 -- ============================================================
 -- ทดสอบส่งเข้ากลุ่มทันทีหนึ่งฉบับ โดยไม่ต้องรอถึงเวลา
---   select line_broadcast('daily', line_msg_daily(), 'ทดสอบ-' || now()::text);
+--   select line_broadcast('daily', line_msg_acc_day(), 'ทดสอบ-' || now()::text);
 --
 -- ผลจริงจาก LINE (pg_net ทำงานเบื้องหลัง ต้องรอสัก 5 วินาทีแล้วค่อยดู)
 -- status_code 200 = สำเร็จ · 401 = token ผิด · 400 = group id ผิดหรือบอทไม่ได้อยู่ในกลุ่ม
