@@ -107,7 +107,7 @@ begin
     '• เสียชีวิต ' || (c->>'deaths') || ' ราย',
     '• สาหัส/หมดสติ ' || (c->>'severe') || ' ราย',
     '• บาดเจ็บเล็กน้อย ' || (c->>'minor') || ' ราย'
-  ], E'\n');
+  ], chr(10));
 end $line_msg_acc_day$;
 
 -- ============================================================
@@ -138,7 +138,7 @@ begin
     '• เสียชีวิต ' || (c->>'deaths') || ' ราย' || line_delta((c->>'deaths')::int, (p->>'deaths')::int),
     '• สาหัส/หมดสติ ' || (c->>'severe') || ' ราย' || line_delta((c->>'severe')::int, (p->>'severe')::int),
     '• บาดเจ็บเล็กน้อย ' || (c->>'minor') || ' ราย' || line_delta((c->>'minor')::int, (p->>'minor')::int)
-  ], E'\n');
+  ], chr(10));
 end $line_msg_acc_week$;
 
 -- ============================================================
@@ -193,7 +193,7 @@ begin
   end if;
 
   v_lines := v_lines || ('รวมผู้เสียชีวิตปี ' || (v_year + 543)::text || ' : ' || v_year_n || ' ราย');
-  return array_to_string(v_lines, E'\n');
+  return array_to_string(v_lines, chr(10));
 end $line_msg_death$;
 
 -- ============================================================
@@ -260,7 +260,7 @@ begin
   end if;
 
   if v_lines is null or array_length(v_lines, 1) is null then return null; end if;
-  return jsonb_build_object('action', v_action, 'text', array_to_string(v_lines, E'\n'));
+  return jsonb_build_object('action', v_action, 'text', array_to_string(v_lines, chr(10)));
 end $line_reply$;
 
 -- ============================================================

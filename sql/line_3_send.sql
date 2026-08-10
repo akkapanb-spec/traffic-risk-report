@@ -76,7 +76,7 @@ begin
   -- LINE รับข้อความละไม่เกิน 5000 ตัวอักษร เกินแล้วตีกลับทั้งฉบับ
   -- ตัดเองดีกว่าปล่อยให้ตีกลับ เพราะข้อความยาวเกิดขึ้นได้จริงเมื่อมีเหตุหลายราย
   v_text := left(p_text, 4900);
-  if length(p_text) > 4900 then v_text := v_text || E'\n… (ข้อความยาวเกิน ตัดบางส่วนออก)'; end if;
+  if length(p_text) > 4900 then v_text := v_text || chr(10) || '… (ข้อความยาวเกิน ตัดบางส่วนออก)'; end if;
 
   v_body := jsonb_build_object('to', p_target,
               'messages', jsonb_build_array(jsonb_build_object('type', 'text', 'text', v_text)));
@@ -160,7 +160,7 @@ begin
   if v_left > v_sent then
     perform line_broadcast('death',
       'ℹ️ มีผู้เสียชีวิตที่บันทึกเข้าระบบเพิ่มอีก ' || (v_left - v_sent) || ' ราย' ||
-      E'\nระบบจะทยอยแจ้งรอบละ ' || greatest(1, p_max) || ' ราย หรือดูทั้งหมดได้ที่หน้าสถิติผู้เสียชีวิต',
+      chr(10) || 'ระบบจะทยอยแจ้งรอบละ ' || greatest(1, p_max) || ' ราย หรือดูทั้งหมดได้ที่หน้าสถิติผู้เสียชีวิต',
       'bulk-' || to_char(now(), 'YYYYMMDDHH24MI'));
   end if;
 
