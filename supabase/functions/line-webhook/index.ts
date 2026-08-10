@@ -23,7 +23,15 @@
 const CHANNEL_SECRET = Deno.env.get('LINE_CHANNEL_SECRET') ?? '';
 const ACCESS_TOKEN   = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN') ?? '';
 const SUPABASE_URL   = Deno.env.get('SUPABASE_URL') ?? '';
-const ANON_KEY       = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+
+/* Supabase เปลี่ยนชื่อคีย์ระหว่างทาง โปรเจกต์ที่สร้างคนละช่วงเวลาจึงมีชื่อไม่เหมือนกัน
+   ถ้าอ่านตัวเดียวแล้วไม่เจอ ฟังก์ชันจะเรียกฐานข้อมูลไม่ได้ และบอทจะเงียบสนิท
+   โดยไม่มีอะไรฟ้อง — ไล่หาสาเหตุยากมาก จึงลองทุกชื่อที่เป็นไปได้ */
+const DB_KEY =
+  Deno.env.get('SUPABASE_ANON_KEY') ??
+  Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ??
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ??
+  Deno.env.get('SUPABASE_SECRET_KEY') ?? '';
 
 /* ตรวจลายเซ็นก่อนเสมอ
    URL ของ Edge Function เป็นสาธารณะ ใครเดาถูกก็ยิงเข้ามาได้
@@ -57,7 +65,7 @@ async function reply(replyToken: string, text: string) {
 async function askDatabase(text: string): Promise<{ action: string; text: string | null } | null> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/line_reply`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
+    headers: { 'Content-Type': 'application/json', apikey: DB_KEY, Authorization: `Bearer ${DB_KEY}` },
     body: JSON.stringify({ p_text: text })
   });
   if (!res.ok) { console.error('line_reply error', res.status, await res.text()); return null; }
@@ -65,6 +73,33 @@ async function askDatabase(text: string): Promise<{ action: string; text: string
 }
 
 Deno.serve(async (req: Request) => {
+  /* ตรวจสุขภาพตัวเอง — เปิด <url>?selftest=1 ในเบราว์เซอร์
+     ตอนตั้งค่าครั้งแรกมีของต้องตั้งหลายที่ ทั้งสอง console ของ LINE และ Supabase
+     พลาดที่เดียวบอทก็เงียบสนิทเหมือนกันหมด แยกไม่ออกว่าพลาดตรงไหน
+     ตัวนี้บอกทีเดียวว่าอะไรพร้อมอะไรยัง
+     คืนแค่ "ตั้งแล้วหรือยัง" กับผลเรียกใช้ ไม่คืนค่าของ secret สักตัว */
+  if (req.method === 'GET' && new URL(req.url).searchParams.get('selftest') === '1') {
+    const rpc = await askDatabase('#help');
+    let lineToken = 'ไม่ได้ตรวจ (ยังไม่ได้ตั้ง token)';
+    if (ACCESS_TOKEN) {
+      try {
+        const r = await fetch('https://api.line.me/v2/bot/info', {
+          headers: { Authorization: `Bearer ${ACCESS_TOKEN}` }
+        });
+        lineToken = r.ok ? 'ใช้ได้ (' + r.status + ')' : 'ใช้ไม่ได้ (' + r.status + ') ' + (await r.text()).slice(0, 120);
+      } catch (e) { lineToken = 'เรียก LINE ไม่ได้: ' + String(e); }
+    }
+    return new Response(JSON.stringify({
+      ตั้ง_LINE_CHANNEL_SECRET: !!CHANNEL_SECRET,
+      ตั้ง_LINE_CHANNEL_ACCESS_TOKEN: !!ACCESS_TOKEN,
+      ตั้ง_SUPABASE_URL: !!SUPABASE_URL,
+      ตั้ง_คีย์ฐานข้อมูล: !!DB_KEY,
+      token_ใช้กับ_LINE_ได้จริง: lineToken,
+      เรียกฐานข้อมูลได้: !!rpc,
+      ตัวอย่างคำตอบจากฐานข้อมูล: rpc ? String(rpc.text ?? '').slice(0, 60) : null
+    }, null, 2), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+  }
+
   if (req.method !== 'POST') return new Response('ok');   // LINE กดปุ่ม Verify ด้วย POST เปล่า
 
   /* แยกสาเหตุให้ชัด — สองอย่างนี้แก้คนละวิธีกันสิ้นเชิง
