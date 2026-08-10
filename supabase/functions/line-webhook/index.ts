@@ -132,6 +132,21 @@ const handler = async (req: Request): Promise<Response> => {
   let events: any[] = [];
   try { events = JSON.parse(raw).events ?? []; } catch { return new Response('ok'); }
 
+  /* ตอบ 200 กลับไปก่อน แล้วค่อยทำงานเบื้องหลัง
+     LINE รอคำตอบไม่นาน ถ้าช้าเกินจะถือว่า timeout แล้วส่งเหตุการณ์เดิมซ้ำ
+     ส่วนงานจริงต้องถามฐานข้อมูลแล้วยิงกลับไปหา LINE ซึ่งกินเวลาหลายวินาทีได้
+     ถ้ารอให้เสร็จก่อนค่อยตอบ จะไปชนเพดานเวลาของ LINE เป็นประจำ
+
+     replyToken ใช้ได้ครั้งเดียว ต่อให้ LINE ส่งซ้ำ ข้อความก็ไม่ออกซ้ำ */
+  const work = handleEvents(events);
+  // @ts-ignore EdgeRuntime มีเฉพาะบน Supabase ตอนรันจริง
+  if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(work);
+  else await work;
+
+  return new Response('ok');
+};
+
+async function handleEvents(events: any[]) {
   for (const ev of events) {
     try {
       const src = ev.source ?? {};
@@ -165,8 +180,6 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('event error', e);
     }
   }
-
-  return new Response('ok');
-};
+}
 
 export default { fetch: withSupabase({ auth: 'none' }, handler) };
