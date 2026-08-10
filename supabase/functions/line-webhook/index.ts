@@ -8,9 +8,8 @@
 // เพราะแก้ SQL ทำได้ทันทีจาก SQL Editor ส่วนแก้ไฟล์นี้ต้อง deploy ใหม่ทุกครั้ง
 // เพิ่มคำสั่งใหม่ เปลี่ยนข้อความ จึงไม่ต้องแตะไฟล์นี้อีกเลย
 //
-// deploy: Supabase Dashboard → Edge Functions → Deploy a new function
-//         ชื่อฟังก์ชัน  line-webhook
-//         ต้องปิด "Verify JWT" เพราะ LINE ไม่ได้ส่ง header Authorization มา
+// deploy: Supabase Dashboard → Edge Functions → line-webhook → Code → Deploy updates
+//         และต้องปิด "Verify JWT with legacy secret" ในแท็บ Settings ทุกครั้งหลัง deploy
 //
 // ต้องตั้ง secret 2 ตัวใน Edge Functions → Secrets
 //   LINE_CHANNEL_SECRET        ใช้ตรวจว่าคำขอมาจาก LINE จริง
@@ -19,6 +18,17 @@
 // token ตัวเดียวกันนี้ต้องใส่ในฐานข้อมูลด้วย (line_set_token) เพราะคนละฝั่งกัน
 // ฝั่งนี้ตอบกลับข้อความที่คนพิมพ์ ส่วนฝั่งฐานข้อมูลส่งแจ้งเตือนตามเวลา
 // ============================================================
+
+/* ตัวรัน Edge Function รุ่นใหม่ตรวจ credential ให้เองก่อนเข้าโค้ดเรา
+   ปิดสวิตช์ Verify JWT ในแดชบอร์ดอย่างเดียวไม่พอ ยังโดนปฏิเสธที่ประตูหน้าด้วย
+   INVALID_CREDENTIALS ต่อให้แนบ anon key มาก็ตาม
+
+   auth: 'none' คือตัวสั่งให้ข้ามการตรวจนั้น จำเป็นสำหรับ webhook ของบุคคลที่สาม
+   เพราะ LINE ไม่ได้แนบ credential ของ Supabase มาด้วย และบังคับให้แนบไม่ได้
+
+   ความปลอดภัยไม่ได้หายไป — ย้ายมาอยู่ที่ verifySignature() ข้างล่างแทน
+   ซึ่งตรวจ HMAC ของ LINE ทุกคำขอก่อนทำอะไรทั้งสิ้น */
+import { withSupabase } from 'npm:@supabase/server@^1';
 
 const CHANNEL_SECRET = Deno.env.get('LINE_CHANNEL_SECRET') ?? '';
 const ACCESS_TOKEN   = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN') ?? '';
@@ -72,7 +82,7 @@ async function askDatabase(text: string): Promise<{ action: string; text: string
   return await res.json();
 }
 
-Deno.serve(async (req: Request) => {
+const handler = async (req: Request): Promise<Response> => {
   /* ตรวจสุขภาพตัวเอง — เปิด <url>?selftest=1 ในเบราว์เซอร์
      ตอนตั้งค่าครั้งแรกมีของต้องตั้งหลายที่ ทั้งสอง console ของ LINE และ Supabase
      พลาดที่เดียวบอทก็เงียบสนิทเหมือนกันหมด แยกไม่ออกว่าพลาดตรงไหน
@@ -157,4 +167,6 @@ Deno.serve(async (req: Request) => {
   }
 
   return new Response('ok');
-});
+};
+
+export default { fetch: withSupabase({ auth: 'none' }, handler) };
