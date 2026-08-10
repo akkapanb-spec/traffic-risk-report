@@ -47,19 +47,39 @@ const DB_KEY =
    URL ของ Edge Function เป็นสาธารณะ ใครเดาถูกก็ยิงเข้ามาได้
    ถ้าไม่ตรวจ คนอื่นจะปลอมเป็น LINE ส่ง event เข้ามาให้บอทตอบอะไรก็ได้
    LINE เซ็นด้วย HMAC-SHA256 ของ body ทั้งก้อน ด้วย channel secret */
+/* เก็บผลครั้งล่าสุดที่ลายเซ็นไม่ผ่าน ไว้ให้ ?selftest=1 อ่าน
+   เพราะ LINE โชว์แค่ "401 Unauthorized" ไม่โชว์ข้อความที่เราตอบกลับ
+   และ log อยู่ในแดชบอร์ดที่คนแก้ปัญหาอาจเข้าไม่ถึง
+   ที่เก็บมีแต่ความยาวกับ 8 ตัวแรกของค่าแฮช ไม่มีตัว secret และไม่มีเนื้อข้อความ */
+let lastSigFail: Record<string, unknown> | null = null;
+
 async function verifySignature(body: string, signature: string): Promise<boolean> {
-  if (!signature) return false;
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(CHANNEL_SECRET),
     { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
   );
   const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body));
   const expected = btoa(String.fromCharCode(...new Uint8Array(mac)));
-  // เทียบแบบเวลาคงที่ ไม่ให้เดาทีละตัวอักษรจากเวลาที่ตอบกลับ
-  if (expected.length !== signature.length) return false;
-  let diff = 0;
-  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
-  return diff === 0;
+
+  let ok = !!signature && expected.length === signature.length;
+  if (ok) {
+    // เทียบแบบเวลาคงที่ ไม่ให้เดาทีละตัวอักษรจากเวลาที่ตอบกลับ
+    let diff = 0;
+    for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
+    ok = diff === 0;
+  }
+
+  if (!ok) {
+    lastSigFail = {
+      เวลา: new Date().toISOString(),
+      ความยาวเนื้อคำขอ: body.length,      // 0 = ตัวห่อกินเนื้อไปก่อน ไม่ใช่ secret ผิด
+      มีheaderลายเซ็น: !!signature,
+      ความยาวsecret: CHANNEL_SECRET.length, // ควรเป็น 32
+      คำนวณได้ขึ้นต้น: expected.slice(0, 8),
+      LINEส่งมาขึ้นต้น: signature.slice(0, 8)
+    };
+  }
+  return ok;
 }
 
 async function reply(replyToken: string, text: string) {
@@ -106,7 +126,8 @@ const handler = async (req: Request): Promise<Response> => {
       ตั้ง_คีย์ฐานข้อมูล: !!DB_KEY,
       token_ใช้กับ_LINE_ได้จริง: lineToken,
       เรียกฐานข้อมูลได้: !!rpc,
-      ตัวอย่างคำตอบจากฐานข้อมูล: rpc ? String(rpc.text ?? '').slice(0, 60) : null
+      ตัวอย่างคำตอบจากฐานข้อมูล: rpc ? String(rpc.text ?? '').slice(0, 60) : null,
+      ลายเซ็นไม่ผ่านครั้งล่าสุด: lastSigFail
     }, null, 2), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
   }
 
