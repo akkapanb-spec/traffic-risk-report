@@ -33,7 +33,7 @@ set search_path = public, extensions;
 -- ทุกอย่างในระบบนี้เป็นเวลาไทย และปีที่แสดงต่อคนอ่านเป็น พ.ศ.
 create or replace function line_thai_date(p_ts timestamptz, p_with_time boolean default false)
 returns text
-language plpgsql immutable set search_path = public, extensions as $$
+language plpgsql immutable set search_path = public, extensions as $line_thai_date$
 declare
   v timestamp;
   m text[] := array['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -43,17 +43,17 @@ begin
   return to_char(v, 'FMDD') || ' ' || m[extract(month from v)::int] || ' ' ||
          (extract(year from v)::int + 543)::text ||
          case when p_with_time then ' ' || to_char(v, 'HH24:MI') || ' น.' else '' end;
-end $$;
+end $line_thai_date$;
 
 create or replace function line_today()
-returns date language sql stable set search_path = public, extensions as $$
+returns date language sql stable set search_path = public, extensions as $line_today$
   select (timezone('Asia/Bangkok', now()))::date;
-$$;
+$line_today$;
 
 -- เทียบกับงวดก่อน ให้เห็นทิศทาง ไม่ใช่แค่ตัวเลขลอย ๆ
 -- ต้องสร้างก่อนตัวที่เรียกใช้มัน
 create or replace function line_delta(p_now int, p_prev int)
-returns text language sql immutable set search_path = public, extensions as $$
+returns text language sql immutable set search_path = public, extensions as $line_delta$
   select case
     when p_prev = 0 and p_now = 0 then ''
     when p_prev = 0               then ' (งวดก่อนไม่มี)'
@@ -61,7 +61,7 @@ returns text language sql immutable set search_path = public, extensions as $$
     when p_now  < p_prev          then ' (▼ -' || (p_prev - p_now) || ' จาก ' || p_prev || ')'
     else ' (เท่าเดิม)'
   end;
-$$;
+$line_delta$;
 
 -- ============================================================
 -- 2) นับอุบัติเหตุและผู้บาดเจ็บในช่วงเวลาหนึ่ง
@@ -71,7 +71,7 @@ $$;
 -- ถ้าเขียนแยกกันสามที่ วันหนึ่งจะแก้ไม่ครบ แล้วตัวเลขสองที่ไม่ตรงกัน
 create or replace function line_acc_counts(p_from timestamptz, p_to timestamptz)
 returns jsonb
-language sql stable security definer set search_path = public, extensions as $$
+language sql stable security definer set search_path = public, extensions as $line_acc_counts$
   select jsonb_build_object(
     'accidents', (select count(*) from accidents_public
                    where incident_datetime >= p_from and incident_datetime < p_to),
@@ -83,14 +83,14 @@ language sql stable security definer set search_path = public, extensions as $$
     'minor',     (select count(*) from injuries
                    where incident_datetime >= p_from and incident_datetime < p_to
                      and raw->>'severity' = 'เล็กน้อย'));
-$$;
+$line_acc_counts$;
 
 -- ============================================================
 -- 3) #ac-d — อุบัติเหตุวันนี้
 -- ============================================================
 create or replace function line_msg_acc_day(p_day date default null)
 returns text
-language plpgsql stable security definer set search_path = public, extensions as $$
+language plpgsql stable security definer set search_path = public, extensions as $line_msg_acc_day$
 declare
   v_day date := coalesce(p_day, line_today());
   v_from timestamptz; v_to timestamptz; c jsonb;
@@ -108,7 +108,7 @@ begin
     '• สาหัส/หมดสติ ' || (c->>'severe') || ' ราย',
     '• บาดเจ็บเล็กน้อย ' || (c->>'minor') || ' ราย'
   ], E'\n');
-end $$;
+end $line_msg_acc_day$;
 
 -- ============================================================
 -- 4) #ac-w — อุบัติเหตุรอบสัปดาห์
@@ -116,7 +116,7 @@ end $$;
 -- 7 วันย้อนหลังนับถึงวันที่ระบุ เทียบกับ 7 วันก่อนหน้า
 create or replace function line_msg_acc_week(p_end date default null)
 returns text
-language plpgsql stable security definer set search_path = public, extensions as $$
+language plpgsql stable security definer set search_path = public, extensions as $line_msg_acc_week$
 declare
   v_end date := coalesce(p_end, line_today());
   v_start date; v_from timestamptz; v_to timestamptz; v_pfrom timestamptz;
@@ -139,7 +139,7 @@ begin
     '• สาหัส/หมดสติ ' || (c->>'severe') || ' ราย' || line_delta((c->>'severe')::int, (p->>'severe')::int),
     '• บาดเจ็บเล็กน้อย ' || (c->>'minor') || ' ราย' || line_delta((c->>'minor')::int, (p->>'minor')::int)
   ], E'\n');
-end $$;
+end $line_msg_acc_week$;
 
 -- ============================================================
 -- 5) ผู้เสียชีวิตรายใหม่ — ส่งอัตโนมัติ ไม่ต้องพิมพ์คีย์เวิร์ด
@@ -148,7 +148,7 @@ end $$;
 -- จึงต้องอ่านจบเร็ว และบอกสิ่งที่เอาไปสั่งการต่อได้จริง
 create or replace function line_msg_death(p_id bigint)
 returns text
-language plpgsql stable security definer set search_path = public, extensions as $$
+language plpgsql stable security definer set search_path = public, extensions as $line_msg_death$
 declare
   d record; v_year int; v_year_n int; v_lines text[];
   v_lat text; v_lng text; v_pos int;
@@ -194,7 +194,7 @@ begin
 
   v_lines := v_lines || ('รวมผู้เสียชีวิตปี ' || (v_year + 543)::text || ' : ' || v_year_n || ' ราย');
   return array_to_string(v_lines, E'\n');
-end $$;
+end $line_msg_death$;
 
 -- ============================================================
 -- 6) สรุปรายสัปดาห์ที่ส่งอัตโนมัติ
@@ -202,9 +202,9 @@ end $$;
 -- เนื้อหาเดียวกับ #ac-w ทุกประการ ต่างกันแค่ใครเป็นคนสั่งให้ส่ง
 -- ไม่เขียนซ้ำ เรียกตัวเดิม จะได้ไม่มีวันหลุดกันคนละเลข
 create or replace function line_msg_weekly(p_end date default null)
-returns text language sql stable security definer set search_path = public, extensions as $$
+returns text language sql stable security definer set search_path = public, extensions as $line_msg_weekly$
   select line_msg_acc_week(coalesce(p_end, line_today() - 1));
-$$;
+$line_msg_weekly$;
 
 -- ============================================================
 -- 7) ตอบคีย์เวิร์ด
@@ -218,7 +218,7 @@ $$;
 -- ยอมให้มีข้อความต่อท้ายได้ เช่น "#ac-d ครับ" เพราะคนพิมพ์ในกลุ่มมักลงท้ายแบบนั้น
 create or replace function line_reply(p_text text)
 returns jsonb
-language plpgsql stable security definer set search_path = public, extensions as $$
+language plpgsql stable security definer set search_path = public, extensions as $line_reply$
 declare
   v_q text := lower(btrim(coalesce(p_text, '')));
   v_action text; v_lines text[]; r record;
@@ -261,7 +261,7 @@ begin
 
   if v_lines is null or array_length(v_lines, 1) is null then return null; end if;
   return jsonb_build_object('action', v_action, 'text', array_to_string(v_lines, E'\n'));
-end $$;
+end $line_reply$;
 
 -- ============================================================
 -- 8) สิทธิ์

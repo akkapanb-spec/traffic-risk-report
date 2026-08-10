@@ -29,7 +29,7 @@ set search_path = public, extensions;
 -- จึงต้องเช็คชนิดก่อนทุกครั้ง
 create or replace function line_acc_injuries(p_p1 jsonb, p_p2 jsonb)
 returns text[]
-language plpgsql immutable set search_path = public, extensions as $$
+language plpgsql immutable set search_path = public, extensions as $line_acc_injuries$
 declare
   v_out text[] := '{}';
   v_party jsonb;
@@ -52,14 +52,14 @@ begin
   end loop;
 
   return v_out;
-end $$;
+end $line_acc_injuries$;
 
 -- ============================================================
 -- 2) อุบัติเหตุครั้งนี้ร้ายแรงหรือไม่
 -- ============================================================
 create or replace function line_acc_is_serious(p_p1 jsonb, p_p2 jsonb, p_road_character text)
 returns boolean
-language sql immutable set search_path = public, extensions as $$
+language sql immutable set search_path = public, extensions as $line_acc_is_serious$
   select
     -- 1 + 2 มีคนตาย สาหัส หรือหมดสติ
     exists (select 1 from unnest(line_acc_injuries(p_p1, p_p2)) x
@@ -68,18 +68,18 @@ language sql immutable set search_path = public, extensions as $$
     or (coalesce(p_road_character, '') = 'ทางม้าลาย'
         and (coalesce(p_p1->>'status', '') = 'คนเดินเท้า'
           or coalesce(p_p2->>'status', '') = 'คนเดินเท้า'));
-$$;
+$line_acc_is_serious$;
 
 -- ============================================================
 -- 3) นับอุบัติเหตุร้ายแรงในช่วงเวลาหนึ่ง
 -- ============================================================
 create or replace function line_serious_count(p_from timestamptz, p_to timestamptz)
 returns int
-language sql stable security definer set search_path = public, extensions as $$
+language sql stable security definer set search_path = public, extensions as $line_serious_count$
   select count(*)::int from accidents
    where incident_datetime >= p_from and incident_datetime < p_to
      and line_acc_is_serious(party1, party2, road_character);
-$$;
+$line_serious_count$;
 
 -- ============================================================
 -- 4) ข้อความแจ้งเตือน
@@ -92,7 +92,7 @@ $$;
 -- และการใส่มาด้วยจะทำให้สายตาไปจับตัวเลขที่ใหญ่ที่สุดซึ่งไม่ใช่ประเด็น
 create or replace function line_msg_serious_day(p_day date default null)
 returns text
-language plpgsql stable security definer set search_path = public, extensions as $$
+language plpgsql stable security definer set search_path = public, extensions as $line_msg_serious_day$
 declare
   v_day date := coalesce(p_day, line_today());
   v_from timestamptz; v_to timestamptz; c jsonb; v_serious int;
@@ -110,7 +110,7 @@ begin
     '• เสียชีวิต ' || (c->>'deaths') || ' ราย',
     '• สาหัส/หมดสติ ' || (c->>'severe') || ' ราย'
   ], E'\n');
-end $$;
+end $line_msg_serious_day$;
 
 -- ============================================================
 -- 5) ส่งเมื่อมีอุบัติเหตุร้ายแรงรายใหม่
@@ -122,7 +122,7 @@ end $$;
 -- เพราะเนื้อหาเป็นยอดรวมของทั้งวันอยู่แล้ว ส่งซ้ำหลายฉบับก็ได้เลขเดิม
 create or replace function line_send_serious(p_max int default 5)
 returns jsonb
-language plpgsql security definer set search_path = public, extensions as $$
+language plpgsql security definer set search_path = public, extensions as $line_send_serious$
 declare
   a record; v_new int := 0; v_day date; v_n int := 0;
 begin
@@ -150,7 +150,7 @@ begin
                         'serious-day-' || v_day::text || '-' || to_char(now(), 'HH24MI'));
 
   return jsonb_build_object('success', true, 'new', v_new, 'targets', v_n, 'day', v_day);
-end $$;
+end $line_send_serious$;
 
 -- ============================================================
 -- 6) หมายอุบัติเหตุร้ายแรงที่มีอยู่แล้วว่า "แจ้งไปแล้ว"
@@ -171,7 +171,7 @@ alter table line_targets add column if not exists want_serious boolean not null 
 -- line_broadcast เดิมไม่รู้จักชนิด 'serious' ต้องสอนให้รู้จัก
 create or replace function line_broadcast(p_kind text, p_text text, p_ref text default null)
 returns int
-language plpgsql security definer set search_path = public, extensions as $$
+language plpgsql security definer set search_path = public, extensions as $line_broadcast$
 declare t record; v_n int := 0; v_req bigint;
 begin
   if coalesce(btrim(p_text), '') = '' then return 0; end if;
@@ -196,7 +196,7 @@ begin
   end loop;
 
   return v_n;
-end $$;
+end $line_broadcast$;
 
 -- ============================================================
 -- 8) สิทธิ์

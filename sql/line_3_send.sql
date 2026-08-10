@@ -29,7 +29,7 @@ create extension if not exists pg_net;
 -- ฟังก์ชันนี้ตั้งใจไม่ให้ anon เรียก — เรียกได้จาก SQL Editor เท่านั้น
 create or replace function line_set_token(p_token text)
 returns text
-language plpgsql security definer set search_path = public, extensions, vault as $$
+language plpgsql security definer set search_path = public, extensions, vault as $line_set_token$
 declare v_id uuid;
 begin
   if coalesce(btrim(p_token), '') = '' then
@@ -45,13 +45,13 @@ begin
     perform vault.update_secret(v_id, btrim(p_token));
     return 'อัปเดต token เดิมแล้ว';
   end if;
-end $$;
+end $line_set_token$;
 
 create or replace function line_token()
 returns text
-language sql stable security definer set search_path = public, extensions, vault as $$
+language sql stable security definer set search_path = public, extensions, vault as $line_token$
   select decrypted_secret from vault.decrypted_secrets where name = 'line_channel_access_token';
-$$;
+$line_token$;
 
 -- ============================================================
 -- 2) ส่งข้อความหนึ่งฉบับไปหนึ่งปลายทาง
@@ -62,7 +62,7 @@ $$;
 -- (มีคำสั่งตรวจให้ท้ายไฟล์) — จุดนี้ต้องรู้ไว้ ไม่งั้นจะเข้าใจผิดว่าส่งสำเร็จทุกครั้ง
 create or replace function line_push(p_target text, p_text text)
 returns bigint
-language plpgsql security definer set search_path = public, extensions as $$
+language plpgsql security definer set search_path = public, extensions as $line_push$
 declare v_token text; v_body jsonb; v_text text;
 begin
   v_token := line_token();
@@ -86,12 +86,12 @@ begin
     headers := jsonb_build_object('Content-Type', 'application/json',
                                   'Authorization', 'Bearer ' || v_token),
     body    := v_body);
-end $$;
+end $line_push$;
 
 -- ส่งไปทุกปลายทางที่เปิดรับเรื่องนั้น
 create or replace function line_broadcast(p_kind text, p_text text, p_ref text default null)
 returns int
-language plpgsql security definer set search_path = public, extensions as $$
+language plpgsql security definer set search_path = public, extensions as $line_broadcast$
 declare t record; v_n int := 0; v_req bigint;
 begin
   if coalesce(btrim(p_text), '') = '' then return 0; end if;
@@ -116,7 +116,7 @@ begin
   end loop;
 
   return v_n;
-end $$;
+end $line_broadcast$;
 
 -- ============================================================
 -- 3) ผู้เสียชีวิตรายใหม่
@@ -129,7 +129,7 @@ end $$;
 -- ซึ่งระบบนี้เคยทำมาแล้ว (accidents_part1..8) ถ้าไม่กัน กลุ่มจะได้ข้อความรัวเป็นร้อย
 create or replace function line_send_new_deaths(p_max int default 3)
 returns jsonb
-language plpgsql security definer set search_path = public, extensions as $$
+language plpgsql security definer set search_path = public, extensions as $line_send_new_deaths$
 declare
   d record; v_sent int := 0; v_left int; v_txt text;
 begin
@@ -165,26 +165,26 @@ begin
   end if;
 
   return jsonb_build_object('success', true, 'sent', v_sent, 'left', v_left - v_sent);
-end $$;
+end $line_send_new_deaths$;
 
 -- ============================================================
 -- 4) สรุปประจำวัน / ประจำสัปดาห์
 -- ============================================================
 create or replace function line_send_daily()
-returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+returns jsonb language plpgsql security definer set search_path = public, extensions as $line_send_daily$
 declare v_day date := line_today() - 1; v_n int;
 begin
   v_n := line_broadcast('daily', line_msg_acc_day(v_day), 'daily-' || v_day::text);
   return jsonb_build_object('success', true, 'targets', v_n, 'day', v_day);
-end $$;
+end $line_send_daily$;
 
 create or replace function line_send_weekly()
-returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+returns jsonb language plpgsql security definer set search_path = public, extensions as $line_send_weekly$
 declare v_end date := line_today() - 1; v_n int;
 begin
   v_n := line_broadcast('weekly', line_msg_weekly(v_end), 'weekly-' || v_end::text);
   return jsonb_build_object('success', true, 'targets', v_n, 'week_ending', v_end);
-end $$;
+end $line_send_weekly$;
 
 -- ============================================================
 -- 5) สิทธิ์ — ปิดทั้งหมด
