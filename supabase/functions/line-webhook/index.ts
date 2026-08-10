@@ -53,6 +53,12 @@ const DB_KEY =
    ที่เก็บมีแต่ความยาวกับ 8 ตัวแรกของค่าแฮช ไม่มีตัว secret และไม่มีเนื้อข้อความ */
 let lastSigFail: Record<string, unknown> | null = null;
 
+/* บันทึกทุกคำขอที่ผ่านลายเซ็นมาได้ ไม่ใช่เฉพาะตอนพัง
+   ตอนบอทเงียบ สิ่งที่ต้องรู้คือ "LINE ส่งมาไหม" กับ "เราตอบกลับสำเร็จไหม"
+   สองอย่างนี้ให้อาการเหมือนกันทุกประการเมื่อมองจากในกลุ่ม
+   ต่างกันตรงที่ตัวแรกต้องไปแก้ที่ LINE ตัวหลังต้องแก้ที่โค้ด */
+let lastEvent: Record<string, unknown> | null = null;
+
 async function verifySignature(body: string, signature: string): Promise<boolean> {
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(CHANNEL_SECRET),
@@ -82,13 +88,16 @@ async function verifySignature(body: string, signature: string): Promise<boolean
   return ok;
 }
 
-async function reply(replyToken: string, text: string) {
+async function reply(replyToken: string, text: string): Promise<string> {
   const res = await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ACCESS_TOKEN}` },
     body: JSON.stringify({ replyToken, messages: [{ type: 'text', text: text.slice(0, 4900) }] })
   });
-  if (!res.ok) console.error('LINE reply error', res.status, await res.text());
+  if (res.ok) return 'ส่งสำเร็จ (200)';
+  const detail = (await res.text()).slice(0, 200);
+  console.error('LINE reply error', res.status, detail);
+  return 'ส่งไม่สำเร็จ (' + res.status + ') ' + detail;
 }
 
 // ถามฐานข้อมูลว่าข้อความนี้ควรตอบอะไร — null แปลว่าไม่ต้องตอบ
@@ -127,7 +136,8 @@ const handler = async (req: Request): Promise<Response> => {
       token_ใช้กับ_LINE_ได้จริง: lineToken,
       เรียกฐานข้อมูลได้: !!rpc,
       ตัวอย่างคำตอบจากฐานข้อมูล: rpc ? String(rpc.text ?? '').slice(0, 60) : null,
-      ลายเซ็นไม่ผ่านครั้งล่าสุด: lastSigFail
+      ลายเซ็นไม่ผ่านครั้งล่าสุด: lastSigFail,
+      เหตุการณ์จากLINEครั้งล่าสุด: lastEvent
     }, null, 2), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
   }
 
@@ -153,21 +163,31 @@ const handler = async (req: Request): Promise<Response> => {
   let events: any[] = [];
   try { events = JSON.parse(raw).events ?? []; } catch { return new Response('ok'); }
 
-  /* ตอบ 200 กลับไปก่อน แล้วค่อยทำงานเบื้องหลัง
-     LINE รอคำตอบไม่นาน ถ้าช้าเกินจะถือว่า timeout แล้วส่งเหตุการณ์เดิมซ้ำ
-     ส่วนงานจริงต้องถามฐานข้อมูลแล้วยิงกลับไปหา LINE ซึ่งกินเวลาหลายวินาทีได้
-     ถ้ารอให้เสร็จก่อนค่อยตอบ จะไปชนเพดานเวลาของ LINE เป็นประจำ
+  /* ทำงานให้เสร็จก่อนค่อยตอบ LINE
+     เคยเปลี่ยนเป็นตอบ 200 ทันทีแล้วทำงานเบื้องหลังผ่าน waitUntil เพื่อกัน timeout
+     แต่ผลคือ LINE ได้ 200 ทุกครั้งและไม่มีข้อความออกมาเลยสักข้อความ
+     เพราะตัวฟังก์ชันถูกปิดทิ้งทันทีที่ตอบ งานเบื้องหลังจึงตายก่อนได้ยิงกลับ
 
-     replyToken ใช้ได้ครั้งเดียว ต่อให้ LINE ส่งซ้ำ ข้อความก็ไม่ออกซ้ำ */
-  const work = handleEvents(events);
-  // @ts-ignore EdgeRuntime มีเฉพาะบน Supabase ตอนรันจริง
-  if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(work);
-  else await work;
+     ตอบช้าแล้วข้อความถึง ดีกว่าตอบเร็วแล้วเงียบ
+     ถ้า LINE ถือว่า timeout มันจะส่งซ้ำ และ replyToken ใช้ได้ครั้งเดียว
+     ข้อความจึงไม่ออกซ้ำในกลุ่มอยู่ดี */
+  await handleEvents(events);
 
   return new Response('ok');
 };
 
 async function handleEvents(events: any[]) {
+  // จดไว้ก่อนลงมือ จะได้รู้ว่า LINE ส่งอะไรมาบ้าง แม้ขั้นตอนถัดไปจะพัง
+  const trace: string[] = [];
+  lastEvent = {
+    เวลา: new Date().toISOString(),
+    จำนวนเหตุการณ์: events.length,
+    ชนิด: events.map((e: any) => e?.type + '/' + (e?.message?.type ?? '-')),
+    ห้อง: events.map((e: any) => (e?.source?.groupId ?? e?.source?.roomId ?? e?.source?.userId ?? '-')),
+    ข้อความ: events.map((e: any) => String(e?.message?.text ?? '-').slice(0, 40)),
+    ผล: trace
+  };
+
   for (const ev of events) {
     try {
       const src = ev.source ?? {};
@@ -177,25 +197,30 @@ async function handleEvents(events: any[]) {
          เพราะ id นี้คือสิ่งเดียวที่ต้องเอาไปใส่ในตาราง line_targets
          และหาจากที่อื่นไม่ได้เลย */
       if (ev.type === 'join' || ev.type === 'follow') {
-        await reply(ev.replyToken,
+        trace.push('ทักทายตอนเข้าห้อง: ' + await reply(ev.replyToken,
           'สวัสดีครับ 👋 บอทแจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ สภ.เมืองนครสวรรค์\n\n' +
           'ID สำหรับตั้งค่าการแจ้งเตือน:\n' + targetId + '\n\n' +
-          'พิมพ์ "เมนู" เพื่อดูคำสั่งที่ใช้ได้');
+          'พิมพ์ #help เพื่อดูคำสั่งที่ใช้ได้'));
         continue;
       }
 
-      if (ev.type !== 'message' || ev.message?.type !== 'text') continue;
+      if (ev.type !== 'message' || ev.message?.type !== 'text') {
+        trace.push('ข้ามเพราะไม่ใช่ข้อความตัวอักษร');
+        continue;
+      }
 
       const answer = await askDatabase(ev.message.text);
-      if (!answer) continue;                      // ไม่เข้าคีย์เวิร์ด — เงียบไว้
+      if (!answer) { trace.push('ไม่เข้าคีย์เวิร์ด จึงเงียบ'); continue; }   // ตั้งใจให้เงียบ
 
       // id เป็นคำสั่งเดียวที่ฐานข้อมูลตอบเองไม่ได้ เพราะ id มากับตัว event
       if (answer.action === 'id') {
-        await reply(ev.replyToken, 'ID ของห้องนี้:\n' + targetId);
+        trace.push('ตอบ id: ' + await reply(ev.replyToken, 'ID ของห้องนี้:\n' + targetId));
         continue;
       }
-      if (answer.text) await reply(ev.replyToken, answer.text);
+      if (answer.text) trace.push('ตอบ ' + answer.action + ': ' + await reply(ev.replyToken, answer.text));
+      else trace.push('ฐานข้อมูลไม่ได้ให้ข้อความมา (' + answer.action + ')');
     } catch (e) {
+      trace.push('พัง: ' + String(e).slice(0, 150));
       // พังทีละ event ต้องไม่ทำให้ทั้งชุดพัง และต้องตอบ 200 เสมอ
       // ไม่งั้น LINE จะส่งซ้ำ แล้วคนในกลุ่มจะได้ข้อความเดิมหลายรอบ
       console.error('event error', e);
