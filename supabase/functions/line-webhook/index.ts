@@ -30,7 +30,7 @@ const ANON_KEY       = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
    ถ้าไม่ตรวจ คนอื่นจะปลอมเป็น LINE ส่ง event เข้ามาให้บอทตอบอะไรก็ได้
    LINE เซ็นด้วย HMAC-SHA256 ของ body ทั้งก้อน ด้วย channel secret */
 async function verifySignature(body: string, signature: string): Promise<boolean> {
-  if (!CHANNEL_SECRET || !signature) return false;
+  if (!signature) return false;
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(CHANNEL_SECRET),
     { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
@@ -67,9 +67,21 @@ async function askDatabase(text: string): Promise<{ action: string; text: string
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return new Response('ok');   // LINE กดปุ่ม Verify ด้วย POST เปล่า
 
+  /* แยกสาเหตุให้ชัด — สองอย่างนี้แก้คนละวิธีกันสิ้นเชิง
+     แต่เดิมตอบ "bad signature" เหมือนกันทั้งคู่ ทำให้ตอนตั้งค่าครั้งแรก
+     แยกไม่ออกว่าลืมใส่ secret หรือใส่ผิดค่า เสียเวลาไล่หาอยู่นาน */
+  if (!CHANNEL_SECRET) {
+    console.error('LINE_CHANNEL_SECRET is not set');
+    return new Response('LINE_CHANNEL_SECRET not set — ไปตั้งที่ Edge Functions → Secrets', { status: 500 });
+  }
+  if (!ACCESS_TOKEN) {
+    console.error('LINE_CHANNEL_ACCESS_TOKEN is not set');
+    return new Response('LINE_CHANNEL_ACCESS_TOKEN not set — ไปตั้งที่ Edge Functions → Secrets', { status: 500 });
+  }
+
   const raw = await req.text();
   if (!(await verifySignature(raw, req.headers.get('x-line-signature') ?? ''))) {
-    return new Response('bad signature', { status: 401 });
+    return new Response('bad signature — secret ไม่ตรงกับ Channel นี้ หรือคำขอไม่ได้มาจาก LINE', { status: 401 });
   }
 
   let events: any[] = [];
