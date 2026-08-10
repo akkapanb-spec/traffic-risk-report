@@ -100,6 +100,17 @@ async function reply(replyToken: string, text: string): Promise<string> {
   return 'ส่งไม่สำเร็จ (' + res.status + ') ' + detail;
 }
 
+/* จดบันทึกลงฐานข้อมูล ยิงแล้วไม่รอผล
+   ห้ามให้การจดบันทึกทำให้การตอบข้อความช้าลงหรือพัง มันมีไว้ช่วยไล่ปัญหาเท่านั้น
+   ถ้ายังไม่ได้รัน line_7_hooklog.sql ก็แค่เงียบไป ไม่กระทบอะไร */
+function hookLog(note: string) {
+  fetch(`${SUPABASE_URL}/rest/v1/rpc/line_hook_write`, {
+    method: 'POST', keepalive: true,
+    headers: { 'Content-Type': 'application/json', apikey: DB_KEY, Authorization: `Bearer ${DB_KEY}` },
+    body: JSON.stringify({ p_note: note })
+  }).catch(() => {});
+}
+
 // ถามฐานข้อมูลว่าข้อความนี้ควรตอบอะไร — null แปลว่าไม่ต้องตอบ
 async function askDatabase(text: string): Promise<{ action: string; text: string | null } | null> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/line_reply`, {
@@ -156,7 +167,15 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   const raw = await req.text();
+
+  /* จดลงฐานข้อมูลทันทีที่คำขอเข้ามา ก่อนตรวจอะไรทั้งสิ้น
+     Supabase ปั่นฟังก์ชันหลายตัวขนานกันได้ ตัวบันทึกในหน่วยความจำจึงเชื่อไม่ได้
+     LINE ยิงเข้าตัวหนึ่ง แต่ตอนอ่านไปโดนอีกตัว เลยเห็นว่างทั้งที่มีคนส่งมา
+     ฐานข้อมูลมีที่เดียว เขียนที่ไหนก็อ่านเจอ */
+  hookLog('รับคำขอ ยาว ' + raw.length + ' ไบต์ · ' + raw.slice(0, 700));
+
   if (!(await verifySignature(raw, req.headers.get('x-line-signature') ?? ''))) {
+    hookLog('ลายเซ็นไม่ผ่าน ' + JSON.stringify(lastSigFail));
     return new Response('bad signature — secret ไม่ตรงกับ Channel นี้ หรือคำขอไม่ได้มาจาก LINE', { status: 401 });
   }
 
@@ -172,6 +191,7 @@ const handler = async (req: Request): Promise<Response> => {
      ถ้า LINE ถือว่า timeout มันจะส่งซ้ำ และ replyToken ใช้ได้ครั้งเดียว
      ข้อความจึงไม่ออกซ้ำในกลุ่มอยู่ดี */
   await handleEvents(events);
+  hookLog('ผลการทำงาน ' + JSON.stringify(lastEvent));
 
   return new Response('ok');
 };
