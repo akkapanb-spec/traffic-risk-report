@@ -63,6 +63,20 @@ $text = [regex]::Replace($text, '(?ms)^authInternalUsers:.*?(?=^\S|\z)', '')
 $text = $authBlock + $text
 Write-Host "เปลี่ยนเป็นถามระบบเจ้าหน้าที่ทุกครั้งแล้ว" -ForegroundColor Green
 
+# ---------- 3.2 ปิดการเข้ารหัสที่ตัว MediaMTX ----------
+# tunnel เป็นคนถือใบรับรองและเข้ารหัสให้แล้ว ตัว MediaMTX ไม่ต้องทำซ้ำ
+# และถ้าสั่งให้ทำแต่หาไฟล์ใบรับรองไม่เจอ มันจะไม่ยอมสตาร์ตเลย
+#   ERR open server.crt: The system cannot find the file specified.
+# ซึ่งเกิดขึ้นจริงตอนย้ายมาเครื่องใหม่ เพราะใบรับรองอยู่บนเครื่องเก่า
+$encBefore = $text
+$text = [regex]::Replace($text, '(?m)^(hlsEncryption|webrtcEncryption|rtspEncryption|rtmpEncryption):\s*.*$',
+                         { param($m) $m.Groups[1].Value + ': no' })
+# ตัดบรรทัดที่ชี้ไปยังไฟล์ใบรับรองทิ้ง ไม่ต้องใช้แล้ว
+$text = [regex]::Replace($text, '(?m)^(hls|webrtc|rtsp|rtmp)Server(Cert|Key):\s*.*\r?\n', '')
+if ($text -ne $encBefore) {
+  Write-Host "ปิดการเข้ารหัสที่ตัว MediaMTX แล้ว (tunnel เข้ารหัสให้อยู่)" -ForegroundColor Green
+}
+
 # ---------- 3.5 ซ่อมช่องว่างที่ขาดหลังเครื่องหมาย : ----------
 # YAML บังคับว่าต้องมีช่องว่างหลัง : เสมอ ขาดช่องเดียวอ่านไม่ออกทั้งไฟล์
 # และข้อความที่ MediaMTX บ่นก็ไม่ได้บอกว่าขาดช่องว่าง บอกแค่ว่าคีย์แปลก
