@@ -1935,7 +1935,19 @@ async function loadDensityLayer() {
   if (!btn || !ensureAvoidMap()) return;
   let res;
   try {
-    const { data, error } = await sb.rpc('geo_density', { p_edge_m: 250 });
+    /* ขนาดช่องมาจากค่าที่แอดมินเผยแพร่ ไม่ฝังตายตัวในโค้ดอีกแล้ว
+       เดิมหน้านี้ใช้ 250 ตายตัว ส่วนหน้าเจ้าหน้าที่มีตัวเลือกที่ไม่ได้บันทึกไว้ที่ไหน
+       สองหน้าจึงแสดงคนละขนาดโดยไม่มีทางทำให้ตรงกันได้ นอกจากแก้โค้ดแล้ว deploy ใหม่
+
+       อ่านไม่ได้ก็ใช้ 250 ต่อไป ชั้นแผนที่ต้องไม่หายเพราะอ่านค่าตั้งค่าไม่ได้ */
+    let edge = 250;
+    try {
+      const st = await sb.from('bs_settings').select('val').eq('key', 'densityEdgeM').maybeSingle();
+      const v = Number(st.data && st.data.val);
+      if (Number.isFinite(v) && v > 0) edge = v;
+    } catch (e) { /* ยังไม่ได้รัน density_2_setting.sql — ใช้ค่าเดิม */ }
+
+    const { data, error } = await sb.rpc('geo_density', { p_edge_m: edge });
     if (error) throw error;
     res = data;
   } catch (e) {
