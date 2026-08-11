@@ -58,14 +58,32 @@ Copy-Item $yml $bak
 Write-Host ""
 Write-Host "สำรองไฟล์เดิมไว้ที่ $(Split-Path $bak -Leaf)" -ForegroundColor Green
 
+# ---------- ซ่อมพอร์ตซ้ำก่อนอย่างอื่น ----------
+# เคยเจอในไฟล์จริงว่าเป็น 192.168.1.153:554:554 ซึ่งเป็นที่อยู่ผิดรูป
+# MediaMTX จะเปิดไฟล์ไม่ได้เลย และไม่ได้บอกว่าผิดตรงพอร์ต
+# ต้องซ่อมก่อน ไม่งั้นการแทนที่ IP ข้างล่างจะหาที่อยู่ไม่เจอแล้วเงียบไป
+$fixed = [regex]::Replace($text, '(:\d+)(?::\d+)+(?=/)', '$1')
+if ($fixed -ne $text) {
+  Write-Host "ซ่อมพอร์ตที่ซ้ำกันในที่อยู่กล้องแล้ว" -ForegroundColor Yellow
+  $text = $fixed
+}
+
 # ---------- แทนที่เฉพาะส่วนชื่อ:รหัส@ ----------
 # ใช้ MatchEvaluator เพื่อไม่ให้อักขระในรหัสถูกตีความเป็นคำสั่ง regex
 $text = [regex]::Replace($text, 'rtsp://[^@\s]*@', { param($m) "rtsp://${userEnc}:${passEnc}@" })
 
 # ---------- เปลี่ยน IP ถ้าระบุมา ----------
+# ต้องรายงานตามจริงว่าเปลี่ยนได้หรือไม่ได้
+# รุ่นก่อนพิมพ์ว่าเปลี่ยนแล้วทุกครั้งแม้หาที่อยู่ไม่เจอ ทำให้เข้าใจผิดว่าแก้แล้ว
 if (-not [string]::IsNullOrWhiteSpace($ipNew)) {
-  $text = [regex]::Replace($text, '(?<=@)[0-9.]+(?=:\d+/)', $ipNew)
-  Write-Host "เปลี่ยนเลข IP เป็น $ipNew แล้ว" -ForegroundColor Green
+  # ดูว่า "หาเจอ" ไม่ใช่ "เปลี่ยนแล้วต่างไหม"
+  # ถ้า IP เดิมตรงกับที่ใส่มาอยู่แล้ว ข้อความจะได้ไม่บอกว่าหาไม่เจอทั้งที่เจอ
+  if ([regex]::IsMatch($text, '(?<=@)[0-9.]+(?=:\d+/)')) {
+    $text = [regex]::Replace($text, '(?<=@)[0-9.]+(?=:\d+/)', $ipNew)
+    Write-Host "ตั้งเลข IP เป็น $ipNew แล้ว" -ForegroundColor Green
+  } else {
+    Write-Host "หาเลข IP ในที่อยู่กล้องไม่เจอ จึงไม่ได้เปลี่ยน (รูปแบบที่อยู่อาจผิด)" -ForegroundColor Yellow
+  }
 }
 
 # YAML ต้องไม่มี BOM ไม่งั้น MediaMTX เปิดไฟล์ไม่ได้
@@ -100,6 +118,14 @@ if (Get-NetTCPConnection -LocalPort 8888 -State Listen -ErrorAction SilentlyCont
   Write-Host "ถ้ายังขึ้น 401 แปลว่ารหัสยังไม่ตรง ให้รันสคริปต์นี้ใหม่" -ForegroundColor Gray
 } else {
   Write-Host "MediaMTX ไม่กลับมา" -ForegroundColor Red
+  Write-Host ""
+  # รันตรง ๆ ให้เห็นว่ามันบ่นอะไร ตอนเป็น Scheduled Task ข้อความพวกนี้หายหมด
+  $exe = Join-Path $PSScriptRoot 'mediamtx.exe'
+  if (Test-Path $exe) {
+    Write-Host "=== ลองรันตรง ๆ เพื่อดูว่ามันบ่นอะไร ===" -ForegroundColor Cyan
+    & $exe 2>&1 | Select-Object -First 15
+    Write-Host ""
+  }
   Write-Host "เอาไฟล์เดิมกลับ:  Copy-Item '$bak' '$yml' -Force" -ForegroundColor Yellow
 }
 Read-Host "กด Enter เพื่อปิด"
