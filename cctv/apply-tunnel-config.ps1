@@ -66,8 +66,12 @@ if ($text -match 'authInternalUsers') {
   Read-Host "กด Enter เพื่อปิด"; exit 1
 }
 
-Set-Content -Path $yml -Value $text -Encoding UTF8 -NoNewline
-Write-Host "บันทึกไฟล์แล้ว" -ForegroundColor Green
+# ต้องเขียนแบบไม่มี BOM
+# Set-Content -Encoding UTF8 บน PowerShell 5.1 ใส่ BOM ให้เสมอ
+# แล้วตัวอ่าน YAML ของ MediaMTX จะสะดุดอักขระนั้นจนเปิดไฟล์ไม่ได้
+# อาการคือโปรแกรมไม่ยอมสตาร์ต โดยไฟล์ดูปกติทุกอย่างเมื่อเปิดอ่าน
+[System.IO.File]::WriteAllText($yml, $text, (New-Object System.Text.UTF8Encoding $false))
+Write-Host "บันทึกไฟล์แล้ว (ไม่มี BOM)" -ForegroundColor Green
 
 # ---------- 4. รีสตาร์ต ----------
 Write-Host ""
@@ -100,6 +104,15 @@ if ($ok) {
   Write-Host "ขั้นต่อไป: ดับเบิลคลิก start-tunnel.bat เพื่อเปิด tunnel ใหม่" -ForegroundColor Cyan
 } else {
   Write-Host "MediaMTX ไม่กลับมา - ไฟล์ตั้งค่าอาจผิด" -ForegroundColor Red
+  Write-Host ""
+  # รันตรง ๆ เพื่อให้เห็นข้อความบ่นจริงจาก MediaMTX
+  # ตอนรันเป็น Scheduled Task ข้อความพวกนี้จะหายไปหมด ไม่มีใครเห็นสาเหตุ
+  $exe = Join-Path $PSScriptRoot 'mediamtx.exe'
+  if (Test-Path $exe) {
+    Write-Host "=== ลองรันตรง ๆ เพื่อดูว่ามันบ่นอะไร ===" -ForegroundColor Cyan
+    & $exe 2>&1 | Select-Object -First 15
+    Write-Host ""
+  }
   Write-Host "เอาไฟล์เดิมกลับด้วยคำสั่งนี้:" -ForegroundColor Yellow
   Write-Host "  Copy-Item '$bak' '$yml' -Force" -ForegroundColor Yellow
 }
