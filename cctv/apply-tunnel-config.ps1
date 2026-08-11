@@ -63,6 +63,18 @@ $text = [regex]::Replace($text, '(?ms)^authInternalUsers:.*?(?=^\S|\z)', '')
 $text = $authBlock + $text
 Write-Host "เปลี่ยนเป็นถามระบบเจ้าหน้าที่ทุกครั้งแล้ว" -ForegroundColor Green
 
+# ---------- 3.5 ซ่อมช่องว่างที่ขาดหลังเครื่องหมาย : ----------
+# YAML บังคับว่าต้องมีช่องว่างหลัง : เสมอ ขาดช่องเดียวอ่านไม่ออกทั้งไฟล์
+# และข้อความที่ MediaMTX บ่นก็ไม่ได้บอกว่าขาดช่องว่าง บอกแค่ว่าคีย์แปลก
+# ซ่อมเฉพาะคีย์ที่รู้จักแน่ ๆ ไม่ไล่ซ่อมทั้งไฟล์ เพราะ rtsp:// มี : ที่ห้ามแตะ
+$before = $text
+foreach ($k in 'source', 'sourceOnDemand', 'rtspTransport', 'runOnDemand') {
+  $text = [regex]::Replace($text, "(?m)^(\s*$k):(\S)", "`$1: `$2")
+}
+if ($text -ne $before) {
+  Write-Host "ซ่อมช่องว่างที่ขาดหลังเครื่องหมาย : ให้แล้ว" -ForegroundColor Yellow
+}
+
 # เตือนถ้ายังเหลือร่องรอยของการกั้นด้วย IP — แปลว่าตัดไม่หมด
 if ($text -match 'authInternalUsers') {
   Write-Host ""
