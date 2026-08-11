@@ -1189,6 +1189,25 @@ canvas{max-width:100%!important;}
             <span class="promo-open"><i class="fa-solid fa-globe"></i> เปิดเว็บไซต์</span>
           </a>
 
+          <!-- ชำระค่าปรับด้วยการสแกนบาร์โค้ดท้ายใบสั่ง
+               ทำเป็นการ์ดแยก ไม่ยัดปุ่มลงในการ์ด PTM เพราะการ์ดนั้นเป็นลิงก์ทั้งใบ
+               ซ้อนลิงก์ในลิงก์ไม่ได้ และถ้าแปลงเป็น span ลิงก์ PTM จะหายจากมือถือ
+               เพราะปุ่ม "เปิดเว็บไซต์" ถูกซ่อนที่จอแคบ เหลือแค่การ์ดที่กดได้ทั้งใบ
+
+               เขียนว่าใช้แอปธนาคารใดก็ได้ตามจริง บาร์โค้ดบนใบสั่งเป็นมาตรฐานกลาง
+               หน้านี้เป็นเว็บของหน่วยราชการ จึงไม่ควรอ่านได้ว่าเจาะจงธนาคารใดธนาคารหนึ่ง -->
+          <span class="promo-card" style="cursor:default">
+            <span class="promo-top">
+              <span class="promo-ic" style="background:linear-gradient(135deg,#00a1e0,#0064a8);color:#fff"><i class="fa-solid fa-barcode"></i></span>
+              <span class="promo-t"><b>ชำระค่าปรับจราจร</b><span>สแกนบาร์โค้ดบนใบสั่ง</span></span>
+            </span>
+            <span class="promo-desc">สแกนบาร์โค้ดท้ายใบสั่งด้วยแอปธนาคารแล้วชำระได้ทันที ใช้แอปธนาคารใดก็ได้ — ด้านล่างคือ Krungthai NEXT</span>
+            <span class="store-row">
+              <a class="store-btn" href="https://play.google.com/store/apps/details?id=ktbcs.netbank&hl=th" target="_blank" rel="noopener" aria-label="โหลด Krungthai NEXT จาก Google Play"><i class="fa-brands fa-google-play"></i><span class="store-lb"> Google Play</span></a>
+              <a class="store-btn" href="https://apps.apple.com/th/app/krungthai-next/id436753378" target="_blank" rel="noopener" aria-label="โหลด Krungthai NEXT จาก App Store"><i class="fa-brands fa-apple"></i><span class="store-lb"> App Store</span></a>
+            </span>
+          </span>
+
           <!-- สองลิงก์นี้เป็นเว็บอ้างอิงภายนอก ใช้ไม่บ่อยเท่าสองใบแรก
                จึงซ้อนกันในคอลัมน์เดียว แบบเตี้ยกว่า ความกว้างเท่าเดิม -->
           <span class="promo-stack">
