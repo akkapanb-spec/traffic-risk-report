@@ -780,12 +780,19 @@
             <button type="button" class="legend-item legend-filter lyr" id="mapLyrOrange" onclick="toggleRiskLayer('orange')"><span class="dot" style="background:#e07000"></span> โซนส้ม</button>
             <button type="button" class="legend-item legend-filter lyr" id="mapLyrCorr"   onclick="toggleRiskLayer('corridor')"><i class="fa-solid fa-route" style="font-size:.75rem"></i> Red Corridor</button>
             <button type="button" class="legend-item legend-filter lyr" id="mapLyrHeat"  onclick="toggleHeatLayer()"><i class="fa-solid fa-fire" style="font-size:.75rem"></i> ความหนาแน่น</button>
+            <!-- ป้ายบอกความกว้างช่องจริง ไม่ใช่ความยาวด้าน
+                 ค่าที่ส่งให้ geo_density คือความยาวด้านของหกเหลี่ยม
+                 ด้านละ 250 ม. ได้ช่องกว้างราว 433 ม. คือเกือบสองเท่า
+                 เขียนว่า "ช่องละ 250" จะทำให้อ่านระยะกระจุกตัวผิดไปครึ่งหนึ่ง -->
             <select id="mapHeatSize" class="input" style="display:none;width:auto;padding:4px 9px;font-size:.75rem" onchange="toggleHeatLayer(true)">
-              <option value="150">ช่องละ 150 ม.</option>
-              <option value="250" selected>ช่องละ 250 ม.</option>
-              <option value="500">ช่องละ 500 ม.</option>
-              <option value="1000">ช่องละ 1 กม.</option>
+              <option value="150">ช่องกว้าง ~260 ม.</option>
+              <option value="250" selected>ช่องกว้าง ~433 ม.</option>
+              <option value="500">ช่องกว้าง ~866 ม.</option>
+              <option value="1000">ช่องกว้าง ~1.7 กม.</option>
             </select>
+            <!-- เผยแพร่ค่านี้ไปหน้าประชาชน — เดิมปรับแล้วมีผลเฉพาะจอคนที่กด -->
+            <button type="button" class="legend-item" id="mapHeatPublish" style="display:none" onclick="publishDensitySize()"
+                    title="ให้หน้าประชาชนใช้ขนาดช่องเดียวกับที่เลือกอยู่"><i class="fa-solid fa-upload" style="font-size:.75rem"></i> ใช้ค่านี้กับหน้าประชาชน</button>
           </div>
           <div id="mapHeatNote" class="hint" style="display:none;margin:-2px 0 6px"></div>
           <div id="accidentMap" class="map-main"></div>
@@ -2887,14 +2894,21 @@
       const btn = document.getElementById('mapLyrHeat');
       const sel = document.getElementById('mapHeatSize');
       const note = document.getElementById('mapHeatNote');
+      const pub = document.getElementById('mapHeatPublish');
       const on = reload === true ? true : !state.heatOn;
 
       if (!on) {
         if (state.heatLayer && state.accidentMap) state.accidentMap.removeLayer(state.heatLayer);
         state.heatOn = false; btn.classList.remove('on');
         sel.style.display = 'none'; note.style.display = 'none';
+        if (pub) pub.style.display = 'none';
         return;
       }
+      // ปุ่มเผยแพร่ให้เห็นเฉพาะแอดมิน คนอื่นปรับดูเองได้แต่เปลี่ยนของหน้าประชาชนไม่ได้
+      if (pub) pub.style.display = (state.user && state.user.isAdmin) ? '' : 'none';
+      // ครั้งแรกที่เปิดชั้นนี้ ตั้งตัวเลือกให้ตรงกับค่าที่เผยแพร่อยู่
+      // ไม่งั้นจะเห็น 250 ทั้งที่หน้าประชาชนใช้ค่าอื่น แล้วเผลอกดเผยแพร่ทับ
+      if (!state.heatSizeSynced) { state.heatSizeSynced = true; await syncPublishedDensitySize(sel); }
       initAccidentMap();
       const endDate = valueOf('mapEndDate');
       try {
@@ -2929,7 +2943,52 @@
           ' น้อย→มาก';
       } catch (e) {
         state.heatOn = false; btn.classList.remove('on'); sel.style.display = 'none';
+        if (pub) pub.style.display = 'none';
         rpcAlert(e, 'โหลดชั้นความหนาแน่นไม่สำเร็จ');
+      }
+    }
+
+    /* อ่านขนาดช่องที่เผยแพร่อยู่มาตั้งใน dropdown
+       ปกติหน้านี้เรียกผ่าน RPC ทั้งหมด แต่ bs_settings เปิดอ่านสาธารณะอยู่แล้ว
+       และค่านี้เจ้าหน้าที่ทุกคนต้องเห็น ไม่ใช่เฉพาะแอดมิน
+       จะไปดึงจาก bs_admin_data ก็ติดสิทธิ์แอดมินและลากข้อมูลมาทั้งก้อนเพื่อเลขตัวเดียว */
+    async function syncPublishedDensitySize(sel) {
+      try {
+        const r = await db.from('bs_settings').select('val').eq('key', 'densityEdgeM').maybeSingle();
+        const v = Number(r.data && r.data.val);
+        if (!Number.isFinite(v) || v <= 0) return;
+        // ค่าที่แก้ด้วยมือใน SQL อาจไม่ตรงกับตัวเลือกที่มี — เติมเข้าไปแทนที่จะเงียบแล้วแสดงผิด
+        if (![...sel.options].some(o => Number(o.value) === v)) {
+          const o = document.createElement('option');
+          o.value = String(v);
+          o.textContent = 'ช่องกว้าง ~' + Math.round(v * Math.sqrt(3)).toLocaleString('th-TH') + ' ม.';
+          sel.appendChild(o);
+        }
+        sel.value = String(v);
+      } catch (e) { /* ยังไม่ได้รัน density_2_setting.sql — ใช้ค่าที่เลือกอยู่ */ }
+    }
+
+    /* เผยแพร่ขนาดช่องที่เลือกอยู่ไปให้หน้าประชาชนใช้
+       เดิมตัวเลือกนี้มีผลแค่จอคนที่กด ปิดหน้าไปก็หาย ส่วนหน้าประชาชนฝังค่า 250 ไว้ตายตัว
+       สองหน้าจึงไม่มีทางแสดงค่าเดียวกันได้ นอกจากจะแก้โค้ดแล้ว deploy ใหม่ทุกครั้ง
+
+       เก็บใน bs_settings ซึ่งเปิดให้อ่านสาธารณะอยู่แล้ว หน้าประชาชนจึงอ่านตรงได้ */
+    async function publishDensitySize() {
+      const edge = Number(document.getElementById('mapHeatSize').value) || 250;
+      const width = Math.round(edge * Math.sqrt(3));
+      const ok = await Swal.fire({
+        icon: 'question', title: 'ใช้ขนาดนี้กับหน้าประชาชน',
+        html: 'ช่องกว้างราว <b>' + width.toLocaleString('th-TH') + ' ม.</b> (ด้านละ ' + edge + ' ม.)<br>' +
+              '<span style="font-size:.85rem;color:#5b6b7f">มีผลกับชั้นความหนาแน่นบนหน้าแรกของประชาชนทันที</span>',
+        showCancelButton: true, confirmButtonText: 'เผยแพร่', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#1d4ed8'
+      });
+      if (!ok.isConfirmed) return;
+      try {
+        const res = await rpc('bs_settings_save', { p_token: state.token, p_settings: { densityEdgeM: edge } });
+        if (!res || !res.success) throw new Error((res && res.message) || 'บันทึกไม่สำเร็จ');
+        Swal.fire({ icon:'success', title:'เผยแพร่แล้ว', text:'หน้าประชาชนจะใช้ขนาดช่องนี้ตั้งแต่การเปิดหน้าครั้งถัดไป', timer:2600, showConfirmButton:false });
+      } catch (e) {
+        rpcAlert(e, 'เผยแพร่ขนาดช่องไม่สำเร็จ');
       }
     }
 
@@ -9165,7 +9224,7 @@
       saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation,
       renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo, openDutySystem, setDashYear, dashCustomRange,
       renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail, toggleDeathOverlay, toggleTambonOfficer,
-      toggleRiskLayer,
+      toggleRiskLayer, publishDensitySize,
       editOfficer, delOfficer, editAccidentCase, deleteAccidentCase, editRiskReport,
       updateAdminBadges, exportMapCsv, exportRiskCsv, exportDeathCsv, exportOfficerCsv,
       viewDeathDetail
