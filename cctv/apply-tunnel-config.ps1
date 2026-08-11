@@ -52,7 +52,13 @@ if ($text -match '(?m)^\s*hlsAddress:\s*.*$') {
 # ซึ่งแปลว่ากล้องยังเปิดให้ทุกคนดูอยู่ ทั้งที่ดูเผิน ๆ เหมือนแก้แล้ว
 $authBlock = "authMethod: http`r`nauthHTTPAddress: $authUrl`r`n"
 
+# ต้องลบของเดิมให้หมดทุกบรรทัดก่อนใส่ใหม่ รวมถึง authHTTPAddress ด้วย
+# รุ่นก่อนลบแต่ authMethod แล้วเติมสองบรรทัดกลับเข้าไป
+# รันซ้ำสี่รอบจึงได้ authHTTPAddress สี่บรรทัด แล้ว YAML ก็ปฏิเสธคีย์ซ้ำ
+# สคริปต์ที่ผู้ใช้จะรันซ้ำได้ต้องให้ผลเหมือนเดิมทุกครั้ง ไม่ใช่สะสมทับ
 $text = [regex]::Replace($text, '(?m)^authMethod:.*\r?\n', '')
+$text = [regex]::Replace($text, '(?m)^authHTTPAddress:.*\r?\n', '')
+$text = [regex]::Replace($text, '(?m)^authHTTPExclude:.*\r?\n', '')
 $text = [regex]::Replace($text, '(?ms)^authInternalUsers:.*?(?=^\S|\z)', '')
 $text = $authBlock + $text
 Write-Host "เปลี่ยนเป็นถามระบบเจ้าหน้าที่ทุกครั้งแล้ว" -ForegroundColor Green
