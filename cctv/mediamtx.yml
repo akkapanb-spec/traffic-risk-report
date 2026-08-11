@@ -101,8 +101,8 @@ paths:
 
   # ตัวอย่างกล้องที่สอง เอาเครื่องหมาย # ออกเมื่อติดตั้งจริง
   # cam2_wide:
-  #   source: rtsp://ชื่อผู้ใช้:รหัสผ่าน@192.168.1.51:554/stream2
+  #   source: rtsp://Ctw001:paknampo6156@192.168.1.51:554/stream1
   #   sourceOnDemand: yes
   # cam2_zoom:
-  #   source: rtsp://ชื่อผู้ใช้:รหัสผ่าน@192.168.1.51:554/stream7
+  #   source: rtsp://Ctw001:paknampo6156C@192.168.1.51:554/stream6
   #   sourceOnDemand: yes
