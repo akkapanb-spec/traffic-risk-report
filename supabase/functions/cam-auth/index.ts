@@ -46,6 +46,19 @@ function pickToken(body: Record<string, unknown>): string {
   return String(body.token ?? body.password ?? '');
 }
 
+/* จำผลไว้สั้น ๆ ไม่ต้องถามฐานข้อมูลทุกชิ้นวิดีโอ
+   MediaMTX ถามที่นี่ทุกครั้งที่มีการขอไฟล์ ซึ่งกับ low-latency HLS
+   คือทุก 1-2 วินาทีต่อคนดูหนึ่งคน ดู 10 นาทีก็เกือบ 600 ครั้ง
+
+   และ officer_session_user ไม่ได้แค่อ่าน มันเขียนทุกครั้งเพื่อเลื่อนเวลาหมดอายุ
+   ถ้าถามทุกชิ้นจริง จะกลายเป็นเขียนฐานข้อมูลวินาทีละครั้งต่อคนดูหนึ่งคน
+   และทุกชิ้นวิดีโอต้องรอผลจาก Supabase ก่อน ภาพจะกระตุก
+
+   30 วินาทีสั้นพอที่การถอนสิทธิ์จะมีผลเกือบทันที
+   และยาวพอให้การดูต่อเนื่องไม่ไปรบกวนฐานข้อมูล */
+const CACHE_MS = 30_000;
+const seen = new Map<string, number>();
+
 const handler = async (req: Request): Promise<Response> => {
   // เปิดด้วยเบราว์เซอร์เพื่อดูว่าตัวนี้ยังมีชีวิตอยู่ไหม
   if (req.method === 'GET') {
@@ -65,6 +78,10 @@ const handler = async (req: Request): Promise<Response> => {
   const token = pickToken(body);
   if (!token) return deny('ไม่มี token');
 
+  const now = Date.now();
+  const ok = seen.get(token);
+  if (ok && ok > now) return allow();
+
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/officer_session_user`, {
       method: 'POST',
@@ -75,7 +92,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     // คืน null เมื่อ token ใช้ไม่ได้หรือหมดอายุ — เป็นสัญญาว่าที่ฟังก์ชันนี้ใช้ทั้งระบบ
     const user = await res.json();
-    if (!user) return deny('session หมดอายุ กรุณาเข้าสู่ระบบใหม่');
+    if (!user) { seen.delete(token); return deny('session หมดอายุ กรุณาเข้าสู่ระบบใหม่'); }
+
+    seen.set(token, now + CACHE_MS);
+    // กันไม่ให้บวมเมื่อมี token เข้ามามาก ๆ — ทิ้งตัวที่หมดอายุแล้วเป็นระยะ
+    if (seen.size > 500) for (const [k, exp] of seen) if (exp <= now) seen.delete(k);
 
     return allow();
   } catch (e) {
