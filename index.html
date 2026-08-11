@@ -673,7 +673,11 @@ canvas{max-width:100%!important;}
 .av-zone .zone-title{padding:16px 18px 0}
 .av-count{font-size:.72rem;font-weight:800;background:#c24e00;color:#fff;border-radius:999px;padding:4px 11px}
 .av-map{height:230px;margin:12px 0 0;border-top:1px solid rgba(209,222,237,.9);border-bottom:1px solid rgba(209,222,237,.9)}
-@media(max-width:860px){.av-map{display:none!important}} /* มือถือ: แผนที่อยู่ใน modal เท่านั้น */
+/* มือถือ: แสดงแผนที่ในหน้าเลย ไม่ต้องเปิด modal ก่อน
+   ทำเป็นสี่เหลี่ยมผืนผ้าตั้ง เพราะจอมือถือสูงกว่ากว้าง
+   แผนที่เตี้ย ๆ แบบจอคอมจะเห็นถนนได้แค่ไม่กี่สาย เลื่อนหาทั้งวันก็ไม่เจอจุดที่ต้องการ
+   130vw ทำให้สูงกว่ากว้างเสมอไม่ว่าจอกว้างเท่าไร และ 72vh กันไม่ให้ยาวจนกลืนทั้งหน้า */
+@media(max-width:860px){.av-map{height:130vw;max-height:72vh}}
 /* แถบเปิด/ปิดชั้นข้อมูลบนแผนที่ — ผูกกับแผนที่ จึงซ่อนพร้อมกันบนมือถือ */
 .av-lyrbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:9px 12px;background:#fafcff;border-bottom:1px solid rgba(209,222,237,.9)}
 .av-lyrlbl{font-size:.72rem;font-weight:800;color:#5b6b7f;display:inline-flex;align-items:center;gap:5px;margin-right:2px}
@@ -2096,10 +2100,13 @@ function avoidWhenText(r) {
   return { live, text: (live ? 'ถึง ' + (sameDay ? ft(e) + ' น. วันนี้' : fd(e) + ' ' + ft(e) + ' น.') : text) };
 }
 
-// PC: เปิดแผนที่รอไว้เลยตั้งแต่โหลดหน้า ไม่ต้องรอมีประกาศ
+/* เปิดแผนที่รอไว้เลยตั้งแต่โหลดหน้า ไม่ต้องรอมีประกาศ
+   เดิมมีเงื่อนไขกันไม่ให้สร้างแผนที่บนจอแคบกว่า 861px เพราะออกแบบให้มือถือ
+   ดูแผนที่ผ่าน modal เท่านั้น แต่แปลว่าคนส่วนใหญ่ที่เปิดจากมือถือไม่เคยเห็นแผนที่เลย
+   ต้องรู้ว่ามี modal ซ่อนอยู่ก่อนถึงจะกดเข้าไปดูได้ */
 function ensureAvoidMap() {
-  if (!window.matchMedia('(min-width:861px)').matches) return false;
   const mapEl = document.getElementById('avoidMap');
+  if (!mapEl) return false;
   mapEl.style.display = 'block';
   if (!avoidLMap) {
     avoidLMap = L.map('avoidMap', { scrollWheelZoom:false }).setView([15.705, 100.14], 12);
