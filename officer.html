@@ -2785,8 +2785,17 @@
       const v = document.getElementById('camPlayer');
       const fail = msg => { hint.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#c2410c"></i> ' + msg; };
 
+      /* แนบ token ของ session ไปกับทุกคำขอ ไม่ใช่แค่ไฟล์รายการแรก
+         MediaMTX ถามตัวตรวจสิทธิ์ทุกครั้งที่มีการขอไฟล์ ทั้งรายการและทุกชิ้นส่วนวิดีโอ
+         ถ้าแนบแค่ครั้งแรก ภาพจะขึ้นแวบเดียวแล้วดับ เพราะชิ้นถัดไปโดนปฏิเสธ
+
+         ต้องแนบทางนี้ ไม่ใช่ต่อท้าย URL ตอนเรียก เพราะที่อยู่ของชิ้นส่วนวิดีโอ
+         MediaMTX เป็นคนสร้างให้ เราไปเติมอะไรเองไม่ได้ */
+      const withToken = u => u + (u.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(state.token || '');
+
       if (window.Hls && Hls.isSupported()) {
-        const hls = new Hls({ lowLatencyMode: true, backBufferLength: 10 });
+        const hls = new Hls({ lowLatencyMode: true, backBufferLength: 10,
+          xhrSetup: (xhr, u) => xhr.open('GET', withToken(u), true) });
         state.camHls = hls;
         hls.on(Hls.Events.ERROR, (_e, data) => {
           if (!data.fatal) return;
@@ -2800,8 +2809,11 @@
         hls.attachMedia(v);
         hls.on(Hls.Events.MANIFEST_PARSED, () => v.play().catch(() => {}));
       } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
-        v.src = url;                       // Safari เล่น HLS ได้เอง ไม่ต้องใช้ hls.js
-        v.addEventListener('error', () => fail('ต่อเกตเวย์ไม่ได้'), { once:true });
+        /* Safari เล่น HLS เองโดยไม่ผ่าน hls.js จึงแทรก token ให้ทุกคำขอไม่ได้
+           ใส่ได้แค่คำขอแรก ถ้าเกตเวย์ตั้งให้ตรวจสิทธิ์ทุกชิ้น ภาพจะขึ้นแล้วดับ
+           บอกให้รู้ตรง ๆ ดีกว่าปล่อยให้เห็นจอดำแล้วเดาเอง */
+        v.src = withToken(url);
+        v.addEventListener('error', () => fail('ต่อเกตเวย์ไม่ได้ หรือเบราว์เซอร์นี้ส่ง token ตามไปไม่ได้ — ลองใช้ Chrome'), { once:true });
         v.play().catch(() => {});
       } else {
         fail('เบราว์เซอร์นี้เล่นสตรีมไม่ได้');
