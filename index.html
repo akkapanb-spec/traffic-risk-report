@@ -1260,9 +1260,9 @@ canvas{max-width:100%!important;}
           <span class="promo-card" id="lineOaCard" style="display:none;cursor:default">
             <span class="promo-top">
               <span class="promo-ic" style="background:#06c755;color:#fff"><i class="fa-brands fa-line"></i></span>
-              <span class="promo-t"><b>ไลน์บอทแจ้งเตือนอุบัติเหตุ</b><span>สภ.เมืองนครสวรรค์</span></span>
+              <span class="promo-t"><b>ไลน์ Chontawan TF Police</b><span>สภ.เมืองนครสวรรค์</span></span>
             </span>
-            <span class="promo-desc">รับแจ้งผู้เสียชีวิตรายใหม่ อุบัติเหตุร้ายแรง และสรุปสถิติรายสัปดาห์ อัตโนมัติทางไลน์</span>
+            <span class="promo-desc">เพื่อติดตามสถานการณ์อุบัติเหตุ และรับแจ้งเตือนอุบัติเหตุซ้ำ</span>
             <span class="store-row">
               <a class="store-btn" id="lineOaAdd" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-user-plus"></i><span class="store-lb"> เพิ่มเพื่อน</span></a>
               <a class="store-btn" id="lineGroupBtn" style="display:none" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-users"></i><span class="store-lb"> เข้ากลุ่มไลน์</span></a>
@@ -1529,7 +1529,8 @@ function lineOaInit() {
       const cell = document.createElement('span');
       cell.className = 'line-qr-item';
       const img = document.createElement('img');
-      img.alt = cap; img.width = 96; img.height = 96; img.src = src;
+      // alt เขียนยาวกว่าป้ายที่เห็น เพราะป้ายสั้น ๆ อย่าง "ไอดีไลน์" อ่านด้วยโปรแกรมอ่านหน้าจอแล้วไม่รู้ว่าคืออะไร
+      img.alt = 'คิวอาร์ ' + cap; img.width = 96; img.height = 96; img.src = src;
       // ไฟล์หาย ก็ซ่อนเฉพาะใบนั้น อีกใบกับปุ่มยังใช้ได้อยู่
       img.onerror = () => { cell.style.display = 'none'; };
       const lb = document.createElement('span');
@@ -1539,7 +1540,7 @@ function lineOaInit() {
       cell.append(img, lb);
       box.appendChild(cell);
     };
-    addQr('assets/line-oa-qr.png', 'เพิ่มเพื่อนบอท', id);
+    addQr('assets/line-oa-qr.png', 'ไอดีไลน์', id);
     if (gUrl) addQr('assets/line-group-qr.png', 'เข้ากลุ่มไลน์', '');
   }
   card.style.display = '';
