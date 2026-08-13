@@ -8773,6 +8773,10 @@
         document.getElementById('cpTo').value = t;
         document.getElementById('cpFrom').value = t.slice(0, 4) + '-01-01';
         document.getElementById('cpImportFile').addEventListener('change', ev => cpImport(ev));
+        // ต้องเติมรายชื่อหัวหน้าชุดตรงนี้ด้วย
+        // เดิมเติมเฉพาะตอน cpResetForm() กับตอนกดแก้ไขแถวเก่า
+        // เปิดหน้ามาครั้งแรกจึงไม่ผ่านทั้งสองทาง ช่องเลยว่างเปล่าไม่มีตัวเลือกอะไรเลย
+        cpFillCommanders('');
         cpShowBE();
         cpAddArrest();
       }
@@ -8792,6 +8796,7 @@
 
     // หัวหน้าชุดที่ปฏิบัติจริงในหน่วย เลือกจากรายชื่อแทนพิมพ์เอง ชื่อจะได้ไม่เขียนไม่ตรงกันจนสรุปยอดรายคนไม่ได้
     const CP_COMMANDERS = [
+      '61 พ.ต.ท.ณฐปกร กิจสุวรรณ',
       '613 ร.ต.อ.สมเกียรติ สามล',
       '615 ร.ต.อ.สิทธิศักดิ์ เข็มจัด',
       '621 ร.ต.อ.ณัฐธนพล สุวรรณชัย',
@@ -8830,12 +8835,15 @@
       if (enforce) document.getElementById('cpBreath').value = '';
       const hint = document.getElementById('cpArrestHint');
       if (hint) hint.innerHTML = enforce
-        ? 'หนึ่งแถวคือหนึ่งข้อหา — เลือกข้อหา เลือกเพศ ใส่จำนวนราย แล้วกรอกอายุให้ครบตามจำนวน'
+        ? 'หนึ่งแถวคือหนึ่งข้อหา — เลือกข้อหา เลือกยานพาหนะ แล้วใส่จำนวนราย'
         : 'หนึ่งแถวคือหนึ่งราย — ใส่ค่าแอลกอฮอล์ที่เป่าได้ของคนนั้น';
+      /* กวดขันวินัยจราจรไม่บันทึกเพศกับอายุ ออกใบสั่งตามข้อหาอย่างเดียว
+         จุดตรวจวัดแอลกอฮอล์ยังเก็บครบเหมือนเดิม เพราะใช้ทำสถิติรายบุคคล */
       document.querySelectorAll('#cpArrestRows .cp-arrest').forEach(r => {
         r.querySelector('.cp-mg-wrap').style.display = enforce ? 'none' : '';
         r.querySelector('.cp-count-wrap').style.display = enforce ? '' : 'none';
-        r.querySelector('.cp-ages-wrap').style.display = enforce ? '' : 'none';
+        r.querySelector('.cp-gender-wrap').style.display = enforce ? 'none' : '';
+        r.querySelector('.cp-ages-wrap').style.display = 'none';
         r.querySelector('.cp-age-wrap').style.display = enforce ? 'none' : '';
       });
     }
@@ -8941,7 +8949,7 @@
             '<div class="cp-ac"></div>' +
           '</div>' +
           '<div class="cp-charge-info"></div></label>' +
-        '<label>เพศ<select class="select cp-gender"><option value="">-</option>' +
+        '<label class="cp-gender-wrap">เพศ<select class="select cp-gender"><option value="">-</option>' +
           ['ผู้ชาย','ผู้หญิง'].map(g => '<option' + (d.gender === g ? ' selected' : '') + '>' + g + '</option>').join('') + '</select></label>' +
         '<label class="cp-count-wrap">จำนวน (ราย)<div style="display:flex;gap:5px">' +
           '<input class="input cp-count" type="number" min="1" max="99" inputmode="numeric" style="min-width:0" value="' + (ages.length || 1) + '">' +
@@ -9037,10 +9045,13 @@
           return;
         }
         // เก็บลงฐานข้อมูลเป็นรายคนเหมือนเดิม หน้าจอแค่กรอกแบบรวบให้เร็วขึ้น
-        // ถ้าเก็บเป็นแถวรวม สถิติเพศ/อายุที่มีอยู่จะอ่านไม่ได้ทั้งหมด
-        const ages = [...r.querySelectorAll('.cp-ages input')].map(i => i.value);
+        // ถ้าเก็บเป็นแถวรวม สถิติที่มีอยู่จะอ่านไม่ได้ทั้งหมด
+        //
+        // เพศกับอายุส่งเป็นค่าว่างเสมอ ไม่ใช่อ่านจากช่องที่ซ่อนอยู่
+        // สลับประเภทจุดตรวจไปมาแล้วค่าที่พิมพ์ค้างไว้ตอนเป็นจุดตรวจแอลกอฮอล์
+        // จะติดไปกับใบสั่งกวดขันวินัยจราจรโดยที่ไม่มีใครเห็นบนหน้าจอ
         const n = Math.max(1, Number(r.querySelector('.cp-count').value) || 1);
-        for (let i = 0; i < n; i++) out.push({ gender, age: ages[i] || '', charge, vehicle, alcohol_mg: '' });
+        for (let i = 0; i < n; i++) out.push({ gender: '', age: '', charge, vehicle, alcohol_mg: '' });
       });
       return out;
     }
