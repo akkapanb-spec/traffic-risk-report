@@ -1466,7 +1466,7 @@ document.addEventListener('DOMContentLoaded', function() {
    ปล่อยว่างไว้ = การ์ดไม่ขึ้นเลย ตั้งใจให้เป็นแบบนั้น
    เพราะถ้าใส่ค่ามั่วแล้วปุ่มขึ้น ประชาชนจะถูกพาไปหาบัญชีของคนอื่น
    ซึ่งบนเว็บของหน่วยราชการ แย่กว่าการไม่มีปุ่มเลยมาก */
-const LINE_OA_ID = '';
+const LINE_OA_ID = '@690vodvg';
 
 /* คืนลิงก์เพิ่มเพื่อนจากค่าที่ตั้งไว้ คืน null ถ้ารูปแบบไม่เข้าพวก
    แยกออกมาเป็นฟังก์ชันเพื่อให้เห็นชัดว่าอะไรผ่านบ้าง และทดสอบทีละค่าได้ */
@@ -1504,7 +1504,10 @@ function lineOaInit() {
   if (box) {
     const img = document.createElement('img');
     img.alt = 'คิวอาร์เพิ่มเพื่อนไลน์บอท สภ.เมืองนครสวรรค์';
-    img.width = 108; img.height = 108; img.loading = 'lazy';
+    // ไม่ใช้ loading=lazy — รูปเล็กแค่ 108px ไม่คุ้มที่จะเลื่อนโหลด
+    // และการเลื่อนโหลดทำให้ onerror ยังไม่ทำงานจนกว่าจะเลื่อนมาถึง
+    // กล่องจึงค้างว่างอยู่แทนที่จะซ่อนตัวเองทันทีเมื่อโหลดไม่ได้
+    img.width = 108; img.height = 108;
     img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=216x216&margin=0&data=' + encodeURIComponent(url);
     // โหลดรูปไม่ได้ (เน็ตองค์กรบล็อก) ก็ซ่อนไป ปุ่มเพิ่มเพื่อนยังใช้ได้อยู่
     img.onerror = () => { box.style.display = 'none'; };
