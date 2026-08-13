@@ -303,8 +303,11 @@ td{vertical-align:top;font-size:.92rem;}
 .df-toggle.open .df-chev{transform:rotate(180deg);}
 /* ลิงก์แนะนำ (เว็บกรมทางหลวง / Thai RSC / แอป Police Care) */
 .promo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:start}
-/* คอลัมน์ที่สาม ซ้อนสองการ์ดเตี้ยแทนใบเดียวสูงเต็ม */
-.promo-stack{display:flex;flex-direction:column;gap:12px}
+/* การ์ด Police Care สูงกว่าใบอื่นมาก เพราะมีทั้งปุ่มสโตร์และเบอร์โทร
+   ให้กินสองแถวในคอลัมน์แรก แล้วการ์ดเตี้ยสองใบจะไหลไปอยู่แถวสองของคอลัมน์ 2 กับ 3 พอดี
+   คือใต้ "ใบสั่งจราจรออนไลน์" และใต้ "ชำระค่าปรับจราจร" ตามลำดับ
+   เดิมสองใบนั้นถูกครอบไว้ใน .promo-stack จึงนับเป็นช่องเดียวแล้วตกไปอยู่คอลัมน์แรก */
+.promo-tall{grid-row:span 2}
 .promo-card.compact{gap:8px;padding:12px}
 .promo-card.compact .promo-ic{width:42px;height:42px;flex:0 0 42px;border-radius:12px}
 .promo-card.compact .promo-ic.crop img{width:472px;left:-11px;top:-4px}
@@ -349,8 +352,8 @@ a.promo-card:hover .promo-open{background:#1d4ed8;color:#fff}
 @media(max-width:760px){
   /* มือถือ: ย่อเป็นแถวกระชับ — ไอคอน+ชื่อ+ลูกศร ตัดคำอธิบาย/ปุ่มใหญ่ทิ้ง */
   .promo-grid{grid-template-columns:1fr;gap:8px}
-  /* บนมือถือทุกใบเป็นแถวเดียวกันหมดอยู่แล้ว การซ้อนคอลัมน์จึงไม่ต้องมี */
-  .promo-stack{display:contents}
+  /* คอลัมน์เดียวแล้ว การกินสองแถวจะเหลือช่องว่างคั่นกลาง */
+  .promo-tall{grid-row:auto}
   .promo-card{flex-direction:row;align-items:center;padding:9px 12px;gap:10px}
   .promo-top{flex:1;min-width:0}
   .promo-desc,.promo-open{display:none}
@@ -1156,7 +1159,7 @@ canvas{max-width:100%!important;}
       <div class="stats-zone" style="margin-top:16px">
         <h3 class="zone-title"><i class="fa-solid fa-arrow-up-right-from-square" style="color:#0f7a47;background:#e9f9ef"></i> ลิงก์แนะนำ · บริการที่เกี่ยวข้อง</h3>
         <div class="promo-grid">
-          <span class="promo-card" style="cursor:default">
+          <span class="promo-card promo-tall" style="cursor:default">
             <span class="promo-top">
               <span class="promo-ic"><img src="https://play-lh.googleusercontent.com/1E_loY5cnzVC6r-M6J9gBkooBVggZETqFHgcDyVmyr9vOp9nQ2Dcim2qSmX3xhDFTEYAOnVF2QQSRCRYBMKb_Q=w240-h480-rw" alt="Police Care"></span>
               <span class="promo-t"><b>แอป Police Care</b><span>สำนักงานตำรวจแห่งชาติ</span></span>
@@ -1210,28 +1213,28 @@ canvas{max-width:100%!important;}
             </span>
           </span>
 
-          <!-- สองลิงก์นี้เป็นเว็บอ้างอิงภายนอก ใช้ไม่บ่อยเท่าสองใบแรก
-               จึงซ้อนกันในคอลัมน์เดียว แบบเตี้ยกว่า ความกว้างเท่าเดิม -->
-          <span class="promo-stack">
-            <a class="promo-card compact" href="https://highwaytraffic.go.th/DOHWeb/Home.aspx" target="_blank" rel="noopener">
-              <i class="fa-solid fa-arrow-up-right-from-square promo-go"></i>
-              <span class="promo-top">
-                <span class="promo-ic crop"><img src="https://highwaytraffic.go.th/DOHWeb/images/banner.jpg" alt="ตรากรมทางหลวง"></span>
-                <span class="promo-t"><b>รายงานสภาพจราจร</b><span>กรมทางหลวง · highwaytraffic.go.th</span></span>
-              </span>
-              <span class="promo-desc">สภาพจราจรทั่วประเทศ กล้อง CCTV และปริมาณจราจรแบบเรียลไทม์</span>
-              <span class="promo-open"><i class="fa-solid fa-globe"></i> เปิดเว็บไซต์</span>
-            </a>
-            <a class="promo-card compact" href="https://www.thairsc.com/" target="_blank" rel="noopener">
-              <i class="fa-solid fa-arrow-up-right-from-square promo-go"></i>
-              <span class="promo-top">
-                <span class="promo-ic"><img class="fvc" src="https://www.thairsc.com/favicon.ico" alt="Thai RSC"></span>
-                <span class="promo-t"><b>ศูนย์ข้อมูลอุบัติเหตุ</b><span>Thai RSC · thairsc.com</span></span>
-              </span>
-              <span class="promo-desc">สถิติอุบัติเหตุระดับประเทศและรายจังหวัด จากบริษัทกลางคุ้มครองผู้ประสบภัยฯ</span>
-              <span class="promo-open"><i class="fa-solid fa-globe"></i> เปิดเว็บไซต์</span>
-            </a>
-          </span>
+          <!-- สองลิงก์นี้เป็นเว็บอ้างอิงภายนอก ใช้ไม่บ่อยเท่าสองใบแรก จึงทำแบบเตี้ยกว่า
+               ลำดับใน HTML คือลำดับที่ตกลงในตาราง — สภาพจราจรใต้ใบสั่งออนไลน์
+               ส่วนศูนย์ข้อมูลอุบัติเหตุใต้ชำระค่าปรับ ห้ามสลับสองใบนี้โดยไม่ตั้งใจ -->
+          <a class="promo-card compact" href="https://highwaytraffic.go.th/DOHWeb/Home.aspx" target="_blank" rel="noopener">
+            <i class="fa-solid fa-arrow-up-right-from-square promo-go"></i>
+            <span class="promo-top">
+              <span class="promo-ic crop"><img src="https://highwaytraffic.go.th/DOHWeb/images/banner.jpg" alt="ตรากรมทางหลวง"></span>
+              <span class="promo-t"><b>รายงานสภาพจราจร</b><span>กรมทางหลวง · highwaytraffic.go.th</span></span>
+            </span>
+            <span class="promo-desc">สภาพจราจรทั่วประเทศ กล้อง CCTV และปริมาณจราจรแบบเรียลไทม์</span>
+            <span class="promo-open"><i class="fa-solid fa-globe"></i> เปิดเว็บไซต์</span>
+          </a>
+
+          <a class="promo-card compact" href="https://www.thairsc.com/" target="_blank" rel="noopener">
+            <i class="fa-solid fa-arrow-up-right-from-square promo-go"></i>
+            <span class="promo-top">
+              <span class="promo-ic"><img class="fvc" src="https://www.thairsc.com/favicon.ico" alt="Thai RSC"></span>
+              <span class="promo-t"><b>ศูนย์ข้อมูลอุบัติเหตุ</b><span>Thai RSC · thairsc.com</span></span>
+            </span>
+            <span class="promo-desc">สถิติอุบัติเหตุระดับประเทศและรายจังหวัด จากบริษัทกลางคุ้มครองผู้ประสบภัยฯ</span>
+            <span class="promo-open"><i class="fa-solid fa-globe"></i> เปิดเว็บไซต์</span>
+          </a>
         </div>
       </div>
 
