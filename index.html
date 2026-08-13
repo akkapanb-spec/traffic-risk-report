@@ -1036,9 +1036,11 @@ canvas{max-width:100%!important;}
       <!-- PC: ซ้ายจุดหลีกเลี่ยง / ขวาสถิติย่อ — มือถือเรียงลงมา (จุดหลีกเลี่ยงก่อน) -->
       <div class="home-split">
 
-        <!-- ซ้าย: จุดจราจรที่ควรหลีกเลี่ยง (admin ประกาศจากแอปเจ้าหน้าที่) -->
+        <!-- ซ้าย: แผนที่ความหนาแน่นอุบัติเหตุและเส้นทางที่ควรเลี่ยง
+             ชื่อเดิมคือ "จุดจราจรที่ควรหลีกเลี่ยง" ซึ่งพูดถึงแค่ประกาศที่แอดมินพิมพ์เอง
+             แต่ตอนนี้กล่องนี้แสดงชั้นความหนาแน่นอุบัติเหตุที่เผยแพร่จากหน้าวิเคราะห์ด้วย -->
         <div class="stats-zone av-zone" id="avoidZone">
-          <h3 class="zone-title"><i class="fa-solid fa-diamond-turn-right" style="color:#c24e00;background:#fff1e6"></i> จุดจราจรที่ควรหลีกเลี่ยง <span class="av-count" id="avoidCount" style="display:none">0 จุด</span>
+          <h3 class="zone-title"><i class="fa-solid fa-diamond-turn-right" style="color:#c24e00;background:#fff1e6"></i> แผนที่ความหนาแน่นอุบัติเหตุและเส้นทางที่ควรเลี่ยง <span class="av-count" id="avoidCount" style="display:none">0 จุด</span>
             <button type="button" class="av-hist-link" onclick="openAvoidHistory()"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติ</button></h3>
           <div id="avoidMap" class="av-map" style="display:none"></div>
           <!-- ชั้นจุดเสี่ยงจากการวิเคราะห์ ซ้อนบนแผนที่จุดหลีกเลี่ยง — เปิด/ปิดได้ทีละชั้น -->
@@ -1935,19 +1937,33 @@ async function loadDensityLayer() {
   if (!btn || !ensureAvoidMap()) return;
   let res;
   try {
-    /* ขนาดช่องมาจากค่าที่แอดมินเผยแพร่ ไม่ฝังตายตัวในโค้ดอีกแล้ว
-       เดิมหน้านี้ใช้ 250 ตายตัว ส่วนหน้าเจ้าหน้าที่มีตัวเลือกที่ไม่ได้บันทึกไว้ที่ไหน
-       สองหน้าจึงแสดงคนละขนาดโดยไม่มีทางทำให้ตรงกันได้ นอกจากแก้โค้ดแล้ว deploy ใหม่
+    /* ขนาดช่องและช่วงเวลามาจากที่เจ้าหน้าที่กด "บันทึก + เผยแพร่" ในหน้าวิเคราะห์จุดเสี่ยง
+       ไม่ฝังตายตัวในโค้ดอีกแล้ว เดิมหน้านี้ใช้ด้าน 250 ม. กับหน้าต่าง 12 เดือนตายตัว
+       ส่วนหน้าเจ้าหน้าที่ปรับได้แต่ไม่ได้บันทึกไว้ที่ไหน สองหน้าจึงไม่มีทางตรงกัน
 
-       อ่านไม่ได้ก็ใช้ 250 ต่อไป ชั้นแผนที่ต้องไม่หายเพราะอ่านค่าตั้งค่าไม่ได้ */
-    let edge = 250;
+       ค่าที่เผยแพร่คือค่าที่แอดมินเห็นกับตาบนแผนที่ผลวิเคราะห์ก่อนกดเผยแพร่
+       หน้านี้จึงแสดงสิ่งเดียวกับที่ตรวจแล้ว ไม่ใช่ช่วงเวลาคนละชุด
+
+       อ่านไม่ได้ก็ถอยไปใช้ค่าเดิม ชั้นแผนที่ต้องไม่หายเพราะอ่านค่าตั้งค่าไม่ได้ */
+    let edge = 250, from = null, to = null;
     try {
-      const st = await sb.from('bs_settings').select('val').eq('key', 'densityEdgeM').maybeSingle();
-      const v = Number(st.data && st.data.val);
+      const st = await sb.from('bs_settings').select('key,val')
+        .in('key', ['densityEdgeM', 'densityFrom', 'densityTo']);
+      const cfg = Object.fromEntries((st.data || []).map(r => [r.key, r.val]));
+      const v = Number(cfg.densityEdgeM);
       if (Number.isFinite(v) && v > 0) edge = v;
+      // วันที่เก็บเป็น jsonb string — ต้องได้รูป YYYY-MM-DD เท่านั้น ไม่งั้นปล่อยเป็น null
+      const asDate = x => /^\d{4}-\d{2}-\d{2}$/.test(String(x || '')) ? String(x) : null;
+      from = asDate(cfg.densityFrom);
+      to   = asDate(cfg.densityTo);
     } catch (e) { /* ยังไม่ได้รัน density_2_setting.sql — ใช้ค่าเดิม */ }
 
-    const { data, error } = await sb.rpc('geo_density', { p_edge_m: edge });
+    const { data, error } = await sb.rpc('geo_density', {
+      p_edge_m: edge,
+      p_from: from,
+      // ช่องวันที่สิ้นสุดหมายถึงทั้งวัน แต่ geo_density ตัดที่ < p_to
+      p_to: to ? to + 'T23:59:59.999' : null
+    });
     if (error) throw error;
     res = data;
   } catch (e) {
@@ -2769,6 +2785,8 @@ function vcInit() {
   fbBuild();
   vcTrack('view', 'home', 'เปิดหน้าแรก');
   // หัวข้อไหนถูกเลื่อนไปถึงจริง — ตัวที่ไม่เคยถูกบันทึกคือหัวข้อที่ไม่มีคนดู
+  // ป้ายตรงนี้เป็นชื่อเดิมของหัวข้อ ไม่ได้เปลี่ยนตามหัวข้อบนหน้าจอ
+  // เพราะมันคือ key ที่เก็บสะสมใน vc_events มาแล้ว เปลี่ยนเมื่อไหร่สถิติจะแตกเป็นสองชุด
   const watch = [['avoidZone','จุดจราจรที่ควรหลีกเลี่ยง'], ['officerStyleStats','สถิติ สภ.เมืองนครสวรรค์'],
     ['fbForm','ความคิดเห็นของท่าน']];
   if ('IntersectionObserver' in window) {

@@ -780,19 +780,12 @@
             <button type="button" class="legend-item legend-filter lyr" id="mapLyrOrange" onclick="toggleRiskLayer('orange')"><span class="dot" style="background:#e07000"></span> โซนส้ม</button>
             <button type="button" class="legend-item legend-filter lyr" id="mapLyrCorr"   onclick="toggleRiskLayer('corridor')"><i class="fa-solid fa-route" style="font-size:.75rem"></i> Red Corridor</button>
             <button type="button" class="legend-item legend-filter lyr" id="mapLyrHeat"  onclick="toggleHeatLayer()"><i class="fa-solid fa-fire" style="font-size:.75rem"></i> ความหนาแน่น</button>
-            <!-- ป้ายบอกความกว้างช่องจริง ไม่ใช่ความยาวด้าน
-                 ค่าที่ส่งให้ geo_density คือความยาวด้านของหกเหลี่ยม
-                 ด้านละ 250 ม. ได้ช่องกว้างราว 433 ม. คือเกือบสองเท่า
-                 เขียนว่า "ช่องละ 250" จะทำให้อ่านระยะกระจุกตัวผิดไปครึ่งหนึ่ง -->
-            <select id="mapHeatSize" class="input" style="display:none;width:auto;padding:4px 9px;font-size:.75rem" onchange="toggleHeatLayer(true)">
-              <option value="150">ช่องกว้าง ~260 ม.</option>
-              <option value="250" selected>ช่องกว้าง ~433 ม.</option>
-              <option value="500">ช่องกว้าง ~866 ม.</option>
-              <option value="1000">ช่องกว้าง ~1.7 กม.</option>
-            </select>
-            <!-- เผยแพร่ค่านี้ไปหน้าประชาชน — เดิมปรับแล้วมีผลเฉพาะจอคนที่กด -->
-            <button type="button" class="legend-item" id="mapHeatPublish" style="display:none" onclick="publishDensitySize()"
-                    title="ให้หน้าประชาชนใช้ขนาดช่องเดียวกับที่เลือกอยู่"><i class="fa-solid fa-upload" style="font-size:.75rem"></i> ใช้ค่านี้กับหน้าประชาชน</button>
+            <!-- ค่าใน value คือ "ความกว้างช่อง" ไม่ใช่ความยาวด้านของหกเหลี่ยม
+                 geo_density รับความยาวด้าน จึงต้องหารด้วยรากที่สองของสามก่อนส่ง (DENSITY_WIDTHS)
+                 เลือกให้ค่าที่ผู้ใช้เห็นเป็นความกว้าง เพราะนั่นคือระยะที่คนเอาไปตีความว่า
+                 "กระจุกตัวในรัศมีเท่าไร" ส่วนความยาวด้านเป็นเรื่องภายในของ PostGIS
+                 หน้านี้กับหน้าวิเคราะห์ใช้ชุดตัวเลขเดียวกัน จะได้เทียบกันได้ -->
+            <select id="mapHeatSize" class="input" style="display:none;width:auto;padding:4px 9px;font-size:.75rem" onchange="toggleHeatLayer(true)"></select>
           </div>
           <div id="mapHeatNote" class="hint" style="display:none;margin:-2px 0 6px"></div>
           <div id="accidentMap" class="map-main"></div>
@@ -992,7 +985,12 @@
               <button type="button" class="legend-item legend-filter lyr on" id="bsLyrRed"    onclick="bsToggleLayer('red')"><span class="dot" style="background:#c1122f"></span> โซนแดง</button>
               <button type="button" class="legend-item legend-filter lyr on" id="bsLyrOrange" onclick="bsToggleLayer('orange')"><span class="dot" style="background:#e07000"></span> โซนส้ม</button>
               <button type="button" class="legend-item legend-filter lyr on" id="bsLyrCorr"   onclick="bsToggleLayer('corridor')"><i class="fa-solid fa-route" style="font-size:.75rem"></i> Red Corridor</button>
+              <!-- ชั้นความหนาแน่นดึงจากอุบัติเหตุดิบตามช่วงวันที่ที่ตั้งไว้ด้านบน
+                   ต่างจากชั้นอื่นที่มาจากผลวิเคราะห์ จึงกดดูได้โดยยังไม่ต้องรันวิเคราะห์ -->
+              <button type="button" class="legend-item legend-filter lyr" id="bsLyrHeat" onclick="bsToggleHeat()"><i class="fa-solid fa-fire" style="font-size:.75rem"></i> ความหนาแน่นอุบัติเหตุ</button>
+              <select id="bsHeatWidth" class="input" style="display:none;width:auto;padding:4px 9px;font-size:.75rem" onchange="bsToggleHeat(true)"></select>
             </div>
+            <div id="bsHeatNote" class="hint" style="display:none;margin:-2px 0 6px"></div>
             <div id="bsPreviewMap" class="map-main"></div>
           </div>
 
@@ -2890,25 +2888,37 @@
       return HEAT_BINS[Math.max(0, Math.min(HEAT_BINS.length - 1, i))];
     }
 
+    /* ชุดความกว้างช่องที่ให้เลือก ใช้ร่วมกันทั้งแผนที่เกิดเหตุและแผนที่ผลวิเคราะห์
+       ตัวเลขคือความกว้างช่อง หน่วยเมตร ไม่ใช่ความยาวด้านหกเหลี่ยม */
+    const DENSITY_WIDTHS = [100, 150, 200, 250, 500, 1000];
+    const DENSITY_DEFAULT_W = 250;
+
+    // หกเหลี่ยมกว้าง w มีด้านยาว w / รากที่สองของสาม
+    const widthToEdge = w => Math.max(1, Math.round(Number(w) / Math.sqrt(3)));
+    const edgeToWidth = e => Math.round(Number(e) * Math.sqrt(3));
+    const widthLabel  = w => w >= 1000 ? 'ช่องกว้าง ~' + (w / 1000).toLocaleString('th-TH') + ' กม.'
+                                       : 'ช่องกว้าง ~' + Number(w).toLocaleString('th-TH') + ' ม.';
+
+    function fillDensitySelect(sel, selected) {
+      if (!sel || sel.options.length) return;
+      const want = Number(selected) || DENSITY_DEFAULT_W;
+      sel.innerHTML = DENSITY_WIDTHS.map(w =>
+        '<option value="' + w + '"' + (w === want ? ' selected' : '') + '>' + widthLabel(w) + '</option>').join('');
+    }
+
     async function toggleHeatLayer(reload) {
       const btn = document.getElementById('mapLyrHeat');
       const sel = document.getElementById('mapHeatSize');
       const note = document.getElementById('mapHeatNote');
-      const pub = document.getElementById('mapHeatPublish');
       const on = reload === true ? true : !state.heatOn;
+      fillDensitySelect(sel);
 
       if (!on) {
         if (state.heatLayer && state.accidentMap) state.accidentMap.removeLayer(state.heatLayer);
         state.heatOn = false; btn.classList.remove('on');
         sel.style.display = 'none'; note.style.display = 'none';
-        if (pub) pub.style.display = 'none';
         return;
       }
-      // ปุ่มเผยแพร่ให้เห็นเฉพาะแอดมิน คนอื่นปรับดูเองได้แต่เปลี่ยนของหน้าประชาชนไม่ได้
-      if (pub) pub.style.display = (state.user && state.user.isAdmin) ? '' : 'none';
-      // ครั้งแรกที่เปิดชั้นนี้ ตั้งตัวเลือกให้ตรงกับค่าที่เผยแพร่อยู่
-      // ไม่งั้นจะเห็น 250 ทั้งที่หน้าประชาชนใช้ค่าอื่น แล้วเผลอกดเผยแพร่ทับ
-      if (!state.heatSizeSynced) { state.heatSizeSynced = true; await syncPublishedDensitySize(sel); }
       initAccidentMap();
       const endDate = valueOf('mapEndDate');
       try {
@@ -2917,7 +2927,7 @@
           p_from:   valueOf('mapStartDate') || null,
           // ช่องวันที่สิ้นสุดหมายถึงทั้งวัน แต่ฟังก์ชันตัดที่ < p_to จึงต้องบวกไปถึงเที่ยงคืนวันถัดไป
           p_to:     endDate ? endDate + 'T23:59:59.999' : null,
-          p_edge_m: Number(sel.value) || 250
+          p_edge_m: widthToEdge(sel.value || DENSITY_DEFAULT_W)
         });
         const cells = (res && res.cells) || [];
         if (state.heatLayer && state.accidentMap) state.accidentMap.removeLayer(state.heatLayer);
@@ -2935,60 +2945,18 @@
         state.heatOn = true; btn.classList.add('on'); sel.style.display = '';
 
         note.style.display = '';
+        // ความกว้างมาจาก res.edge_m ที่ฐานข้อมูลใช้จริง ไม่ใช่ค่าที่เลือกไว้
+        // ถ้าค่าที่ขอถูกบีบให้อยู่ในช่วง ป้ายจะได้ไม่บอกตัวเลขที่ไม่ตรงกับรูปที่วาด
         note.innerHTML = '<i class="fa-solid fa-fire" style="color:#dc2626"></i> ' +
           cells.length.toLocaleString('th-TH') + ' ช่อง · ' +
           Number(res.total || 0).toLocaleString('th-TH') + ' จุด · หนาที่สุด <b>' + res.max_n + '</b> ครั้ง/ช่อง · ' +
+          'ช่องกว้างราว ' + edgeToWidth(res.edge_m).toLocaleString('th-TH') + ' ม. · ' +
           'ตัดช่องบนระบบพิกัดเมตร (EPSG:32647) ' +
           HEAT_BINS.map(c => '<span style="display:inline-block;width:15px;height:10px;border-radius:2px;background:' + c + ';border:1px solid rgba(0,0,0,.14)"></span>').join('') +
           ' น้อย→มาก';
       } catch (e) {
         state.heatOn = false; btn.classList.remove('on'); sel.style.display = 'none';
-        if (pub) pub.style.display = 'none';
         rpcAlert(e, 'โหลดชั้นความหนาแน่นไม่สำเร็จ');
-      }
-    }
-
-    /* อ่านขนาดช่องที่เผยแพร่อยู่มาตั้งใน dropdown
-       ปกติหน้านี้เรียกผ่าน RPC ทั้งหมด แต่ bs_settings เปิดอ่านสาธารณะอยู่แล้ว
-       และค่านี้เจ้าหน้าที่ทุกคนต้องเห็น ไม่ใช่เฉพาะแอดมิน
-       จะไปดึงจาก bs_admin_data ก็ติดสิทธิ์แอดมินและลากข้อมูลมาทั้งก้อนเพื่อเลขตัวเดียว */
-    async function syncPublishedDensitySize(sel) {
-      try {
-        const r = await db.from('bs_settings').select('val').eq('key', 'densityEdgeM').maybeSingle();
-        const v = Number(r.data && r.data.val);
-        if (!Number.isFinite(v) || v <= 0) return;
-        // ค่าที่แก้ด้วยมือใน SQL อาจไม่ตรงกับตัวเลือกที่มี — เติมเข้าไปแทนที่จะเงียบแล้วแสดงผิด
-        if (![...sel.options].some(o => Number(o.value) === v)) {
-          const o = document.createElement('option');
-          o.value = String(v);
-          o.textContent = 'ช่องกว้าง ~' + Math.round(v * Math.sqrt(3)).toLocaleString('th-TH') + ' ม.';
-          sel.appendChild(o);
-        }
-        sel.value = String(v);
-      } catch (e) { /* ยังไม่ได้รัน density_2_setting.sql — ใช้ค่าที่เลือกอยู่ */ }
-    }
-
-    /* เผยแพร่ขนาดช่องที่เลือกอยู่ไปให้หน้าประชาชนใช้
-       เดิมตัวเลือกนี้มีผลแค่จอคนที่กด ปิดหน้าไปก็หาย ส่วนหน้าประชาชนฝังค่า 250 ไว้ตายตัว
-       สองหน้าจึงไม่มีทางแสดงค่าเดียวกันได้ นอกจากจะแก้โค้ดแล้ว deploy ใหม่ทุกครั้ง
-
-       เก็บใน bs_settings ซึ่งเปิดให้อ่านสาธารณะอยู่แล้ว หน้าประชาชนจึงอ่านตรงได้ */
-    async function publishDensitySize() {
-      const edge = Number(document.getElementById('mapHeatSize').value) || 250;
-      const width = Math.round(edge * Math.sqrt(3));
-      const ok = await Swal.fire({
-        icon: 'question', title: 'ใช้ขนาดนี้กับหน้าประชาชน',
-        html: 'ช่องกว้างราว <b>' + width.toLocaleString('th-TH') + ' ม.</b> (ด้านละ ' + edge + ' ม.)<br>' +
-              '<span style="font-size:.85rem;color:#5b6b7f">มีผลกับชั้นความหนาแน่นบนหน้าแรกของประชาชนทันที</span>',
-        showCancelButton: true, confirmButtonText: 'เผยแพร่', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#1d4ed8'
-      });
-      if (!ok.isConfirmed) return;
-      try {
-        const res = await rpc('bs_settings_save', { p_token: state.token, p_settings: { densityEdgeM: edge } });
-        if (!res || !res.success) throw new Error((res && res.message) || 'บันทึกไม่สำเร็จ');
-        Swal.fire({ icon:'success', title:'เผยแพร่แล้ว', text:'หน้าประชาชนจะใช้ขนาดช่องนี้ตั้งแต่การเปิดหน้าครั้งถัดไป', timer:2600, showConfirmButton:false });
-      } catch (e) {
-        rpcAlert(e, 'เผยแพร่ขนาดช่องไม่สำเร็จ');
       }
     }
 
@@ -5130,10 +5098,18 @@
       document.getElementById('bsTo').value = to;
       bsMarkYear(y);
       bsShowPeriod();
+      bsHeatRefresh();
     }
 
     // แก้วันที่เองแล้วปุ่มปีต้องเลิกไฮไลต์ ไม่งั้นจะเข้าใจผิดว่ายังเป็นช่วงของปีนั้น
-    function bsOnDateEdit() { bsMarkYear('__range__'); bsShowPeriod(); }
+    function bsOnDateEdit() { bsMarkYear('__range__'); bsShowPeriod(); bsHeatRefresh(); }
+
+    /* เปลี่ยนช่วงวันที่แล้วชั้นความหนาแน่นต้องตามไปด้วย
+       ไม่งั้นสีบนแผนที่จะยังเป็นของช่วงเดิม ทั้งที่บรรทัดสรุปด้านบนเปลี่ยนไปแล้ว
+       ยิงใหม่เฉพาะตอนชั้นเปิดอยู่ จะได้ไม่เสียเวลาคำนวณให้คนที่ไม่ได้ดูชั้นนี้ */
+    function bsHeatRefresh() {
+      if (state.bsLayers && state.bsLayers.heat) bsToggleHeat(true);
+    }
 
     // ช่วงที่เลือกไว้ แปลงเป็นวันสิ้นสุด + จำนวนเดือนย้อนหลัง ให้เครื่องวิเคราะห์ใช้
     function bsPeriod() {
@@ -6519,7 +6495,8 @@
         state.bsInit = true;
         state.bsEditFeature = null; state.bsEditIncident = null; state.bsEditZone = null;
         state.bsDrawPts = [];
-        state.bsLayers = { sites:true, drunk:true, red:true, orange:true, corridor:true };
+        // heat เริ่มปิด เพราะต้องยิงถาม PostGIS หนึ่งรอบ ไม่ควรถ่วงตอนเปิดหน้า
+        state.bsLayers = { sites:true, drunk:true, red:true, orange:true, corridor:true, heat:false };
         bsBuildYearChips();
         // เติมตัวเลือกในฟอร์ม (ใช้ชุดเดียวกับฟอร์มอุบัติเหตุ ค่าจะได้ตรงกันตอนวิเคราะห์)
         const opt = (v, t) => '<option value="' + escapeHtml(v) + '">' + escapeHtml(t || v) + '</option>';
@@ -6707,6 +6684,7 @@
       state.bsPreviewMap = L.map('bsPreviewMap').setView(NAKHON_SAWAN_CENTER, 12);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap contributors', keepBuffer:6, updateWhenZooming:false, updateWhenIdle:true }).addTo(state.bsPreviewMap);
       state.bsGroups = {
+        heat: L.layerGroup(),   // ไม่ addTo ตั้งแต่แรก เพราะชั้นนี้เริ่มปิดไว้
         sites: L.layerGroup().addTo(state.bsPreviewMap), drunk: L.layerGroup().addTo(state.bsPreviewMap),
         red: L.layerGroup().addTo(state.bsPreviewMap), orange: L.layerGroup().addTo(state.bsPreviewMap),
         corridor: L.layerGroup().addTo(state.bsPreviewMap)
@@ -6715,7 +6693,8 @@
     function bsRenderPreviewMap() {
       bsInitPreviewMap();
       const d = state.bsDraft; if (!d) return;
-      Object.values(state.bsGroups).forEach(g => g.clearLayers());
+      // heat ไม่ได้มาจากผลวิเคราะห์ แต่มาจากอุบัติเหตุดิบ — รันวิเคราะห์รอบใหม่แล้วต้องไม่ถูกล้าง
+      Object.keys(state.bsGroups).forEach(k => { if (k !== 'heat') state.bsGroups[k].clearLayers(); });
       const bounds = [];
       (d.sites || []).forEach(s => {
         const drunk = s.rule === 'drunk';
@@ -6757,12 +6736,83 @@
       const g = state.bsGroups && state.bsGroups[name];
       if (!g || !state.bsPreviewMap) return;
       if (on) g.addTo(state.bsPreviewMap); else state.bsPreviewMap.removeLayer(g);
-      const btn = document.getElementById('bsLyr' + { sites:'Sites', drunk:'Drunk', red:'Red', orange:'Orange', corridor:'Corr' }[name]);
+      const btn = document.getElementById('bsLyr' + { sites:'Sites', drunk:'Drunk', red:'Red', orange:'Orange', corridor:'Corr', heat:'Heat' }[name]);
       if (btn) btn.classList.toggle('on', on);
+      // ชั้นความหนาแน่นเป็นพื้นระบายสี ต้องอยู่ใต้หมุดเสมอ ไม่งั้นบังการคลิกจุดเสี่ยง
+      if (name === 'heat' && on) g.eachLayer(l => l.bringToBack && l.bringToBack());
     }
     function bsToggleLayer(name) {
       state.bsLayers[name] = !state.bsLayers[name];
       bsApplyLayer(name);
+    }
+
+    /* ---------- ชั้นความหนาแน่นบนแผนที่ผลวิเคราะห์ ----------
+       ช่วงเวลาผูกกับช่องวันที่ของการวิเคราะห์ ไม่ใช่หน้าต่างของตัวเอง
+       เพื่อให้สิ่งที่เห็นบนแผนที่มาจากข้อมูลชุดเดียวกับจุดเสี่ยงที่คำนวณได้
+       ถ้าไม่กรอกวันที่เลยจะใช้ "ปีปัจจุบัน" (1 ม.ค. ถึงวันนี้)
+
+       ตั้งใจไม่ใช้ค่าปริยายของ bsPeriod() ที่ถอยหลัง 12 เดือน เพราะเกณฑ์จุดเสี่ยง
+       นับจำนวนครั้งต่อ 12 เดือน ถ้าไปเปลี่ยนค่าปริยายนั้นเป็นปีปัจจุบัน
+       พอถึงต้นเดือนมกราคมหน้าต่างจะเหลือไม่กี่วันแล้วเกณฑ์จะเพี้ยนทั้งชุด */
+    function bsHeatPeriod() {
+      const from = valueOf('bsFrom'), to = valueOf('bsTo');
+      if (from || to) { const p = bsPeriod(); return { from: p.from, to: p.to, auto: false }; }
+      const today = bkkStamp(new Date(), 'day');
+      return { from: today.slice(0, 4) + '-01-01', to: today, auto: true };
+    }
+
+    async function bsToggleHeat(reload) {
+      const btn  = document.getElementById('bsLyrHeat');
+      const sel  = document.getElementById('bsHeatWidth');
+      const note = document.getElementById('bsHeatNote');
+      fillDensitySelect(sel, state.bsHeatWidth);
+      const on = reload === true ? true : !state.bsLayers.heat;
+
+      bsInitPreviewMap();
+      if (!on) {
+        state.bsLayers.heat = false; bsApplyLayer('heat');
+        sel.style.display = 'none'; note.style.display = 'none';
+        return;
+      }
+
+      const per = bsHeatPeriod();
+      const width = Number(sel.value) || DENSITY_DEFAULT_W;
+      state.bsHeatWidth = width;
+      btn.classList.add('on');
+      note.style.display = ''; note.textContent = 'กำลังคำนวณความหนาแน่น…';
+      try {
+        const res = await rpc('geo_density', {
+          p_token: state.token, p_from: per.from, p_to: per.to + 'T23:59:59.999',
+          p_edge_m: widthToEdge(width)
+        });
+        const cells = (res && res.cells) || [];
+        const g = state.bsGroups.heat;
+        g.clearLayers();
+        cells.forEach(c => {
+          const poly = (c.polygon || []).map(p => [p[0], p[1]]);
+          if (poly.length < 3) return;
+          L.polygon(poly, { color:'#fff', weight:1, fillColor: heatColor(c.n, res.max_n), fillOpacity:.5 })
+            .bindTooltip('อุบัติเหตุ <b>' + c.n + '</b> ครั้งในช่องนี้', { direction:'top', opacity:.96 })
+            .addTo(g);
+        });
+        state.bsLayers.heat = true;
+        bsApplyLayer('heat');
+        sel.style.display = '';
+        state.bsHeatMeta = { width: edgeToWidth(res.edge_m), from: per.from, to: per.to, cells: cells.length };
+
+        note.innerHTML = '<i class="fa-solid fa-fire" style="color:#dc2626"></i> ' +
+          cells.length.toLocaleString('th-TH') + ' ช่อง · ' +
+          Number(res.total || 0).toLocaleString('th-TH') + ' จุด · หนาที่สุด <b>' + res.max_n + '</b> ครั้ง/ช่อง · ' +
+          'ช่องกว้างราว ' + edgeToWidth(res.edge_m).toLocaleString('th-TH') + ' ม. · ' +
+          thaiDayLabel(per.from) + ' ถึง ' + thaiDayLabel(per.to) +
+          (per.auto ? ' <b>(ปีปัจจุบัน — ยังไม่ได้กำหนดช่วง)</b>' : '') + ' ' +
+          HEAT_BINS.map(c => '<span style="display:inline-block;width:15px;height:10px;border-radius:2px;background:' + c + ';border:1px solid rgba(0,0,0,.14)"></span>').join('') +
+          ' น้อย→มาก';
+      } catch (e) {
+        state.bsLayers.heat = false; bsApplyLayer('heat');
+        sel.style.display = 'none'; note.style.display = 'none';
+        rpcAlert(e, 'โหลดชั้นความหนาแน่นไม่สำเร็จ');
+      }
     }
 
     /* ---------- บันทึก / เผยแพร่ ---------- */
@@ -6770,9 +6820,16 @@
       const d = state.bsDraft;
       if (!d || !d.sites) { Swal.fire({ icon:'info', title:'ยังไม่มีผลวิเคราะห์', text:'กดปุ่ม “วิเคราะห์” ก่อน' }); return; }
       if (d.saved) { Swal.fire({ icon:'info', title:'นี่คือผลที่บันทึกไว้แล้ว', text:'กด “วิเคราะห์” เพื่อคำนวณรอบใหม่ก่อนบันทึกทับ' }); return; }
+      /* ชั้นความหนาแน่นไปกับการเผยแพร่ด้วย — หน้าประชาชนจะได้เห็นแผนที่แบบเดียวกับที่ตรวจแล้ว
+         ไม่ใช่แค่หมุดจุดเสี่ยง ส่วนขนาดช่องกับช่วงวันที่เอาจากที่ตั้งไว้บนหน้านี้
+         ยังไม่ได้เปิดชั้นดูก็ยังเผยแพร่ได้ โดยใช้ขนาดปริยายกับช่วงของการวิเคราะห์รอบนี้ */
+      const per = bsHeatPeriod();
+      const heatW = Number(state.bsHeatWidth) || DENSITY_DEFAULT_W;
       const ask = await Swal.fire({
         icon:'warning', title: publish ? 'เผยแพร่ขึ้นหน้าประชาชน?' : 'บันทึกเป็นฉบับร่าง?',
         html: 'จุดเสี่ยง <b>' + d.sites.length + '</b> จุด · โซน <b>' + d.zones.length + '</b> โซน<br>' +
+          (publish ? 'ความหนาแน่น ช่องกว้าง <b>' + heatW.toLocaleString('th-TH') + ' ม.</b> · ' +
+                     thaiDayLabel(per.from) + ' ถึง ' + thaiDayLabel(per.to) + '<br>' : '') +
           '<span style="color:#9a3412">ผลวิเคราะห์รอบก่อนจะถูกแทนที่</span> (โซนที่วาดเองไม่ถูกแตะต้อง)',
         showCancelButton:true, confirmButtonText: publish ? 'เผยแพร่เลย' : 'บันทึกร่าง', cancelButtonText:'ยกเลิก'
       });
@@ -6782,6 +6839,18 @@
           p_token: state.token, p_run: d.run, p_sites: d.sites, p_zones: d.zones, p_publish: !!publish
         });
         if (!res.success) throw new Error(res.message);
+        if (publish) {
+          // แยกเป็นอีกคำสั่ง เพราะ bs_publish ดูแลเฉพาะจุดเสี่ยง/โซน
+          // ล้มตรงนี้ไม่ควรทำให้การเผยแพร่ผลวิเคราะห์ที่สำเร็จไปแล้วดูเหมือนล้มด้วย
+          try {
+            await rpc('bs_settings_save', { p_token: state.token, p_settings: {
+              densityEdgeM: widthToEdge(heatW), densityFrom: per.from, densityTo: per.to
+            }});
+          } catch (e) {
+            Swal.fire({ icon:'warning', title:'เผยแพร่ผลวิเคราะห์แล้ว',
+              text:'แต่ตั้งค่าชั้นความหนาแน่นไม่สำเร็จ หน้าประชาชนจะใช้ค่าเดิม' });
+          }
+        }
         Swal.fire({ icon:'success', title:'สำเร็จ', text:res.message });
         state.bsDraft = null;
         await bsLoadAdminData();
@@ -9224,7 +9293,7 @@
       saveDeath, resetDeathForm, loadDeathList, editDeath, deleteDeath, dfUseCurrentLocation,
       renderDeathList, dfOpenMapPicker, openAdminMenu, adminMenuGo, openDutySystem, setDashYear, dashCustomRange,
       renderMapTable, toggleMapTableSort, mapTableGo, viewMapItemDetail, toggleDeathOverlay, toggleTambonOfficer,
-      toggleRiskLayer, publishDensitySize,
+      toggleRiskLayer, bsToggleHeat,
       editOfficer, delOfficer, editAccidentCase, deleteAccidentCase, editRiskReport,
       updateAdminBadges, exportMapCsv, exportRiskCsv, exportDeathCsv, exportOfficerCsv,
       viewDeathDetail
