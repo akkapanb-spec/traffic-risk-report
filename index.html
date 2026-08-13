@@ -307,11 +307,6 @@ td{vertical-align:top;font-size:.92rem;}
    ให้กินสองแถวในคอลัมน์แรก แล้วการ์ดเตี้ยสองใบจะไหลไปอยู่แถวสองของคอลัมน์ 2 กับ 3 พอดี
    คือใต้ "ใบสั่งจราจรออนไลน์" และใต้ "ชำระค่าปรับจราจร" ตามลำดับ
    เดิมสองใบนั้นถูกครอบไว้ใน .promo-stack จึงนับเป็นช่องเดียวแล้วตกไปอยู่คอลัมน์แรก */
-.promo-tall{grid-row:span 2}
-.line-qr{display:flex;gap:14px;margin-top:2px;flex-wrap:wrap}
-.line-qr-item{display:flex;flex-direction:column;align-items:center;gap:5px}
-.line-qr img{border-radius:8px;border:1px solid #dbe6f4;background:#fff;padding:4px}
-.line-qr-lb{font-size:.7rem;line-height:1.45;color:#5b6b7f;font-weight:700;text-align:center}
 .promo-card.compact{gap:8px;padding:12px}
 .promo-card.compact .promo-ic{width:42px;height:42px;flex:0 0 42px;border-radius:12px}
 .promo-card.compact .promo-ic.crop img{width:472px;left:-11px;top:-4px}
@@ -356,10 +351,6 @@ a.promo-card:hover .promo-open{background:#1d4ed8;color:#fff}
 @media(max-width:760px){
   /* มือถือ: ย่อเป็นแถวกระชับ — ไอคอน+ชื่อ+ลูกศร ตัดคำอธิบาย/ปุ่มใหญ่ทิ้ง */
   .promo-grid{grid-template-columns:1fr;gap:8px}
-  /* คอลัมน์เดียวแล้ว การกินสองแถวจะเหลือช่องว่างคั่นกลาง */
-  .promo-tall{grid-row:auto}
-  /* มือถือกดปุ่มเพิ่มเพื่อนได้เลย ไม่ต้องสแกนคิวอาร์บนจอตัวเอง */
-  .line-qr{display:none}
   .promo-card{flex-direction:row;align-items:center;padding:9px 12px;gap:10px}
   .promo-top{flex:1;min-width:0}
   .promo-desc,.promo-open{display:none}
@@ -1164,8 +1155,28 @@ canvas{max-width:100%!important;}
       <!-- ลิงก์แนะนำ: เว็บกรมทางหลวง / Thai RSC / แอป Police Care — ไอคอนจริงจากปลายทาง ไม่เก็บไฟล์รูปเอง -->
       <div class="stats-zone" style="margin-top:16px">
         <h3 class="zone-title"><i class="fa-solid fa-arrow-up-right-from-square" style="color:#0f7a47;background:#e9f9ef"></i> ลิงก์แนะนำ · บริการที่เกี่ยวข้อง</h3>
+        <!-- ลำดับการ์ดในไฟล์นี้คือลำดับที่แสดงจริง ไล่ซ้ายไปขวาแล้วลงบรรทัดใหม่
+             1 ไลน์ · 2 Police Care · 3 ใบสั่งออนไลน์ · 4 ชำระค่าปรับ
+             5 สภาพจราจร · 6 ศูนย์ข้อมูลอุบัติเหตุ · 7 เบอร์โทร
+             ไม่มีใบไหนกินสองแถวแล้ว ลำดับที่เห็นจึงตรงกับลำดับในโค้ดเสมอ -->
         <div class="promo-grid">
-          <span class="promo-card promo-tall" style="cursor:default">
+          <!-- 1 — ไลน์ของหน่วย ซ่อนไว้จนกว่าจะตั้ง LINE_OA_ID ให้ถูกต้อง (ดู lineOaInit)
+               ถ้า ID ผิด ปุ่มนี้จะพาประชาชนไปหาบัญชีของคนอื่น
+               หน้านี้เป็นเว็บของ สภ. จึงยอมให้การ์ดไม่ขึ้น ดีกว่าขึ้นแล้วลิงก์ผิด -->
+          <span class="promo-card" id="lineOaCard" style="display:none;cursor:default">
+            <span class="promo-top">
+              <span class="promo-ic" style="background:#06c755;color:#fff"><i class="fa-brands fa-line"></i></span>
+              <span class="promo-t"><b>ไลน์ Chontawan TF Police</b><span>สภ.เมืองนครสวรรค์</span></span>
+            </span>
+            <span class="promo-desc">เพื่อติดตามสถานการณ์อุบัติเหตุ และรับแจ้งเตือนอุบัติเหตุซ้ำ</span>
+            <span class="store-row">
+              <a class="store-btn" id="lineOaAdd" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-user-plus"></i><span class="store-lb"> เพิ่มเพื่อน</span></a>
+              <a class="store-btn" id="lineGroupBtn" style="display:none" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-users"></i><span class="store-lb"> เข้ากลุ่มไลน์</span></a>
+            </span>
+          </span>
+
+          <!-- 2 -->
+          <span class="promo-card" style="cursor:default">
             <span class="promo-top">
               <span class="promo-ic"><img src="https://play-lh.googleusercontent.com/1E_loY5cnzVC6r-M6J9gBkooBVggZETqFHgcDyVmyr9vOp9nQ2Dcim2qSmX3xhDFTEYAOnVF2QQSRCRYBMKb_Q=w240-h480-rw" alt="Police Care"></span>
               <span class="promo-t"><b>แอป Police Care</b><span>สำนักงานตำรวจแห่งชาติ</span></span>
@@ -1175,20 +1186,9 @@ canvas{max-width:100%!important;}
               <a class="store-btn" href="https://play.google.com/store/apps/details?id=th.go.police.policecare&hl=th" target="_blank" rel="noopener" aria-label="โหลด Police Care จาก Google Play"><i class="fa-brands fa-google-play"></i><span class="store-lb"> Google Play</span></a>
               <a class="store-btn" href="https://apps.apple.com/th/app/police-care/id6754902103" target="_blank" rel="noopener" aria-label="โหลด Police Care จาก App Store"><i class="fa-brands fa-apple"></i><span class="store-lb"> App Store</span></a>
             </span>
-            <!-- เบอร์ติดต่อ: href="tel:" ทำให้มือถือเปิดหน้าโทรออกพร้อมเลขทันที
-                 ต้องเป็นเลขล้วนไม่มีขีด ส่วนที่แสดงคงขีดไว้ให้อ่านง่าย
-                 วางในการ์ด Police Care จึงอยู่คอลัมน์ขวาใต้ปุ่มสโตร์พอดี -->
-            <span class="call-row">
-              <a class="call-btn" href="tel:055881567">
-                <i class="fa-solid fa-phone"></i>
-                <span class="call-t">สภ.เมืองนครสวรรค์<b>0-5688-1567</b></span>
-              </a>
-              <a class="call-btn" href="tel:056225335">
-                <i class="fa-solid fa-tower-broadcast"></i>
-                <span class="call-t">ศูนย์จราจรชอนตะวัน<b>0-5622-5335</b></span>
-              </a>
-            </span>
           </span>
+
+          <!-- 3 -->
 
           <a class="promo-card" href="https://ptm.police.go.th/eTicket/#/" target="_blank" rel="noopener">
             <i class="fa-solid fa-arrow-up-right-from-square promo-go"></i>
@@ -1254,22 +1254,28 @@ canvas{max-width:100%!important;}
             <span class="promo-open"><i class="fa-solid fa-globe"></i> เปิดเว็บไซต์</span>
           </a>
 
-          <!-- ไลน์บอทของหน่วย — ซ่อนไว้จนกว่าจะตั้ง LINE_OA_ID ให้ถูกต้อง (ดู lineOaInit)
-               ถ้า ID ผิด ปุ่มนี้จะพาประชาชนไปหาบัญชีของคนอื่น
-               หน้านี้เป็นเว็บของ สภ. จึงยอมให้การ์ดไม่ขึ้น ดีกว่าขึ้นแล้วลิงก์ผิด -->
-          <span class="promo-card" id="lineOaCard" style="display:none;cursor:default">
+          <!-- 7 — เบอร์ติดต่อ แยกออกมาเป็นการ์ดของตัวเอง
+               เดิมซ่อนอยู่ท้ายการ์ด Police Care ซึ่งอ่านได้ว่าเป็นเบอร์ของแอปนั้น
+               ทั้งที่เป็นเบอร์ของหน่วยเอง และการ์ดนั้นก็สูงกว่าใบอื่นเพราะแบกไว้
+
+               href="tel:" ทำให้มือถือเปิดหน้าโทรออกพร้อมเลขทันที
+               ต้องเป็นเลขล้วนไม่มีขีด ส่วนที่แสดงคงขีดไว้ให้อ่านง่าย -->
+          <span class="promo-card" style="cursor:default">
             <span class="promo-top">
-              <span class="promo-ic" style="background:#06c755;color:#fff"><i class="fa-brands fa-line"></i></span>
-              <span class="promo-t"><b>ไลน์บอทแจ้งเตือนอุบัติเหตุ</b><span>สภ.เมืองนครสวรรค์</span></span>
+              <span class="promo-ic" style="background:#0f7a47;color:#fff"><i class="fa-solid fa-phone"></i></span>
+              <span class="promo-t"><b>โทรแจ้งเหตุ</b><span>สภ.เมืองนครสวรรค์</span></span>
             </span>
-            <span class="promo-desc">รับแจ้งผู้เสียชีวิตรายใหม่ อุบัติเหตุร้ายแรง และสรุปสถิติรายสัปดาห์ อัตโนมัติทางไลน์</span>
-            <span class="store-row">
-              <a class="store-btn" id="lineOaAdd" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-user-plus"></i><span class="store-lb"> เพิ่มเพื่อน</span></a>
-              <a class="store-btn" id="lineGroupBtn" style="display:none" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-users"></i><span class="store-lb"> เข้ากลุ่มไลน์</span></a>
+            <span class="promo-desc">แจ้งอุบัติเหตุหรือขอความช่วยเหลือด้านการจราจร กดที่เบอร์เพื่อโทรออกได้ทันที</span>
+            <span class="call-row">
+              <a class="call-btn" href="tel:055881567">
+                <i class="fa-solid fa-phone"></i>
+                <span class="call-t">สภ.เมืองนครสวรรค์<b>0-5688-1567</b></span>
+              </a>
+              <a class="call-btn" href="tel:056225335">
+                <i class="fa-solid fa-tower-broadcast"></i>
+                <span class="call-t">ศูนย์จราจรชอนตะวัน<b>0-5622-5335</b></span>
+              </a>
             </span>
-            <!-- คิวอาร์ไว้ให้คนที่เปิดหน้านี้บนคอมแล้วต้องสแกนด้วยมือถืออีกเครื่อง
-                 บนมือถือไม่ต้องใช้ กดปุ่มเพิ่มเพื่อนได้เลย จึงซ่อนที่จอแคบ -->
-            <span class="line-qr" id="lineOaQr"></span>
           </span>
         </div>
       </div>
@@ -1505,9 +1511,6 @@ function lineOaInit() {
   if (!card) return;
   const url = lineOaUrl(LINE_OA_ID);
   if (!url) return;
-  // ป้ายใต้คิวอาร์: โชว์ @id ถ้าตั้งมาแบบนั้น ส่วนแบบลิงก์ยาวไม่ต้องโชว์ให้รก
-  const raw = String(LINE_OA_ID).trim();
-  const id = raw.startsWith('@') ? raw : '';
   document.getElementById('lineOaAdd').href = url;
 
   // ปุ่มเข้ากลุ่มขึ้นเฉพาะเมื่อมีลิงก์ที่ใช้ได้จริง ยังไม่ใส่ก็เหลือปุ่มเพิ่มเพื่อนปุ่มเดียว
@@ -1516,32 +1519,6 @@ function lineOaInit() {
   const gBtn = document.getElementById('lineGroupBtn');
   if (gUrl && gBtn) { gBtn.href = gUrl; gBtn.style.display = ''; }
 
-  /* คิวอาร์เป็นไฟล์ในโปรเจกต์ ไม่ได้ไปขอจากเซิร์ฟเวอร์ใครตอนเปิดหน้า
-     เดิมเรียกบริการสร้างคิวอาร์ภายนอกทุกครั้งที่มีคนเปิดหน้าแรก
-     ซึ่งแปลว่าเว็บของหน่วยราชการไปพึ่งบริการที่เราคุมไม่ได้ และบอกคนนอกด้วยว่าใครเปิดหน้านี้บ้าง
-
-     ทั้งสองไฟล์ถอดรหัสตรวจแล้วว่าตรงกับปุ่มที่คู่กัน
-     ถ้าเปลี่ยน LINE_OA_ID หรือ LINE_GROUP_URL ต้องสร้างไฟล์ใหม่ด้วย
-     ไม่งั้นปุ่มกับคิวอาร์จะพาไปคนละที่ ซึ่งไม่มีอะไรบนหน้าจอฟ้องให้เห็น */
-  const box = document.getElementById('lineOaQr');
-  if (box) {
-    const addQr = (src, cap, sub) => {
-      const cell = document.createElement('span');
-      cell.className = 'line-qr-item';
-      const img = document.createElement('img');
-      img.alt = cap; img.width = 96; img.height = 96; img.src = src;
-      // ไฟล์หาย ก็ซ่อนเฉพาะใบนั้น อีกใบกับปุ่มยังใช้ได้อยู่
-      img.onerror = () => { cell.style.display = 'none'; };
-      const lb = document.createElement('span');
-      lb.className = 'line-qr-lb';
-      lb.append(cap);
-      if (sub) lb.append(document.createElement('br'), sub);
-      cell.append(img, lb);
-      box.appendChild(cell);
-    };
-    addQr('assets/line-oa-qr.png', 'เพิ่มเพื่อนบอท', id);
-    if (gUrl) addQr('assets/line-group-qr.png', 'เข้ากลุ่มไลน์', '');
-  }
   card.style.display = '';
 }
 
