@@ -1264,7 +1264,7 @@ canvas{max-width:100%!important;}
             <span class="promo-desc">รับแจ้งผู้เสียชีวิตรายใหม่ อุบัติเหตุร้ายแรง และสรุปสถิติรายสัปดาห์ อัตโนมัติทางไลน์</span>
             <span class="store-row">
               <a class="store-btn" id="lineOaAdd" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-user-plus"></i><span class="store-lb"> เพิ่มเพื่อน</span></a>
-              <a class="store-btn" href="#" onclick="lineOaGroupHelp();return false"><i class="fa-solid fa-users"></i><span class="store-lb"> เชิญเข้ากลุ่ม</span></a>
+              <a class="store-btn" id="lineGroupBtn" style="display:none" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-users"></i><span class="store-lb"> เข้ากลุ่มไลน์</span></a>
             </span>
             <!-- คิวอาร์ไว้ให้คนที่เปิดหน้านี้บนคอมแล้วต้องสแกนด้วยมือถืออีกเครื่อง
                  บนมือถือไม่ต้องใช้ กดปุ่มเพิ่มเพื่อนได้เลย จึงซ่อนที่จอแคบ -->
@@ -1468,6 +1468,18 @@ document.addEventListener('DOMContentLoaded', function() {
    ซึ่งบนเว็บของหน่วยราชการ แย่กว่าการไม่มีปุ่มเลยมาก */
 const LINE_OA_ID = '@690vodvg';
 
+/* ลิงก์ชวนประชาชนเข้ากลุ่มไลน์ของหน่วย — คนละเรื่องกับตัวบอทข้างบน
+   ปุ่มเข้ากลุ่มจะไม่ขึ้นจนกว่าจะใส่ลิงก์ตรงนี้ ส่วนปุ่มเพิ่มเพื่อนขึ้นตามปกติ
+
+   ใส่ได้ทั้งลิงก์กลุ่มธรรมดาและ OpenChat
+     กลุ่ม     https://line.me/ti/g/xxxxxxx   (จากกลุ่ม → เชิญ → ลิงก์ชวน)
+     OpenChat  https://line.me/ti/g2/xxxxxxx  (จาก OpenChat → เชิญ → คัดลอกลิงก์)
+
+   ข้อควรระวัง ลิงก์ชวนเข้ากลุ่มธรรมดาใครได้ไปก็เข้าได้ และเปลี่ยนลิงก์ใหม่ทีหลังไม่ได้
+   นอกจากปิดลิงก์เดิมทิ้ง ส่วน OpenChat ตั้งให้ต้องอนุมัติก่อนเข้าได้ และมีเครื่องมือดูแลห้อง
+   วางบนหน้าสาธารณะแบบนี้ OpenChat เหมาะกว่า */
+const LINE_GROUP_URL = '';
+
 /* คืนลิงก์เพิ่มเพื่อนจากค่าที่ตั้งไว้ คืน null ถ้ารูปแบบไม่เข้าพวก
    แยกออกมาเป็นฟังก์ชันเพื่อให้เห็นชัดว่าอะไรผ่านบ้าง และทดสอบทีละค่าได้ */
 function lineOaUrl(raw) {
@@ -1480,7 +1492,8 @@ function lineOaUrl(raw) {
 
   // แบบที่ 2 — ลิงก์ที่คัดลอกมา รับเฉพาะโดเมนของไลน์
   // ไม่งั้นเผลอวางลิงก์อะไรมาก็ได้ แล้วปุ่มบนหน้าราชการจะพาไปที่อื่น
-  if (/^https:\/\/(lin\.ee|line\.me|page\.line\.me)\/[^\s"'<>]+$/i.test(v)) return v;
+  // openchat.line.me อยู่ในรายการด้วย เพราะลิงก์ OpenChat บางแบบใช้โดเมนนี้
+  if (/^https:\/\/(lin\.ee|line\.me|page\.line\.me|openchat\.line\.me)\/[^\s"'<>]+$/i.test(v)) return v;
 
   // ตัวเลขล้วน = Channel ID ที่หยิบมาผิดตัว ปฏิเสธไปเลยดีกว่าปล่อยผ่าน
   return null;
@@ -1495,6 +1508,12 @@ function lineOaInit() {
   const raw = String(LINE_OA_ID).trim();
   const id = raw.startsWith('@') ? raw : '';
   document.getElementById('lineOaAdd').href = url;
+
+  // ปุ่มเข้ากลุ่มขึ้นเฉพาะเมื่อมีลิงก์ที่ใช้ได้จริง ยังไม่ใส่ก็เหลือปุ่มเพิ่มเพื่อนปุ่มเดียว
+  // ตรวจโดเมนด้วยตัวเดียวกับปุ่มเพิ่มเพื่อน จะได้ไม่มีทางวางลิงก์นอกไลน์ลงบนหน้านี้
+  const gUrl = lineOaUrl(LINE_GROUP_URL);
+  const gBtn = document.getElementById('lineGroupBtn');
+  if (gUrl && gBtn) { gBtn.href = gUrl; gBtn.style.display = ''; }
 
   /* คิวอาร์เป็นไฟล์ในโปรเจกต์ ไม่ได้ไปขอจากเซิร์ฟเวอร์ใครตอนเปิดหน้า
      เดิมเรียกบริการสร้างคิวอาร์ภายนอกทุกครั้งที่มีคนเปิดหน้าแรก
@@ -1518,24 +1537,6 @@ function lineOaInit() {
     box.appendChild(lb);
   }
   card.style.display = '';
-}
-
-/* ไลน์ไม่มีลิงก์ที่กดแล้วดึงบอทเข้ากลุ่มให้ทันที ต้องเชิญจากในกลุ่มเอง
-   จึงบอกขั้นตอนแทนที่จะทำปุ่มที่กดแล้วไม่เกิดอะไรขึ้น */
-function lineOaGroupHelp() {
-  Swal.fire({
-    icon: 'info',
-    title: 'เชิญบอทเข้ากลุ่ม',
-    html: '<div style="text-align:left;font-size:.92rem;line-height:1.85">' +
-      '<b>1.</b> กด “เพิ่มเพื่อน” ให้เรียบร้อยก่อน<br>' +
-      '<b>2.</b> เปิดกลุ่มไลน์ที่ต้องการ<br>' +
-      '<b>3.</b> กดเมนู ☰ มุมขวาบน แล้วเลือก <b>เชิญ</b><br>' +
-      '<b>4.</b> เลือก <b>ไลน์บอทแจ้งเตือนอุบัติเหตุ</b> จากรายชื่อเพื่อน<br><br>' +
-      '<span style="color:#9a3412">ถ้าหาบอทไม่เจอในรายชื่อ</span> แปลว่าบัญชีทางการยังไม่ได้เปิดให้เข้ากลุ่ม ' +
-      'ผู้ดูแลต้องไปเปิดที่ LINE Developers Console → Messaging API → ' +
-      '<b>Allow bot to join group chats</b> ก่อน</div>',
-    confirmButtonText: 'เข้าใจแล้ว', confirmButtonColor: '#06c755'
-  });
 }
 
 /* ปุ่ม "เปิดแอป Krungthai NEXT" — โผล่เฉพาะเครื่อง Android
