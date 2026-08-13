@@ -1207,6 +1207,18 @@ canvas{max-width:100%!important;}
               <span class="promo-t"><b>ชำระค่าปรับจราจร</b><span>สแกนบาร์โค้ดบนใบสั่ง</span></span>
             </span>
             <span class="promo-desc">สแกนบาร์โค้ดท้ายใบสั่งด้วยแอปธนาคารแล้วชำระได้ทันที ใช้แอปธนาคารใดก็ได้ — ด้านล่างคือ Krungthai NEXT</span>
+            <!-- ปุ่มเปิดแอป โผล่เฉพาะ Android (ดู ktbShowOpenApp)
+                 iPhone ทำไม่ได้เพราะกรุงไทยไม่ได้เปิดเผยที่อยู่เรียกแอป
+                 การเดาสคีมาแล้วผิด จะกลายเป็นปุ่มที่กดแล้วเงียบ ซึ่งแย่กว่าไม่มีปุ่ม
+
+                 intent: ของ Chrome Android เปิดแอปได้โดยอ้างชื่อแพ็กเกจ
+                 ถ้าเปิดไม่ได้ (ไม่ได้ติดตั้ง หรือแอปไม่รับ intent แบบนี้)
+                 browser_fallback_url จะพาไป Play Store แทน ไม่ใช่ค้างหรือขึ้น error
+                 อย่างแย่ที่สุดจึงเท่ากับปุ่ม Google Play ที่มีอยู่แล้ว ไม่มีทางแย่กว่าเดิม -->
+            <a class="promo-open" id="ktbOpenApp" style="display:none"
+               href="intent://#Intent;package=ktbcs.netbank;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dktbcs.netbank%26hl%3Dth;end">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> เปิดแอป Krungthai NEXT
+            </a>
             <span class="store-row">
               <a class="store-btn" href="https://play.google.com/store/apps/details?id=ktbcs.netbank&hl=th" target="_blank" rel="noopener" aria-label="โหลด Krungthai NEXT จาก Google Play"><i class="fa-brands fa-google-play"></i><span class="store-lb"> Google Play</span></a>
               <a class="store-btn" href="https://apps.apple.com/th/app/krungthai-next/id436753378" target="_blank" rel="noopener" aria-label="โหลด Krungthai NEXT จาก App Store"><i class="fa-brands fa-apple"></i><span class="store-lb"> App Store</span></a>
@@ -1411,7 +1423,19 @@ document.addEventListener('DOMContentLoaded', function() {
   updateDateTime(); setInterval(updateDateTime, 1000); setupEventListeners();
   setTimeout(() => initializeDashboard(), 100); // หน้าเริ่มต้นคือ Dashboard
   vcInit();   // แบบสอบถาม + บันทึกการใช้งานแบบไม่ระบุตัวตน
+  ktbShowOpenApp();
 });
+
+/* ปุ่ม "เปิดแอป Krungthai NEXT" — โผล่เฉพาะเครื่อง Android
+   ไม่ใช่ทุกที่ เพราะกลไก intent: เป็นของ Chrome บน Android เท่านั้น
+   บน iPhone กับคอมพิวเตอร์จะกดแล้วไม่มีอะไรเกิดขึ้น ซ่อนไปเลยดีกว่าให้เจอปุ่มตาย
+
+   เช็คจาก userAgent ซึ่งปลอมได้ แต่ผลเสียสูงสุดคือเห็นปุ่มเกินมาหนึ่งปุ่ม
+   ไม่ใช่เรื่องความปลอดภัย จึงไม่ต้องใช้วิธีตรวจที่ซับซ้อนกว่านี้ */
+function ktbShowOpenApp() {
+  const btn = document.getElementById('ktbOpenApp');
+  if (btn && /android/i.test(navigator.userAgent || '')) btn.style.display = '';
+}
 
 function getThaiDateTime() {
   const now = new Date(); const utc7 = new Date(now.getTime() + (7 * 60 * 60 * 1000));
