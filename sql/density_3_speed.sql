@@ -1,7 +1,10 @@
 -- ============================================================
 -- ความหนาแน่นอุบัติเหตุ — ทำให้ช่องเล็กใช้งานได้จริง
 -- ============================================================
--- ต้องรัน density_1_rpc.sql มาก่อน  ไฟล์นี้เขียนทับ geo_density ตัวเดิม
+-- ต้องรัน density_1_rpc.sql และ geo_fixes_1.sql มาก่อน
+-- ไฟล์นี้เขียนทับ geo_density ตัวที่ geo_fixes_1.sql วางไว้ และคงการแก้ SRID นั้นไว้ครบ
+-- (st_setsrid ครอบกรอบก่อนส่งให้ st_hexagongrid — ถ้าหลุดบรรทัดนั้น
+--  จะได้ "Operation on mixed SRID geometries" ทุกขนาดช่อง)
 --
 -- ตรวจก่อนกด Run: บรรทัดแรกของช่อง editor ต้องเป็นเส้น ==== ชุดนี้
 --
@@ -86,7 +89,11 @@ begin
   analyze tmp_geo_pt;
 
   -- ขยายขอบออกหนึ่งช่อง ไม่งั้นจุดที่อยู่ริมสุดจะตกนอกตาราง
-  select st_expand(st_extent(g)::geometry, v_edge * 2) into v_bounds from tmp_geo_pt;
+  -- st_setsrid ครอบไว้ตามที่ geo_fixes_1.sql แก้ไว้ — ห้ามถอดออก
+  -- st_extent คืน box2d ซึ่งไม่เก็บ SRID พอ cast เป็น geometry จะได้ SRID 0
+  -- แล้ว st_hexagongrid สร้างหกเหลี่ยม SRID 0 ตามไปด้วย พอเอาไปตัดกับจุด 32647 ก็ล้มทั้งฟังก์ชัน
+  select st_setsrid(st_expand(st_extent(g)::geometry, v_edge * 2), 32647)
+    into v_bounds from tmp_geo_pt;
 
   with cells as (
     select h.geom
