@@ -1458,6 +1458,15 @@
           </div>
           <div id="wxFirstResult"><div class="hint">กด “ทดสอบ” หลังดึงข้อมูลแล้ว</div></div>
         </div>
+
+        <!-- โปรไฟล์รายจุด — เอามิติเวลาและฝนมาใส่ในจุดเสี่ยงที่วิเคราะห์ไว้แล้ว
+             จุดที่จำนวนครั้งเท่ากันอาจต้องใช้มาตรการคนละแบบ ถ้าเกิดคนละเงื่อนไข -->
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-fingerprint"></i> โปรไฟล์จุดเสี่ยง
+            <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="bsProfile()"><i class="fa-solid fa-rotate"></i> วิเคราะห์</button></h3>
+          <p class="hint" style="margin:0 0 12px">จุดเสี่ยงที่เผยแพร่แล้ว เกิดช่วงเวลาไหน และตอนถนนสภาพใด — เพื่อเลือกมาตรการให้ตรงกับสาเหตุ</p>
+          <div id="bsProfileResult"><div class="hint">กด “วิเคราะห์” — ใช้ได้แม้ยังไม่มีข้อมูลฝน (ส่วนเวลายังคำนวณได้)</div></div>
+        </div>
       </section>
 
       <section id="page-population" class="page">
@@ -5883,6 +5892,114 @@
         'ถ้าดูแค่ว่ากี่เปอร์เซ็นต์ของอุบัติเหตุเกิดตอนฝนตก จะสรุปเกินจริงเสมอ</p>';
     }
 
+    /* ============ โปรไฟล์จุดเสี่ยง ============
+       จำนวนขั้นต่ำก่อนยอมสรุปรูปแบบ
+       จุดเสี่ยงหนึ่งจุดมักมีอุบัติเหตุหลักหน่วย ถ้าเอา 3 ครั้งมาบอกว่า
+       "กระจุกช่วงเย็น" ก็เท่ากับเดา แล้วเอาไปสั่งจัดกำลังผิด
+       ต่ำกว่านี้จะบอกตรง ๆ ว่าข้อมูลไม่พอ ไม่ใช่แปะป้ายให้ดูฉลาด */
+    const BSP_MIN_N = 6;
+
+    async function bsProfile() {
+      const host = document.getElementById('bsProfileResult');
+      host.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const r = await rpc('bs_site_profile', { p_token: state.token,
+          p_wet_mm: Number(valueOf('wxWet')) || 0.2,
+          p_gap_hours: Number(valueOf('wxGap')) || 24,
+          p_first_hrs: Number(valueOf('wxFirstHrs')) || 2 });
+        if (!r || !r.success) throw new Error((r && r.message) || 'วิเคราะห์ไม่ได้');
+        bsRenderProfile(r);
+      } catch (e) {
+        host.innerHTML = '<div class="hint">' +
+          (/bs_site_profile|does not exist|schema cache/i.test(e.message || '')
+            ? 'ยังไม่ได้รันไฟล์ <b>sql/bs_profile_1.sql</b>'
+            : escapeHtml(e.message || 'วิเคราะห์ไม่ได้')) + '</div>';
+      }
+    }
+
+    // ช่วง 4 ชั่วโมงติดกันที่มีเหตุมากที่สุด วนรอบเที่ยงคืนได้
+    function bspPeak(hours) {
+      let best = { start: 0, sum: -1 };
+      for (let s = 0; s < 24; s++) {
+        let sum = 0;
+        for (let k = 0; k < 4; k++) sum += hours[(s + k) % 24] || 0;
+        if (sum > best.sum) best = { start: s, sum };
+      }
+      return best;
+    }
+    const bspHH = h => String(h).padStart(2, '0') + ':00';
+
+    function bsRenderProfile(r) {
+      const sites = r.sites || [];
+      if (!sites.length) {
+        document.getElementById('bsProfileResult').innerHTML =
+          '<div class="hint">ยังไม่มีจุดเสี่ยงที่เผยแพร่ — ไปที่หน้าจุดเสี่ยงอุบัติเหตุ(วิเคราะห์) แล้วกดวิเคราะห์และเผยแพร่ก่อน</div>';
+        return;
+      }
+      const base = r.baseline || {};
+      const pct = v => (Number(v) * 100).toFixed(0) + '%';
+
+      document.getElementById('bsProfileResult').innerHTML =
+        (!r.has_weather ? '<p class="hint" style="color:#c24e00;margin:0 0 12px">' +
+          '<i class="fa-solid fa-circle-info"></i> ยังไม่มีข้อมูลสภาพอากาศ — ส่วนของเวลายังใช้ได้ แต่ยังบอกไม่ได้ว่าจุดไหนสัมพันธ์กับฝน กดดึงข้อมูลด้านบนก่อน</p>' : '') +
+        sites.map(s => {
+          const hours = s.hours || [];
+          const w = s.weather || {};
+          const n = s.n || 0;
+          const known = (w.dry || 0) + (w.rain || 0) + (w.first || 0);
+          const notes = [];
+
+          if (n < BSP_MIN_N) {
+            notes.push({ t: 'ข้อมูลยังน้อยเกินไป (' + n + ' ครั้งในรัศมี) — ยังสรุปรูปแบบไม่ได้', c: '#64748b' });
+          } else {
+            const pk = bspPeak(hours);
+            const share = pk.sum / n;
+            // 4 ชั่วโมงคือหนึ่งในหกของวัน ถ้ากระจุกเกินครึ่งถือว่าชัด
+            if (share >= 0.5) {
+              notes.push({ t: 'กระจุกช่วง ' + bspHH(pk.start) + '-' + bspHH((pk.start + 4) % 24) +
+                ' (' + pk.sum + ' จาก ' + n + ' ครั้ง = ' + pct(share) + ')', c: '#c1122f' });
+            } else {
+              notes.push({ t: 'เกิดกระจายทั้งวัน ไม่มีช่วงเวลาที่เด่นชัด', c: '#0369a1' });
+            }
+            // เทียบกับสัดส่วนเวลาของทั้งพื้นที่ ไม่ใช่ดูสัดส่วนลอย ๆ
+            if (known >= BSP_MIN_N && base.first != null && Number(base.first) > 0) {
+              const obs = (w.first || 0) / known, exp = Number(base.first);
+              if (obs >= exp * 2 && (w.first || 0) >= 2) {
+                notes.push({ t: 'สัมพันธ์กับฝนแรก — เกิดตอนฝนแรก ' + pct(obs) +
+                  ' ทั้งที่ฝนแรกกินเวลาแค่ ' + pct(exp) + ' ของทั้งปี', c: '#7c3aed' });
+              }
+            }
+            if (known >= BSP_MIN_N && base.rain != null && Number(base.rain) > 0) {
+              const obs = ((w.rain || 0) + (w.first || 0)) / known;
+              const exp = Number(base.rain) + Number(base.first || 0);
+              if (obs >= exp * 1.5) notes.push({ t: 'เกิดตอนฝนตกมากกว่าปกติ (' + pct(obs) + ' เทียบฐาน ' + pct(exp) + ')', c:'#0e7490' });
+            }
+          }
+
+          const mx = Math.max(1, ...hours);
+          const bars = hours.map((v, i) =>
+            '<span title="' + bspHH(i) + ' — ' + v + ' ครั้ง" style="display:inline-block;width:3.6%;height:' +
+            Math.max(2, Math.round(v / mx * 46)) + 'px;background:' + (v ? '#1d4ed8' : '#dbe6f4') +
+            ';border-radius:2px 2px 0 0;margin-right:.5%"></span>').join('');
+
+          return '<div style="border:1px solid #dbe6f4;border-radius:14px;padding:14px;margin-bottom:12px">' +
+            '<div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">' +
+              '<b style="font-size:.95rem">' + escapeHtml(s.title || '-') + '</b>' +
+              '<span class="hint">' + escapeHtml(s.road || '') + ' · ในรัศมี ' + (s.radius_m || 200) + ' ม. พบ ' + n + ' ครั้ง</span></div>' +
+            '<div style="display:flex;align-items:flex-end;height:48px;margin:10px 0 2px">' + bars + '</div>' +
+            '<div class="hint" style="display:flex;justify-content:space-between;font-size:.66rem">' +
+              '<span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span></div>' +
+            (known ? '<div class="hint" style="margin-top:8px">สภาพถนน — แห้ง ' + (w.dry||0) +
+                     ' · ฝนต่อเนื่อง ' + (w.rain||0) + ' · <b>ฝนแรก ' + (w.first||0) + '</b>' +
+                     (w.unknown ? ' · ไม่ทราบ ' + w.unknown : '') + '</div>' : '') +
+            notes.map(x => '<div style="margin-top:8px;font-weight:700;font-size:.86rem;color:' + x.c + '">' +
+                            escapeHtml(x.t) + '</div>').join('') +
+            '</div>';
+        }).join('') +
+        '<p class="hint" style="margin-top:8px">สัดส่วนฝนเทียบกับ <b>ฐานของทั้งพื้นที่</b> ไม่ใช่ดูตัวเลขลอย ๆ — ' +
+        'ฝนกินเวลาไปแล้วส่วนหนึ่งของทั้งปี ถ้าไม่เทียบฐานจะสรุปเกินจริงทุกครั้ง</p>';
+    }
+
     /* ทดสอบสมมติฐานฝนแรก — ไม่ได้เขียนให้ผลออกมาสนับสนุน
        ถ้าฝนแรกกับฝนต่อเนื่องอัตราพอ ๆ กัน หน้าจอจะบอกตรง ๆ ว่าไม่ต่าง */
     async function wxFirstRain() {
@@ -9775,7 +9892,7 @@
       avOpenMapPicker, avUseCurrentLocation, avQuickDays, resetAvoidForm, saveAdvisory,
       loadAdvisories, editAdvisory, closeAdvisory, deleteAdvisory, avRemoveImage,
       arOpenForm, arUseGps, arPublish, arSaveDraft, arReject,
-      wxFetchAll, wxAnalyze, wxFirstRain,
+      wxFetchAll, wxAnalyze, wxFirstRain, bsProfile,
       openLocationPicker, closeLocationPicker, useCurrentLocation, confirmLocation,
       resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard,
       setMapFilter, loadAdminList, setApproval,
