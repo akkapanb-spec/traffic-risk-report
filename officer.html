@@ -892,11 +892,25 @@
           <form id="avoidForm" class="form-grid" onsubmit="return false">
             <div class="field span-6"><label>ชนิดเหตุการณ์ <span class="req">*</span></label>
               <select id="avKind" class="select">
+                <option value="accident">อุบัติเหตุ</option>
                 <option value="work">ก่อสร้าง / ซ่อมทาง</option>
                 <option value="close">ปิดถนน</option>
                 <option value="event">ขบวน / กิจกรรม</option>
                 <option value="flood">น้ำท่วม</option>
                 <option value="other">อื่นๆ</option>
+              </select></div>
+            <!-- ผลกระทบใช้ได้กับทุกชนิด ไม่เฉพาะอุบัติเหตุ
+                 คนอ่านอยากรู้ว่า "ผ่านได้ไหม" มากกว่าว่าเกิดอะไรขึ้น
+                 เป็นตัวเลือกไม่ใช่ช่องพิมพ์ เพราะข้อความไลน์จะได้ใช้คำเหมือนกันทุกครั้ง -->
+            <div class="field span-6"><label>ผลกระทบการจราจร</label>
+              <select id="avImpact" class="select">
+                <option value="">ไม่ระบุ</option>
+                <option value="ปิดการจราจรทั้งหมด">ปิดการจราจรทั้งหมด</option>
+                <option value="เหลือ 1 ช่องทาง">เหลือ 1 ช่องทาง</option>
+                <option value="เหลือ 2 ช่องทาง">เหลือ 2 ช่องทาง</option>
+                <option value="รถติดสะสม">รถติดสะสม</option>
+                <option value="รถเคลื่อนตัวช้า">รถเคลื่อนตัวช้า</option>
+                <option value="ผ่านได้ตามปกติ">ผ่านได้ตามปกติ</option>
               </select></div>
             <div class="field span-6"><label>หัวข้อประกาศ <span class="req">*</span></label>
               <input id="avTitle" class="input" maxlength="60" placeholder="สั้น กระชับ เช่น ซ่อมผิวทาง เบี่ยง 1 ช่องจราจร"></div>
@@ -5646,8 +5660,8 @@
     }
 
     /* ============ ประกาศจุดหลีกเลี่ยง (admin) ============ */
-    const AVOID_KINDS = { work:'ก่อสร้าง/ซ่อมทาง', close:'ปิดถนน', event:'ขบวน/กิจกรรม', flood:'น้ำท่วม', other:'อื่นๆ' };
-    const AVOID_ICONS = { work:'fa-person-digging', close:'fa-road-barrier', event:'fa-flag', flood:'fa-water', other:'fa-circle-exclamation' };
+    const AVOID_KINDS = { accident:'อุบัติเหตุ', work:'ก่อสร้าง/ซ่อมทาง', close:'ปิดถนน', event:'ขบวน/กิจกรรม', flood:'น้ำท่วม', other:'อื่นๆ' };
+    const AVOID_ICONS = { accident:'fa-car-burst', work:'fa-person-digging', close:'fa-road-barrier', event:'fa-flag', flood:'fa-water', other:'fa-circle-exclamation' };
     let avPickerMap = null, avPickerMarker = null;
 
     function isoToLocalInput(iso) {
@@ -5733,7 +5747,36 @@
       return urls;
     }
 
+    /* ถามว่าจะส่งประกาศนี้เข้าไลน์เลยไหม
+       แยกจากการบันทึกโดยตั้งใจ ไลน์ล่มแล้วประกาศต้องยังขึ้นหน้าเว็บได้
+       และถ้ารอบนี้ไม่ส่ง ยังกดส่งทีหลังได้จากปุ่มในรายการ */
+    async function avAskNotify(id, title) {
+      const ask = await Swal.fire({
+        icon: 'question', title: 'ส่งแจ้งเตือนเข้าไลน์เลยไหม',
+        html: escapeHtml(title) + '<br><span style="font-size:.85rem;color:#5b6b7f">' +
+              'ส่งหาทุกกลุ่มและทุกคนที่เพิ่มบอทไว้ · ส่งแล้วเรียกคืนไม่ได้</span>',
+        showCancelButton: true, confirmButtonText: 'ส่งเลย', cancelButtonText: 'ยังไม่ส่ง',
+        confirmButtonColor: '#06c755'
+      });
+      if (!ask.isConfirmed) return;
+      await avNotify(id, true);
+    }
+
+    // ส่งจริง ใช้ร่วมกันทั้งตอนบันทึกใหม่และปุ่มในรายการ
+    async function avNotify(id, quiet) {
+      try {
+        const res = await rpc('advisory_notify', { p_token: state.token, p_id: Number(id) });
+        if (!res || !res.success) throw new Error((res && res.message) || 'ส่งไม่สำเร็จ');
+        Swal.fire({ icon: res.sent > 0 ? 'success' : 'info', title: res.message,
+                    timer: 2400, showConfirmButton: false });
+        if (!quiet) loadAdvisories();
+      } catch (e) {
+        rpcAlert(e, 'ส่งเข้าไลน์ไม่สำเร็จ');
+      }
+    }
+
     async function saveAdvisory() {
+      const wasEditing = state.editingAdvisory != null;
       const title = document.getElementById('avTitle').value.trim();
       const place = document.getElementById('avPlace').value.trim();
       const starts = document.getElementById('avStarts').value;
@@ -5759,13 +5802,20 @@
           p_reroute: document.getElementById('avReroute').value.trim(),
           p_lat: lat, p_lng: lng,
           p_starts: new Date(starts).toISOString(), p_ends: new Date(ends).toISOString(),
-          p_images: images
+          p_images: images,
+          p_impact: document.getElementById('avImpact').value
         });
         if (!result.success) {
           if (result.code === 'AUTH_REQUIRED') { clearSession(); showAuthPage(); }
           throw new Error(result.message || 'บันทึกไม่สำเร็จ');
         }
-        await Swal.fire({ icon:'success', title:result.message, timer:1600, showConfirmButton:false });
+        Swal.close();
+        /* ถามเรื่องส่งไลน์หลังบันทึกสำเร็จแล้วเท่านั้น
+           ประกาศล่วงหน้า เช่น ซ่อมถนนอีกสองสัปดาห์ ยังไม่ต้องแจ้งใครตอนนี้
+           จึงถามทุกครั้งแทนที่จะส่งอัตโนมัติ — และไม่ถามตอนแก้ไขประกาศเก่า
+           เพราะแก้คำผิดแล้วไม่ควรเด้งถามส่งซ้ำ */
+        if (result.id && !wasEditing) await avAskNotify(result.id, title);
+        else await Swal.fire({ icon:'success', title:result.message, timer:1600, showConfirmButton:false });
         resetAvoidForm();
         loadAdvisories();
       } catch (error) {
@@ -5810,9 +5860,13 @@
           '<i class="fa-solid ' + (AVOID_ICONS[r.kind] || AVOID_ICONS.other) + '" style="width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:#fff1e6;color:#c24e00;flex:0 0 30px"></i>' +
           '<div style="flex:1;min-width:180px"><b style="font-size:.86rem">' + escapeHtml(r.title) + '</b>' +
           '<div style="font-size:.72rem;color:#64748b">' + escapeHtml(AVOID_KINDS[r.kind] || r.kind) + ' · ' + fmt(r.starts_at) + ' – ' + fmt(r.ends_at) + ' · ' + escapeHtml(r.place) +
+          (r.impact ? ' · <b>' + escapeHtml(r.impact) + '</b>' : '') +
           ((r.images || []).length ? ' · <i class="fa-solid fa-image"></i> ' + r.images.length : '') + '</div></div>' +
           '<span style="font-size:.66rem;font-weight:800;border-radius:999px;padding:3px 10px;background:' + st.bg + ';color:' + st.c + '">' + st.t + '</span>' +
           '<span style="display:flex;gap:5px">' +
+          // ส่งไลน์ได้ทุกใบ ไม่ใช่เฉพาะตอนสร้าง — ตอนสร้างอาจยังไม่ถึงเวลาแจ้ง
+          // กดซ้ำไม่ทำให้กลุ่มได้ข้อความสองรอบ ฝั่งฐานข้อมูลกันไว้แล้ว
+          '<button class="btn btn-soft btn-sm" type="button" style="color:#06c755" onclick="avNotify(' + r.id + ')" title="ส่งแจ้งเตือนเข้าไลน์"><i class="fa-brands fa-line"></i></button>' +
           '<button class="btn btn-soft btn-sm" type="button" onclick="editAdvisory(' + r.id + ')" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>' +
           (active ? '<button class="btn btn-soft btn-sm" type="button" style="color:#c24e00" onclick="closeAdvisory(' + r.id + ')" title="ปิดประกาศก่อนเวลา"><i class="fa-solid fa-stop"></i></button>' : '') +
           '<button class="btn btn-soft btn-sm" type="button" style="color:#c1122f" onclick="deleteAdvisory(' + r.id + ')" title="ลบถาวร"><i class="fa-solid fa-trash"></i></button>' +
@@ -5825,6 +5879,7 @@
       if (!r) return;
       state.editingAdvisory = id;
       document.getElementById('avKind').value = r.kind || 'other';
+      document.getElementById('avImpact').value = r.impact || '';
       document.getElementById('avTitle').value = r.title || '';
       document.getElementById('avPlace').value = r.place || '';
       document.getElementById('avDetail').value = r.detail || '';
@@ -9294,7 +9349,7 @@
     Object.assign(window, {
       showRegister, showLogin, logout, toggleDrawer, openPage,
       avOpenMapPicker, avUseCurrentLocation, avQuickDays, resetAvoidForm, saveAdvisory,
-      loadAdvisories, editAdvisory, closeAdvisory, deleteAdvisory, avRemoveImage,
+      loadAdvisories, editAdvisory, closeAdvisory, deleteAdvisory, avRemoveImage, avNotify,
       openLocationPicker, closeLocationPicker, useCurrentLocation, confirmLocation,
       resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard,
       setMapFilter, loadAdminList, setApproval,

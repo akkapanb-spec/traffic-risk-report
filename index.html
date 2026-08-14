@@ -715,7 +715,7 @@ canvas{max-width:100%!important;}
 .av-sign:before{content:"";position:absolute;inset:4px;transform:rotate(45deg);border-radius:7px;
   background:var(--avc,#64748b);border:2.5px solid #fff;box-shadow:0 3px 9px rgba(15,23,42,.28)}
 .av-sign i{position:relative;color:#fff;font-size:.78rem;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
-.avk-work{--avc:#e07000}.avk-close{--avc:#c1122f}.avk-event{--avc:#1d4ed8}.avk-flood{--avc:#0e7490}.avk-other{--avc:#64748b}
+.avk-accident{--avc:#c1122f}.avk-work{--avc:#e07000}.avk-close{--avc:#c1122f}.avk-event{--avc:#1d4ed8}.avk-flood{--avc:#0e7490}.avk-other{--avc:#64748b}
 .av-item .av-body{min-width:0;flex:1}
 .av-item .av-body strong{display:block;font-size:.92rem;line-height:1.4;color:#132238}
 .av-item .av-place{display:block;font-size:.76rem;color:#5b6b7f;margin-top:2px;line-height:1.5}
@@ -1322,6 +1322,8 @@ canvas{max-width:100%!important;}
           <div id="avmPhotos" class="av-photos" style="display:none"></div>
           <div class="avm-row"><i class="fa-solid fa-location-dot"></i><span id="avmPlace"></span></div>
           <div class="avm-row"><i class="fa-regular fa-calendar"></i><span id="avmWhen"></span></div>
+          <!-- ผลกระทบคือสิ่งที่คนอ่านอยากรู้ก่อนเพื่อน — ผ่านได้ไหม เลี่ยงดีกว่าไหม -->
+          <div class="avm-row" id="avmImpactRow"><i class="fa-solid fa-traffic-light"></i><span id="avmImpact"></span></div>
           <div class="avm-row" id="avmDetailRow"><i class="fa-solid fa-circle-info"></i><span id="avmDetail"></span></div>
           <div class="avm-row" id="avmRerouteRow"><i class="fa-solid fa-route"></i><span id="avmReroute"></span></div>
         </div>
@@ -2251,6 +2253,7 @@ function toggleAvoidLayer(name) {
 
 /* ============ จุดจราจรที่ควรหลีกเลี่ยง (ประกาศโดย admin จากแอปเจ้าหน้าที่) ============ */
 const AVOID_KIND_META = {
+  accident: { ic:'fa-car-burst',        cls:'avk-accident', label:'อุบัติเหตุ' },
   work:  { ic:'fa-person-digging',      cls:'avk-work',  label:'ก่อสร้าง/ซ่อมทาง' },
   close: { ic:'fa-road-barrier',        cls:'avk-close', label:'ปิดถนน' },
   event: { ic:'fa-flag',                cls:'avk-event', label:'ขบวน/กิจกรรม' },
@@ -2441,6 +2444,8 @@ function openAvoidModal(r) {
   document.getElementById('avmTitle').textContent = r.title;
   document.getElementById('avmPlace').textContent = r.place;
   document.getElementById('avmWhen').textContent = w.text + (w.live ? ' (กำลังเกิดขึ้น)' : '');
+  document.getElementById('avmImpactRow').style.display = r.impact ? 'flex' : 'none';
+  document.getElementById('avmImpact').textContent = r.impact || '';
   document.getElementById('avmDetailRow').style.display = r.detail ? 'flex' : 'none';
   document.getElementById('avmDetail').textContent = r.detail || '';
   document.getElementById('avmRerouteRow').style.display = r.reroute ? 'flex' : 'none';
