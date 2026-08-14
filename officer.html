@@ -1432,6 +1432,32 @@
           </div>
           <div id="wxResult"><div class="hint">กด “คำนวณใหม่” หลังดึงข้อมูลแล้ว</div></div>
         </div>
+
+        <!-- ทดสอบสมมติฐานจากหน้างาน: ฝนแรกหลังทิ้งช่วงอันตรายกว่าฝนต่อเนื่อง
+             เพราะน้ำมันและยางที่สะสมบนผิวถนนลอยขึ้นมาเป็นฟิล์มลื่น
+             ส่วนฝนหนักต่อเนื่องชะล้างออกไป และคนขี่ จยย. ก็จอดหลบ -->
+        <div class="card" style="border:2px solid #0369a1">
+          <h3 class="card-title" style="color:#0369a1"><i class="fa-solid fa-droplet"></i> ฝนแรก vs ฝนต่อเนื่อง
+            <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="wxFirstRain()"><i class="fa-solid fa-flask"></i> ทดสอบ</button></h3>
+          <p class="hint" style="margin:0 0 12px">สมมติฐาน: อันตรายไม่ได้อยู่ที่ฝนหนัก แต่อยู่ที่ฝนตกใหม่หลังถนนแห้งมานาน — ทดสอบกับข้อมูลจริง ไม่ใช่เชื่อไว้ก่อน</p>
+          <div class="filter-bar" style="margin-bottom:12px">
+            <div class="field"><label>แห้งมาก่อนกี่ชั่วโมง ถึงนับว่าฝนแรก</label>
+              <select id="wxGap" class="select" onchange="wxFirstRain()">
+                <option value="6">6 ชั่วโมง</option>
+                <option value="12">12 ชั่วโมง</option>
+                <option value="24" selected>24 ชั่วโมง (1 วัน)</option>
+                <option value="48">48 ชั่วโมง (2 วัน)</option>
+                <option value="72">72 ชั่วโมง (3 วัน)</option>
+              </select></div>
+            <div class="field"><label>นับกี่ชั่วโมงแรกว่ายังลื่น</label>
+              <select id="wxFirstHrs" class="select" onchange="wxFirstRain()">
+                <option value="1">1 ชั่วโมง</option>
+                <option value="2" selected>2 ชั่วโมง</option>
+                <option value="3">3 ชั่วโมง</option>
+              </select></div>
+          </div>
+          <div id="wxFirstResult"><div class="hint">กด “ทดสอบ” หลังดึงข้อมูลแล้ว</div></div>
+        </div>
       </section>
 
       <section id="page-population" class="page">
@@ -5857,6 +5883,66 @@
         'ถ้าดูแค่ว่ากี่เปอร์เซ็นต์ของอุบัติเหตุเกิดตอนฝนตก จะสรุปเกินจริงเสมอ</p>';
     }
 
+    /* ทดสอบสมมติฐานฝนแรก — ไม่ได้เขียนให้ผลออกมาสนับสนุน
+       ถ้าฝนแรกกับฝนต่อเนื่องอัตราพอ ๆ กัน หน้าจอจะบอกตรง ๆ ว่าไม่ต่าง */
+    async function wxFirstRain() {
+      const host = document.getElementById('wxFirstResult');
+      host.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const r = await rpc('wx_first_rain', { p_token: state.token,
+          p_wet_mm: Number(valueOf('wxWet')) || 0.2,
+          p_gap_hours: Number(valueOf('wxGap')) || 24,
+          p_first_hrs: Number(valueOf('wxFirstHrs')) || 2 });
+        if (!r || !r.success) {
+          host.innerHTML = '<div class="hint">' + escapeHtml((r && r.message) || 'คำนวณไม่ได้') +
+            (/wx_first_rain|does not exist|schema cache/i.test((r && r.message) || '')
+              ? ' — ยังไม่ได้รัน sql/weather_2_firstrain.sql' : '') + '</div>';
+          return;
+        }
+        wxRenderFirstRain(r);
+      } catch (e) {
+        host.innerHTML = '<div class="hint">' +
+          (/wx_first_rain|does not exist|schema cache/i.test(e.message || '')
+            ? 'ยังไม่ได้รันไฟล์ <b>sql/weather_2_firstrain.sql</b>' : escapeHtml(e.message || 'คำนวณไม่ได้')) + '</div>';
+      }
+    }
+
+    function wxRenderFirstRain(r) {
+      const s = r.states || {};
+      const g = k => s[k] || { hours: 0, acc: 0, rate: null };
+      const dry = g('dry'), first = g('first'), rain = g('rain');
+      const n = v => v == null ? '-' : Number(v).toLocaleString('th-TH');
+
+      // เทียบฝนแรกกับฝนต่อเนื่อง เพราะนั่นคือข้อถกเถียง
+      // ไม่ใช่เทียบกับแห้ง ซึ่งรู้อยู่แล้วว่าฝนเสี่ยงกว่าแห้ง
+      const vs = (first.rate != null && rain.rate != null && rain.rate > 0)
+        ? +(first.rate / rain.rate).toFixed(2) : null;
+      const enough = first.hours >= 30;   // ชั่วโมงน้อยเกินไปสรุปไม่ได้
+      let verdict, color;
+      if (!enough) { verdict = 'ชั่วโมงฝนแรกยังน้อยเกินไป (' + n(first.hours) + ' ชม.) สรุปไม่ได้ — ลองลดเกณฑ์ช่วงแห้ง หรือดึงข้อมูลย้อนหลังให้ยาวขึ้น'; color = '#64748b'; }
+      else if (vs == null) { verdict = 'ข้อมูลไม่พอเปรียบเทียบ'; color = '#64748b'; }
+      else if (vs >= 1.2)  { verdict = 'สนับสนุนสมมติฐาน — ฝนแรกเสี่ยงกว่าฝนต่อเนื่อง ' + vs + ' เท่า'; color = '#c1122f'; }
+      else if (vs <= 0.83) { verdict = 'ตรงข้ามกับสมมติฐาน — ฝนแรกเสี่ยงน้อยกว่าฝนต่อเนื่อง (' + vs + ' เท่า)'; color = '#0f7a47'; }
+      else                 { verdict = 'ไม่พบความต่างชัดเจน (' + vs + ' เท่า) — ฝนแรกกับฝนต่อเนื่องพอ ๆ กัน'; color = '#c24e00'; }
+
+      const row = (label, o, hl) =>
+        '<tr' + (hl ? ' style="background:#fff5f6"' : '') + '><td>' + label + '</td>' +
+        '<td>' + n(o.hours) + '</td><td>' + n(o.acc) + '</td>' +
+        '<td><b>' + n(o.rate) + '</b></td></tr>';
+
+      document.getElementById('wxFirstResult').innerHTML =
+        '<div style="border:2px solid ' + color + ';border-radius:16px;padding:16px;margin-bottom:14px;background:#fbfdff">' +
+        '<div style="font-size:1.05rem;font-weight:800;color:' + color + '">' + escapeHtml(verdict) + '</div></div>' +
+        '<div class="table-wrap"><table class="table"><thead><tr>' +
+        '<th>สถานะถนน</th><th>ชั่วโมง</th><th>อุบัติเหตุ</th><th>ครั้ง/พันชั่วโมง</th></tr></thead><tbody>' +
+        row('แห้ง', dry, false) +
+        row('<b>ฝนแรก</b> (หลังแห้ง ' + r.gap_hours + ' ชม. · นับ ' + r.first_hrs + ' ชม.แรก)', first, true) +
+        row('ฝนต่อเนื่อง', rain, false) +
+        '</tbody></table></div>' +
+        '<p class="hint" style="margin-top:12px">ตัวเลขที่ต้องเทียบคือ <b>ฝนแรก กับ ฝนต่อเนื่อง</b> ไม่ใช่เทียบกับแห้ง — ' +
+        'เพราะข้อถกเถียงคือ “ฝนช่วงไหนอันตราย” ไม่ใช่ “ฝนอันตรายกว่าแห้งไหม” ซึ่งรู้อยู่แล้ว</p>';
+    }
+
     /* ============ รายงานเส้นทางเลี่ยง (จากที่เกิดเหตุ) ============
        สองขั้น: หน้างานส่งร่าง → ผู้ดูแลตรวจแล้วกดประกาศ
        ข้อความที่เข้ากลุ่มไลน์แล้วเรียกคืนไม่ได้ และเป็นเสียงของหน่วยงาน
@@ -9689,7 +9775,7 @@
       avOpenMapPicker, avUseCurrentLocation, avQuickDays, resetAvoidForm, saveAdvisory,
       loadAdvisories, editAdvisory, closeAdvisory, deleteAdvisory, avRemoveImage,
       arOpenForm, arUseGps, arPublish, arSaveDraft, arReject,
-      wxFetchAll, wxAnalyze,
+      wxFetchAll, wxAnalyze, wxFirstRain,
       openLocationPicker, closeLocationPicker, useCurrentLocation, confirmLocation,
       resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard,
       setMapFilter, loadAdminList, setApproval,
