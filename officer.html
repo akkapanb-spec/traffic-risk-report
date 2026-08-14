@@ -611,6 +611,7 @@
         <button class="nav-btn admin-item" data-page="roadnet" id="rnNavBtn" style="display:none" onclick="openPage('roadnet',this)"><i class="fa-solid fa-road"></i> โครงข่ายถนนและสถานที่</button>
         <button class="nav-btn admin-item" data-page="checkpoint" id="cpNavBtn" style="display:none" onclick="openPage('checkpoint',this)"><i class="fa-solid fa-clipboard-check"></i> จุดตรวจกวดขันวินัยจราจร</button>
         <button class="nav-btn admin-item" data-page="population" id="popNavBtn" style="display:none" onclick="openPage('population',this)"><i class="fa-solid fa-people-group"></i> ประชากรและอัตราความเสี่ยง</button>
+        <button class="nav-btn admin-item" data-page="weather" id="wxNavBtn" style="display:none" onclick="openPage('weather',this)"><i class="fa-solid fa-cloud-rain"></i> สภาพอากาศกับอุบัติเหตุ</button>
         <button class="nav-btn admin-item" data-page="traffic" id="tvNavBtn" style="display:none" onclick="openPage('traffic',this)"><i class="fa-solid fa-gauge-high"></i> ปริมาณจราจรและอัตราอันตราย</button>
         <button class="nav-btn admin-item" data-page="voice" id="vcNavBtn" style="display:none" onclick="openPage('voice',this)"><i class="fa-solid fa-comment-dots"></i> เสียงจากประชาชน <span class="menu-badge" id="badgeVoice" style="display:none"></span></button>
         <!-- ลิงก์จริง ไม่ใช่ window.open — popup blocker บล็อก window.open แต่ไม่บล็อกการกดลิงก์ -->
@@ -1396,6 +1397,43 @@
       </section>
 
       <!-- ADMIN: ประชากรและอัตราความเสี่ยง -->
+      <!-- ============ สภาพอากาศกับอุบัติเหตุ ============ -->
+      <section id="page-weather" class="page">
+        <div class="page-head"><div class="page-icon" style="background:linear-gradient(135deg,#38bdf8,#0369a1)"><i class="fa-solid fa-cloud-rain"></i></div><div><h2>สภาพอากาศกับอุบัติเหตุ</h2><p>ฝนเพิ่มความเสี่ยงกี่เท่า · เทียบอัตราต่อชั่วโมง ไม่ใช่สัดส่วนจำนวนเคส</p></div></div>
+
+        <div id="wxNotReady" class="card" style="display:none;border-color:#fecaca;background:#fff5f5">
+          <h3 class="card-title" style="color:#c1122f"><i class="fa-solid fa-triangle-exclamation"></i> ยังใช้งานไม่ได้</h3>
+          <p class="hint" style="margin:0">ยังไม่ได้รันไฟล์ <b>sql/weather_1_tables.sql</b> ใน Supabase SQL Editor</p>
+        </div>
+
+        <div class="card" id="wxFetchCard">
+          <h3 class="card-title"><i class="fa-solid fa-cloud-arrow-down"></i> ดึงข้อมูลสภาพอากาศย้อนหลัง</h3>
+          <p class="hint" style="margin:0 0 12px">ดึงจาก Open-Meteo (ERA5 ของ ECMWF) รายชั่วโมง แยกตามตำบล · ฟรี ไม่ต้องใช้คีย์ · ดึงทับช่วงเดิมได้ ไม่เกิดข้อมูลซ้ำ</p>
+          <div class="filter-bar">
+            <div class="field"><label>ตั้งแต่</label><input id="wxFrom" class="input" type="date"></div>
+            <div class="field"><label>ถึง</label><input id="wxTo" class="input" type="date"></div>
+            <button class="btn btn-primary" type="button" onclick="wxFetchAll()"><i class="fa-solid fa-cloud-arrow-down"></i> ดึงข้อมูล</button>
+          </div>
+          <div id="wxFetchLog" class="hint" style="margin-top:12px"></div>
+          <div id="wxCoverage" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-scale-balanced"></i> ผลวิเคราะห์
+            <button class="btn btn-soft btn-sm" style="margin-left:auto" type="button" onclick="wxAnalyze()"><i class="fa-solid fa-rotate"></i> คำนวณใหม่</button></h3>
+          <div class="filter-bar" style="margin-bottom:12px">
+            <div class="field"><label>ฝนกี่ มม./ชม. ถึงนับว่าตก</label>
+              <select id="wxWet" class="select" onchange="wxAnalyze()">
+                <option value="0.1">0.1 (นับละอองด้วย)</option>
+                <option value="0.2" selected>0.2 (ค่าแนะนำ)</option>
+                <option value="1">1.0 (เฉพาะฝนจริงจัง)</option>
+                <option value="5">5.0 (เฉพาะฝนหนัก)</option>
+              </select></div>
+          </div>
+          <div id="wxResult"><div class="hint">กด “คำนวณใหม่” หลังดึงข้อมูลแล้ว</div></div>
+        </div>
+      </section>
+
       <section id="page-population" class="page">
         <div class="page-head"><div class="page-icon" style="background:linear-gradient(135deg,#f472b6,#9d174d)"><i class="fa-solid fa-people-group"></i></div><div><h2>ประชากรและอัตราความเสี่ยง</h2><p>อัตราการเสียชีวิตต่อประชากรแสนคน · เทียบเป้าหมายแผนแม่บท · สอบทานกับแหล่งข้อมูลอื่น</p></div></div>
 
@@ -3049,6 +3087,7 @@
       document.getElementById('rnNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('cpNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('popNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
+      document.getElementById('wxNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('tvNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('vcNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('dutyNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
@@ -3162,6 +3201,7 @@
       if (page === 'riskmanage') loadRiskManage();
       if (page === 'deaths') initDeathPage();
       if (page === 'avoid') initAvoidPage();
+      if (page === 'weather') initWeatherPage();
       if (page === 'blackspot') initBlackspotPage();
       if (page === 'roadnet') initRoadnetPage();
       if (page === 'checkpoint') initCheckpointPage();
@@ -5688,6 +5728,133 @@
         ['วันที่ลงทะเบียน','ยศ','ชื่อ','นามสกุล','โทรศัพท์','เลขบัตรประชาชน','ปนพ.','สถานะ','ผู้ดูแลระบบ'],
         rows.map(r => [formatThaiDateTimeStr(r.registeredAt), r.rank, r.firstName, r.lastName, r.phone,
           r.nationalId, r.policeCode, r.status, r.isAdmin ? 'ใช่' : '']));
+    }
+
+    /* ============ สภาพอากาศกับอุบัติเหตุ ============
+       เบราว์เซอร์ไปดึงจาก Open-Meteo แล้วส่งมาให้ Postgres เก็บ
+       ท่าเดียวกับเครื่องวิเคราะห์จุดเสี่ยง — งานที่ต้องออกไปข้างนอกทำที่หน้าเว็บ
+       ส่วนการเก็บกับคำนวณอยู่ที่ฐานข้อมูล */
+    const WX_API = 'https://archive-api.open-meteo.com/v1/archive';
+
+    async function initWeatherPage() {
+      const f = document.getElementById('wxFrom'), t = document.getElementById('wxTo');
+      if (!f.value) {
+        // ค่าเริ่มต้น: ย้อนหลัง 1 ปีถึงเมื่อวาน
+        // ไม่เอาถึงวันนี้เพราะ ERA5 ตามหลังของจริงอยู่ราว 5 วัน ขอมาก็ได้ค่าว่าง
+        const to = new Date(Date.now() - 6 * 86400e3);
+        const fr = new Date(to.getTime() - 365 * 86400e3);
+        t.value = bkkStamp(to, 'day'); f.value = bkkStamp(fr, 'day');
+      }
+      await wxLoadZones();
+    }
+
+    async function wxLoadZones() {
+      try {
+        const r = await rpc('wx_zone_list', { p_token: state.token });
+        if (!r || !r.success) throw new Error((r && r.message) || 'โหลดโซนไม่สำเร็จ');
+        state.wxZones = r.zones || [];
+        document.getElementById('wxNotReady').style.display = 'none';
+        wxRenderCoverage(r.coverage || []);
+      } catch (e) {
+        // ยังไม่ได้รัน SQL — บอกให้ชัดแทนที่จะขึ้น error ดิบ
+        if (/wx_zone_list|does not exist|schema cache/i.test(e.message || '')) {
+          document.getElementById('wxNotReady').style.display = '';
+        } else rpcAlert(e, 'โหลดโซนไม่สำเร็จ');
+      }
+    }
+
+    function wxRenderCoverage(cov) {
+      const host = document.getElementById('wxCoverage');
+      const zones = state.wxZones || [];
+      if (!zones.length) { host.innerHTML = ''; return; }
+      const by = {}; cov.forEach(c => by[c.zone_code] = c);
+      const d = iso => iso ? new Date(iso).toLocaleDateString('th-TH', { timeZone:'Asia/Bangkok', day:'numeric', month:'short', year:'2-digit' }) : '-';
+      host.innerHTML = '<div class="table-wrap"><table class="table"><thead><tr>' +
+        '<th>ตำบล</th><th>ชั่วโมงที่มี</th><th>ตั้งแต่</th><th>ถึง</th></tr></thead><tbody>' +
+        zones.map(z => { const c = by[z.code];
+          return '<tr><td>' + escapeHtml(z.name) + '</td>' +
+            '<td>' + (c ? Number(c.hours).toLocaleString('th-TH') : '<span style="color:#c1122f">ยังไม่มี</span>') + '</td>' +
+            '<td>' + (c ? d(c.first) : '-') + '</td><td>' + (c ? d(c.last) : '-') + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+
+    /* ดึงทีละตำบล — 7 คำขอจบ ไม่ใช่คำขอต่ออุบัติเหตุหนึ่งเคส
+       เพราะสิ่งที่ต้องการคือ "ทุกชั่วโมง" เอาไปเป็นตัวหาร ไม่ใช่แค่ชั่วโมงที่เกิดเหตุ */
+    async function wxFetchAll() {
+      const from = valueOf('wxFrom'), to = valueOf('wxTo');
+      if (!from || !to || from > to) { Swal.fire({ icon:'warning', title:'ช่วงวันที่ไม่ถูกต้อง' }); return; }
+      const zones = state.wxZones || [];
+      if (!zones.length) { Swal.fire({ icon:'warning', title:'ยังไม่มีโซน', text:'รัน sql/weather_1_tables.sql ก่อน' }); return; }
+
+      const log = document.getElementById('wxFetchLog');
+      let done = 0, rows = 0, fail = 0;
+      log.innerHTML = 'กำลังดึง…';
+      for (const z of zones) {
+        try {
+          const u = WX_API + '?latitude=' + z.latitude + '&longitude=' + z.longitude +
+            '&start_date=' + from + '&end_date=' + to +
+            '&hourly=precipitation,weather_code&timezone=Asia%2FBangkok';
+          const j = await (await fetch(u)).json();
+          if (!j.hourly || !j.hourly.time) throw new Error('รูปแบบข้อมูลไม่ตรงที่คาด');
+          const payload = j.hourly.time.map((t, i) => ({
+            t: t, p: j.hourly.precipitation[i], w: j.hourly.weather_code[i]
+          }));
+          const r = await rpc('wx_save', { p_token: state.token, p_zone: z.code,
+            p_grid_lat: j.latitude, p_grid_lng: j.longitude, p_rows: payload });
+          if (!r || !r.success) throw new Error((r && r.message) || 'บันทึกไม่สำเร็จ');
+          rows += r.saved || 0; done++;
+        } catch (e) { fail++; }
+        log.innerHTML = 'ดึงแล้ว ' + done + '/' + zones.length + ' ตำบล · ' +
+          rows.toLocaleString('th-TH') + ' ชั่วโมง' + (fail ? ' · ล้มเหลว ' + fail : '');
+      }
+      await wxLoadZones();
+      Swal.fire({ icon: fail ? 'warning' : 'success',
+        title: fail ? 'ดึงเสร็จแต่มีบางตำบลไม่ผ่าน' : 'ดึงข้อมูลเสร็จ',
+        text: done + ' ตำบล · ' + rows.toLocaleString('th-TH') + ' ชั่วโมง' });
+      wxAnalyze();
+    }
+
+    async function wxAnalyze() {
+      const host = document.getElementById('wxResult');
+      host.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const r = await rpc('wx_stats', { p_token: state.token, p_from: null, p_to: null,
+          p_wet_mm: Number(valueOf('wxWet')) || 0.2 });
+        if (!r || !r.success) { host.innerHTML = '<div class="hint">' + escapeHtml((r && r.message) || 'คำนวณไม่ได้') + '</div>'; return; }
+        wxRenderResult(r);
+      } catch (e) { host.innerHTML = '<div class="hint">' + escapeHtml(e.message || 'คำนวณไม่ได้') + '</div>'; }
+    }
+
+    function wxRenderResult(r) {
+      const t = r.total || {};
+      const n = v => v == null ? '-' : Number(v).toLocaleString('th-TH');
+      // ตัวเลขเดียวที่ต้องอ่านคือ ratio — ที่เหลือมีไว้ให้ตรวจว่ามาจากไหน
+      const ratio = t.ratio;
+      const verdict = ratio == null ? 'ข้อมูลยังไม่พอสรุป'
+        : ratio >= 1.15 ? 'ฝนตกเสี่ยงกว่าตอนแห้ง ' + ratio + ' เท่า'
+        : ratio <= 0.85 ? 'ตอนฝนตกเกิดอุบัติเหตุน้อยกว่าตอนแห้ง (' + ratio + ' เท่า)'
+        : 'ฝนไม่ได้เพิ่มความเสี่ยงอย่างมีนัย (' + ratio + ' เท่า)';
+      const color = ratio == null ? '#64748b' : ratio >= 1.15 ? '#c1122f' : ratio <= 0.85 ? '#0f7a47' : '#c24e00';
+
+      document.getElementById('wxResult').innerHTML =
+        '<div style="border:2px solid ' + color + ';border-radius:16px;padding:18px;margin-bottom:16px;background:#fbfdff">' +
+        '<div style="font-size:1.15rem;font-weight:800;color:' + color + '">' + escapeHtml(verdict) + '</div>' +
+        '<div class="hint" style="margin-top:8px">' +
+          'ตอนฝนตก ' + n(t.wet_acc) + ' ครั้ง จาก ' + n(t.wet_hours) + ' ชั่วโมง = <b>' + n(t.wet_rate) + '</b> ครั้งต่อพันชั่วโมง<br>' +
+          'ตอนแห้ง ' + n(t.dry_acc) + ' ครั้ง จาก ' + n(t.dry_hours) + ' ชั่วโมง = <b>' + n(t.dry_rate) + '</b> ครั้งต่อพันชั่วโมง' +
+        '</div></div>' +
+        '<div class="table-wrap"><table class="table"><thead><tr>' +
+        '<th>ตำบล</th><th>ชม.ฝนตก</th><th>อุบัติเหตุ</th><th>อัตรา</th>' +
+        '<th>ชม.แห้ง</th><th>อุบัติเหตุ</th><th>อัตรา</th><th>เสี่ยงกว่า</th></tr></thead><tbody>' +
+        (r.zones || []).map(z =>
+          '<tr><td>' + escapeHtml(z.name || z.zone_code) + '</td>' +
+          '<td>' + n(z.wet_hours) + '</td><td>' + n(z.wet_acc) + '</td><td><b>' + n(z.wet_rate) + '</b></td>' +
+          '<td>' + n(z.dry_hours) + '</td><td>' + n(z.dry_acc) + '</td><td><b>' + n(z.dry_rate) + '</b></td>' +
+          '<td>' + (z.ratio == null ? '-' : '<b style="color:' + (z.ratio >= 1.15 ? '#c1122f' : '#0f7a47') + '">' + z.ratio + ' เท่า</b>') + '</td></tr>'
+        ).join('') + '</tbody></table></div>' +
+        '<p class="hint" style="margin-top:12px">อัตรา = ครั้งต่อ 1,000 ชั่วโมง · ' +
+        'เทียบอัตราต่อชั่วโมงไม่ใช่สัดส่วนจำนวนเคส เพราะฝนตกกินเวลาไปแล้วส่วนหนึ่งของทั้งปี ' +
+        'ถ้าดูแค่ว่ากี่เปอร์เซ็นต์ของอุบัติเหตุเกิดตอนฝนตก จะสรุปเกินจริงเสมอ</p>';
     }
 
     /* ============ รายงานเส้นทางเลี่ยง (จากที่เกิดเหตุ) ============
@@ -9522,6 +9689,7 @@
       avOpenMapPicker, avUseCurrentLocation, avQuickDays, resetAvoidForm, saveAdvisory,
       loadAdvisories, editAdvisory, closeAdvisory, deleteAdvisory, avRemoveImage,
       arOpenForm, arUseGps, arPublish, arSaveDraft, arReject,
+      wxFetchAll, wxAnalyze,
       openLocationPicker, closeLocationPicker, useCurrentLocation, confirmLocation,
       resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard,
       setMapFilter, loadAdminList, setApproval,
