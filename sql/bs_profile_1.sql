@@ -92,7 +92,9 @@ begin
   -- หนึ่งเหตุอาจตกในรัศมีหลายจุดได้ ซึ่งถูกต้อง เพราะจุดเสี่ยงซ้อนทับกันได้จริง
   pair as (
     select s.id as site_id, a.hr,
-           coalesce(h.state, 'unknown') as state
+           coalesce(h.state, 'unknown') as state,
+           -- เก็บพิกัดบนระบบเมตรไว้วัดรูปร่างการกระจุกทีหลัง
+           st_transform(st_setsrid(st_makepoint(a.longitude, a.latitude), 4326), 32647) as g
       from bs_sites s
       join acc a
         on st_dwithin(
@@ -101,6 +103,36 @@ begin
              greatest(coalesce(s.radius_m, 200), 50))
       left join hour_state h on h.zone_code = a.zone_code and h.hour = a.hour_key
      where s.published
+  ),
+  -- รูปร่างการกระจุก — ตัวที่บอกว่าควรใช้มาตรการแบบไหน
+  --   กระจุกแน่นในไม่กี่สิบเมตร = จุดเดียว มักมีสาเหตุกายภาพชิ้นเดียว แก้ด้วยวิศวกรรม
+  --   ยืดยาวไปตามแนวถนน       = ปัญหาทั้งช่วง แก้ด้วยความเร็ว/ป้ายตลอดแนว
+  --   กระจายเป็นวง             = ปัญหาพฤติกรรมของย่าน แก้ด้วยการบังคับใช้กฎหมาย
+  --
+  -- วัดจากวงกลมเล็กที่สุดที่คลุมทุกจุดได้ (เส้นผ่านศูนย์กลาง)
+  -- กับกรอบสี่เหลี่ยมที่เอียงตามแนวการกระจาย (ด้านยาวหารด้านสั้น)
+  -- ต้องมีอย่างน้อย 3 จุดถึงจะมีรูปร่างให้วัด
+  shape as (
+    select p.site_id,
+           st_minimumboundingradius(st_collect(p.g)) as mbr,
+           st_orientedenvelope(st_collect(p.g))      as env,
+           count(*)::int as gn
+      from pair p group by p.site_id having count(*) >= 3
+  ),
+  shape2 as (
+    select s.site_id,
+           round(((s.mbr).radius * 2)::numeric, 0) as spread_m,
+           -- ด้านของกรอบเอียง คำนวณจากจุดมุมสามจุดแรก
+           greatest(
+             st_distance(st_pointn(st_exteriorring(s.env), 1), st_pointn(st_exteriorring(s.env), 2)),
+             st_distance(st_pointn(st_exteriorring(s.env), 2), st_pointn(st_exteriorring(s.env), 3))
+           ) as long_m,
+           greatest(least(
+             st_distance(st_pointn(st_exteriorring(s.env), 1), st_pointn(st_exteriorring(s.env), 2)),
+             st_distance(st_pointn(st_exteriorring(s.env), 2), st_pointn(st_exteriorring(s.env), 3))
+           ), 1) as short_m
+      from shape s
+     where st_geometrytype(s.env) = 'ST_Polygon'
   ),
   per_site as (
     select p.site_id,
@@ -142,9 +174,15 @@ begin
         'hours', coalesce(ps.hours, '[]'::jsonb),
         'weather', jsonb_build_object(
           'dry', coalesce(ps.dry_n, 0), 'rain', coalesce(ps.rain_n, 0),
-          'first', coalesce(ps.first_n, 0), 'unknown', coalesce(ps.unknown_n, 0))
+          'first', coalesce(ps.first_n, 0), 'unknown', coalesce(ps.unknown_n, 0)),
+        -- รูปร่างการกระจุก null เมื่อมีจุดน้อยกว่า 3 จุด
+        'spread_m', sh.spread_m,
+        'elongation', case when sh.short_m is not null
+                           then round((sh.long_m / sh.short_m)::numeric, 1) end
       ) order by coalesce(ps.n, 0) desc, s.id)
-      from bs_sites s left join per_site ps on ps.site_id = s.id
+      from bs_sites s
+      left join per_site ps on ps.site_id = s.id
+      left join shape2 sh on sh.site_id = s.id
       where s.published), '[]'::jsonb)
   ) into v_out;
 
