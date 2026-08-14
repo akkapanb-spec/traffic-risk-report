@@ -404,6 +404,29 @@
     .loading-skeleton{height:100px;border-radius:18px;background:linear-gradient(90deg,#edf3f8 25%,#f8fbfd 38%,#edf3f8 63%);background-size:400% 100%;animation:shine 1.4s infinite}@keyframes shine{0%{background-position:100% 0}100%{background-position:0 0}}
     .empty{text-align:center;color:var(--muted);padding:30px}.empty i{display:block;font-size:2rem;color:#9bb1c8;margin-bottom:8px}
 
+    /* ปุ่มรายงานเส้นทางเลี่ยง — ขอบแดงกระพริบให้สะดุดตาตอนรีบ
+       กระพริบที่ "ขอบ" ไม่ใช่ทั้งปุ่ม ตัวหนังสือจะได้อ่านออกตลอดเวลา
+       ไม่ใช้ opacity เพราะปุ่มจะหายไปครึ่งจังหวะ กดพลาดตอนมือสั่น */
+    .avoid-alert-btn{display:flex;align-items:center;gap:13px;width:100%;text-align:left;cursor:pointer;
+      padding:15px 18px;border:2px solid #c1122f;background:#fff5f6;color:#8a0f24;font:inherit;
+      animation:avoidPulse 1.25s ease-in-out infinite}
+    .avoid-alert-btn i{font-size:1.5rem;flex:0 0 auto}
+    .avoid-alert-btn b{display:block;font-size:1rem;color:#c1122f}
+    .avoid-alert-btn small{display:block;font-size:.76rem;color:#8a5560;margin-top:2px;line-height:1.5}
+    .avoid-alert-btn:hover{background:#ffe9ec}
+    @keyframes avoidPulse{
+      0%,100%{border-color:#c1122f;box-shadow:0 0 0 0 rgba(193,18,47,.42)}
+      50%    {border-color:#ff5a76;box-shadow:0 0 0 9px rgba(193,18,47,0)}
+    }
+    /* เครื่องบางเครื่องตั้งค่าลดการเคลื่อนไหวไว้ด้วยเหตุผลทางสุขภาพ
+       เคารพค่านั้น ปุ่มยังแดงเด่นอยู่ แค่ไม่กระพริบ */
+    @media(prefers-reduced-motion:reduce){.avoid-alert-btn{animation:none}}
+
+    /* จุดแดงหลังชื่อเมนู บอกว่ามีร่างรอตรวจ */
+    .nav-dot{display:none;width:9px;height:9px;border-radius:50%;background:#c1122f;margin-left:6px;
+      box-shadow:0 0 0 3px rgba(193,18,47,.18);animation:avoidPulse 1.25s ease-in-out infinite}
+    .nav-dot.on{display:inline-block}
+
     @media(max-width:900px){.field{grid-column:span 6}.chart-grid,.dashboard-detail-grid{grid-template-columns:1fr}.chart-wide,.dashboard-full,.age-tall{grid-column:auto;grid-row:auto}.map-main{height:500px}.user-chip{display:none}}
     @media(max-width:640px){.card-title{flex-wrap:wrap;row-gap:8px}.hero{padding-top:27px}.hero-logo{width:98px;height:98px}.auth-actions{grid-template-columns:1fr}.topbar-inner{height:66px;padding:0 10px}.brand-mini img{width:40px;height:40px}.brand-text strong{font-size:.88rem}.brand-text span{font-size:.68rem}.clock{display:none}.main{padding:16px 10px 88px}.card{padding:15px;border-radius:18px}.page-head{margin-bottom:14px}.page-icon{width:46px;height:46px}.stats-grid{grid-template-columns:1fr}.stat-card{min-height:112px}.field,.field.span-6,.field.span-8{grid-column:1/-1}.form-grid{gap:11px}.filter-bar{grid-template-columns:1fr 1fr}.filter-bar .btn{grid-column:1/-1}.image-previews{grid-template-columns:repeat(2,1fr)}.popup-parties{grid-template-columns:1fr}.map-main{height:430px}.map-picker{height:360px}.submit-bar{bottom:7px}.logout-icon{width:38px;height:38px}.chart-card{min-height:330px}}
 
@@ -583,7 +606,7 @@
         <button class="nav-btn admin-item" data-page="admin" id="adminNavBtn" style="display:none" onclick="openPage('admin',this)"><i class="fa-solid fa-user-check"></i> อนุมัติสิทธิ์ผู้ลงทะเบียน <span class="menu-badge" id="badgeApprove" style="display:none"></span></button>
         <button class="nav-btn admin-item" data-page="riskmanage" id="riskNavBtn" style="display:none" onclick="openPage('riskmanage',this)"><i class="fa-solid fa-triangle-exclamation"></i> จัดการจุดเสี่ยงที่ประชาชนแจ้ง <span class="menu-badge" id="badgeRisk" style="display:none"></span></button>
         <button class="nav-btn admin-item" data-page="deaths" id="deathsNavBtn" style="display:none" onclick="openPage('deaths',this)"><i class="fa-solid fa-skull-crossbones"></i> บันทึกข้อมูลผู้เสียชีวิต</button>
-        <button class="nav-btn admin-item" data-page="avoid" id="avoidNavBtn" style="display:none" onclick="openPage('avoid',this)"><i class="fa-solid fa-diamond-turn-right"></i> ประกาศจุดหลีกเลี่ยง</button>
+        <button class="nav-btn admin-item" data-page="avoid" id="avoidNavBtn" style="display:none" onclick="openPage('avoid',this)"><i class="fa-solid fa-diamond-turn-right"></i> ประกาศจุดหลีกเลี่ยง<span class="nav-dot" id="avoidNavDot"></span></button>
         <button class="nav-btn admin-item" data-page="blackspot" id="bsNavBtn" style="display:none" onclick="openPage('blackspot',this)"><i class="fa-solid fa-location-crosshairs"></i> จุดเสี่ยงอุบัติเหตุ (วิเคราะห์)</button>
         <button class="nav-btn admin-item" data-page="roadnet" id="rnNavBtn" style="display:none" onclick="openPage('roadnet',this)"><i class="fa-solid fa-road"></i> โครงข่ายถนนและสถานที่</button>
         <button class="nav-btn admin-item" data-page="checkpoint" id="cpNavBtn" style="display:none" onclick="openPage('checkpoint',this)"><i class="fa-solid fa-clipboard-check"></i> จุดตรวจกวดขันวินัยจราจร</button>
@@ -633,6 +656,15 @@
 
       <section id="page-accident" class="page">
         <div class="page-head"><div class="page-icon"><i class="fa-solid fa-car-burst"></i></div><div><h2>บันทึกข้อมูลอุบัติเหตุ</h2><p>กรอกข้อมูลให้ครบถ้วนก่อนบันทึกเข้าสู่ระบบ</p></div></div>
+
+        <!-- ปุ่มด่วนสำหรับเจ้าหน้าที่ที่ยังอยู่ที่เกิดเหตุ
+             วางไว้เหนือฟอร์มบันทึกเพราะเป็นคนละงานกัน และต้องกดได้ทันทีที่เปิดหน้า
+             การบันทึกอุบัติเหตุเต็มรูปแบบทำทีหลังที่โรงพักได้ แต่การเตือนคนให้เลี่ยงทางต้องเดี๋ยวนี้ -->
+        <button type="button" class="card avoid-alert-btn" onclick="arOpenForm()">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span><b>รายงานเส้นทางเลี่ยง</b><small>แจ้งจากที่เกิดเหตุ ผู้ดูแลตรวจแล้วประกาศให้ประชาชน</small></span>
+        </button>
+
         <form id="accidentForm" novalidate>
           <div class="card">
             <h3 class="card-title"><i class="fa-regular fa-calendar-check"></i> ข้อมูลการบันทึก</h3>
@@ -928,6 +960,16 @@
               <button class="btn btn-outline" type="button" onclick="resetAvoidForm()"><i class="fa-solid fa-rotate-left"></i> ล้างฟอร์ม</button>
               <button class="btn" type="button" id="avSubmitBtn" onclick="saveAdvisory()" style="background:linear-gradient(135deg,#e07000,#c24e00);color:#fff;box-shadow:0 9px 20px rgba(194,78,0,.28)"><i class="fa-solid fa-bullhorn"></i> ประกาศขึ้นหน้าเว็บ</button></div>
           </form>
+        </div>
+
+        <!-- ร่างที่เจ้าหน้าที่หน้างานส่งเข้ามา รอผู้ดูแลตรวจก่อนออกสู่สาธารณะ
+             วางต่อจากฟอร์มประกาศใหม่ เพราะเป็นงานเดียวกันคือทำให้ประกาศขึ้นเว็บ
+             ต่างกันแค่ที่มาของข้อมูล — อันนี้มาจากหน้างาน ไม่ได้พิมพ์เองที่โรงพัก -->
+        <div class="card" id="arReviewCard" style="display:none;border:2px solid #c1122f">
+          <h3 class="card-title" style="color:#c1122f"><i class="fa-solid fa-triangle-exclamation"></i> ประกาศเลี่ยงอุบัติเหตุ
+            <span id="arPendingPill" class="pill" style="background:#fdecef;color:#c1122f">0 ร่าง</span></h3>
+          <p class="hint" style="margin:0 0 12px">เจ้าหน้าที่หน้างานส่งเข้ามา — ตรวจข้อความให้ถูกต้องก่อนกดประกาศ เพราะส่งเข้ากลุ่มไลน์แล้วเรียกคืนไม่ได้</p>
+          <div id="arReviewList"></div>
         </div>
         <div class="card">
           <h3 class="card-title"><i class="fa-solid fa-list-check"></i> ประกาศทั้งหมด <span id="avTotal" class="pill">0 รายการ</span>
@@ -3000,6 +3042,9 @@
       document.getElementById('riskNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('deathsNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('avoidNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
+      // จุดแดงต้องขึ้นตั้งแต่เข้าระบบ ไม่ใช่รอให้เปิดหน้าประกาศก่อน
+      // ไม่งั้นแอดมินไม่มีทางรู้ว่ามีร่างรออยู่
+      arRefreshBadge();
       document.getElementById('bsNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('rnNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('cpNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
@@ -5645,6 +5690,186 @@
           r.nationalId, r.policeCode, r.status, r.isAdmin ? 'ใช่' : '']));
     }
 
+    /* ============ รายงานเส้นทางเลี่ยง (จากที่เกิดเหตุ) ============
+       สองขั้น: หน้างานส่งร่าง → ผู้ดูแลตรวจแล้วกดประกาศ
+       ข้อความที่เข้ากลุ่มไลน์แล้วเรียกคืนไม่ได้ และเป็นเสียงของหน่วยงาน
+       จึงไม่ให้ยิงตรงจากที่เกิดเหตุ แม้จะช้ากว่าอยู่บ้าง */
+
+    // ยานพาหนะใช้ชุดเดียวกับฟอร์มอุบัติเหตุ ชื่อจะได้ตรงกันเวลาสรุปยอด
+    const AR_VEHICLES = ['จักรยานยนต์','จักรยาน','รถยนต์เก๋ง','รถยนต์กระบะ','รถตู้','รถโดยสาร',
+      'รถบรรทุก 6 ล้อขึ้นไป','รถบรรทุกพ่วง/เทรลเลอร์','รถไถ/รถการเกษตร','คนเดินเท้า','อื่นๆ'];
+    const AR_DIRECTIONS = ['ขาขึ้น','ขาล่อง','ขาเข้าเมือง','ขาออกเมือง','ทั้งสองทิศทาง'];
+
+    function arFieldsHtml(pfx, r) {
+      r = r || {};
+      const opt = (list, cur) => '<option value="">-</option>' +
+        list.map(v => '<option' + (v === cur ? ' selected' : '') + '>' + escapeHtml(v) + '</option>').join('');
+      // ค่าเริ่มต้นของเวลาคือ "ตอนนี้" เพราะคนกรอกยืนอยู่ที่เกิดเหตุ ไม่ได้กรอกย้อนหลัง
+      const when = r.occurred_at ? isoToLocalInput(r.occurred_at)
+                                 : isoToLocalInput(new Date().toISOString());
+      return '<div class="form-grid">' +
+        '<div class="field span-6"><label>วันเวลาเกิดเหตุ <span class="req">*</span></label>' +
+          '<input id="' + pfx + 'When" class="input" type="datetime-local" value="' + when + '"></div>' +
+        '<div class="field span-6"><label>ผ่านได้กี่ช่องจราจร</label>' +
+          '<input id="' + pfx + 'Lanes" class="input" type="number" min="0" max="9" inputmode="numeric" value="' +
+          (r.lanes == null ? '' : r.lanes) + '" placeholder="เช่น 1"></div>' +
+        '<div class="field span-6"><label>รถคันที่ 1</label><select id="' + pfx + 'V1" class="select">' + opt(AR_VEHICLES, r.vehicle1) + '</select></div>' +
+        '<div class="field span-6"><label>รถคันที่ 2 (ถ้ามี)</label><select id="' + pfx + 'V2" class="select">' + opt(AR_VEHICLES, r.vehicle2) + '</select></div>' +
+        '<div class="field span-6"><label>ถนน <span class="req">*</span></label>' +
+          '<input id="' + pfx + 'Road" class="input" maxlength="120" value="' + escapeHtml(r.road || '') + '" placeholder="ใส่เลขทางหลวงด้วย เช่น ทล.1 พหลโยธิน"></div>' +
+        '<div class="field span-6"><label>ทิศทาง</label><select id="' + pfx + 'Dir" class="select">' + opt(AR_DIRECTIONS, r.direction) + '</select></div>' +
+        '<div class="field span-12"><label>เส้นทางเลี่ยงที่แนะนำ</label>' +
+          '<input id="' + pfx + 'Reroute" class="input" maxlength="120" value="' + escapeHtml(r.reroute || '') + '" placeholder="ใส่เลขถนนด้วยถ้ามี เช่น ทล.122 ทางเลี่ยงเมือง"></div>' +
+        '<div class="field span-12"><label>พิกัด (ละติจูด, ลองจิจูด)</label>' +
+          '<div style="display:flex;gap:8px"><input id="' + pfx + 'Coords" class="input" style="flex:1;min-width:0" value="' +
+          (r.latitude != null && r.longitude != null ? r.latitude.toFixed(6) + ', ' + r.longitude.toFixed(6) : '') +
+          '" placeholder="15.7051, 100.1372">' +
+          '<button class="btn btn-soft" type="button" onclick="arUseGps(\'' + pfx + '\')" title="ใช้ตำแหน่งปัจจุบัน"><i class="fa-solid fa-crosshairs"></i></button></div>' +
+          '<div class="hint">กดปุ่มเข็มทิศเพื่อใช้ตำแหน่งที่ยืนอยู่ตอนนี้</div></div>' +
+        '<div class="field span-12"><label>หมายเหตุเพิ่มเติม</label>' +
+          '<input id="' + pfx + 'Note" class="input" maxlength="150" value="' + escapeHtml(r.note || '') + '" placeholder="ไม่บังคับ"></div>' +
+        '</div>';
+    }
+
+    function arUseGps(pfx) {
+      if (!navigator.geolocation) { Swal.fire({ icon:'warning', title:'เครื่องนี้ไม่รองรับการหาตำแหน่ง' }); return; }
+      navigator.geolocation.getCurrentPosition(
+        p => { document.getElementById(pfx + 'Coords').value = p.coords.latitude.toFixed(6) + ', ' + p.coords.longitude.toFixed(6); },
+        () => Swal.fire({ icon:'warning', title:'หาตำแหน่งไม่ได้', text:'ตรวจว่าอนุญาตให้เข้าถึงตำแหน่งแล้ว' }),
+        { enableHighAccuracy:true, timeout:8000 });
+    }
+
+    // อ่านค่าจากฟอร์ม คืน null ถ้ากรอกไม่ผ่าน (แจ้งเตือนเองแล้ว)
+    function arRead(pfx) {
+      const road = valueOf(pfx + 'Road').trim();
+      if (!road) { Swal.fire({ icon:'warning', title:'กรุณากรอกชื่อถนน' }); return null; }
+      const when = valueOf(pfx + 'When');
+      if (!when) { Swal.fire({ icon:'warning', title:'กรุณาระบุวันเวลาเกิดเหตุ' }); return null; }
+      let lat = null, lng = null;
+      const co = valueOf(pfx + 'Coords').trim();
+      if (co) {
+        const p = co.split(',');
+        lat = parseFloat(p[0]); lng = parseFloat(p[1]);
+        if (isNaN(lat) || isNaN(lng)) { Swal.fire({ icon:'warning', title:'รูปแบบพิกัดไม่ถูกต้อง', text:'ต้องเป็น ละติจูด, ลองจิจูด' }); return null; }
+      }
+      const lanes = valueOf(pfx + 'Lanes');
+      return {
+        p_occurred: new Date(when).toISOString(),
+        p_vehicle1: valueOf(pfx + 'V1'), p_vehicle2: valueOf(pfx + 'V2'),
+        p_road: road, p_direction: valueOf(pfx + 'Dir'),
+        p_lanes: lanes === '' ? null : Number(lanes),
+        p_reroute: valueOf(pfx + 'Reroute').trim(),
+        p_lat: lat, p_lng: lng, p_note: valueOf(pfx + 'Note').trim()
+      };
+    }
+
+    /* ฟอร์มที่ซ่อนไว้ เปิดจากปุ่มแดงบนหน้าบันทึกอุบัติเหตุ
+       ทำเป็นหน้าต่างซ้อน ไม่ใช่การ์ดในหน้า เพราะไม่อยากให้ไปปนกับฟอร์มบันทึกอุบัติเหตุ
+       ที่กรอกยาวกว่ามากและคนละจังหวะการใช้งาน */
+    async function arOpenForm() {
+      const res = await Swal.fire({
+        title: '<span style="color:#c1122f">⚠️ รายงานเส้นทางเลี่ยง</span>',
+        html: '<div style="text-align:left">' +
+              '<p class="hint" style="margin:0 0 12px">ส่งเป็นร่างให้ผู้ดูแลตรวจก่อน ยังไม่ออกสู่ประชาชนทันที</p>' +
+              arFieldsHtml('ar') + '</div>',
+        width: 720, showCancelButton: true,
+        confirmButtonText: '<i class="fa-solid fa-paper-plane"></i> ส่งรายงาน',
+        cancelButtonText: 'ยกเลิก', confirmButtonColor: '#c1122f',
+        focusConfirm: false,
+        preConfirm: () => arRead('ar') || false
+      });
+      if (!res.isConfirmed || !res.value) return;
+      try {
+        const r = await rpc('avoid_report_save', Object.assign({ p_token: state.token, p_id: null }, res.value));
+        if (!r || !r.success) throw new Error((r && r.message) || 'ส่งไม่สำเร็จ');
+        Swal.fire({ icon:'success', title:'ส่งรายงานแล้ว', text:r.message, timer:2600, showConfirmButton:false });
+        arRefreshBadge();
+      } catch (e) { rpcAlert(e, 'ส่งรายงานไม่สำเร็จ'); }
+    }
+
+    /* จุดแดงบนเมนู บอกว่ามีร่างรออยู่
+       เรียกได้เฉพาะแอดมิน คนอื่นเรียกแล้วถูกปฏิเสธ จึงเงียบไปเฉย ๆ ไม่เด้ง error */
+    async function arRefreshBadge() {
+      const dot = document.getElementById('avoidNavDot');
+      if (!dot || !(state.user && state.user.isAdmin)) return;
+      try {
+        const r = await rpc('avoid_report_list', { p_token: state.token });
+        if (!r || !r.success) return;
+        state.arRows = r.rows || [];
+        dot.classList.toggle('on', (r.pending || 0) > 0);
+        arRenderReview();
+      } catch (e) { /* เงียบไว้ ไม่ให้จุดแดงพังทั้งหน้า */ }
+    }
+
+    function arRenderReview() {
+      const card = document.getElementById('arReviewCard');
+      const list = document.getElementById('arReviewList');
+      if (!card || !list) return;
+      const rows = state.arRows || [];
+      document.getElementById('arPendingPill').textContent = rows.length + ' ร่าง';
+      card.style.display = rows.length ? '' : 'none';
+      if (!rows.length) { list.innerHTML = ''; return; }
+      list.innerHTML = rows.map(r =>
+        '<div style="border:1px solid #f3d3d9;border-radius:14px;padding:14px;margin-bottom:14px;background:#fffafa">' +
+        '<div class="hint" style="margin:0 0 10px">ส่งโดย <b>' + escapeHtml(r.created_by || '-') + '</b> · ' +
+          escapeHtml(new Date(r.created_at).toLocaleString('th-TH', { timeZone:'Asia/Bangkok', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })) + ' น.</div>' +
+        arFieldsHtml('ar' + r.id, r) +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">' +
+        '<button class="btn" type="button" onclick="arPublish(' + r.id + ')" style="background:linear-gradient(135deg,#e07000,#c24e00);color:#fff"><i class="fa-solid fa-bullhorn"></i> ประกาศขึ้นหน้าเว็บ</button>' +
+        '<button class="btn btn-soft" type="button" onclick="arSaveDraft(' + r.id + ')"><i class="fa-solid fa-floppy-disk"></i> บันทึกร่าง</button>' +
+        '<button class="btn btn-outline" type="button" style="color:#c1122f" onclick="arReject(' + r.id + ')"><i class="fa-solid fa-xmark"></i> ทิ้งร่าง</button>' +
+        '</div></div>').join('');
+    }
+
+    async function arSaveDraft(id) {
+      const v = arRead('ar' + id); if (!v) return;
+      try {
+        const r = await rpc('avoid_report_save', Object.assign({ p_token: state.token, p_id: id }, v));
+        if (!r || !r.success) throw new Error((r && r.message) || 'บันทึกไม่สำเร็จ');
+        Swal.fire({ icon:'success', title:r.message, timer:1600, showConfirmButton:false });
+        arRefreshBadge();
+      } catch (e) { rpcAlert(e, 'บันทึกร่างไม่สำเร็จ'); }
+    }
+
+    async function arPublish(id) {
+      // บันทึกสิ่งที่แก้ไว้ก่อนเสมอ ไม่งั้นข้อความที่ออกไปจะเป็นของเดิมที่ยังไม่ได้แก้
+      const v = arRead('ar' + id); if (!v) return;
+      const ask = await Swal.fire({
+        icon:'warning', title:'ประกาศขึ้นหน้าเว็บและแจ้งเข้าไลน์',
+        html:'<div style="text-align:left;font-size:.9rem;line-height:1.7">' +
+             'ประกาศจะขึ้นหน้าประชาชนทันที และบอทจะส่งข้อความเข้ากลุ่มไลน์<br>' +
+             '<b style="color:#c1122f">ส่งเข้ากลุ่มแล้วเรียกคืนไม่ได้</b> ตรวจข้อความให้ถูกต้องก่อน</div>' +
+             '<div style="margin-top:12px;text-align:left"><label class="hint">ประกาศนานกี่ชั่วโมง</label>' +
+             '<input id="arHours" class="input" type="number" min="1" max="72" value="6"></div>',
+        showCancelButton:true, confirmButtonText:'ประกาศเลย', cancelButtonText:'ยกเลิก',
+        confirmButtonColor:'#c24e00',
+        preConfirm: () => Math.max(1, Math.min(72, Number(document.getElementById('arHours').value) || 6))
+      });
+      if (!ask.isConfirmed) return;
+      try {
+        const s = await rpc('avoid_report_save', Object.assign({ p_token: state.token, p_id: id }, v));
+        if (!s || !s.success) throw new Error((s && s.message) || 'บันทึกก่อนประกาศไม่สำเร็จ');
+        const r = await rpc('avoid_report_publish', { p_token: state.token, p_id: id, p_hours: ask.value });
+        if (!r || !r.success) throw new Error((r && r.message) || 'ประกาศไม่สำเร็จ');
+        Swal.fire({ icon: r.sent > 0 ? 'success' : 'warning', title:'ประกาศแล้ว', text:r.message });
+        arRefreshBadge();
+        loadAdvisories();
+      } catch (e) { rpcAlert(e, 'ประกาศไม่สำเร็จ'); }
+    }
+
+    async function arReject(id) {
+      const ask = await Swal.fire({ icon:'question', title:'ทิ้งร่างนี้',
+        text:'ร่างจะไม่ถูกประกาศ แต่ยังเก็บไว้ดูย้อนหลังได้',
+        showCancelButton:true, confirmButtonText:'ทิ้ง', cancelButtonText:'ยกเลิก', confirmButtonColor:'#c1122f' });
+      if (!ask.isConfirmed) return;
+      try {
+        const r = await rpc('avoid_report_reject', { p_token: state.token, p_id: id });
+        if (!r || !r.success) throw new Error((r && r.message) || 'ทำรายการไม่สำเร็จ');
+        Swal.fire({ icon:'success', title:r.message, timer:1600, showConfirmButton:false });
+        arRefreshBadge();
+      } catch (e) { rpcAlert(e, 'ทิ้งร่างไม่สำเร็จ'); }
+    }
+
     /* ============ ประกาศจุดหลีกเลี่ยง (admin) ============ */
     const AVOID_KINDS = { work:'ก่อสร้าง/ซ่อมทาง', close:'ปิดถนน', event:'ขบวน/กิจกรรม', flood:'น้ำท่วม', other:'อื่นๆ' };
     const AVOID_ICONS = { work:'fa-person-digging', close:'fa-road-barrier', event:'fa-flag', flood:'fa-water', other:'fa-circle-exclamation' };
@@ -5663,6 +5888,7 @@
       }
       if (!document.getElementById('avStarts').value) resetAvoidForm();
       loadAdvisories();
+      arRefreshBadge();   // ร่างจากหน้างานอยู่ในหน้านี้ด้วย ต้องดึงมาพร้อมกัน
     }
 
     function resetAvoidForm() {
@@ -9295,6 +9521,7 @@
       showRegister, showLogin, logout, toggleDrawer, openPage,
       avOpenMapPicker, avUseCurrentLocation, avQuickDays, resetAvoidForm, saveAdvisory,
       loadAdvisories, editAdvisory, closeAdvisory, deleteAdvisory, avRemoveImage,
+      arOpenForm, arUseGps, arPublish, arSaveDraft, arReject,
       openLocationPicker, closeLocationPicker, useCurrentLocation, confirmLocation,
       resetAccidentForm, loadMapData, removeImage, focusMapMarker, loadHomeStats, loadDashboard,
       setMapFilter, loadAdminList, setApproval,
