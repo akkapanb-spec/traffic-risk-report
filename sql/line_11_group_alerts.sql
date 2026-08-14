@@ -9,7 +9,7 @@
 --   1) การแจ้งอัตโนมัติทุกชนิด ส่งเข้าเฉพาะ "กลุ่ม" ไม่ส่งหาแชทส่วนตัว
 --   2) ปิดช่องโหว่: อุบัติเหตุที่บันทึกผ่านฟอร์มไม่เคยระบุว่าตายที่เกิดเหตุหรือที่ รพ.
 --   3) แจ้งผู้เสียชีวิต เฉพาะที่เสียชีวิตในที่เกิดเหตุเท่านั้น
---   4) แจ้งจุดสะสมอุบัติเหตุรายเดือน ช่องกว้าง 100 ม.
+--   4) แจ้งจุดสะสมอุบัติเหตุรายเดือน ช่องกว้าง 100 ม. ทันทีที่ถึงเกณฑ์
 -- ============================================================
 
 set search_path = public, extensions;
@@ -244,8 +244,12 @@ revoke execute on function line_send_new_deaths(int) from public, anon, authenti
 --   จึงใช้จำนวนครั้งตายตัวแทน แก้ตัวเลขได้ที่ bs_settings คีย์ hotspotMinPerMonth
 --
 --   วัดจากของจริง: เดือน ส.ค. 2569 มี 55 อุบัติเหตุ ช่องหนาสุดได้ 3 ครั้ง
---   ตั้งไว้ที่ 3 จึงเตือนราวเดือนละจุด ไม่ใช่เดือนละสิบจุดจนคนเลิกอ่าน
-insert into bs_settings(key, val) values ('hotspotMinPerMonth', '3'::jsonb)
+--   ตั้งไว้ที่ 4 คือสูงกว่าที่เคยเกิดจริงในเดือนนี้หนึ่งขั้น
+--   จุดที่ถึงเกณฑ์จึงเป็นจุดที่หนักผิดปกติจริง ๆ ไม่ใช่จุดที่บังเอิญมีรถชนสองสามครั้ง
+--
+-- on conflict do nothing — รันไฟล์ซ้ำจะไม่ทับค่าที่ปรับด้วยมือไว้แล้ว
+-- อยากเปลี่ยนทีหลังใช้ update ตามท้ายไฟล์
+insert into bs_settings(key, val) values ('hotspotMinPerMonth', '4'::jsonb)
 on conflict (key) do nothing;
 
 create or replace function line_send_hotspots()
@@ -263,7 +267,7 @@ declare
   v_sent int := 0;
   v_found int := 0;
 begin
-  v_min  := coalesce((select (val#>>'{}')::int from bs_settings where key = 'hotspotMinPerMonth'), 3);
+  v_min  := coalesce((select (val#>>'{}')::int from bs_settings where key = 'hotspotMinPerMonth'), 4);
   v_from := date_trunc('month', timezone('Asia/Bangkok', now()));
   v_to   := now();
   v_month := to_char(v_from, 'YYYY-MM');
@@ -331,13 +335,19 @@ revoke execute on function line_send_hotspots() from public, anon, authenticated
 -- 5) ตั้งเวลาเดิน
 -- ============================================================
 -- ผู้เสียชีวิต: ทุก 5 นาทีตามเดิม ตารางเดิมยังอยู่ ไม่ต้องตั้งใหม่
--- จุดสะสม: วันละครั้ง 08:00 น. ไทย = 01:00 UTC
---   ไม่ต้องถี่กว่านี้ จุดสะสมทั้งเดือนไม่ได้เปลี่ยนทุกชั่วโมง
---   และแจ้งตอนเช้าคนอ่านทัน ไม่ใช่เด้งตอนตีสาม
+--
+-- จุดสะสม: ทุก 5 นาทีเช่นกัน — แจ้งทันทีที่จุดไหนถึงเกณฑ์ ไม่รอรอบเช้า
+--   เดินถี่แบบนี้ไม่ได้ส่งถี่ตาม เพราะกุญแจกันส่งซ้ำคุมไว้อยู่
+--   จุดหนึ่งในเดือนหนึ่งส่งได้ครั้งเดียว รอบที่เหลือเจอแล้วเงียบ
+--
+--   ราคาที่จ่ายคือคิวรีทุก 5 นาที ซึ่งเบามาก เพราะนับเฉพาะเดือนปัจจุบัน
+--   เดือนนี้มี 55 จุด ไม่ใช่พันกว่าจุดแบบหน้าแผนที่ทั้งปี
+--   และมี index บนตารางชั่วคราวเหมือน geo_density
+--
 -- ถอนของเดิมก่อนถ้ามี ใช้ท่าเดียวกับ line_6_no_daily.sql ที่รันผ่านมาแล้ว
 -- คืน 0 แถวถ้ายังไม่เคยตั้ง ไม่ error
 select cron.unschedule(jobname) from cron.job where jobname = 'line-hotspot';
-select cron.schedule('line-hotspot', '0 1 * * *', 'select line_send_hotspots();');
+select cron.schedule('line-hotspot', '*/5 * * * *', 'select line_send_hotspots();');
 
 -- ============================================================
 -- ตรวจผลหลังรัน
@@ -352,8 +362,11 @@ select cron.schedule('line-hotspot', '0 1 * * *', 'select line_send_hotspots();'
 --   select ref_id, detail, sent_at from line_sent
 --    where kind = 'death' and target_id = 'SKIP' order by sent_at desc limit 10;
 --
--- งาน cron ที่เดินอยู่
+-- งาน cron ที่เดินอยู่ — line-hotspot กับ line-new-deaths ต้องเป็น */5 * * * *
 --   select jobname, schedule, active from cron.job order by jobname;
+--
+-- เปลี่ยนเกณฑ์จุดสะสมทีหลัง (มีผลรอบถัดไปทันที ไม่ต้องรันไฟล์ใหม่)
+--   update bs_settings set val = '3'::jsonb, updated_at = now() where key = 'hotspotMinPerMonth';
 --
 -- *** ระวัง: คำสั่งข้างล่างส่งเข้าไลน์จริง ไม่ใช่การทดลอง ***
 --   select line_send_hotspots();
