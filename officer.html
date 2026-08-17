@@ -6044,6 +6044,18 @@
       }
     }
 
+    /* ช่วงความไม่แน่นอนของ "เสี่ยงกว่ากี่เท่า" (ราว 95%)
+       เหตุการณ์แบบนับครั้ง ยิ่งนับได้น้อยยิ่งแกว่ง — 6 ครั้งแกว่งได้เกือบเท่าตัว
+       ใช้สูตรมาตรฐานบนสเกลลอการิทึม ค่าคลาดเคลื่อน = รากที่สองของ (1/a + 1/b)
+       เป็นค่าประมาณ ไม่ใช่ค่าที่แม่นที่สุด แต่เพียงพอจะบอกว่า "ยังบอกไม่ได้" หรือ "ต่างจริง"
+       คืน null เมื่อฝั่งใดฝั่งหนึ่งเป็นศูนย์ เพราะคำนวณอัตราส่วนไม่ได้ */
+    function wxRatioCI(a, aHours, b, bHours) {
+      if (!a || !b || !aHours || !bHours) return null;
+      const rr = (a / aHours) / (b / bHours);
+      const se = Math.sqrt(1 / a + 1 / b);
+      return { rr, lo: rr * Math.exp(-1.96 * se), hi: rr * Math.exp(1.96 * se) };
+    }
+
     function wxRenderFirstRain(r) {
       // รับได้ทั้งรูปแบบเดิม (object) และรูปแบบใหม่จาก weather_3_fix.sql (array)
       const s = r.states || Object.fromEntries((r.rows || []).map(x => [x.state, x]));
@@ -6055,31 +6067,48 @@
       // ไม่ใช่เทียบกับแห้ง ซึ่งรู้อยู่แล้วว่าฝนเสี่ยงกว่าแห้ง
       const vs = (first.rate != null && rain.rate != null && rain.rate > 0)
         ? +(first.rate / rain.rate).toFixed(2) : null;
+      // ช่วงที่ค่าจริงน่าจะอยู่ ถ้าคร่อม 1 แปลว่ายังแยกไม่ออกจากความบังเอิญ
+      const ci = wxRatioCI(first.acc, first.hours, rain.acc, rain.hours);
 
-      /* เกณฑ์ว่าข้อมูลพอสรุปหรือยัง ต้องวัดจาก "จำนวนเหตุการณ์ที่คาดว่าจะเกิด"
-         ไม่ใช่จำนวนชั่วโมง — เดิมผมตั้งไว้ที่ 30 ชั่วโมงซึ่งผิดหน่วย
-         ทำให้ 124 ชั่วโมงที่มีอุบัติเหตุ 0 ครั้งถูกสรุปว่า "ตรงข้ามกับสมมติฐาน"
-         ทั้งที่ 124 ชั่วโมงคาดว่าจะเกิดแค่ราว 2 ครั้ง การเจอ 0 จึงไม่แปลกเลย
+      /* ตัดสินจากช่วงความไม่แน่นอน ไม่ใช่จากตัวเลขกลางอย่างเดียว
 
-         ต้องคาดว่าจะเกิดอย่างน้อย 5 ครั้ง ถึงจะเริ่มแยกออกว่าต่างจริงหรือบังเอิญ */
-      const BSP_MIN_EXPECTED = 5;
-      const expected = (rain.rate != null && first.hours)
-        ? (first.hours * rain.rate / 1000) : 0;
-      const enough = expected >= BSP_MIN_EXPECTED;
+         เดิมใช้เกณฑ์ "คาดว่าจะเกิดอย่างน้อย 5 ครั้ง" ซึ่งยังหลวมเกินไป
+         ข้อมูลจริง 3 ปีได้ฝนแรก 6 ครั้ง เทียบกับที่คาดไว้ 7.5 ครั้ง
+         ต่างกันแค่ระดับที่ความบังเอิญทำได้ แต่ระบบกลับประกาศว่า "ตรงข้ามกับสมมติฐาน"
 
-      let verdict, color;
-      if (!enough) {
-        // บอกด้วยว่าต้องมีอีกเท่าไหร่ถึงจะพอ จะได้รู้ว่าต้องดึงข้อมูลย้อนหลังแค่ไหน
-        const need = rain.rate ? Math.ceil(BSP_MIN_EXPECTED / (rain.rate / 1000)) : null;
-        verdict = 'ยังสรุปไม่ได้ — ฝนแรกมี ' + n(first.hours) + ' ชม. ซึ่งคาดว่าจะเกิดอุบัติเหตุแค่ราว ' +
-          expected.toFixed(1) + ' ครั้ง เจอ ' + n(first.acc) + ' ครั้งจึงยังบอกอะไรไม่ได้' +
-          (need ? ' · ต้องมีราว ' + n(need) + ' ชม. ขึ้นไป' : '');
+         การไล่ขยับตัวเลขเกณฑ์ไปเรื่อย ๆ แก้ปัญหาไม่ตรงจุด
+         ปัญหาคือแสดงตัวเลขกลางตัวเดียวโดยไม่บอกว่ามันแกว่งได้แค่ไหน
+         จึงเปลี่ยนมาบอกช่วง ถ้าช่วงนั้นคร่อม 1 = ยังแยกไม่ออกจากความบังเอิญ */
+      let verdict, color, detail = '';
+      // ศูนย์ครั้งไม่ใช่ "ปลอดภัย" — ต้องดูว่าที่อัตราปกติควรเกิดกี่ครั้ง
+      // ถ้าควรเกิด 3 ครั้งแล้วเจอ 0 นั่นคือเรื่องปกติของเลขน้อย ไม่ใช่การค้นพบ
+      if (!first.acc && first.hours && rain.rate) {
+        const exp = first.hours * rain.rate / 1000;
+        verdict = 'ยังสรุปไม่ได้ — ฝนแรกไม่มีอุบัติเหตุเลย แต่ที่อัตราปกติควรเกิดแค่ราว ' +
+                  exp.toFixed(1) + ' ครั้ง';
         color = '#64748b';
+        detail = 'เจอ 0 ทั้งที่คาดว่าจะเจอ ' + exp.toFixed(1) + ' เป็นเรื่องที่เกิดขึ้นเองได้บ่อย ' +
+                 'ยังไม่ใช่หลักฐานว่าฝนแรกปลอดภัย · ต้องมีราว ' +
+                 n(Math.ceil(25 / (rain.rate / 1000))) + ' ชม. ขึ้นไปถึงจะเริ่มตอบได้';
       }
-      else if (vs == null) { verdict = 'ข้อมูลไม่พอเปรียบเทียบ'; color = '#64748b'; }
-      else if (vs >= 1.2)  { verdict = 'สนับสนุนสมมติฐาน — ฝนแรกเสี่ยงกว่าฝนต่อเนื่อง ' + vs + ' เท่า'; color = '#c1122f'; }
-      else if (vs <= 0.83) { verdict = 'ตรงข้ามกับสมมติฐาน — ฝนแรกเสี่ยงน้อยกว่าฝนต่อเนื่อง (' + vs + ' เท่า)'; color = '#0f7a47'; }
-      else                 { verdict = 'ไม่พบความต่างชัดเจน (' + vs + ' เท่า) — ฝนแรกกับฝนต่อเนื่องพอ ๆ กัน'; color = '#c24e00'; }
+      else if (vs == null || !ci) { verdict = 'ข้อมูลไม่พอเปรียบเทียบ'; color = '#64748b'; }
+      else if (ci.lo <= 1 && ci.hi >= 1) {
+        verdict = 'ยังสรุปไม่ได้ — ต่างกัน ' + vs + ' เท่า แต่ช่วงที่เป็นไปได้คือ ' +
+                  ci.lo.toFixed(2) + ' ถึง ' + ci.hi.toFixed(2) + ' เท่า ซึ่งคร่อม 1';
+        color = '#64748b';
+        detail = 'ฝนแรกมีอุบัติเหตุแค่ ' + n(first.acc) + ' ครั้ง — น้อยเกินกว่าจะแยกความต่างจริงออกจากความบังเอิญ ' +
+                 'ต้องมีราว ' + n(Math.ceil(25 / (rain.rate / 1000))) + ' ชม. ขึ้นไปถึงจะเริ่มตอบได้';
+      }
+      else if (ci.lo > 1) {
+        verdict = 'สนับสนุนสมมติฐาน — ฝนแรกเสี่ยงกว่าฝนต่อเนื่อง ' + vs + ' เท่า';
+        color = '#c1122f';
+        detail = 'ช่วงที่เป็นไปได้ ' + ci.lo.toFixed(2) + ' ถึง ' + ci.hi.toFixed(2) + ' เท่า ซึ่งสูงกว่า 1 ทั้งช่วง';
+      }
+      else {
+        verdict = 'ตรงข้ามกับสมมติฐาน — ฝนแรกเสี่ยงน้อยกว่าฝนต่อเนื่อง ' + vs + ' เท่า';
+        color = '#0f7a47';
+        detail = 'ช่วงที่เป็นไปได้ ' + ci.lo.toFixed(2) + ' ถึง ' + ci.hi.toFixed(2) + ' เท่า ซึ่งต่ำกว่า 1 ทั้งช่วง';
+      }
 
       const row = (label, o, hl) =>
         '<tr' + (hl ? ' style="background:#fff5f6"' : '') + '><td>' + label + '</td>' +
@@ -6088,7 +6117,8 @@
 
       document.getElementById('wxFirstResult').innerHTML =
         '<div style="border:2px solid ' + color + ';border-radius:16px;padding:16px;margin-bottom:14px;background:#fbfdff">' +
-        '<div style="font-size:1.05rem;font-weight:800;color:' + color + '">' + escapeHtml(verdict) + '</div></div>' +
+        '<div style="font-size:1.05rem;font-weight:800;color:' + color + '">' + escapeHtml(verdict) + '</div>' +
+        (detail ? '<div class="hint" style="margin-top:8px">' + escapeHtml(detail) + '</div>' : '') + '</div>' +
         '<div class="table-wrap"><table class="table"><thead><tr>' +
         '<th>สถานะถนน</th><th>ชั่วโมง</th><th>อุบัติเหตุ</th><th>ครั้ง/พันชั่วโมง</th></tr></thead><tbody>' +
         row('แห้ง', dry, false) +
