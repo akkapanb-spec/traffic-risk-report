@@ -6045,7 +6045,8 @@
     }
 
     function wxRenderFirstRain(r) {
-      const s = r.states || {};
+      // รับได้ทั้งรูปแบบเดิม (object) และรูปแบบใหม่จาก weather_3_fix.sql (array)
+      const s = r.states || Object.fromEntries((r.rows || []).map(x => [x.state, x]));
       const g = k => s[k] || { hours: 0, acc: 0, rate: null };
       const dry = g('dry'), first = g('first'), rain = g('rain');
       const n = v => v == null ? '-' : Number(v).toLocaleString('th-TH');
