@@ -5864,12 +5864,15 @@
       const t = r.total || {};
       const n = v => v == null ? '-' : Number(v).toLocaleString('th-TH');
       // ตัวเลขเดียวที่ต้องอ่านคือ ratio — ที่เหลือมีไว้ให้ตรวจว่ามาจากไหน
+      // ใช้ช่วงความไม่แน่นอนตัดสิน แบบเดียวกับการ์ดฝนแรก
+      // ถ้าช่วงคร่อม 1 แปลว่ายังแยกไม่ออกจากความบังเอิญ ไม่ว่าตัวเลขกลางจะดูสวยแค่ไหน
       const ratio = t.ratio;
-      const verdict = ratio == null ? 'ข้อมูลยังไม่พอสรุป'
-        : ratio >= 1.15 ? 'ฝนตกเสี่ยงกว่าตอนแห้ง ' + ratio + ' เท่า'
-        : ratio <= 0.85 ? 'ตอนฝนตกเกิดอุบัติเหตุน้อยกว่าตอนแห้ง (' + ratio + ' เท่า)'
-        : 'ฝนไม่ได้เพิ่มความเสี่ยงอย่างมีนัย (' + ratio + ' เท่า)';
-      const color = ratio == null ? '#64748b' : ratio >= 1.15 ? '#c1122f' : ratio <= 0.85 ? '#0f7a47' : '#c24e00';
+      const tci = wxRatioCI(t.wet_acc, t.wet_hours, t.dry_acc, t.dry_hours);
+      let verdict, color;
+      if (ratio == null || !tci) { verdict = 'ข้อมูลยังไม่พอสรุป'; color = '#64748b'; }
+      else if (!tci.weak && tci.lo > 1) { verdict = 'ฝนตกเสี่ยงกว่าตอนแห้ง ' + ratio + ' เท่า'; color = '#c1122f'; }
+      else if (!tci.weak && tci.hi < 1) { verdict = 'ตอนฝนตกเกิดอุบัติเหตุน้อยกว่าตอนแห้ง (' + ratio + ' เท่า)'; color = '#0f7a47'; }
+      else { verdict = 'ยังสรุปไม่ได้ — ต่างกัน ' + ratio + ' เท่า แต่ช่วงที่เป็นไปได้คร่อม 1'; color = '#64748b'; }
 
       document.getElementById('wxResult').innerHTML =
         '<div style="border:2px solid ' + color + ';border-radius:16px;padding:18px;margin-bottom:16px;background:#fbfdff">' +
@@ -5881,12 +5884,22 @@
         '<div class="table-wrap"><table class="table"><thead><tr>' +
         '<th>ตำบล</th><th>ชม.ฝนตก</th><th>อุบัติเหตุ</th><th>อัตรา</th>' +
         '<th>ชม.แห้ง</th><th>อุบัติเหตุ</th><th>อัตรา</th><th>เสี่ยงกว่า</th></tr></thead><tbody>' +
-        (r.zones || []).map(z =>
-          '<tr><td>' + escapeHtml(z.name || z.zone_code) + '</td>' +
-          '<td>' + n(z.wet_hours) + '</td><td>' + n(z.wet_acc) + '</td><td><b>' + n(z.wet_rate) + '</b></td>' +
-          '<td>' + n(z.dry_hours) + '</td><td>' + n(z.dry_acc) + '</td><td><b>' + n(z.dry_rate) + '</b></td>' +
-          '<td>' + (z.ratio == null ? '-' : '<b style="color:' + (z.ratio >= 1.15 ? '#c1122f' : '#0f7a47') + '">' + z.ratio + ' เท่า</b>') + '</td></tr>'
-        ).join('') + '</tbody></table></div>' +
+        (r.zones || []).map(z => {
+          /* ตัวเลข "เสี่ยงกว่า" รายตำบลส่วนใหญ่ยืนบนอุบัติเหตุไม่กี่ครั้ง
+             เช่น 3 ครั้งตอนฝน เทียบ 4 ครั้งตอนแห้ง ได้ 16.83 เท่า ซึ่งดูน่าตกใจมาก
+             แต่ถ้าบังเอิญมีอีกครั้งเดียวตัวเลขจะเปลี่ยนไปครึ่งหนึ่ง — เป็นเสียงรบกวน
+             จึงแสดงเป็นตัวเลขเข้มเฉพาะตำบลที่ช่วงความไม่แน่นอนไม่คร่อม 1 */
+          const zci = wxRatioCI(z.wet_acc, z.wet_hours, z.dry_acc, z.dry_hours);
+          const solid = zci && !zci.weak && (zci.lo > 1 || zci.hi < 1);
+          const cell = z.ratio == null ? '-'
+            : solid ? '<b style="color:' + (z.ratio >= 1 ? '#c1122f' : '#0f7a47') + '">' + z.ratio + ' เท่า</b>'
+            : '<span style="color:#94a3b8" title="อุบัติเหตุน้อยเกินกว่าจะแยกจากความบังเอิญ">' +
+              z.ratio + ' เท่า · ยังไม่ชัด</span>';
+          return '<tr><td>' + escapeHtml(z.name || z.zone_code) + '</td>' +
+            '<td>' + n(z.wet_hours) + '</td><td>' + n(z.wet_acc) + '</td><td><b>' + n(z.wet_rate) + '</b></td>' +
+            '<td>' + n(z.dry_hours) + '</td><td>' + n(z.dry_acc) + '</td><td><b>' + n(z.dry_rate) + '</b></td>' +
+            '<td>' + cell + '</td></tr>';
+        }).join('') + '</tbody></table></div>' +
         '<p class="hint" style="margin-top:12px">อัตรา = ครั้งต่อ 1,000 ชั่วโมง · ' +
         'เทียบอัตราต่อชั่วโมงไม่ใช่สัดส่วนจำนวนเคส เพราะฝนตกกินเวลาไปแล้วส่วนหนึ่งของทั้งปี ' +
         'ถ้าดูแค่ว่ากี่เปอร์เซ็นต์ของอุบัติเหตุเกิดตอนฝนตก จะสรุปเกินจริงเสมอ</p>';
@@ -6056,7 +6069,13 @@
       if (!a || !b || !aHours || !bHours) return null;
       const rr = (a / aHours) / (b / bHours);
       const se = Math.sqrt(1 / a + 1 / b);
-      return { rr, lo: rr * Math.exp(-1.96 * se), hi: rr * Math.exp(1.96 * se) };
+      /* weak = สูตรนี้เชื่อไม่ได้เพราะนับได้น้อยเกินไป
+         ค่าประมาณแบบลอการิทึมต้องการราว 10 ครั้งต่อฝั่งขึ้นไป
+         ต่ำกว่านั้นช่วงที่คำนวณได้จะแคบกว่าความจริง แล้วบอกว่า "ต่างจริง" ทั้งที่ไม่ใช่
+         ตัวอย่างจริง: หนองกรด 3 ครั้งตอนฝน เทียบ 4 ครั้งตอนแห้ง ได้ 16.83 เท่า
+         ซึ่งสูตรบอกว่าชัดเจน ทั้งที่ต่างกันแค่ครั้งเดียวก็พลิกแล้ว */
+      return { rr, lo: rr * Math.exp(-1.96 * se), hi: rr * Math.exp(1.96 * se),
+               weak: Math.min(a, b) < 10 };
     }
 
     function wxRenderFirstRain(r) {
@@ -6095,7 +6114,7 @@
                  n(Math.ceil(25 / (rain.rate / 1000))) + ' ชม. ขึ้นไปถึงจะเริ่มตอบได้';
       }
       else if (vs == null || !ci) { verdict = 'ข้อมูลไม่พอเปรียบเทียบ'; color = '#64748b'; }
-      else if (ci.lo <= 1 && ci.hi >= 1) {
+      else if (ci.weak || (ci.lo <= 1 && ci.hi >= 1)) {
         verdict = 'ยังสรุปไม่ได้ — ต่างกัน ' + vs + ' เท่า แต่ช่วงที่เป็นไปได้คือ ' +
                   ci.lo.toFixed(2) + ' ถึง ' + ci.hi.toFixed(2) + ' เท่า ซึ่งคร่อม 1';
         color = '#64748b';
