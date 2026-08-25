@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ทดสอบฉาก</title>
+<style>
+  body{background:#223;margin:0;padding:14px;font-family:'Leelawadee UI',Tahoma,sans-serif}
+  .row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:900px;margin:auto}
+  .box{background:#fff;border-radius:12px;overflow:hidden}
+  .cap{color:#fff;font-size:13px;padding:6px 8px 2px}
+  svg{display:block;width:100%;height:auto}
+  .dash{transform-box:fill-box;transform-origin:50% 0;animation:flow 1.5s linear infinite}
+  .dash.still{animation:none}
+  @keyframes flow{from{transform:translateY(0) scale(.5);opacity:.3}to{transform:translateY(96px) scale(4.6);opacity:1}}
+  .rainfall{animation:rainmove .5s linear infinite}
+  @keyframes rainmove{to{transform:translate(-9px,30px)}}
+  .blink{animation:bl .8s steps(1) infinite}
+  @keyframes bl{50%{opacity:.15}}
+</style>
+</head>
+<body>
+<div class="row" id="row"></div>
+<script src="scene-art.js"></script>
+<script>
+var arts = ['junction','rain','helmet','uturn','drowsy','truck','drink','amber'];
+document.getElementById('row').innerHTML = arts.map(function (a) {
+  return '<div><div class="cap">' + a + '</div><div class="box">' + sceneSVG(a) + '</div></div>';
+}).join('');
+</script>
+</body>
+</html>

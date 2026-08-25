@@ -1,0 +1,30 @@
+<!doctype html><meta charset="utf-8">
+<style>
+  /* ริชเมนูแบบสูง 6 ช่องเท่ากัน ใช้โปสเตอร์ชุดใหม่ที่แก้เบอร์ในภาพแล้ว
+     ตัดออกมาจากภาพรวมที่ส่งมา ช่องละ 418x498
+
+     ใช้ contain ไม่ใช่ cover เพราะสัดส่วนของโปสเตอร์กับช่องไม่เท่ากัน
+     ถ้าใช้ cover จะโดนตัดหัวท้ายไปราว 15 เปอร์เซ็นต์ ซึ่งกินหัวเรื่องของโปสเตอร์
+     ยอมให้มีขอบสีกรมท่าด้านข้างแทน ดีกว่าตัดเนื้อหาทิ้ง */
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:2500px;height:1686px;overflow:hidden}
+  body{font-family:'Leelawadee UI','Tahoma',sans-serif;background:#0b1f3a}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);
+        width:2500px;height:1686px;gap:6px;background:#0b1f3a}
+  .cell{position:relative;overflow:hidden;background:#0b1f3a}
+  .cell img{width:100%;height:100%;object-fit:contain;display:block}
+  .bar{position:absolute;left:0;right:0;bottom:0;height:172px;
+       background:rgba(7,17,38,.93);border-top:4px solid rgba(255,255,255,.22);
+       display:flex;align-items:center;justify-content:center}
+  .lbl{color:#fff;font-size:88px;font-weight:700;text-align:center;line-height:1.1;
+       text-shadow:0 4px 18px rgba(0,0,0,.95)}
+  .sm{font-size:72px}
+</style>
+<div class="grid">
+  <div class="cell"><img src="src/n1.png"><div class="bar"><div class="lbl">เข้ากลุ่มไลน์</div></div></div>
+  <div class="cell"><img src="src/n2.png"><div class="bar"><div class="lbl">แจ้งจุดเสี่ยง</div></div></div>
+  <div class="cell"><img src="src/n3.png"><div class="bar"><div class="lbl">สถิติอุบัติเหตุ</div></div></div>
+  <div class="cell"><img src="src/n4.png"><div class="bar"><div class="lbl">ตรวจสอบใบสั่ง</div></div></div>
+  <div class="cell"><img src="src/n5.png"><div class="bar"><div class="lbl sm">สาระดีๆ ขับขี่ปลอดภัย</div></div></div>
+  <div class="cell"><img src="src/n6.png"><div class="bar"><div class="lbl">โทรแจ้งเหตุ</div></div></div>
+</div>

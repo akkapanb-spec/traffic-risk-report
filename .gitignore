@@ -8,3 +8,14 @@ node_modules/
 .env
 .dev.vars
 Thumbs.db
+
+# Artwork working files — the site only ever loads the compressed .jpg
+# Originals and intermediates are 78 MB against 1.4 MB of shipped images.
+# They are kept locally for re-export; git would carry them in every clone forever.
+assets/scenes/_original/
+assets/richmenu/src/
+assets/scenes/*.png
+assets/richmenu/base.png
+assets/richmenu/menu2.png
+assets/richmenu/richmenu.png
+assets/poster/camp-poster.png

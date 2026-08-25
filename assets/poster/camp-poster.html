@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>โปสเตอร์กิจกรรมแจกหมวกนิรภัย</title>
+<style>
+/* ============================================================
+   โปสเตอร์ประกาศกิจกรรมแจกหมวกนิรภัย
+   งานจราจร สภ.เมืองนครสวรรค์
+   ============================================================
+   ขนาด 1080 x 1350 สัดส่วน 4 ต่อ 5 ซึ่งเป็นสัดส่วนที่กินพื้นที่
+   มากที่สุดในหน้าฟีดของไลน์และเฟซบุ๊กโดยไม่ถูกตัดขอบ
+
+   หลักที่ยึด
+     1 สิ่งที่คนต้องทำต้องเด่นกว่าสิ่งที่คนจะได้
+       โปสเตอร์แจกของส่วนใหญ่ทำของรางวัลใหญ่แล้วซ่อนวิธีร่วมไว้ตัวเล็ก
+       คนเลยสแกนแล้วจบตรงนั้น ไม่รู้ว่าต้องพิมพ์อะไรต่อ
+     2 คำว่า กิจกรรม ต้องเห็นชัดที่สุดรองจากหัวเรื่อง
+       เพราะมันคือขั้นตอนเดียวที่ระบบรอให้คนทำ
+     3 QR อันเดียวพอ ไม่ใส่ QR กลุ่มด้วย
+       เพราะบอทจะส่งลิงก์กลุ่มให้เองหลังจากพิมพ์คำว่ากิจกรรม
+       สอง QR บนใบเดียวทำให้คนลังเลว่าต้องสแกนอันไหนก่อน
+   ============================================================ */
+* { margin:0; padding:0; box-sizing:border-box }
+html, body { width:1080px; height:1350px; overflow:hidden }
+body {
+  font-family:'Leelawadee UI','Tahoma',sans-serif;
+  background:linear-gradient(165deg,#0a1c36 0%,#123163 46%,#0a1c36 100%);
+  color:#fff; position:relative;
+}
+
+/* ลายเส้นถนนจาง ๆ เป็นพื้นหลัง ให้รู้ว่าเป็นเรื่องจราจรตั้งแต่ยังไม่ทันอ่าน */
+.road { position:absolute; inset:0; opacity:.09; overflow:hidden }
+.road .lane {
+  position:absolute; left:-14%; width:128%; height:26px; background:#fff;
+  transform:rotate(-13deg); border-radius:20px;
+}
+
+.wrap { position:relative; height:100%; display:flex; flex-direction:column; padding:52px 62px 0 }
+
+/* ---------- หัวกระดาษ ---------- */
+.top { display:flex; align-items:center; gap:20px; margin-bottom:34px }
+.top img { width:94px; height:94px; object-fit:contain }
+.top h1 { font-size:30px; font-weight:700; line-height:1.28 }
+.top h1 span { display:block; font-size:22px; font-weight:400; color:#a9c4ec }
+
+/* ---------- หัวเรื่อง ---------- */
+.prize { font-size:31px; font-weight:600; color:#ffd76a; letter-spacing:.5px }
+.title { font-size:90px; font-weight:800; line-height:1.02; margin:6px 0 10px }
+.title em { font-style:normal; color:#ffd76a }
+.sub { font-size:32px; color:#cfe0fa; line-height:1.36 }
+
+/* ---------- ขั้นตอน ---------- */
+.steps { margin:26px 0 22px; display:flex; flex-direction:column; gap:12px }
+.step { display:flex; align-items:center; gap:20px; background:rgba(255,255,255,.085);
+        border:1px solid rgba(255,255,255,.16); border-radius:19px; padding:16px 24px }
+.num { flex:0 0 58px; height:58px; border-radius:50%; background:#ffd76a; color:#0a1c36;
+       font-size:32px; font-weight:800; display:flex; align-items:center; justify-content:center }
+.step p { font-size:31px; line-height:1.34 }
+.step p b { color:#ffd76a }
+
+/* ---------- กล่องคำสั่งที่ต้องพิมพ์ ---------- */
+/* ตัวนี้คือหัวใจของใบนี้ ถ้าคนอ่านจำได้อย่างเดียวต้องจำอันนี้ */
+.doit { background:#ffd76a; color:#0a1c36; border-radius:22px; padding:19px 30px;
+        display:flex; align-items:center; gap:26px }
+.doit .lbl { font-size:29px; font-weight:600; line-height:1.3 }
+.doit .word { font-size:76px; font-weight:800; letter-spacing:2px; white-space:nowrap }
+
+/* ---------- ท้ายกระดาษ ---------- */
+.bottom { margin-top:auto; display:flex; align-items:flex-end; gap:34px; padding-bottom:44px }
+.qr { background:#fff; border-radius:20px; padding:16px; flex:0 0 auto }
+.qr img, .qr canvas { display:block; width:212px; height:212px }
+.qrcap { text-align:center; color:#0a1c36; font-size:19px; font-weight:700; margin-top:8px }
+.info { flex:1 }
+.info .line1 { font-size:30px; font-weight:700; color:#ffd76a; margin-bottom:9px }
+.info .line2 { font-size:26px; color:#cfe0fa; line-height:1.5 }
+.deadline { display:inline-block; background:#c1122f; color:#fff; font-size:28px; font-weight:700;
+            padding:11px 24px; border-radius:999px; margin-bottom:14px }
+.phone { margin-top:14px; font-size:25px; color:#9fbbe6 }
+.phone b { color:#fff; font-size:29px }
+</style>
+</head>
+<body>
+
+<div class="road">
+  <div class="lane" style="top:150px"></div>
+  <div class="lane" style="top:520px"></div>
+  <div class="lane" style="top:900px"></div>
+  <div class="lane" style="top:1250px"></div>
+</div>
+
+<div class="wrap">
+
+  <div class="top">
+    <img src="logo.png" alt="">
+    <h1>งานจราจร สถานีตำรวจภูธรเมืองนครสวรรค์<span>ร่วมลดอุบัติเหตุทางถนน</span></h1>
+  </div>
+
+  <div class="prize">🎁 กิจกรรมแจกของรางวัล</div>
+  <div class="title">หมวกนิรภัย<br><em>ฟรี 100 ใบ</em></div>
+  <div class="sub">ชวนเพื่อน 5 คน มาร่วมกลุ่มความปลอดภัยทางถนน<br>รับหมวกนิรภัยฟรี 1 ใบ</div>
+
+  <div class="steps">
+    <div class="step"><div class="num">1</div><p>สแกน QR ด้านล่าง <b>เพิ่มเพื่อน</b> กับบัญชีทางการ</p></div>
+    <div class="step"><div class="num">2</div><p>พิมพ์คำว่า <b>กิจกรรม</b> รับรหัสและลิงก์ชวนเพื่อนของคุณ</p></div>
+    <div class="step"><div class="num">3</div><p>ส่งลิงก์ให้เพื่อน <b>ครบ 5 คน</b> ทั้งเพิ่มเพื่อนและเข้ากลุ่ม</p></div>
+  </div>
+
+  <div class="doit">
+    <div class="lbl">เริ่มเลย<br>พิมพ์คำว่า</div>
+    <div class="word">กิจกรรม</div>
+  </div>
+
+  <div class="bottom">
+    <div>
+      <div class="qr"><div id="qr"></div><div class="qrcap">@690vodvg</div></div>
+    </div>
+    <div class="info">
+      <div class="deadline">ถึง 30 ก.ย. 2569</div>
+      <div class="line1">ของมีจำนวนจำกัด 100 ใบ</div>
+      <div class="line2">ครบเงื่อนไขก่อน ได้รับก่อน<br>ติดต่อรับได้ที่ สภ.เมืองนครสวรรค์</div>
+      <div class="phone">แจ้งเหตุ <b>0-5688-1567</b> ตลอด 24 ชั่วโมง</div>
+    </div>
+  </div>
+
+</div>
+
+<script src="qrcode.js"></script>
+<script>
+/* สร้าง QR ในเครื่องเอง ไม่ส่ง URL ออกไปให้บริการภายนอกวาดให้
+   ระดับแก้ความผิดพลาด H เพราะโปสเตอร์ที่พิมพ์ออกมาอาจมีรอยพับหรือเปื้อน
+   ยังสแกนติดแม้ภาพเสียหายถึงราวสามสิบเปอร์เซ็นต์ */
+var qr = qrcode(0, 'H');
+qr.addData('https://line.me/R/ti/p/@690vodvg');
+qr.make();
+document.getElementById('qr').innerHTML = qr.createImgTag(6, 0);
+var img = document.querySelector('#qr img');
+if (img) { img.style.width = '212px'; img.style.height = '212px'; img.style.imageRendering = 'pixelated'; }
+</script>
+</body>
+</html>

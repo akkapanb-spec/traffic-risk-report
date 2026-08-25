@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ทดสอบการตัดสินใจ | สภ.เมืองนครสวรรค์</title>
+<link rel="icon" href="logo.png">
+<style>
+/* ============================================================
+   เกมตัดสินใจบนถนน — สภ.เมืองนครสวรรค์
+   ============================================================
+   ไฟล์เดียวจบ ไม่มีไลบรารีภายนอก เปิดจากมือถือได้เลย
+   ใช้ชุดสีเดียวกับหน้าประชาชนเพื่อให้รู้ว่าเป็นระบบเดียวกัน
+
+   หลักที่ยึดตอนออกแบบ
+     1 โจทย์มาจากสถิติจริงในพื้นที่ ไม่ใช่คำถามทั่วไปที่หาที่ไหนก็ได้
+       เช่น ผู้เสียชีวิตจากจักรยานยนต์ 50 จาก 62 ราย ไม่สวมหมวก จึงมีข้อว่าด้วยระยะทางสั้น
+     2 ตอบผิดต้องได้เหตุผล ไม่ใช่แค่บอกว่าผิด
+       คนจำเหตุผลได้นานกว่าจำคำตอบ
+     3 ไม่ทำภาพอุบัติเหตุให้ดูสนุก เพราะนี่คือเรื่องที่มีคนตายจริงในพื้นที่นี้
+   ============================================================ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Leelawadee UI','Sarabun',system-ui,sans-serif;background:#eef3f9;color:#0f1f35;
+     min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px}
+.wrap{width:100%;max-width:520px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.top img{width:38px;height:38px;object-fit:contain}
+.top h1{font-size:1.02rem;font-weight:700;line-height:1.2}
+.top span{display:block;font-size:.74rem;font-weight:400;color:#5b6b7f}
+
+.card{background:#fff;border-radius:16px;box-shadow:0 2px 14px rgba(16,40,80,.09);overflow:hidden}
+
+/* ---------- ฉากถนน เส้นแบ่งเลนวิ่งเพื่อให้รู้สึกว่ารถกำลังเคลื่อนที่ ---------- */
+.tag{position:absolute;left:12px;top:12px;background:rgba(7,17,38,.86);color:#fff;
+     font-size:.76rem;padding:5px 12px;border-radius:999px}
+
+.scene{position:relative;height:196px;overflow:hidden;background:#0b1f3a}
+
+/* ---------- คำถามและตัวเลือก ---------- */
+.body{padding:16px}
+.q{font-size:1.06rem;font-weight:700;line-height:1.45;margin-bottom:14px}
+.opt{display:block;width:100%;text-align:right;background:#f4f7fb;border:2px solid #dbe6f4;
+     border-radius:12px;padding:13px 14px;margin-bottom:9px;font:inherit;font-size:.97rem;
+     line-height:1.4;cursor:pointer;transition:.12s}
+.opt:active{transform:scale(.99)}
+.opt.ok{border-color:#16834b;background:#eaf7f0}
+.opt.no{border-color:#c1122f;background:#fdeef1}
+.opt.dim{opacity:.5}
+.opt[disabled]{cursor:default}
+
+.why{border-radius:12px;padding:13px 14px;margin-top:4px;font-size:.93rem;line-height:1.55;display:none}
+.why.show{display:block}
+.why.good{background:#eaf7f0;border:1px solid #bfe3cf}
+.why.bad{background:#fdeef1;border:1px solid #f3c6cf}
+.why b{display:block;margin-bottom:4px;font-size:1rem}
+.fact{margin-top:9px;padding-top:9px;border-top:1px dashed rgba(0,0,0,.16);font-size:.86rem;color:#3d4b60}
+.fact.law + .fact{border-top:0;margin-top:6px;padding-top:0}
+
+.bar{display:flex;align-items:center;gap:10px;padding:11px 16px;background:#f7fafd;border-top:1px solid #e4ecf6}
+/* เล่นรอบละ 20 ข้อ จุดจึงต้องตัดบรรทัดได้ ไม่งั้นบีบปุ่มจนล้นจอมือถือ
+   min-width:0 จำเป็นเพราะ flex item ปกติจะไม่ยอมหดต่ำกว่าความกว้างเนื้อหา */
+.dots{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0;align-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#d2dde9;flex:0 0 8px}
+.count{font-size:.8rem;font-weight:700;color:#5b6b7f;white-space:nowrap}
+.dot.on{background:#1d4ed8}
+.dot.win{background:#16834b}
+.dot.lose{background:#c1122f}
+.btn{border:0;border-radius:11px;padding:11px 20px;font:inherit;font-weight:700;font-size:.95rem;
+     background:#1d4ed8;color:#fff;cursor:pointer}
+.btn:disabled{background:#b9c6d8;cursor:default}
+.btn.ghost{background:#fff;color:#1d4ed8;border:2px solid #1d4ed8}
+
+/* ---------- หน้าสรุป ---------- */
+.sum{padding:22px 18px;text-align:center}
+.score{font-size:2.6rem;font-weight:700;line-height:1}
+.score small{font-size:1rem;font-weight:400;color:#5b6b7f}
+.verdict{margin:10px 0 16px;font-size:1.02rem;line-height:1.5}
+.miss{text-align:right;background:#fff8ec;border:1px solid #f0dcb8;border-radius:12px;
+      padding:12px 14px;margin-bottom:14px;font-size:.9rem;line-height:1.6}
+.miss b{display:block;margin-bottom:6px}
+.miss li{margin-right:18px;margin-bottom:4px}
+.links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.foot{text-align:center;font-size:.76rem;color:#6b7a8d;margin-top:12px;line-height:1.6}
+.scene-svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.clip{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#0b1f3a}
+.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+       transform-origin:50% 62%;animation:push 9s ease-out both}
+@keyframes push{from{transform:scale(1.0)}to{transform:scale(1.14)}}
+.photo.two{animation:push 9s ease-out both,fade 9s ease-in-out both}
+@keyframes fade{0%,42%{opacity:0}58%,100%{opacity:1}}
+.dash{transform-box:fill-box;transform-origin:50% 0;animation:flow 1.5s linear infinite}
+.dash.still{animation:none}
+@keyframes flow{from{transform:translateY(0) scale(.5);opacity:.3}to{transform:translateY(112px) scale(4.6);opacity:1}}
+.rainfall{animation:rainmove .5s linear infinite}
+@keyframes rainmove{to{transform:translate(-10px,34px)}}
+.blink{animation:bl .8s steps(1) infinite}
+@keyframes bl{50%{opacity:.2}}
+@media (prefers-reduced-motion:reduce){.dash,.rainfall,.blink,.photo{animation:none}}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <img src="logo.png" alt="">
+    <h1>ทดสอบการตัดสินใจ<span>สถานการณ์จริงบนถนนนครสวรรค์ · งานจราจร สภ.เมืองนครสวรรค์</span></h1>
+  </div>
+
+  <div class="card" id="play">
+    <div class="scene" id="scene"></div>
+    <div class="body">
+      <div class="q" id="q">กำลังโหลด…</div>
+      <div id="opts"></div>
+      <div class="why" id="why"></div>
+    </div>
+    <div class="bar">
+      <div class="dots" id="dots"></div>
+      <span class="count" id="count"></span>
+      <button class="btn" id="next" disabled>ข้อถัดไป</button>
+    </div>
+  </div>
+
+  <div class="card hidden" id="end">
+    <div class="sum">
+      <div class="score" id="score">0<small> / 0</small></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="miss hidden" id="miss"></div>
+      <div class="links">
+        <button class="btn" id="again">เล่นอีกครั้ง</button>
+        <a class="btn ghost" href="index.html" style="text-decoration:none">กลับหน้าหลัก</a>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">
+    ทุกสถานการณ์อ้างอิงจากลักษณะอุบัติเหตุที่เกิดจริงในพื้นที่<br>
+    สุ่มมาเล่นรอบละ 20 ข้อ จากคลัง 56 ข้อ เล่นซ้ำได้ ไม่ซ้ำชุดเดิม<br>ชวนคนในบ้านเล่นด้วยกันได้
+  </p>
+</div>
+
+<script src="assets/scene-art.js"></script>
+<script src="assets/questions.js"></script>
+<script>
+'use strict';
+/* ============================================================
+   คลังคำถามย้ายไปอยู่ที่ assets/questions.js แล้ว
+   เพราะ 56 ข้อเขียนไว้ในหน้านี้จะยาวเกินกว่าจะแก้ไหว
+   เพิ่มหรือแก้คำถาม ให้ไปแก้ที่ไฟล์นั้นไฟล์เดียว ไม่ต้องแตะไฟล์นี้
+   ============================================================ */
+const SCENES = window.QUESTIONS || [];
+
+/* จำนวนข้อที่หยิบมาเล่นในหนึ่งรอบ
+   สุ่มจากคลังทั้งหมด จึงเล่นซ้ำได้หลายรอบโดยไม่เจอชุดเดิม
+   ถ้าคลังมีน้อยกว่านี้ จะใช้เท่าที่มี */
+const PER_ROUND = 20;
+
+/* ---------- สถานะการเล่น ---------- */
+var order = [], idx = 0, score = 0, missed = [], answered = false;
+
+/* จำชื่อคลิปที่หาไม่เจอไว้ ฉากที่ยังไม่มีวีดิโอจะได้ไม่ถูกยิงซ้ำทุกครั้งที่เล่นวนมาใหม่ */
+var noClip = {};
+
+function $(id) { return document.getElementById(id); }
+
+/* สลับลำดับเพื่อให้เล่นซ้ำแล้วไม่จำเจ และไม่ให้จำได้ว่าข้อถูกอยู่ตำแหน่งเดิมเสมอ */
+function shuffle(a) {
+  var b = a.slice(), i, j, t;
+  for (i = b.length - 1; i > 0; i--) {
+    j = Math.floor(Math.random() * (i + 1));
+    t = b[i]; b[i] = b[j]; b[j] = t;
+  }
+  return b;
+}
+
+/* ตัดข้อความให้สั้นลงสำหรับหน้าสรุป
+   ห้ามตัดด้วยการนับคำที่คั่นด้วยช่องว่าง เพราะภาษาไทยไม่เว้นวรรคระหว่างคำ
+   ทำแบบนั้นจะไม่ตัดอะไรเลย และหน้าสรุปจะกลายเป็นข้อความพรืดยาวหลายพันพิกเซล
+   จึงนับเป็นตัวอักษร แล้วถอยไปจบที่ช่องว่างที่ใกล้ที่สุดถ้ามีอยู่ใกล้ ๆ */
+function clip(text, max) {
+  if (text.length <= max) return text;
+  var cut = text.slice(0, max);
+  var sp = cut.lastIndexOf(' ');
+  if (sp > max - 18) cut = cut.slice(0, sp);
+  return cut.replace(/[ ]+$/, '') + '…';
+}
+
+function start() {
+  // สุ่มทั้งคลังแล้วหยิบมาแค่ PER_ROUND ข้อ ถ้าคลังเล็กกว่านั้นก็ใช้เท่าที่มี
+  order = shuffle(SCENES.map(function (_, i) { return i; })).slice(0, PER_ROUND);
+  idx = 0; score = 0; missed = [];
+  $('end').classList.add('hidden');
+  $('play').classList.remove('hidden');
+  $('dots').innerHTML = order.map(function (_, i) {
+    return '<span class="dot" id="d' + i + '"></span>';
+  }).join('');
+  render();
+}
+
+function render() {
+  answered = false;
+  var s = SCENES[order[idx]];
+
+  // วาดฉากใหม่ทุกข้อ ถ้ามีไฟล์ภาพจริงจะทับภาพวาด ถ้ายังไม่มีก็ใช้ภาพวาดไปก่อน
+  // ใช้ onerror ลบตัวเองทิ้ง จึงเพิ่มภาพทีละฉากได้โดยไม่ต้องแก้โค้ด
+  $('scene').className = 'scene';
+
+  /* ถ้ามีไฟล์วีดิโอชื่อเดียวกับภาพนิ่งอยู่ในโฟลเดอร์เดียวกัน จะหยิบมาใช้เอง
+     เช่น มี junction.jpg อยู่แล้ว วาง junction.mp4 ลงไปก็ใช้ได้ทันที
+     ไม่ต้องแก้โค้ดและไม่ต้องแก้คลังคำถาม เหมือนตอนเพิ่มภาพนิ่งทีละฉาก
+     ฉากไหนยังไม่มีคลิป ตัววีดิโอจะลบตัวเองทิ้งแล้วเหลือภาพนิ่งไว้ตามเดิม */
+  var vidSrc = s.vid || (s.img ? s.img.replace(/.(jpg|jpeg|png)$/i, '.mp4') : '');
+  if (vidSrc && noClip[vidSrc]) vidSrc = '';
+
+  $('scene').innerHTML = sceneSVG(s.art, s.mood) +
+    (s.img ? '<img class="photo" src="' + s.img + '" alt="" onerror="this.remove()">' : '') +
+    // เฟรมที่สองของฉากเดียวกัน จางเข้ามาทับกลางทาง ทำให้เห็นว่าสถานการณ์คืบหน้าไป
+    (s.img2 ? '<img class="photo two" src="' + s.img2 + '" alt="" onerror="this.remove()">' : '') +
+    // ต้องมี muted กับ playsinline ไม่งั้นมือถือจะไม่ยอมเล่นเอง
+    // ใส่ src ที่ตัว video โดยตรง ไม่ใช้ source ลูก เพราะถ้าไฟล์หาย
+    // สัญญาณผิดพลาดของ source จะไม่ส่งขึ้นมาถึง video แล้วจะเหลือกล่องดำบังภาพนิ่งไว้
+    (vidSrc ? '<video class="clip" src="' + vidSrc + '"' + (s.img ? ' poster="' + s.img + '"' : '') +
+            ' autoplay muted loop playsinline preload="auto"></video>' : '') +
+    '<span class="tag">' + s.tag + '</span>';
+
+  /* ผูกตัวดักพลาดด้วยจาวาสคริปต์ ไม่ใช่ใส่ใน onerror ของแท็ก
+     เพราะต้องจดชื่อไฟล์ที่หาไม่เจอไว้ด้วย ซึ่งเขียนในแอตทริบิวต์แล้วอ่านยาก */
+  var clip = $('scene').querySelector('.clip');
+  if (clip) clip.addEventListener('error', function () { noClip[vidSrc] = 1; clip.remove(); });
+  $('q').textContent = s.q;
+
+  var opts = shuffle(s.opts.map(function (_, i) { return i; }));
+  $('opts').innerHTML = opts.map(function (i) {
+    return '<button class="opt" data-i="' + i + '">' + s.opts[i].t + '</button>';
+  }).join('');
+  Array.prototype.forEach.call($('opts').children, function (b) {
+    b.addEventListener('click', function () { choose(Number(b.dataset.i)); });
+  });
+
+  var why = $('why');
+  why.className = 'why';
+  why.innerHTML = '';
+  $('next').disabled = true;
+  $('next').textContent = (idx === order.length - 1) ? 'ดูผลรวม' : 'ข้อถัดไป';
+  var dot = $('d' + idx);
+  if (dot) dot.classList.add('on');
+  $('count').textContent = (idx + 1) + '/' + order.length;
+}
+
+function choose(i) {
+  if (answered) return;
+  answered = true;
+  var s = SCENES[order[idx]];
+  var right = s.opts[i].ok;
+
+  Array.prototype.forEach.call($('opts').children, function (b) {
+    var j = Number(b.dataset.i);
+    b.disabled = true;
+    if (s.opts[j].ok) b.classList.add('ok');
+    else if (j === i) b.classList.add('no');
+    else b.classList.add('dim');
+  });
+
+  var dot = $('d' + idx);
+  if (dot) { dot.classList.remove('on'); dot.classList.add(right ? 'win' : 'lose'); }
+  if (right) score++; else missed.push(s);
+
+  var why = $('why');
+  why.className = 'why show ' + (right ? 'good' : 'bad');
+  // แยกไอคอนระหว่างข้อกฎหมายกับตัวเลขสถิติ เพราะเป็นหลักฐานคนละชนิด
+  // ถ้าเอาตราชั่งไปติดหน้าตัวเลข หรือเอากราฟไปติดหน้าข้อกฎหมาย คนอ่านจะเข้าใจที่มาผิด
+  var src = '';
+  if (s.law)  src += '<div class="fact law">⚖️ ' + s.law + '</div>';
+  if (s.fact) src += '<div class="fact">📊 ' + s.fact + '</div>';
+
+  why.innerHTML = '<b>' + (right ? '✅ ตัดสินใจถูกแล้ว' : '❌ ยังไม่ใช่ทางที่ปลอดภัยที่สุด') + '</b>' +
+                  s.why + src;
+  $('next').disabled = false;
+  why.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function finish() {
+  $('play').classList.add('hidden');
+  $('end').classList.remove('hidden');
+  var n = order.length;
+  $('score').innerHTML = score + '<small> / ' + n + '</small>';
+
+  var v;
+  if (score === n) v = 'ตอบถูกทุกข้อ — ความรู้แน่นแล้ว สิ่งที่เหลือคือทำให้ได้จริงทุกครั้งที่อยู่บนถนน';
+  else if (score >= n * 0.7) v = 'ทำได้ดี เหลือบางสถานการณ์ที่ยังพลาด ลองอ่านเหตุผลด้านล่างอีกครั้ง';
+  else if (score >= n * 0.4) v = 'ยังมีหลายจุดที่ควรทบทวน ข้อที่พลาดคือข้อที่เกิดขึ้นจริงบ่อยในพื้นที่นี้';
+  else v = 'ทบทวนอีกสักรอบนะครับ ทุกข้อในเกมนี้มาจากเหตุที่เกิดจริงและมีคนบาดเจ็บจริง';
+  $('verdict').textContent = v;
+
+  var box = $('miss');
+  if (missed.length) {
+    box.classList.remove('hidden');
+    box.innerHTML = '<b>สิ่งที่ควรจำกลับไป</b><ul>' + missed.map(function (m) {
+      return '<li>' + m.tag + ' — ' + clip(m.why, 92) + '</li>';
+    }).join('') + '</ul>';
+  } else {
+    box.classList.add('hidden');
+  }
+}
+
+$('next').addEventListener('click', function () {
+  if (idx < order.length - 1) { idx++; render(); }
+  else finish();
+});
+$('again').addEventListener('click', start);
+
+start();
+</script>
+</body>
+</html>
