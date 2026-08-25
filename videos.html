@@ -157,7 +157,8 @@
       <ol>
         <li>เข้า <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank">console.cloud.google.com</a> → สร้างโปรเจกต์ → กด <b>เปิดใช้งาน (Enable)</b> Google Drive API</li>
         <li>ไปที่เมนู <b>ข้อมูลเข้าสู่ระบบ (Credentials)</b> → <b>สร้างข้อมูลเข้าสู่ระบบ</b> → <b>คีย์ API (API Key)</b> แล้วคัดลอกคีย์</li>
-        <li>ส่งคีย์ให้ผม หรือแก้ไฟล์ <code>videos.html</code> บรรทัด <code>GOOGLE_API_KEY = ''</code> ให้ใส่คีย์ระหว่างเครื่องหมายคำพูด</li>
+        <li>นำคีย์ไปใส่ที่ Supabase Dashboard ที่ <b>Edge Functions</b> แล้วเลือก <b>Secrets</b> ตั้งชื่อว่า <code>GOOGLE_API_KEY</code></li>
+        <li><b>ห้ามนำคีย์มาใส่ในไฟล์ <code>videos.html</code></b> เพราะหน้านี้เป็นสาธารณะ ใครกดดูโค้ดก็เห็นและหยิบไปใช้ได้</li>
       </ol>
       <iframe class="folder-frame" id="folderFrame"></iframe>
     </div>
@@ -166,19 +167,20 @@
 
 <script>
 const DRIVE_FOLDER_ID = '1EyT0dgnBzMWOgqEfiURrgVrKfCPq6GNd';
-const GOOGLE_API_KEY = 'AIzaSyCY0-IyJ9MWf2vcCSLmhe2-OtbLiaJD48Y';
+/* กุญแจ Google API ย้ายไปอยู่ใน Secrets ของ Edge Functions แล้ว
+   ไม่เก็บไว้ในหน้าเว็บอีก เพราะหน้านี้เป็นสาธารณะและโค้ดอยู่ในที่เก็บสาธารณะ
+   ใครกด View Source ก็เห็น แล้วหยิบไปกินโควตาของเราได้ทันที
+   ตอนนี้หน้าเว็บคุยกับตัวกลาง ตัวกลางเป็นคนถือกุญแจ */
+const DRIVE_API = 'https://ftpruljwwsmvipfcedyk.supabase.co/functions/v1/drive';
 
 let videos = [];
 let currentId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (GOOGLE_API_KEY) {
-    document.getElementById('playerMode').style.display = 'block';
-    loadPlaylist();
-  } else {
-    document.getElementById('fallbackMode').style.display = 'block';
-    document.getElementById('folderFrame').src = 'https://drive.google.com/embeddedfolderview?id=' + DRIVE_FOLDER_ID + '#grid';
-  }
+  /* เปิดโหมดเพลเยอร์ไว้ก่อนเสมอ ถ้าตัวกลางเรียกไม่ได้ loadPlaylist จะพาถอย
+     ไปโหมดโฟลเดอร์เอง หน้าเว็บจึงไม่ว่างเปล่าไม่ว่าหลังบ้านจะเป็นอย่างไร */
+  document.getElementById('playerMode').style.display = 'block';
+  loadPlaylist();
 });
 
 function thDate(iso) {
@@ -188,21 +190,13 @@ function thDate(iso) {
 }
 
 async function loadPlaylist() {
-  if (!GOOGLE_API_KEY) return;
   const list = document.getElementById('playlist');
   list.innerHTML = '<div class="loading"><i class="fa-solid fa-rotate"></i>กำลังโหลดรายการวิดีโอ...</div>';
   try {
-    const params = new URLSearchParams({
-      q: "'" + DRIVE_FOLDER_ID + "' in parents and mimeType contains 'video/' and trashed=false",
-      key: GOOGLE_API_KEY,
-      fields: 'files(id,name,createdTime,modifiedTime,thumbnailLink)',
-      orderBy: 'name_natural',
-      pageSize: '200',
-      supportsAllDrives: 'true',
-      includeItemsFromAllDrives: 'true'
-    });
-    const response = await fetch('https://www.googleapis.com/drive/v3/files?' + params.toString());
-    if (!response.ok) throw new Error('เชื่อมต่อ Google Drive ไม่สำเร็จ (HTTP ' + response.status + ') — ตรวจสอบ API Key และการเปิดใช้ Drive API');
+    /* เงื่อนไขการค้นและรายการช่องที่ขอ ย้ายไปอยู่ในตัวกลางหมดแล้ว
+       หน้าเว็บไม่ต้องรู้อะไรเกี่ยวกับ Drive อีก รู้แค่ว่าขอรายชื่อจากที่ไหน */
+    const response = await fetch(DRIVE_API + '?list=1');
+    if (!response.ok) throw new Error('เชื่อมต่อคลังวิดีโอไม่สำเร็จ (HTTP ' + response.status + ')');
     const data = await response.json();
     videos = data.files || [];
     sortVideos();
@@ -215,7 +209,14 @@ async function loadPlaylist() {
     renderPlaylist();
     if (!currentId || !videos.some(v => v.id === currentId)) playVideo(videos[0].id);
   } catch (error) {
-    list.innerHTML = '<div class="empty"><i class="fa-solid fa-circle-exclamation"></i> ' + error.message + '</div>';
+    /* ตัวกลางล้มหรือยังไม่ได้ deploy ต้องยังดูคลิปได้อยู่
+       ถอยไปฝังโฟลเดอร์ของ Drive ซึ่งไม่ต้องใช้กุญแจเลย
+       ประชาชนที่เข้ามาดูคลิปไม่ควรเจอหน้าว่างเพราะปัญหาหลังบ้านของเรา */
+    console.error('ดึงรายชื่อคลิปไม่สำเร็จ', error);
+    document.getElementById('playerMode').style.display = 'none';
+    document.getElementById('fallbackMode').style.display = 'block';
+    document.getElementById('folderFrame').src =
+      'https://drive.google.com/embeddedfolderview?id=' + DRIVE_FOLDER_ID + '#grid';
   }
 }
 
@@ -255,7 +256,7 @@ function playVideo(id) {
   // สตรีมไฟล์ตรงด้วย player ของเบราว์เซอร์ (แผงควบคุมหุบเอง ไม่มี OSD ทึบบังแบบ Drive)
   frame.style.display = 'none'; frame.src = '';
   player.style.display = 'block';
-  player.src = 'https://www.googleapis.com/drive/v3/files/' + id + '?alt=media&key=' + GOOGLE_API_KEY;
+  player.src = DRIVE_API + '?id=' + encodeURIComponent(id);
   player.play().catch(() => {});
   document.getElementById('nowTitle').textContent = item.name;
   document.getElementById('nowDate').innerHTML = '<i class="fa-regular fa-calendar"></i> เพิ่มเมื่อ ' + thDate(item.createdTime);

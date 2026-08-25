@@ -112,11 +112,22 @@ function hookLog(note: string) {
 }
 
 // ถามฐานข้อมูลว่าข้อความนี้ควรตอบอะไร — null แปลว่าไม่ต้องตอบ
-async function askDatabase(text: string): Promise<{ action: string; text: string | null } | null> {
+async function askDatabase(
+  text: string,
+  userId?: string,
+  sourceType?: string
+): Promise<{ action: string; text: string | null } | null> {
+  // ส่ง userId มาด้วยเพื่อให้กิจกรรมแจกของรางวัลรู้ว่าใครพูด
+  // ฐานข้อมูลจะใช้ก็ต่อเมื่อ campEnabled เป็น true และเป็นแชทส่วนตัวเท่านั้น
+  // ถ้าไม่ส่งมา ฝั่งฐานข้อมูลมีค่าปริยายรองรับ พฤติกรรมเดิมจึงไม่เปลี่ยน
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/line_reply`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', apikey: DB_KEY, Authorization: `Bearer ${DB_KEY}` },
-    body: JSON.stringify({ p_text: text })
+    body: JSON.stringify({
+      p_text: text,
+      p_user_id: userId ?? null,
+      p_source_type: sourceType ?? null
+    })
   });
   if (!res.ok) { console.error('line_reply error', res.status, await res.text()); return null; }
   return await res.json();
@@ -215,8 +226,13 @@ async function handleEvents(events: any[]) {
 
       /* บอทเพิ่งถูกเชิญเข้ากลุ่ม — บอก id ทันทีโดยไม่ต้องให้ใครพิมพ์อะไร
          เพราะ id นี้คือสิ่งเดียวที่ต้องเอาไปใส่ในตาราง line_targets
-         และหาจากที่อื่นไม่ได้เลย */
-      if (ev.type === 'join' || ev.type === 'follow') {
+         และหาจากที่อื่นไม่ได้เลย
+
+         จงใจไม่ดัก follow ซึ่งคือตอนประชาชนเพิ่มบอทเป็นเพื่อน
+         เพราะข้อความนั้นเด้งใส่ทุกคนที่สแกนคิวอาร์ พร้อมโชว์ id ส่วนตัวของเขา
+         ซึ่งคนทั่วไปไม่ได้ต้องการและไม่รู้ว่าเอาไปทำอะไร
+         ส่วน join เกิดเฉพาะตอนเจ้าหน้าที่เชิญบอทเข้ากลุ่ม ซึ่งเป็นคนที่ต้องใช้ id จริง */
+      if (ev.type === 'join') {
         trace.push('ทักทายตอนเข้าห้อง: ' + await reply(ev.replyToken,
           'สวัสดีครับ 👋 บอทแจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ สภ.เมืองนครสวรรค์\n\n' +
           'ID สำหรับตั้งค่าการแจ้งเตือน:\n' + targetId + '\n\n' +
@@ -229,7 +245,7 @@ async function handleEvents(events: any[]) {
         continue;
       }
 
-      const answer = await askDatabase(ev.message.text);
+      const answer = await askDatabase(ev.message.text, src.userId, src.type);
       if (!answer) { trace.push('ไม่เข้าคีย์เวิร์ด จึงเงียบ'); continue; }   // ตั้งใจให้เงียบ
 
       // id เป็นคำสั่งเดียวที่ฐานข้อมูลตอบเองไม่ได้ เพราะ id มากับตัว event
