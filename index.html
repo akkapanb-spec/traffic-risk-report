@@ -1052,8 +1052,11 @@ canvas{max-width:100%!important;}
             <button type="button" class="av-lyr" id="avLyrOrange" onclick="toggleAvoidLayer('orange')"><span class="av-lyrdot" style="background:#f59e0b"></span> โซนส้ม</button>
             <button type="button" class="av-lyr" id="avLyrCorr" onclick="toggleAvoidLayer('corridor')"><i class="fa-solid fa-route"></i> เส้นทางเสี่ยง</button>
             <button type="button" class="av-lyr" id="avLyrHeat" onclick="toggleAvoidLayer('heat')" style="display:none"><i class="fa-solid fa-fire"></i> ความหนาแน่น</button>
+            <button type="button" class="av-lyr" id="avLyrRain" onclick="toggleRainLayer()" style="display:none"><i class="fa-solid fa-cloud-showers-heavy"></i> ฝนตอนนี้</button>
           </div>
           <div id="avHeatNote" class="av-heatnote" style="display:none"></div>
+          <div id="avRainNote" class="av-heatnote" style="display:none"></div>
+          <div id="avRainStat" class="av-heatnote" style="font-weight:600"></div>
           <div id="avoidList" class="av-list"><div class="av-empty"><i class="fa-solid fa-circle-check"></i> ขณะนี้ไม่มีประกาศจุดหลีกเลี่ยง เดินทางได้ตามปกติ</div></div>
         </div>
 
@@ -2039,6 +2042,137 @@ async function loadBlackspotPublic() {
   renderBlackspotStats();
   renderBlackspotLayers();
   loadDensityLayer();
+  loadRainLayer();
+}
+
+
+/* ---------- ชั้นเรดาร์ฝน จาก RainViewer ----------
+   ทำไมต้องมี
+     สถิติของพื้นที่บอกว่าถนนเปียกเกิดเหตุถี่กว่าถนนแห้ง
+     และช่วงอันตรายที่สุดคือไม่กี่นาทีแรกที่ฝนเริ่มตก
+     ซึ่งเป็นสิ่งที่เรดาร์เห็นก่อนคนขับรู้ตัว ชั้นนี้จึงช่วยตัดสินใจก่อนออกเดินทางได้จริง
+
+   ทำไมแยกออกมาไม่ใช้กลไกชั้นเดิม
+     ชั้นอื่นเป็น layerGroup ที่มีจำนวนหมุดนับได้ และมีป้ายตัวเลขกำกับปุ่ม
+     ชั้นนี้เป็นภาพไทล์ 13 ภาพซ้อนกัน ตัวเลข 13 บนปุ่มไม่มีความหมายกับคนอ่าน
+     แยกออกมาจึงไม่ต้องไปแก้กลไกที่ชั้นอื่นใช้อยู่ และไม่มีทางทำของเดิมพัง
+
+   ไม่ต้องใช้กุญแจและไม่ต้องสมัคร แต่ก็ไม่รับประกันว่าจะเรียกได้ตลอดไป
+   ถ้าเรียกไม่ได้จะซ่อนปุ่มไว้เฉย ๆ ไม่ขึ้นข้อความผิดพลาดให้ประชาชนต้องมาแก้ให้เรา */
+const RAIN = { host:'', frames:[], layers:[], idx:0, timer:null, on:false, ready:false };
+
+async function loadRainLayer() {
+  if (!ensureAvoidMap()) return;
+  let data;
+  try {
+    const r = await fetch('https://api.rainviewer.com/public/weather-maps.json', { cache:'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    data = await r.json();
+  } catch (e) { return; }
+
+  const past = (data.radar && data.radar.past) || [];
+  const soon = (data.radar && data.radar.nowcast) || [];
+  RAIN.frames = past.concat(soon);
+  if (!RAIN.frames.length || !data.host) return;
+
+  RAIN.host = data.host;
+  /* สร้างชั้นไทล์ไว้ครบทุกเฟรมตั้งแต่แรก แล้วสลับด้วยความทึบแสงตอนเล่นภาพ
+     ถ้าเปลี่ยน url ของชั้นเดียวไปเรื่อย ๆ ภาพจะกะพริบทุกเฟรมเพราะไทล์ต้องโหลดใหม่ */
+  /* maxNativeZoom 7 สำคัญมาก ห้ามเอาออก
+     RainViewer แบบไม่เสียเงินมีภาพเรดาร์จริงถึงระดับซูม 7 เท่านั้น
+     ซูม 8 ขึ้นไปมันคืนภาพสำรองสีเทาเหมือนกันทุกใบ ซึ่งไม่ใช่ฝนแต่ดูเหมือนมีอะไรอยู่
+     ถ้าไม่ใส่บรรทัดนี้ แผนที่จะพ่นสีเทาทับเมืองทั้งเมืองแล้วคนเข้าใจว่าฝนตกทั้งจังหวัด
+     ใส่แล้ว Leaflet จะขยายภาพซูม 7 ขึ้นมาแทน หยาบขึ้นแต่เป็นของจริง */
+  RAIN.layers = RAIN.frames.map(f => L.tileLayer(
+    RAIN.host + f.path + '/256/{z}/{x}/{y}/2/1_1.png',
+    { opacity:0, zIndex:350, maxNativeZoom:7, attribution:'เรดาร์ฝน RainViewer' }
+  ));
+  RAIN.idx = past.length ? past.length - 1 : 0;   // เริ่มที่ภาพล่าสุดของจริง ไม่ใช่ภาพพยากรณ์
+  RAIN.ready = true;
+
+  document.getElementById('avoidLayerBar').style.display = 'flex';
+  const btn = document.getElementById('avLyrRain');
+  if (btn) btn.style.display = '';
+}
+
+function rainShow(i) {
+  RAIN.idx = i;
+  RAIN.layers.forEach((l, k) => l.setOpacity(k === i ? 0.82 : 0));
+
+  const f = RAIN.frames[i];
+  const note = document.getElementById('avRainNote');
+  if (!note) return;
+  const t = new Date(f.time * 1000).toLocaleTimeString('th-TH',
+    { timeZone:'Asia/Bangkok', hour:'2-digit', minute:'2-digit' });
+  /* บอกให้ชัดว่าภาพไหนคือของจริงที่ผ่านมาแล้ว ภาพไหนคือการคาดการณ์
+     คนอ่านต้องแยกออก ไม่งั้นจะเข้าใจว่าฝนตกอยู่ตรงนั้นจริงทั้งที่เป็นการเดา */
+  const future = f.time * 1000 > Date.now();
+  note.innerHTML = '<b>🌧️ เรดาร์ฝน</b> ' + t + ' น.' +
+    (future ? ' <span style="color:#b45309">คาดการณ์</span>' : '') +
+    ' · ภาพ ' + (i + 1) + ' จาก ' + RAIN.frames.length +
+    ' · <span style="color:#5b6b7f">ย้อนหลัง 2 ชั่วโมง เล่นวนอัตโนมัติ</span>';
+}
+
+function rainPlay() {
+  rainStop();
+  /* ค้างที่ภาพล่าสุดนานกว่าเฟรมอื่นสามเท่า เพราะนั่นคือสถานการณ์ตอนนี้
+     ถ้าเล่นผ่านเร็วเท่ากันหมด คนจะอ่านภาพเมื่อสองชั่วโมงก่อนค้างตา
+     แล้วเข้าใจว่าฝนกำลังตกตรงนั้น ทั้งที่ผ่านไปแล้ว */
+  const step = () => {
+    const next = (RAIN.idx + 1) % RAIN.frames.length;
+    rainShow(next);
+    RAIN.timer = setTimeout(step, next === RAIN.frames.length - 1 ? 1900 : 650);
+  };
+  RAIN.timer = setTimeout(step, 1900);   // เปิดมาเห็นภาพล่าสุดก่อน แล้วค่อยเริ่มเล่น
+}
+
+function rainStop() {
+  if (RAIN.timer) { clearTimeout(RAIN.timer); RAIN.timer = null; }
+}
+
+/* บอกเป็นตัวหนังสือว่าตอนนี้มีฝนใกล้เมืองหรือไม่
+   เพราะวันที่ฟ้าใส ชั้นนี้จะว่างเปล่าจนคนเข้าใจว่าแผนที่เสีย
+   ตัวเลขมาจากตัวอ่านเรดาร์ตัวเดียวกับที่ใช้ส่งข้อความเตือนเข้ากลุ่ม
+   จะได้ไม่มีวันที่หน้าเว็บบอกอย่างหนึ่งแล้วข้อความในกลุ่มบอกอีกอย่าง */
+async function rainStatus() {
+  const el = document.getElementById('avRainStat');
+  if (!el) return;
+  el.textContent = 'กำลังตรวจพื้นที่…';
+  try {
+    const r = await fetch('https://ftpruljwwsmvipfcedyk.supabase.co/functions/v1/rain?km=8');
+    const d = await r.json();
+    if (!d || !d.ok) throw new Error('ตรวจไม่ได้');
+    el.innerHTML = d.rainPercent > 0
+      ? '<b style="color:#0369a1">มีฝนในรัศมี 8 กม. รอบตัวเมือง ' + d.rainPercent + '%</b>'
+      : 'ขณะนี้ไม่มีฝนในรัศมี 8 กม. รอบตัวเมือง';
+  } catch (e) { el.textContent = ''; }
+}
+
+function toggleRainLayer() {
+  if (!RAIN.ready || !avoidLMap) return;
+  RAIN.on = !RAIN.on;
+
+  const btn  = document.getElementById('avLyrRain');
+  const note = document.getElementById('avRainNote');
+
+  if (RAIN.on) {
+    /* ถอยซูมออกก่อน ภาพเรดาร์มีถึงระดับซูม 7 หนึ่งพิกเซลกว้าง 1.2 กิโลเมตร
+       ถ้าดูที่ซูม 12 ภาพจะถูกยืด 32 เท่าจนเบลอและดูจางเหมือนไม่มีอะไร
+       ถอยมาที่ 10 แล้วยังเห็นตัวเมืองครบ และภาพคมพอจะบอกทิศทางกลุ่มฝนได้ */
+    if (avoidLMap.getZoom() > 10) avoidLMap.setView(avoidLMap.getCenter(), 10, { animate: false });
+    RAIN.layers.forEach(l => l.addTo(avoidLMap));
+    rainShow(RAIN.idx);
+    rainPlay();
+    rainStatus();
+    if (note) note.style.display = 'flex';
+  } else {
+    /* ต้องหยุดตัวจับเวลาด้วย ไม่ใช่แค่เอาชั้นออก
+       ถ้าลืมหยุด มันจะวิ่งอยู่เบื้องหลังกินแบตและกินเน็ตของคนที่ปิดชั้นไปแล้ว */
+    rainStop();
+    RAIN.layers.forEach(l => avoidLMap.removeLayer(l));
+    if (note) note.style.display = 'none';
+  }
+  if (btn) btn.classList.toggle('on', RAIN.on);
 }
 
 /* ---------- ชั้นความหนาแน่น คำนวณด้วย PostGIS ฝั่งฐานข้อมูล ---------- */

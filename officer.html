@@ -614,6 +614,7 @@
         <button class="nav-btn admin-item" data-page="weather" id="wxNavBtn" style="display:none" onclick="openPage('weather',this)"><i class="fa-solid fa-cloud-rain"></i> สภาพอากาศกับอุบัติเหตุ</button>
         <button class="nav-btn admin-item" data-page="traffic" id="tvNavBtn" style="display:none" onclick="openPage('traffic',this)"><i class="fa-solid fa-gauge-high"></i> ปริมาณจราจรและอัตราอันตราย</button>
         <button class="nav-btn admin-item" data-page="voice" id="vcNavBtn" style="display:none" onclick="openPage('voice',this)"><i class="fa-solid fa-comment-dots"></i> เสียงจากประชาชน <span class="menu-badge" id="badgeVoice" style="display:none"></span></button>
+        <button class="nav-btn admin-item" data-page="campaign" id="cpgNavBtn" style="display:none" onclick="openPage('campaign',this)"><i class="fa-solid fa-gift"></i> กิจกรรมแจกของรางวัล</button>
         <!-- ลิงก์จริง ไม่ใช่ window.open — popup blocker บล็อก window.open แต่ไม่บล็อกการกดลิงก์ -->
         <a class="nav-btn admin-item" id="dutyNavBtn" style="display:none" href="https://akkapanb-spec.github.io/traffic-duty-daily/" target="_blank" rel="noopener" onclick="toggleDrawer(false)"><i class="fa-solid fa-clipboard-user"></i> ระบบการปฏิบัติหน้าที่จราจรประจำวัน <i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i></a>
       </nav>
@@ -1396,10 +1397,94 @@
         </div>
       </section>
 
+
+      <!-- ============ ADMIN: กิจกรรมแจกของรางวัล ============ -->
+      <section id="page-campaign" class="page">
+        <div class="page-head"><div class="page-icon" style="background:linear-gradient(135deg,#fbbf24,#b45309)"><i class="fa-solid fa-gift"></i></div><div><h2>กิจกรรมแจกของรางวัล</h2><p>ตรวจสิทธิ์หน้าเคาน์เตอร์ · ผู้เข้าร่วม · เปิดปิดกิจกรรม</p></div></div>
+
+        <div id="cpgNotReady" class="card" style="display:none;border-color:#fecaca;background:#fff5f5">
+          <h3 class="card-title" style="color:#c1122f"><i class="fa-solid fa-triangle-exclamation"></i> ยังใช้งานไม่ได้</h3>
+          <p class="hint" style="margin:0">ยังไม่ได้รันไฟล์ <b>sql/camp_1_tables.sql</b> ถึง <b>camp_11_ui.sql</b> ใน Supabase SQL Editor</p>
+        </div>
+
+        <div id="cpgReady" style="display:none">
+
+          <div class="card" id="cpgStatusCard"><div class="loading-skeleton"></div></div>
+
+          <!-- หน้าเคาน์เตอร์ใช้ช่องนี้เป็นหลัก จึงวางไว้บนสุดรองจากสถานะ -->
+          <div class="card" style="border-color:#fcd34d;background:#fffbeb">
+            <h3 class="card-title"><i class="fa-solid fa-magnifying-glass"></i> ตรวจสิทธิ์รับของรางวัล</h3>
+            <p class="hint" style="margin:0 0 10px">ประชาชนแจ้งรหัส 6 ตัวที่ได้จากบอท พิมพ์ลงช่องนี้เพื่อดูว่าครบเงื่อนไขหรือยัง</p>
+            <div class="filter-bar">
+              <input id="cpgCode" class="input" style="max-width:230px;text-transform:uppercase;letter-spacing:2px;font-weight:700"
+                     placeholder="รหัส 6 ตัว" maxlength="6" onkeydown="if(event.key==='Enter')cpgFind()">
+              <button class="btn" type="button" onclick="cpgFind()"><i class="fa-solid fa-magnifying-glass"></i> ค้นหา</button>
+              <button class="btn btn-soft" type="button" onclick="document.getElementById('cpgCode').value='';document.getElementById('cpgFindResult').innerHTML=''">ล้าง</button>
+            </div>
+            <div id="cpgFindResult" style="margin-top:14px"></div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-award"></i> ผู้ได้สิทธิ์ <span id="cpgClaimCount" class="pill">0 ราย</span></h3>
+            <div class="filter-bar" style="margin-bottom:12px">
+              <button class="btn btn-soft btn-sm" type="button" onclick="cpgAward()"><i class="fa-solid fa-bolt"></i> ออกสิทธิ์เดี๋ยวนี้</button>
+              <button class="btn btn-soft btn-sm" type="button" onclick="cpgLoad()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button>
+            </div>
+            <p class="hint" style="margin:0 0 10px">ระบบออกสิทธิ์ให้เองทุก 30 นาที ปุ่มนี้ใช้เมื่อมีคนมายืนรออยู่หน้าเคาน์เตอร์</p>
+            <div id="cpgClaims"></div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-users"></i> ผู้เข้าร่วมทั้งหมด <span id="cpgPeopleCount" class="pill">0 คน</span></h3>
+            <div class="filter-bar" style="margin-bottom:12px">
+              <input id="cpgSearch" class="input" placeholder="🔍 ค้นหาชื่อหรือรหัส" oninput="cpgRenderPeople()">
+              <select id="cpgFilter" class="select" style="max-width:200px" onchange="cpgRenderPeople()">
+                <option value="">ทุกคน</option>
+                <option value="ready">ครบเงื่อนไขแล้ว</option>
+                <option value="near">ชวนได้แล้วบางส่วน</option>
+                <option value="out">หลุดเงื่อนไข</option>
+              </select>
+            </div>
+            <div id="cpgPeople"><div class="loading-skeleton"></div></div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-sliders"></i> ตั้งค่ากิจกรรม</h3>
+            <p class="hint" style="margin:0 0 12px">แก้แล้วมีผลทันที ไม่ต้องแก้โค้ด — <b>ปิดกิจกรรมแล้วข้อมูลผู้เข้าร่วมยังอยู่ครบ</b></p>
+            <div class="filter-bar">
+              <div class="field"><label for="cpgSetNeed">ต้องชวนกี่คน</label>
+                <input id="cpgSetNeed" class="input" type="number" min="1" max="50" style="max-width:120px"></div>
+              <div class="field"><label for="cpgSetQuota">จำนวนของรางวัล</label>
+                <input id="cpgSetQuota" class="input" type="number" min="1" max="100000" style="max-width:140px"></div>
+              <div class="field"><label for="cpgSetEnd">วันสิ้นสุด</label>
+                <input id="cpgSetEnd" class="input" type="date" style="max-width:180px"></div>
+              <button class="btn" type="button" style="align-self:flex-end" onclick="cpgSaveSettings()"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-soft" type="button" id="cpgToggleBtn" onclick="cpgToggle()"></button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       <!-- ADMIN: ประชากรและอัตราความเสี่ยง -->
       <!-- ============ สภาพอากาศกับอุบัติเหตุ ============ -->
       <section id="page-weather" class="page">
         <div class="page-head"><div class="page-icon" style="background:linear-gradient(135deg,#38bdf8,#0369a1)"><i class="fa-solid fa-cloud-rain"></i></div><div><h2>สภาพอากาศกับอุบัติเหตุ</h2><p>ฝนเพิ่มความเสี่ยงกี่เท่า · เทียบอัตราต่อชั่วโมง ไม่ใช่สัดส่วนจำนวนเคส</p></div></div>
+
+        <!-- เรดาร์ฝนสด ตอบคนละคำถามกับส่วนวิเคราะห์ย้อนหลังด้านล่าง จึงวางแยกไว้บนสุด -->
+        <div class="card" id="wxRadarCard" style="display:none;border:2px solid #0369a1">
+          <h3 class="card-title" style="color:#0369a1"><i class="fa-solid fa-satellite-dish"></i> เรดาร์ฝนตอนนี้
+            <span id="wxRadarTime" class="pill" style="margin-left:8px">กำลังโหลด…</span></h3>
+          <p class="hint" style="margin:0 0 10px">ภาพเรดาร์ย้อนหลัง 2 ชั่วโมง เล่นวนอัตโนมัติ ใช้ดูว่ากลุ่มฝนกำลังเคลื่อนไปทางไหน</p>
+          <div class="filter-bar" style="margin-bottom:10px">
+            <button class="btn btn-soft btn-sm" type="button" onclick="wxRadarStepBy(-1)"><i class="fa-solid fa-backward-step"></i> ก่อนหน้า</button>
+            <button class="btn btn-soft btn-sm" type="button" id="wxRadarPlay" onclick="wxRadarToggle()"><i class="fa-solid fa-pause"></i> หยุด</button>
+            <button class="btn btn-soft btn-sm" type="button" onclick="wxRadarStepBy(1)">ถัดไป <i class="fa-solid fa-forward-step"></i></button>
+          </div>
+          <div id="wxRadarMap" style="height:380px;border-radius:12px;overflow:hidden"></div>
+        </div>
 
         <div id="wxNotReady" class="card" style="display:none;border-color:#fecaca;background:#fff5f5">
           <h3 class="card-title" style="color:#c1122f"><i class="fa-solid fa-triangle-exclamation"></i> ยังใช้งานไม่ได้</h3>
@@ -1739,7 +1824,10 @@
     };
 
     const ranks = ['ส.ต.ต.','ส.ต.ท.','ส.ต.อ.','จ.ส.ต.','ด.ต.','ร.ต.ต.','ร.ต.ท.','ร.ต.อ.','พ.ต.ต.','พ.ต.ท.','พ.ต.อ.'];
-    const provinces = ['กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี'];
+    /* ใช้เฉพาะช่องจังหวัดทะเบียนรถ ส่วนจังหวัดที่เกิดเหตุเป็นช่องล็อกไว้ ไม่ใช่ตัวเลือก
+       ไม่จดทะเบียน วางไว้ต้นรายการทั้งที่ผิดลำดับอักษร เพราะไม่ใช่จังหวัด
+       และรถที่ไม่จดทะเบียนพบบ่อยในคดีจักรยานยนต์ ถ้าไปแทรกกลางรายการจะหาไม่เจอ */
+    const provinces = ['ไม่จดทะเบียน','กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี'];
     const injuries = ['เสียชีวิต','หมดสติ','สาหัส','เล็กน้อย','ไม่บาดเจ็บ'];
     const bodyParts = ['ลำคอ-ศีรษะ','ลำตัวและเอว','แขน-มือ','ขา-เท้า','หลายส่วน','ไม่บาดเจ็บ'];
     const safetyOptions = ['สวมหมวกนิรภัย','ไม่สวมหมวกนิรภัย','คาดเข็มขัดนิรภัย','ไม่คาดเข็มขัดนิรภัย'];
@@ -1824,7 +1912,36 @@
       if (error) {
         const nice = rpcFriendly(error.message);
         if (nice) { const e = new Error(nice.title); e.friendly = nice; throw e; }
-        throw new Error('ไม่สามารถเชื่อมต่อระบบได้: ' + error.message);
+        /* เอา details/hint มาต่อท้ายด้วย และบอกด้วยว่าพังที่ฟังก์ชันไหน
+           เดิมเราโยนสองช่องนั้นทิ้ง เหลือแต่ message ลอย ๆ
+           อย่าง "invalid input syntax for type json" ซึ่งบอกแค่ว่าพังที่ชนิดข้อมูล
+           ไม่บอกว่าค่าไหนหรือฟังก์ชันไหน ตามจากภาพหน้าจอที่ผู้ใช้ส่งมาไม่ได้เลย */
+        const extra = [error.details, error.hint].filter(Boolean).join(' · ');
+        /* ถ้าเป็นเรื่องรูปแบบ json ให้บอกด้วยว่าตัวอักษรที่ฐานข้อมูลบ่นถึง
+           อยู่ในข้อมูลที่เราส่งไปจริงหรือเปล่า
+           เพราะลำพัง Token "\" is invalid ไม่ได้บอกว่าปัญหาอยู่ฝั่งหน้าเว็บหรือฝั่งฐานข้อมูล
+           ตัวดักก่อนหน้านี้ตรวจแค่ก้อน payload จึงพลาด token กับรายการรูปภาพไป */
+        /* ตรวจ "ข้อความที่ส่งจริง" ไม่ใช่ก้อนข้อมูลก่อนแปลง
+           ครั้งก่อนผมตรวจตอนยังเป็นก้อน ซึ่งสะอาดเสมอ แล้วสรุปว่าฝั่งเราไม่ผิด
+           แต่ขั้นตอนแปลงก้อนเป็นข้อความคือขั้นที่สร้างแบ็กสแลชขึ้นมาได้เอง
+           เช่น การกด Enter ขึ้นบรรทัดใหม่ในช่องกรอก จะกลายเป็นแบ็กสแลชกับตัว n */
+        /* บันทึกของฐานข้อมูลชี้ว่าพังตั้งแต่ขั้นแปลงก้อนข้อมูลที่ส่งมา
+           คือยังไม่ทันเข้าไปในคำสั่งบันทึกเลย และตัวที่พังคือแบ็กสแลชที่ลอยอยู่นอกข้อความ
+           ซึ่งเป็นรูปแบบเดียวกับที่เห็นในช่องแก้ไข SQL คือแบ็กสแลชหน้าปีกกาปิด
+
+           หน้าเว็บสร้างข้อความสะอาดออกมาแน่นอน ตรวจแล้วหลายรอบ
+           แปลว่ามีอะไรมาแก้ทีหลัง จุดเดียวที่แก้ได้คือตัวส่งข้อมูลของเบราว์เซอร์
+           ถ้ามันถูกสวมทับ ค่าที่อ่านออกมาจะไม่ใช่ native code */
+        /* เจอครั้งหนึ่งแล้วว่า error ชนิดนี้ไม่ได้มาจากข้อมูลที่ส่ง
+           แต่มาจากแบ็กสแลชที่ฝังอยู่ในโค้ดฝั่งฐานข้อมูลตั้งแต่ตอนติดตั้ง
+           (ตัวแก้ไข SQL ของ Supabase เติม \ หน้า } ให้เองเวลาลากไฟล์ไปวาง)
+           จึงชี้ทางไปที่ไฟล์ตรวจเลย แทนที่จะให้ไปไล่หาที่ข้อมูลซึ่งไม่ใช่ตัวการ */
+        const where = /type json/i.test(error.message || '')
+          ? ' « มักเกิดจากแบ็กสแลชที่ฝังอยู่ในโค้ดฐานข้อมูล ไม่ใช่ข้อมูลที่กรอก' +
+            ' — ให้รัน sql/find_backslash_damage.sql เพื่อหาจุดที่เสียหาย »'
+          : '';
+        throw new Error('ไม่สามารถเชื่อมต่อระบบได้: ' + error.message +
+          (extra ? ' — ' + extra : '') + ' [' + fn + ']' + where);
       }
       return data;
     }
@@ -3125,6 +3242,7 @@
       document.getElementById('wxNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('tvNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('vcNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
+      document.getElementById('cpgNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('dutyNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminMenuTab').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.querySelector('.mobile-tabbar').classList.toggle('admin-mode', !!state.user.isAdmin);
@@ -3242,6 +3360,7 @@
       if (page === 'checkpoint') initCheckpointPage();
       if (page === 'population') initPopulationPage();
       if (page === 'voice') initVoicePage();
+      if (page === 'campaign') initCampaignPage();
       // ไฮไลต์ปุ่ม "ผู้ดูแล" ในแถบล่าง เมื่ออยู่ในหน้าใดหน้าหนึ่งของ admin
       const adminMenuTab = document.getElementById('adminMenuTab');
       if (adminMenuTab) adminMenuTab.classList.toggle('active', ['admin','riskmanage','deaths','avoid','blackspot','roadnet','checkpoint','population','voice'].includes(page));
@@ -4409,6 +4528,61 @@
       };
     }
 
+    /* ============ ตัวดักแบ็กสแลช ============
+       ฐานข้อมูลปฏิเสธด้วย invalid input syntax for type json — Token "\" is invalid
+       ซึ่งเป็นข้อความที่คนหน้างานอ่านแล้วไม่มีทางรู้ว่าต้องไปแก้ช่องไหน
+       เจ้าหน้าที่จึงกดบันทึกซ้ำแล้วซ้ำอีกโดยไม่รู้ว่าติดตรงไหน
+
+       แบ็กสแลชไม่มีความหมายในชื่อสถานที่ ถนน สาเหตุ หรือทะเบียนรถอยู่แล้ว
+       แต่ปุ่มมันอยู่ติดกับ Enter และ Backspace จึงพิมพ์โดนโดยไม่ตั้งใจได้ง่ายมาก
+       ดักตั้งแต่ก่อนส่ง แล้วบอกให้ชัดว่าอยู่ช่องไหน ดีกว่าปล่อยไปตายที่ฐานข้อมูล */
+    const BS_FIELD_LABELS = {
+      'location.place': 'สถานที่เกิดเหตุ', 'location.road': 'ถนน',
+      'location.subdistrict': 'ตำบล', 'location.localAuthority': 'อปท.',
+      'location.cause': 'สาเหตุเบื้องต้น', 'location.details': 'รายละเอียดอื่นๆ',
+      'location.roadCharacterOther': 'ลักษณะทางอื่นๆ',
+      'location.district': 'อำเภอ', 'location.province': 'จังหวัด',
+      'party1.plate': 'ทะเบียนรถ ฝ่ายที่ 1', 'party2.plate': 'ทะเบียนรถ ฝ่ายที่ 2',
+      'party1.vehicleOther': 'ยานพาหนะอื่นๆ ฝ่ายที่ 1',
+      'party2.vehicleOther': 'ยานพาหนะอื่นๆ ฝ่ายที่ 2'
+    };
+    // ช่องของผู้โดยสารไม่มีในตารางข้างบน เพราะมีได้ไม่จำกัดจำนวน
+    // แปลทีละคำจากเส้นทางแทน ไม่งั้นจะขึ้นเป็น party1.passengers.age ให้คนหน้างานงง
+    const BS_WORDS = { party1:'ฝ่ายที่ 1', party2:'ฝ่ายที่ 2', passengers:'ผู้โดยสาร',
+      location:'จุดเกิดเหตุ', age:'อายุ', gender:'เพศ', plate:'ทะเบียนรถ', injury:'อาการบาดเจ็บ',
+      safety:'อุปกรณ์นิรภัย', vehicle:'ยานพาหนะ', vehicleOther:'ยานพาหนะอื่นๆ',
+      bodyPart:'อวัยวะที่บาดเจ็บ', license:'ใบขับขี่', province:'จังหวัด', status:'สถานะ' };
+    const bsPretty = path => String(path).split('.')
+      .map(seg => seg.replace(/^[a-zA-Z0-9]+/, m => BS_WORDS[m] || m)).join(' · ');
+
+    function findBackslash(node, path) {
+      if (typeof node === 'string') return node.indexOf('\\') >= 0 ? { path: path || '', value: node } : null;
+      if (Array.isArray(node)) {
+        for (let i = 0; i < node.length; i++) {
+          const hit = findBackslash(node[i], (path || '') + ' รายการที่ ' + (i + 1));
+          if (hit) return hit;
+        }
+        return null;
+      }
+      if (node && typeof node === 'object') {
+        for (const k of Object.keys(node)) {
+          const hit = findBackslash(node[k], path ? path + '.' + k : k);
+          if (hit) return hit;
+        }
+      }
+      return null;
+    }
+    function stripBackslashes(node) {
+      if (typeof node === 'string') return node.split('\\').join('');
+      if (Array.isArray(node)) return node.map(stripBackslashes);
+      if (node && typeof node === 'object') {
+        const out = {};
+        Object.keys(node).forEach(k => { out[k] = stripBackslashes(node[k]); });
+        return out;
+      }
+      return node;
+    }
+
     async function submitAccident(event) {
       event.preventDefault();
       const form = event.currentTarget;
@@ -4425,7 +4599,7 @@
       if (Number.isNaN(occurredDate.getTime())) {
         await Swal.fire({ icon:'error', title:'วันที่และเวลาไม่ถูกต้อง' }); return;
       }
-      const payload = {
+      let payload = {
         occurredAt: occurredDate.toISOString(),
         party1: collectParty('p1', 'ผู้ขับขี่'),
         party2: collectParty('p2', valueOf('p2Status')),
@@ -4436,6 +4610,22 @@
           latitude:valueOf('latitude'), longitude:valueOf('longitude'), details:valueOf('details')
         }
       };
+      // ดักแบ็กสแลชก่อนส่ง ไม่ลบเงียบ ๆ เพราะนี่คือสำนวนคดี ต้องให้เจ้าของข้อมูลเห็นก่อนว่าจะแก้อะไร
+      const bs = findBackslash(payload);
+      if (bs) {
+        const label = BS_FIELD_LABELS[bs.path] || bsPretty(bs.path);
+        const ans = await Swal.fire({
+          icon: 'warning', title: 'พบเครื่องหมาย \\ ในข้อมูล',
+          html: 'ช่อง <b>' + escapeHtml(label) + '</b> มีเครื่องหมาย <b>\\</b> อยู่<br>' +
+            '<div style="background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0;' +
+            'word-break:break-all;font-size:.85rem">' + escapeHtml(bs.value) + '</div>' +
+            'ฐานข้อมูลไม่รับเครื่องหมายนี้ จึงบันทึกไม่สำเร็จ',
+          showCancelButton: true, confirmButtonText: 'ลบเครื่องหมายนี้แล้วบันทึก',
+          cancelButtonText: 'กลับไปแก้เอง', confirmButtonColor: '#16834b'
+        });
+        if (!ans.isConfirmed) return;
+        payload = stripBackslashes(payload);
+      }
       Swal.fire({ title:'กำลังบันทึกข้อมูล', html:'กรุณารอสักครู่ ระบบกำลังบันทึกข้อมูลและอัปโหลดรูปภาพ', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
       try {
         const imageUrls = await uploadAccidentImages();
@@ -5771,7 +5961,121 @@
        ส่วนการเก็บกับคำนวณอยู่ที่ฐานข้อมูล */
     const WX_API = 'https://archive-api.open-meteo.com/v1/archive';
 
+
+    /* ============================================================
+       เรดาร์ฝนสด จาก RainViewer — หน้าสภาพอากาศของเจ้าหน้าที่
+       ============================================================
+       ส่วนอื่นในหน้านี้เป็นการวิเคราะห์ย้อนหลังหนึ่งปี ใช้ตอบว่าฝนทำให้เกิดเหตุมากขึ้นไหม
+       ส่วนนี้ตอบคนละคำถาม คือตอนนี้ฝนกำลังตกตรงไหน ซึ่งเอาไปสั่งการได้ทันที
+       จึงวางไว้บนสุด ไม่ปนกับส่วนวิเคราะห์
+
+       ไม่ต้องใช้กุญแจและไม่ต้องสมัคร เรียกไม่ได้ก็ซ่อนการ์ดไว้ ไม่ล้มทั้งหน้า
+       ============================================================ */
+    const WXR = { map:null, host:'', frames:[], layers:[], idx:0, timer:null, playing:false };
+
+    async function wxRadarInit() {
+      const card = document.getElementById('wxRadarCard');
+      if (!card || WXR.map) return;
+
+      let data;
+      try {
+        const r = await fetch('https://api.rainviewer.com/public/weather-maps.json', { cache:'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        data = await r.json();
+      } catch (e) {
+        card.style.display = 'none';
+        return;
+      }
+
+      const past = (data.radar && data.radar.past) || [];
+      const soon = (data.radar && data.radar.nowcast) || [];
+      WXR.frames = past.concat(soon);
+      if (!WXR.frames.length || !data.host) { card.style.display = 'none'; return; }
+      WXR.host = data.host;
+
+      card.style.display = '';
+      WXR.map = L.map('wxRadarMap', { scrollWheelZoom:false }).setView([15.705, 100.14], 8);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { attribution:'© OpenStreetMap' }).addTo(WXR.map);
+
+      /* สร้างชั้นไทล์ครบทุกเฟรมตั้งแต่แรก แล้วสลับด้วยความทึบแสง
+         ถ้าเปลี่ยน url ของชั้นเดียวไปเรื่อย ๆ ภาพจะกะพริบทุกเฟรมเพราะไทล์ต้องโหลดใหม่ */
+      /* maxNativeZoom 7 สำคัญมาก ห้ามเอาออก
+         RainViewer แบบไม่เสียเงินมีภาพเรดาร์จริงถึงระดับซูม 7 เท่านั้น
+         ซูม 8 ขึ้นไปคืนภาพสำรองสีเทาเหมือนกันทุกใบ ซึ่งไม่ใช่ฝน
+         ถ้าไม่ใส่ จะเห็นสีเทาทับทั้งจังหวัดแล้วเข้าใจผิดว่าฝนตกหมด */
+      WXR.layers = WXR.frames.map(f => L.tileLayer(
+        WXR.host + f.path + '/256/{z}/{x}/{y}/2/1_1.png',
+        { opacity:0, zIndex:350, maxNativeZoom:7, attribution:'เรดาร์ฝน RainViewer' }
+      ));
+      WXR.layers.forEach(l => l.addTo(WXR.map));
+
+      WXR.idx = past.length ? past.length - 1 : 0;   // เริ่มที่ภาพจริงล่าสุด ไม่ใช่ภาพคาดการณ์
+      wxRadarShow(WXR.idx);
+      wxRadarPlay();
+
+      setTimeout(() => WXR.map.invalidateSize(), 250);
+    }
+
+    function wxRadarShow(i) {
+      WXR.idx = i;
+      WXR.layers.forEach((l, k) => l.setOpacity(k === i ? 0.82 : 0));
+
+      const f = WXR.frames[i];
+      const lab = document.getElementById('wxRadarTime');
+      if (!lab) return;
+      const t = new Date(f.time * 1000).toLocaleTimeString('th-TH',
+        { timeZone:'Asia/Bangkok', hour:'2-digit', minute:'2-digit' });
+      /* แยกให้ชัดว่าภาพไหนเกิดขึ้นจริงแล้ว ภาพไหนเป็นการคาดการณ์
+         คนที่เอาไปสั่งกำลังต้องรู้ว่ากำลังดูของจริงหรือดูการเดา */
+      const future = f.time * 1000 > Date.now();
+      lab.innerHTML = '<b>' + t + ' น.</b>' +
+        (future ? ' <span style="color:#b45309">คาดการณ์</span>' : '') +
+        ' <span style="color:#5b6b7f">· ภาพ ' + (i + 1) + ' จาก ' + WXR.frames.length + '</span>';
+    }
+
+    function wxRadarPlay() {
+      wxRadarStop();
+      WXR.playing = true;
+      /* ค้างที่ภาพล่าสุดนานกว่าเฟรมอื่นสามเท่า เพราะนั่นคือสถานการณ์ตอนนี้
+         ถ้าเล่นผ่านเร็วเท่ากันหมด คนจะอ่านภาพเมื่อสองชั่วโมงก่อนค้างตา */
+      const step = () => {
+        const next = (WXR.idx + 1) % WXR.frames.length;
+        wxRadarShow(next);
+        WXR.timer = setTimeout(step, next === WXR.frames.length - 1 ? 1900 : 650);
+      };
+      WXR.timer = setTimeout(step, 1900);
+      wxRadarBtn();
+    }
+
+    function wxRadarStop() {
+      if (WXR.timer) { clearTimeout(WXR.timer); WXR.timer = null; }
+      WXR.playing = false;
+      wxRadarBtn();
+    }
+
+    function wxRadarToggle() {
+      if (WXR.playing) wxRadarStop(); else wxRadarPlay();
+    }
+
+    function wxRadarBtn() {
+      const b = document.getElementById('wxRadarPlay');
+      if (!b) return;
+      b.innerHTML = WXR.playing
+        ? '<i class="fa-solid fa-pause"></i> หยุด'
+        : '<i class="fa-solid fa-play"></i> เล่น';
+    }
+
+    function wxRadarStepBy(d) {
+      /* กดเลื่อนทีละภาพต้องหยุดการเล่นอัตโนมัติก่อน
+         ไม่งั้นตัวจับเวลาจะแย่งเลื่อนกลับทันทีจนกดแล้วเหมือนไม่มีอะไรเกิดขึ้น */
+      wxRadarStop();
+      const n = WXR.frames.length;
+      wxRadarShow((WXR.idx + d + n) % n);
+    }
+
     async function initWeatherPage() {
+      wxRadarInit();   // ไม่ await เพราะเรดาร์ล่มต้องไม่หน่วงส่วนวิเคราะห์
       const f = document.getElementById('wxFrom'), t = document.getElementById('wxTo');
       if (!f.value) {
         // ค่าเริ่มต้น: ย้อนหลัง 1 ปีถึงเมื่อวาน
@@ -5925,32 +6229,65 @@
       } catch (e) {
         host.innerHTML = '<div class="hint">' +
           (/bs_site_profile|does not exist|schema cache/i.test(e.message || '')
-            ? 'ยังไม่ได้รันไฟล์ <b>sql/bs_profile_1.sql</b>'
+            ? 'ยังไม่ได้รันไฟล์ <b>sql/bs_profile_3.sql</b>'
             : escapeHtml(e.message || 'วิเคราะห์ไม่ได้')) + '</div>';
       }
     }
 
+    /* โอกาสที่จะได้ผลอย่างน้อยเท่าที่เห็น ทั้งที่ไม่มีอะไรผิดปกติจริง
+       คิดตรงจากการแจกแจงทวินาม ไม่ใช้สูตรประมาณ
+       เพราะจำนวนครั้งต่อจุดอยู่หลักหน่วยถึงหลักสิบ ซึ่งเป็นช่วงที่สูตรประมาณพัง
+       (บทเรียนเดียวกับตอนที่ช่วงความเชื่อมั่นแบบล็อกปล่อย 16.83 เท่า
+        ออกมาจากอุบัติเหตุ 3 กับ 4 ครั้ง) */
+    function bspBinomTail(k, n, p) {
+      if (k <= 0) return 1;
+      if (k > n || n <= 0) return 0;
+      if (p >= 1) return 1;
+      if (p <= 0) return 0;
+      let term = Math.pow(1 - p, n), sum = term;          // P(X = 0)
+      for (let i = 0; i < k - 1; i++) {                   // ไล่ถึง P(X = k-1)
+        term *= ((n - i) / (i + 1)) * (p / (1 - p));
+        sum += term;
+      }
+      return Math.max(0, Math.min(1, 1 - sum));
+    }
+    const BSP_ALPHA = 0.05;
+
     /* แปลรูปร่างการกระจุกเป็นประเภทปัญหา
-       เกณฑ์
-         กว้างไม่เกิน 150 ม.          = จุดเดียว สาเหตุกายภาพชิ้นเดียว
-         ยาวกว่ากว้างตั้งแต่ 3 เท่า   = ยืดไปตามแนวถนน เป็นปัญหาทั้งช่วง
-         นอกนั้น                      = กระจายเป็นวง เป็นปัญหาของย่าน
-       150 ม. มาจากขนาดทางแยกทั่วไปบวกระยะเบรก — กว้างกว่านั้นไม่ใช่ "จุด" แล้ว */
-    function bspShape(spread, elong, n) {
+       ข้อควรระวังที่ทำให้เกณฑ์เดิมผิด
+         ความกว้างมีเพดานเท่ากับเส้นผ่านศูนย์กลางของรัศมีที่ใช้หาจุดนั้นเสมอ
+         จุดรัศมี 100 ม. จึงกว้างได้มากสุด 200 ม. ไม่ว่าอุบัติเหตุจะกระจายแค่ไหน
+         การเอาเส้น 150 ม. มาแบ่งทุกจุด จึงเป็นการแบ่งตามรัศมีที่เลือกไว้ตอนสร้างจุด
+         ไม่ได้แบ่งตามพฤติกรรมของอุบัติเหตุ — คิดเป็นสัดส่วนของเพดานแทน */
+    function bspShape(spread, elong, n, radiusM) {
       if (spread == null || n < 3) return null;   // น้อยกว่า 3 จุดไม่มีรูปร่างให้วัด
       const m = Math.round(spread);
-      if (m <= 150) return { t: 'จุดเสี่ยงเฉพาะจุด — กระจุกในรัศมี ' + m + ' ม. · มักมีสาเหตุกายภาพชิ้นเดียว แก้ที่ตัวจุด (ป้าย ไฟ ผิวทาง เกาะกลาง)', c: '#c1122f' };
-      if (elong != null && elong >= 3) return { t: 'ช่วงถนนเสี่ยง — ยืดยาวราว ' + m + ' ม. ตามแนวถนน · แก้ตลอดช่วง (จำกัดความเร็ว ป้ายเตือนต่อเนื่อง ตีเส้น)', c: '#c24e00' };
-      return { t: 'พื้นที่เสี่ยง — กระจายราว ' + m + ' ม. ไม่กระจุกจุดเดียว · มักเป็นพฤติกรรมของย่าน แก้ด้วยการกวดขันและรณรงค์', c: '#7c3aed' };
+      const cap = Math.max(1, (Number(radiusM) || 200) * 2);
+      const fill = m / cap;
+      const tail = ' (กว้างได้มากสุด ' + Math.round(cap) + ' ม. ตามรัศมีที่ใช้หาจุด)';
+      if (fill <= 0.4) return { t: 'กระจุกแน่นจริง — เหตุอยู่ในวงแค่ ' + m + ' ม.' + tail +
+        ' · มักมีสาเหตุกายภาพชิ้นเดียว แก้ที่ตัวจุด (ป้าย ไฟ ผิวทาง เกาะกลาง)', c: '#c1122f' };
+      if (elong != null && elong >= 3) return { t: 'ยืดตามแนวถนน — ยาวราว ' + m +
+        ' ม. ยาวกว่ากว้าง ' + elong + ' เท่า · แก้ตลอดช่วง (จำกัดความเร็ว ป้ายเตือนต่อเนื่อง ตีเส้น)', c: '#c24e00' };
+      return { t: 'เหตุกระจายเต็มรัศมี — ' + m + ' ม.' + tail +
+        ' · ไม่มีจุดกระจุกให้แก้ทางกายภาพ ต้องดูที่พฤติกรรมของย่าน', c: '#7c3aed' };
     }
 
-    // ช่วง 4 ชั่วโมงติดกันที่มีเหตุมากที่สุด วนรอบเที่ยงคืนได้
-    function bspPeak(hours) {
-      let best = { start: 0, sum: -1 };
+    /* ช่วง 4 ชั่วโมงติดกันที่มีเหตุมากที่สุด วนรอบเที่ยงคืนได้
+       คืนสัดส่วนที่ "ควรจะเป็น" ของช่วงนั้นมาด้วย
+       ซึ่งไม่ใช่ 4/24 อย่างที่เคยคิด เพราะอุบัติเหตุทั้งอำเภอกระจุกชั่วโมงเร่งด่วนอยู่แล้ว
+       จุดที่เกิดเยอะตอนเย็นจึงอาจแค่เดินตามจังหวะของทั้งเมือง ไม่ได้ผิดปกติเลย */
+    function bspPeak(hours, baseHours) {
+      const bt = Array.isArray(baseHours) && baseHours.length === 24 ? baseHours.map(Number) : null;
+      const btTotal = bt ? bt.reduce((a, b) => a + (b || 0), 0) : 0;
+      let best = { start: 0, sum: -1, share: 4 / 24 };
       for (let s = 0; s < 24; s++) {
-        let sum = 0;
-        for (let k = 0; k < 4; k++) sum += hours[(s + k) % 24] || 0;
-        if (sum > best.sum) best = { start: s, sum };
+        let sum = 0, bs = 0;
+        for (let k = 0; k < 4; k++) {
+          sum += hours[(s + k) % 24] || 0;
+          if (bt) bs += bt[(s + k) % 24] || 0;
+        }
+        if (sum > best.sum) best = { start: s, sum, share: btTotal ? bs / btTotal : 4 / 24 };
       }
       return best;
     }
@@ -5964,6 +6301,8 @@
         return;
       }
       const base = r.baseline || {};
+      // จังหวะรายชั่วโมงของทั้งอำเภอ ใช้เป็นฐานเทียบเรื่องเวลา (จาก bs_profile_3.sql)
+      const baseHours = Array.isArray(r.hours_baseline) ? r.hours_baseline : null;
       const pct = v => (Number(v) * 100).toFixed(0) + '%';
 
       document.getElementById('bsProfileResult').innerHTML =
@@ -5979,33 +6318,51 @@
           /* รูปร่างการกระจุก — บอกว่าเป็นปัญหาระดับไหน
              วัดจากตำแหน่งจริงของอุบัติเหตุ ไม่ใช่จากกฎที่สร้างจุดนั้นขึ้นมา
              เพราะจุดที่มาจากกฎ "ช่วงถนน" อาจกระจุกแน่นจริง หรือกระจายยาวก็ได้ */
-          const shape = bspShape(s.spread_m, s.elongation, n);
+          const shape = bspShape(s.spread_m, s.elongation, n, s.radius_m);
           if (shape) notes.push(shape);
 
           if (n < BSP_MIN_N) {
             notes.push({ t: 'ข้อมูลยังน้อยเกินไป (' + n + ' ครั้งในรัศมี) — ยังสรุปรูปแบบเวลาไม่ได้', c: '#64748b' });
           } else {
-            const pk = bspPeak(hours);
-            const share = pk.sum / n;
-            // 4 ชั่วโมงคือหนึ่งในหกของวัน ถ้ากระจุกเกินครึ่งถือว่าชัด
-            if (share >= 0.5) {
-              notes.push({ t: 'กระจุกช่วง ' + bspHH(pk.start) + '-' + bspHH((pk.start + 4) % 24) +
-                ' (' + pk.sum + ' จาก ' + n + ' ครั้ง = ' + pct(share) + ')', c: '#c1122f' });
+            /* ช่วงเวลา — เทียบกับจังหวะรายชั่วโมงของทั้งอำเภอ ไม่ใช่กับ 4/24
+               และคูณ 24 กลับเข้าไป เพราะเราไล่ดูครบ 24 ช่วงแล้วหยิบช่วงที่เด่นที่สุดมา
+               ถ้าไม่ชดเชย จะเจอ "รูปแบบ" โดยบังเอิญง่ายขึ้น 24 เท่า */
+            const pk = bspPeak(hours, baseHours);
+            const pTime = Math.min(1, bspBinomTail(pk.sum, n, pk.share) * 24);
+            const win = bspHH(pk.start) + '-' + bspHH((pk.start + 4) % 24);
+            const expTime = (pk.share * n).toFixed(1);
+            if (pTime < BSP_ALPHA) {
+              notes.push({ t: 'กระจุกช่วง ' + win + ' มากกว่าจังหวะปกติของทั้งอำเภอ (' +
+                pk.sum + ' จาก ' + n + ' ครั้ง · ช่วงนี้ควรได้ราว ' + expTime + ')', c: '#c1122f' });
             } else {
-              notes.push({ t: 'เกิดกระจายทั้งวัน ไม่มีช่วงเวลาที่เด่นชัด', c: '#0369a1' });
+              notes.push({ t: 'ไม่มีช่วงเวลาที่เด่นเกินจังหวะปกติของทั้งอำเภอ — ช่วงที่มากสุดคือ ' +
+                win + ' (' + pk.sum + ' จาก ' + n + ' ครั้ง · ควรได้ราว ' + expTime + ')', c: '#64748b' });
             }
-            // เทียบกับสัดส่วนเวลาของทั้งพื้นที่ ไม่ใช่ดูสัดส่วนลอย ๆ
-            if (known >= BSP_MIN_N && base.first != null && Number(base.first) > 0) {
-              const obs = (w.first || 0) / known, exp = Number(base.first);
-              if (obs >= exp * 2 && (w.first || 0) >= 2) {
-                notes.push({ t: 'สัมพันธ์กับฝนแรก — เกิดตอนฝนแรก ' + pct(obs) +
-                  ' ทั้งที่ฝนแรกกินเวลาแค่ ' + pct(exp) + ' ของทั้งปี', c: '#7c3aed' });
+
+            /* ฝน — เทียบกับสัดส่วนเวลาของทั้งพื้นที่ แล้วตัดด้วยนัยสำคัญ
+               เกณฑ์เดิมคือ "มากกว่าฐาน 1.5 เท่า" ซึ่งเมื่อฐานอยู่แถว 11%
+               แปลว่าฝน 2 ครั้งจาก 9 ก็ผ่านแล้ว ทั้งที่โยนเหรียญเล่นก็ได้แบบนั้น
+               หนึ่งในสามครั้ง — เป็นการสรุปเกินจริงแบบเดียวกับที่ไล่แก้ในหน้าฝนแรก */
+            const rainObs = (w.rain || 0) + (w.first || 0);
+            const rainExp = Number(base.rain || 0) + Number(base.first || 0);
+            if (known >= BSP_MIN_N && rainExp > 0) {
+              const pRain = bspBinomTail(rainObs, known, rainExp);
+              const expN = (rainExp * known).toFixed(1);
+              if (pRain < BSP_ALPHA) {
+                notes.push({ t: 'สัมพันธ์กับฝนจริง — เกิดตอนถนนเปียก ' + rainObs + ' จาก ' + known +
+                  ' ครั้ง ทั้งที่ฝนกินเวลาแค่ ' + pct(rainExp) + ' (ควรได้ราว ' + expN + ')', c: '#0e7490' });
+              } else {
+                notes.push({ t: 'ฝนยังไม่ต่างจากปกติ — เปียก ' + rainObs + ' จาก ' + known +
+                  ' ครั้ง ซึ่งควรได้ราว ' + expN + ' อยู่แล้ว', c: '#64748b' });
               }
             }
-            if (known >= BSP_MIN_N && base.rain != null && Number(base.rain) > 0) {
-              const obs = ((w.rain || 0) + (w.first || 0)) / known;
-              const exp = Number(base.rain) + Number(base.first || 0);
-              if (obs >= exp * 1.5) notes.push({ t: 'เกิดตอนฝนตกมากกว่าปกติ (' + pct(obs) + ' เทียบฐาน ' + pct(exp) + ')', c:'#0e7490' });
+            // ฝนแรกแยกดูต่างหาก เพราะเป็นสมมุติฐานที่ตั้งใจทดสอบ ไม่ใช่ผลพลอยได้
+            if (known >= BSP_MIN_N && Number(base.first || 0) > 0 && (w.first || 0) > 0) {
+              const pFirst = bspBinomTail(w.first || 0, known, Number(base.first));
+              if (pFirst < BSP_ALPHA) {
+                notes.push({ t: 'สัมพันธ์กับฝนแรก — เกิดตอนฝนแรก ' + (w.first || 0) + ' จาก ' + known +
+                  ' ครั้ง ทั้งที่ฝนแรกกินเวลาแค่ ' + pct(Number(base.first)) + ' ของเวลาทั้งหมด', c: '#7c3aed' });
+              }
             }
           }
 
@@ -6020,8 +6377,11 @@
               '<b style="font-size:.95rem">' + escapeHtml(s.title || '-') + '</b>' +
               '<span class="hint">' + escapeHtml(s.road || '') + ' · ในรัศมี ' + (s.radius_m || 200) + ' ม. พบ ' + n + ' ครั้ง</span></div>' +
             '<div style="display:flex;align-items:flex-end;height:48px;margin:10px 0 2px">' + bars + '</div>' +
+            /* บอกความสูงของแท่งสูงสุดด้วย เพราะกราฟปรับสเกลตามค่าสูงสุดของจุดนั้นเสมอ
+               จุดที่มีชั่วโมงละ 2 ครั้ง จึงหน้าตาเหมือนจุดที่มีชั่วโมงละ 20 ครั้งเป๊ะ */
             '<div class="hint" style="display:flex;justify-content:space-between;font-size:.66rem">' +
               '<span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span></div>' +
+            '<div class="hint" style="font-size:.66rem;margin-top:2px">แท่งสูงสุด = ' + mx + ' ครั้ง/ชม.</div>' +
             (known ? '<div class="hint" style="margin-top:8px">สภาพถนน — แห้ง ' + (w.dry||0) +
                      ' · ฝนต่อเนื่อง ' + (w.rain||0) + ' · <b>ฝนแรก ' + (w.first||0) + '</b>' +
                      (w.unknown ? ' · ไม่ทราบ ' + w.unknown : '') + '</div>' : '') +
@@ -8134,6 +8494,262 @@
     const VC_FB_COLS = ['วันที่','คะแนน','หัวข้อ','ข้อความ','ช่องทางติดต่อ','สถานะ','บันทึกเจ้าหน้าที่','ผู้รับเรื่อง'];
 
     async function initVoicePage() { await vcLoad(); }
+
+    /* ============================================================
+       กิจกรรมแจกของรางวัล — หน้าเจ้าหน้าที่
+       ============================================================
+       ทุกอย่างผ่าน RPC ที่มี admin_check_ เป็นบรรทัดแรก
+       ตาราง camp_ ปิด RLS ตายสนิท หน้าเว็บจึงแตะตารางตรง ๆ ไม่ได้เลย
+
+       ช่องค้นรหัสอยู่บนสุดรองจากสถานะ เพราะงานที่ทำบ่อยที่สุด
+       คือมีคนยืนอยู่ตรงหน้าแล้วบอกรหัสมา ไม่ใช่การนั่งดูรายงาน
+       ============================================================ */
+    async function initCampaignPage() { await cpgLoad(); }
+
+    async function cpgLoad() {
+      try {
+        const ov = await rpc('camp_admin_overview', { p_token: state.token });
+        if (!ov || !ov.success) throw new Error((ov && ov.message) || 'โหลดข้อมูลไม่สำเร็จ');
+        const [cl, pp] = await Promise.all([
+          rpc('camp_admin_claims', { p_token: state.token, p_period: null }),
+          rpc('camp_admin_people', { p_token: state.token, p_limit: 500 })
+        ]);
+        state.cpg = { ov: ov, claims: (cl && cl.rows) || [], people: (pp && pp.rows) || [] };
+        document.getElementById('cpgNotReady').style.display = 'none';
+        document.getElementById('cpgReady').style.display = 'block';
+        cpgRenderStatus(); cpgRenderClaims(); cpgRenderPeople(); cpgFillSettings();
+      } catch (e) {
+        const missing = /camp_admin|does not exist|schema cache/i.test(e.message);
+        document.getElementById('cpgNotReady').style.display = missing ? 'block' : 'none';
+        document.getElementById('cpgReady').style.display = missing ? 'none' : 'block';
+        if (!missing) rpcAlert(e, 'โหลดข้อมูลกิจกรรมไม่สำเร็จ');
+      }
+    }
+
+    function cpgThaiDate(iso) {
+      if (!iso) return '-';
+      const m = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+      const p = String(iso).slice(0, 10).split('-');
+      if (p.length < 3) return iso;
+      return Number(p[2]) + ' ' + m[Number(p[1]) - 1] + ' ' + (Number(p[0]) + 543);
+    }
+
+    function cpgRenderStatus() {
+      const o = state.cpg.ov;
+      const box = (n, l, c) => '<div style="flex:1;min-width:112px;text-align:center;background:#fff;border:1px solid #e3ecf5;border-radius:12px;padding:11px 8px">' +
+        '<div style="font-size:1.5rem;font-weight:800;color:' + c + '">' + n + '</div>' +
+        '<div style="font-size:.78rem;color:#5b6b7f;margin-top:2px">' + l + '</div></div>';
+
+      /* แยกสองสถานะให้ชัด ปิดสวิตช์ กับ นอกช่วงเวลา
+         เพราะกิจกรรมที่หมดเขตแล้วกับที่ยังไม่กดเปิด มองจากภายนอกเหมือนกันหมด
+         แต่แก้คนละวิธี อันหนึ่งเลื่อนวัน อีกอันกดเปิด */
+      const openTxt = o.open
+        ? '<span class="pill" style="background:#eaf7f0;color:#16834b">เปิดรับอยู่</span>'
+        : (o.enabled
+            ? '<span class="pill" style="background:#fdeef1;color:#c1122f">นอกช่วงเวลา</span>'
+            : '<span class="pill" style="background:#eef2f7;color:#5b6b7f">ปิดสวิตช์อยู่</span>');
+
+      document.getElementById('cpgStatusCard').innerHTML =
+        '<h3 class="card-title" style="margin-bottom:10px"><i class="fa-solid fa-flag-checkered"></i> สถานะกิจกรรม ' + openTxt + '</h3>' +
+        '<p class="hint" style="margin:0 0 12px">แจก<b>' + escapeHtml(o.prize) + '</b> · ชวนครบ <b>' + o.need + ' คน</b> จึงได้รับ · ' +
+          cpgThaiDate(o.startDate) + ' ถึง ' + cpgThaiDate(o.endDate) +
+          (o.daysLeft === null || o.daysLeft === undefined ? '' :
+            (o.daysLeft >= 0 ? ' · เหลืออีก <b>' + o.daysLeft + ' วัน</b>' : ' · <b style="color:#c1122f">หมดเขตแล้ว</b>')) + '</p>' +
+        '<div style="display:flex;gap:9px;flex-wrap:wrap">' +
+          box(o.members, 'ผู้เข้าร่วม', '#1d4ed8') +
+          box(o.bothOk, 'ผ่านทั้งสองข้อ', '#16834b') +
+          box(o.ready, 'ครบ รอออกสิทธิ์', '#b45309') +
+          box(o.claimed, 'ได้สิทธิ์แล้ว', '#7c3aed') +
+          box(o.left, 'ของเหลือ', o.left > 0 ? '#0f766e' : '#c1122f') +
+        '</div>' +
+        (o.groupSet ? '' : '<p class="hint" style="margin:12px 0 0;color:#c1122f"><b>ยังไม่ได้ตั้งรหัสกลุ่ม</b> ระบบจึงตรวจการอยู่ในกลุ่มไม่ได้</p>');
+    }
+
+    function cpgRenderClaims() {
+      const rows = state.cpg.claims;
+      document.getElementById('cpgClaimCount').textContent = rows.length + ' ราย';
+      if (!rows.length) {
+        document.getElementById('cpgClaims').innerHTML = '<p class="hint" style="margin:0">ยังไม่มีใครได้สิทธิ์</p>';
+        return;
+      }
+      document.getElementById('cpgClaims').innerHTML =
+        '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.92rem">' +
+        '<thead><tr style="background:#f4f7fb">' +
+        '<th style="padding:9px 10px;text-align:right">รหัส</th><th style="padding:9px 10px;text-align:right">ชื่อ</th>' +
+        '<th style="padding:9px 10px;text-align:center">ชวนได้</th><th style="padding:9px 10px;text-align:center">สถานะ</th>' +
+        '<th style="padding:9px 10px;text-align:right">ผู้บันทึก</th><th style="padding:9px 10px"></th></tr></thead><tbody>' +
+        rows.map(function (r) {
+          const done = r.status === 'รับแล้ว';
+          const cancel = r.status === 'ยกเลิก';
+          const color = done ? '#16834b' : (cancel ? '#8a94a6' : '#b45309');
+          /* เครื่องหมายคำพูดชั้นในต้องหนีด้วยแบ็กสแลช
+             เพราะสตริงจาวาสคริปต์ใช้ฟันหนู แอตทริบิวต์ html ใช้ฟันหนูคู่
+             และอาร์กิวเมนต์ข้างในต้องเป็นฟันหนูอีกชั้น */
+          const btns = (done || cancel)
+            ? '<button class="btn btn-soft btn-sm" onclick="cpgMark(' + r.id + ', \'รอรับของ\')">ย้อนกลับ</button>'
+            : '<button class="btn btn-sm" onclick="cpgMark(' + r.id + ', \'รับแล้ว\')">รับแล้ว</button> ' +
+              '<button class="btn btn-soft btn-sm" onclick="cpgMark(' + r.id + ', \'ยกเลิก\')">ยกเลิก</button>';
+          return '<tr style="border-top:1px solid #eef2f7">' +
+            '<td style="padding:9px 10px;font-weight:800;letter-spacing:1px">' + escapeHtml(r.code) + '</td>' +
+            '<td style="padding:9px 10px">' + escapeHtml(r.name) + '</td>' +
+            '<td style="padding:9px 10px;text-align:center">' + r.friends + '</td>' +
+            '<td style="padding:9px 10px;text-align:center;color:' + color + ';font-weight:700">' + escapeHtml(r.status) + '</td>' +
+            '<td style="padding:9px 10px;font-size:.85rem;color:#5b6b7f">' + escapeHtml(r.handledBy || '-') + '</td>' +
+            '<td style="padding:9px 10px;text-align:left;white-space:nowrap">' + btns + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+
+    function cpgRenderPeople() {
+      const all = state.cpg.people;
+      const need = state.cpg.ov.need;
+      const q = (valueOf('cpgSearch') || '').trim().toLowerCase();
+      const f = valueOf('cpgFilter') || '';
+      const rows = all.filter(function (r) {
+        if (q && (String(r.name).toLowerCase().indexOf(q) < 0 && String(r.code).toLowerCase().indexOf(q) < 0)) return false;
+        if (f === 'ready' && r.n < need) return false;
+        if (f === 'near' && !(r.n > 0 && r.n < need)) return false;
+        /* หลุดเงื่อนไข หมายถึงตรวจแล้วพบว่าไม่ผ่านข้อใดข้อหนึ่ง
+           ไม่ใช่ยังไม่เคยตรวจ ซึ่งค่าเป็น null ไม่ใช่ false */
+        if (f === 'out' && !(r.isFriend === false || r.inGroup === false)) return false;
+        return true;
+      });
+      document.getElementById('cpgPeopleCount').textContent = all.length + ' คน';
+      if (!rows.length) {
+        document.getElementById('cpgPeople').innerHTML = '<p class="hint" style="margin:0">ไม่พบรายการที่ตรงกับเงื่อนไข</p>';
+        return;
+      }
+      const mark = v => v === true ? '<span style="color:#16834b">&#10003;</span>'
+                     : v === false ? '<span style="color:#c1122f">&#10007;</span>'
+                     : '<span style="color:#b0bccb">&ndash;</span>';
+      document.getElementById('cpgPeople').innerHTML =
+        '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.92rem">' +
+        '<thead><tr style="background:#f4f7fb">' +
+        '<th style="padding:9px 10px;text-align:right">รหัส</th><th style="padding:9px 10px;text-align:right">ชื่อ</th>' +
+        '<th style="padding:9px 10px;text-align:center">เพื่อน</th><th style="padding:9px 10px;text-align:center">กลุ่ม</th>' +
+        '<th style="padding:9px 10px;text-align:center">ชวนได้</th><th style="padding:9px 10px;text-align:right">ผู้ชวน</th></tr></thead><tbody>' +
+        rows.map(function (r) {
+          return '<tr style="border-top:1px solid #eef2f7">' +
+            '<td style="padding:9px 10px;font-weight:800;letter-spacing:1px">' + escapeHtml(r.code) + '</td>' +
+            '<td style="padding:9px 10px">' + escapeHtml(r.name) + '</td>' +
+            '<td style="padding:9px 10px;text-align:center">' + mark(r.isFriend) + '</td>' +
+            '<td style="padding:9px 10px;text-align:center">' + mark(r.inGroup) + '</td>' +
+            '<td style="padding:9px 10px;text-align:center;font-weight:700;color:' + (r.n >= need ? '#16834b' : '#5b6b7f') + '">' + r.n + '</td>' +
+            '<td style="padding:9px 10px;color:#5b6b7f">' + escapeHtml(r.invitedBy || 'มาเอง') + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+
+    async function cpgFind() {
+      const code = (valueOf('cpgCode') || '').trim().toUpperCase();
+      const out = document.getElementById('cpgFindResult');
+      if (!code) { out.innerHTML = ''; return; }
+      out.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const r = await rpc('camp_admin_find', { p_token: state.token, p_code: code });
+        if (!r || !r.success) {
+          out.innerHTML = '<p style="margin:0;color:#c1122f;font-weight:700">' + escapeHtml((r && r.message) || 'ไม่พบ') + '</p>';
+          return;
+        }
+        const ok = r.have >= r.need;
+        const already = r.status === 'รับแล้ว';
+
+        /* เตือนเรื่องรับซ้ำให้เด่นที่สุด เพราะเป็นความผิดพลาดที่แก้ไม่ได้หลังของออกจากมือ
+           ต่างจากยังไม่ครบ ซึ่งแค่บอกให้ไปชวนเพิ่ม */
+        const head = already
+          ? '<div style="background:#fdeef1;border:1px solid #f3c6cf;border-radius:12px;padding:12px 14px;margin-bottom:12px;color:#c1122f;font-weight:800">&#9888; รายนี้รับของไปแล้ว เมื่อ ' + escapeHtml(String(r.handledAt || '').slice(0, 10)) + ' โดย ' + escapeHtml(r.handledBy || '-') + '</div>'
+          : (ok
+              ? '<div style="background:#eaf7f0;border:1px solid #bfe3cf;border-radius:12px;padding:12px 14px;margin-bottom:12px;color:#16834b;font-weight:800">&#10003; ครบเงื่อนไขแล้ว ' + r.have + ' จาก ' + r.need + ' คน มอบของได้</div>'
+              : '<div style="background:#fff8ec;border:1px solid #f0dcb8;border-radius:12px;padding:12px 14px;margin-bottom:12px;color:#b45309;font-weight:800">ยังไม่ครบ ชวนได้ ' + r.have + ' จาก ' + r.need + ' คน</div>');
+
+        const friends = (r.friends || []).map(function (f) {
+          const why = f.counts ? '<b style="color:#16834b">นับให้</b>'
+            : '<span style="color:#c1122f">' +
+              (f.isFriend === false ? 'ไม่ได้เป็นเพื่อนแล้ว'
+                : (f.inGroup === false ? 'ไม่ได้อยู่ในกลุ่ม' : 'ยังไม่ได้ตรวจ')) + '</span>';
+          return '<li style="margin-bottom:3px">' + escapeHtml(f.name) + ' (' + escapeHtml(f.code) + ') &mdash; ' + why + '</li>';
+        }).join('');
+
+        const action = r.claimId
+          ? (already ? '' : '<button class="btn" onclick="cpgMark(' + r.claimId + ', \'รับแล้ว\')"><i class="fa-solid fa-check"></i> บันทึกว่ารับของแล้ว</button>')
+          : (ok ? '<button class="btn" onclick="cpgAward(true)"><i class="fa-solid fa-bolt"></i> ออกสิทธิ์เดี๋ยวนี้</button>'
+                : '<p class="hint" style="margin:0">ยังชวนไม่ครบ จึงยังไม่มีสิทธิ์</p>');
+
+        out.innerHTML = head +
+          '<div style="font-size:1.05rem;font-weight:800;margin-bottom:4px">' + escapeHtml(r.name) +
+            '  <span style="letter-spacing:2px;color:#1d4ed8">' + escapeHtml(r.code) + '</span></div>' +
+          '<p class="hint" style="margin:0 0 10px">เข้าร่วมเมื่อ ' + escapeHtml(String(r.joinedAt || '').slice(0, 10)) +
+            ' · ตรวจล่าสุด ' + escapeHtml(String(r.checkedAt || 'ยังไม่ตรวจ').slice(0, 16).replace('T', ' ')) + '</p>' +
+          '<div style="font-weight:700;margin-bottom:5px">เพื่อนที่ชวนมา ' + (r.friends || []).length + ' คน</div>' +
+          (friends ? '<ul style="margin:0 0 12px 18px">' + friends + '</ul>' : '<p class="hint" style="margin:0 0 12px">ยังไม่มีใคร</p>') +
+          action;
+      } catch (e) { rpcAlert(e, 'ค้นหาไม่สำเร็จ'); out.innerHTML = ''; }
+    }
+
+    async function cpgMark(id, status) {
+      const c = await Swal.fire({
+        title: 'ยืนยัน', text: 'บันทึกรายการนี้เป็น ' + status + ' ใช่หรือไม่',
+        icon: 'question', showCancelButton: true, confirmButtonText: 'ยืนยัน', cancelButtonText: 'ยกเลิก'
+      });
+      if (!c.isConfirmed) return;
+      try {
+        const r = await rpc('camp_admin_set_status', { p_token: state.token, p_claim_id: id, p_status: status, p_note: null });
+        if (!r || !r.success) throw new Error((r && r.message) || 'บันทึกไม่สำเร็จ');
+        Swal.fire({ icon: 'success', title: r.message, timer: 1400, showConfirmButton: false });
+        await cpgLoad();
+        if ((valueOf('cpgCode') || '').trim()) cpgFind();
+      } catch (e) { rpcAlert(e, 'บันทึกไม่สำเร็จ'); }
+    }
+
+    async function cpgAward(refind) {
+      try {
+        const r = await rpc('camp_admin_award', { p_token: state.token });
+        if (!r || !r.success) throw new Error((r && r.message) || 'ออกสิทธิ์ไม่สำเร็จ');
+        Swal.fire({ icon: 'success', title: r.message, timer: 2000, showConfirmButton: false });
+        await cpgLoad();
+        if (refind && (valueOf('cpgCode') || '').trim()) cpgFind();
+      } catch (e) { rpcAlert(e, 'ออกสิทธิ์ไม่สำเร็จ'); }
+    }
+
+    function cpgFillSettings() {
+      const o = state.cpg.ov;
+      document.getElementById('cpgSetNeed').value = o.need;
+      document.getElementById('cpgSetQuota').value = o.quota;
+      document.getElementById('cpgSetEnd').value = String(o.endDate || '').slice(0, 10);
+      const b = document.getElementById('cpgToggleBtn');
+      b.innerHTML = o.enabled
+        ? '<i class="fa-solid fa-toggle-on"></i> ปิดกิจกรรม'
+        : '<i class="fa-solid fa-toggle-off"></i> เปิดกิจกรรม';
+      b.style.color = o.enabled ? '#c1122f' : '#16834b';
+    }
+
+    async function cpgSet(key, value) {
+      const r = await rpc('camp_admin_set', { p_token: state.token, p_key: key, p_value: String(value) });
+      if (!r || !r.success) throw new Error((r && r.message) || 'บันทึกไม่สำเร็จ');
+      return r;
+    }
+
+    async function cpgSaveSettings() {
+      try {
+        await cpgSet('campNeedFriends', Number(valueOf('cpgSetNeed')) || 5);
+        await cpgSet('campQuota', Number(valueOf('cpgSetQuota')) || 100);
+        const end = valueOf('cpgSetEnd');
+        if (end) await cpgSet('campEndDate', end);
+        Swal.fire({ icon: 'success', title: 'บันทึกแล้ว', timer: 1300, showConfirmButton: false });
+        await cpgLoad();
+      } catch (e) { rpcAlert(e, 'บันทึกไม่สำเร็จ'); }
+    }
+
+    async function cpgToggle() {
+      const on = state.cpg.ov.enabled;
+      const c = await Swal.fire({
+        title: on ? 'ปิดกิจกรรม' : 'เปิดกิจกรรม',
+        text: on ? 'บอทจะหยุดรับผู้เข้าร่วมใหม่ ข้อมูลเดิมยังอยู่ครบ' : 'ประชาชนจะเริ่มร่วมกิจกรรมได้ทันที',
+        icon: 'warning', showCancelButton: true, confirmButtonText: 'ยืนยัน', cancelButtonText: 'ยกเลิก'
+      });
+      if (!c.isConfirmed) return;
+      try { await cpgSet('campEnabled', on ? 'false' : 'true'); await cpgLoad(); }
+      catch (e) { rpcAlert(e, 'เปลี่ยนสถานะไม่สำเร็จ'); }
+    }
+
 
     async function vcLoad() {
       try {
