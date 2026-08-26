@@ -382,6 +382,21 @@ a.promo-card:hover .promo-open{background:#1d4ed8;color:#fff}
 .tb-toggle{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:1px solid #cbd5e1;border-radius:999px;
   background:#fff;color:#475569;font-weight:700;font-size:.76rem;cursor:pointer;transition:all .15s}
 .tb-toggle[aria-pressed="true"]{background:linear-gradient(135deg,#123b7a,#1d4ed8);border-color:#1d4ed8;color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.3)}
+/* ช่องที่เกิดเหตุถี่ที่สุด ให้เต้นช้า ๆ เพื่อให้สะดุดตาบนแผนที่ที่มีสีเยอะ
+   เต้นรอบละ 1.4 วินาที ไม่ใช่กะพริบถี่ ๆ
+   เนื้อหาที่กะพริบเกินสามครั้งต่อวินาทีกระตุ้นอาการชักในคนบางกลุ่มได้
+   และหน้านี้เป็นหน้าสาธารณะที่ใครก็เปิดได้ จึงต้องเลือกจังหวะช้าไว้ก่อน
+   ให้เฉพาะช่องกลุ่มสูงสุดเท่านั้นที่เต้น ถ้าเต้นทุกช่องจะไม่มีอะไรเด่นเลย */
+@keyframes avHotPulse{
+  0%,100%{fill-opacity:.55;stroke-width:1.5}
+  50%    {fill-opacity:.95;stroke-width:4}
+}
+.av-hot{animation:avHotPulse 1.4s ease-in-out infinite;}
+/* ผู้ใช้ที่ตั้งเครื่องให้ลดการเคลื่อนไหว ต้องไม่เจอภาพเต้น
+   แต่ยังต้องแยกออกว่าช่องไหนหนักสุด จึงคงเส้นขอบหนากับสีเข้มไว้แทน */
+@media (prefers-reduced-motion: reduce){
+  .av-hot{animation:none;stroke-width:4;fill-opacity:.92}
+}
 .risk-ov-pin{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:12px;
   border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 
@@ -2238,11 +2253,20 @@ async function loadDensityLayer() {
   }
   bsLayerGroups.heat.clearLayers();
 
+  // ช่องที่เข้ากลุ่มสีสูงสุดคือช่องที่ควรสะดุดตา จึงให้เต้น
+  // ใช้เกณฑ์เดียวกับการไล่สี ไม่ตั้งตัวเลขใหม่ซ้อนเข้าไปให้สองระบบเถียงกันเอง
+  const hotFrom = Math.max(2, Math.ceil(res.max_n * (HEAT_BINS.length - 1) / HEAT_BINS.length));
+
   cells.forEach(c => {
     const poly = (c.polygon || []).map(p => [p[0], p[1]]);
     if (poly.length < 3) return;
-    L.polygon(poly, { color:'#fff', weight:1, fillColor: heatColor(c.n, res.max_n), fillOpacity:.62 })
-      .bindTooltip('อุบัติเหตุ <b>' + c.n + '</b> ครั้งในช่องนี้', { direction:'top', opacity:.96 })
+    const hot = c.n >= hotFrom;
+    L.polygon(poly, { color: hot ? '#7f1d1d' : '#fff', weight: hot ? 2 : 1,
+                      fillColor: heatColor(c.n, res.max_n), fillOpacity:.62,
+                      className: hot ? 'av-hot' : '' })
+      .bindTooltip((hot ? '🔴 จุดเกิดเหตุถี่ที่สุด<br>' : '') +
+                   'อุบัติเหตุ <b>' + c.n + '</b> ครั้งในช่องนี้',
+                   { direction:'top', opacity:.96 })
       .addTo(bsLayerGroups.heat);
   });
 
