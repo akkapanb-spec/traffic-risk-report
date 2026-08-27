@@ -887,8 +887,9 @@
             <div class="field span-6"><label>วันที่และเวลาเกิดเหตุ <span class="req">*</span></label><input id="dfDatetime" class="input" type="datetime-local" required></div>
             <div class="field span-6"><label>อายุ (ปี) <span class="req">*</span></label><input id="dfAge" class="input" type="number" min="0" max="120" inputmode="numeric"></div>
             <div class="field span-6"><label>เพศ</label><select id="dfGender" class="select"><option value="">เลือกเพศ</option><option>ชาย</option><option>หญิง</option></select></div>
-            <div class="field span-6"><label>สถานะ</label><select id="dfStatus" class="select"><option value="">เลือกสถานะ</option><option>ผู้ขับขี่</option><option>ผู้โดยสาร</option><option>คนเดินเท้า</option></select></div>
-            <div class="field span-6"><label>ประเภทรถ</label><select id="dfVehicle" class="select"><option value="">เลือกประเภทรถ</option><option>จักรยานยนต์</option><option>รถยนต์เก๋ง</option><option>รถยนต์กระบะ</option><option>รถตู้</option><option>รถบรรทุก 6 ล้อขึ้นไป</option><option>รถบรรทุกพ่วง/เทรลเลอร์</option><option>อื่นๆ ให้ระบุ</option></select></div>
+            <div class="field span-6"><label>สถานะ</label><select id="dfStatus" class="select" onchange="applyDeathPedestrian()"><option value="">เลือกสถานะ</option><option>ผู้ขับขี่</option><option>ผู้โดยสาร</option><option>คนเดินเท้า</option></select></div>
+            <div class="field span-6" id="dfVehicleField"><label>ประเภทรถ</label><select id="dfVehicle" class="select"><option value="">เลือกประเภทรถ</option><option>จักรยานยนต์</option><option>รถยนต์เก๋ง</option><option>รถยนต์กระบะ</option><option>รถตู้</option><option>รถบรรทุก 6 ล้อขึ้นไป</option><option>รถบรรทุกพ่วง/เทรลเลอร์</option><option>อื่นๆ ให้ระบุ</option></select></div>
+            <div class="field span-6"><label id="dfCpLabel">ประเภทรถคู่กรณี</label><select id="dfCpVehicle" class="select"><option value="">เลือกประเภทรถคู่กรณี</option><option>จักรยานยนต์</option><option>รถยนต์เก๋ง</option><option>รถยนต์กระบะ</option><option>รถตู้</option><option>รถบรรทุก 6 ล้อขึ้นไป</option><option>รถบรรทุกพ่วง/เทรลเลอร์</option><option>รถไถ/รถการเกษตร</option><option>คนเดินเท้า</option><option>ไม่มีคู่กรณี</option><option>อื่นๆ ให้ระบุ</option></select></div>
             <div class="field span-6"><label>อุปกรณ์นิรภัย</label><select id="dfSafety" class="select"><option value="">เลือกอุปกรณ์นิรภัย</option><option>สวมหมวกนิรภัย</option><option>ไม่สวมหมวกนิรภัย</option><option>คาดเข็มขัดนิรภัย</option><option>ไม่คาดเข็มขัดนิรภัย</option><option>อื่นๆ</option></select></div>
             <div class="field span-6"><label>อาการบาดเจ็บ</label><select id="dfInjury" class="select"><option value="">เลือกอาการ</option><option>เสียชีวิตที่เกิดเหตุ</option><option>เสียชีวิตโรงพยาบาล</option></select></div>
             <div class="field span-6"><label>อวัยวะบาดเจ็บ</label><select id="dfBody" class="select"><option value="">เลือกอวัยวะ</option><option>ลำคอ-ศีรษะ</option><option>ลำตัว</option><option>แขน-มือ</option><option>ขา-เท้า</option><option>หลายส่วน</option><option>อื่นๆ</option></select></div>
@@ -900,6 +901,13 @@
               <datalist id="dfRoadList"><option value="ทล.1 /ในเขตเทศบาลนคร"></option><option value="ทล.1 /ในเขตเทศบาลหนองเบน"></option><option value="ทล.1 /นอกเขตเทศบาล"></option><option value="ทล.117/ในเขตเทศบาลนคร"></option><option value="ทล.122"></option><option value="ทล.1072 /นอกเขตเทศบาล"></option><option value="ทล.1182 /นอกเขตเทศบาล"></option><option value="ทล.1182 /ในเขตเทศบาล"></option><option value="ทล.3005 /ในเขตเทศบาล"></option><option value="ทล.3005 /นอกเขตเทศบาล"></option><option value="นว..1120 /ในเขตเทศบาลนคร"></option><option value="อปท.เทศบาลนคร"></option><option value="อปท.นอกเขตเทศบาล"></option></datalist></div>
             <div class="field span-6"><label>ตำบล</label><select id="dfSubdistrict" class="select"><option value="">เลือกตำบล</option></select></div>
             <div class="field span-6"><label>พิกัด (ละติจูด, ลองจิจูด)</label><div style="display:flex;gap:8px"><input id="dfCoords" class="input" style="flex:1;min-width:0" placeholder="15.7051, 100.1372"><button class="btn btn-soft" type="button" onclick="dfOpenMapPicker()" title="จิ้มเลือกบนแผนที่"><i class="fa-solid fa-map-location-dot"></i></button><button class="btn btn-soft" type="button" onclick="dfUseCurrentLocation()" title="ใช้ตำแหน่งปัจจุบัน"><i class="fa-solid fa-crosshairs"></i></button></div></div>
+            <div class="field span-12"><label>ภาพอินโฟกราฟิก <span style="font-weight:400;color:#64748b">(ไม่บังคับ · 1 ภาพ · แนวนอน 16:9)</span></label>
+              <div class="image-drop" style="padding:14px">
+                <i class="fa-solid fa-image"></i><p><strong>เลือกไฟล์ภาพที่ทำไว้แล้ว JPG หรือ PNG หนึ่งภาพ</strong></p><p>แนวนอนอัตราส่วน 16:9 · ระบบย่อขนาดให้ก่อนอัปโหลด · ไม่มีก็ปล่อยว่างไว้ได้</p>
+                <label class="btn btn-soft" for="dfInfoFile"><i class="fa-solid fa-upload"></i> เลือกภาพ</label>
+                <input id="dfInfoFile" class="sr-only" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+              </div>
+              <div id="dfInfoPreview"></div></div>
             <div class="field span-6"><label>ภูมิลำเนา</label><select id="dfDomicile" class="select"><option value="">เลือก</option><option>ในพื้นที่/จว.</option><option>นอกพื้นที่</option><option>อยู่ระหว่างตรวจสอบ</option><option>ไม่ระบุ</option></select></div>
             <div class="field span-12" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
               <button class="btn btn-primary" type="button" id="deathSaveBtn" onclick="saveDeath()"><i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล</button>
@@ -1813,7 +1821,7 @@
     const NAKHON_SAWAN_CENTER = [15.7047, 100.1372];
     const SESSION_KEY = 'accidentTrafficPoliceSession';
     const state = {
-      token: '', user: null, preparedImages: [], currentPage: 'home',
+      token: '', user: null, preparedImages: [], deathInfoImage: null, currentPage: 'home',
       dashboardLoaded: false, mapLoaded: false, dashboardData: null,
       accidentRows: null, injuryRows: null, deathDates: null,
       pickerMap: null, pickerMarker: null, selectedLocation: null,
@@ -1838,7 +1846,7 @@
     const subdistrictsFull = ['ปากน้ำโพ','นครสวรรค์ตก','นครสวรรค์ออก','วัดไทรย์','ตะเคียนเลื่อน','หนองกรด','หนองกระโดน','บ้านแก่ง','หนองปลิง','กลางแดด','เกรียงไกร','แควใหญ่','บางพระหลวง','พระนอน','บางม่วง','บ้านมะเกลือ','บึงเสนาท'];
     // รายการสาเหตุมาตรฐานของทั้งระบบ — ฟอร์มอุบัติเหตุ ฟอร์มผู้เสียชีวิต และกราฟ ใช้ชุดนี้ชุดเดียว
     // เพิ่มตัวเลือกใหม่ที่นี่ที่เดียว แล้วทุกที่จะตามอัตโนมัติ
-    const causes = ['เมาสุรา','ขับรถเร็ว','ชนท้าย','ตัดหน้า','เปลี่ยนช่องทาง','กลับรถ','ย้อนศร','ฝ่าฝืนสัญญาณไฟ','แซงในที่คับขัน','ทัศนวิสัยแย่','ใช้โทรศัพท์','ขาดความระมัดระวัง','อ่อนล้า/หลับใน','รถขัดข้อง'];
+    const causes = ['เมาสุรา','ขับรถเร็ว','ชนท้าย','ชนคนเดินเท้า','ตัดหน้า','เปลี่ยนช่องทาง','กลับรถ','ย้อนศร','ฝ่าฝืนสัญญาณไฟ','แซงในที่คับขัน','ทัศนวิสัยแย่','ใช้โทรศัพท์','ขาดความระมัดระวัง','อ่อนล้า/หลับใน','รถขัดข้อง'];
     const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -3864,7 +3872,7 @@
     }
 
     /* ============ ADMIN: บันทึกข้อมูลผู้เสียชีวิต ============ */
-    const DEATH_FIELDS = ['dfDatetime','dfAge','dfGender','dfStatus','dfVehicle','dfSafety','dfInjury','dfBody','dfLicense','dfRoadType','dfCause','dfHighway','dfRoadName','dfSubdistrict','dfCoords','dfDomicile'];
+    const DEATH_FIELDS = ['dfDatetime','dfAge','dfGender','dfStatus','dfVehicle','dfCpVehicle','dfSafety','dfInjury','dfBody','dfLicense','dfRoadType','dfCause','dfHighway','dfRoadName','dfSubdistrict','dfCoords','dfDomicile'];
 
     function initDeathPage() {
       const subSelect = document.getElementById('dfSubdistrict');
@@ -3884,18 +3892,125 @@
       return d.toLocaleString('sv-SE', { timeZone:'Asia/Bangkok' }).slice(0, 16).replace(' ', 'T');
     }
 
+    /* คนเดินเท้าไม่มีรถของตัวเอง ช่องประเภทรถจึงไม่ควรให้กรอก
+       ถ้าปล่อยไว้แล้วมีคนเผลอเลือก ข้อมูลจะขัดกันเอง คือคนเดินเท้าที่ขับรถกระบะ
+       แล้วสถิติประเภทรถของผู้เสียชีวิตจะเพี้ยนโดยไม่มีใครสังเกต
+
+       ซ่อนแทนที่จะทำให้จาง เพราะช่องที่จางแต่ยังอยู่ทำให้คนสงสัยว่าลืมกรอกหรือเปล่า
+       และล้างค่าเดิมทิ้งด้วย เผื่อเลือกรถไว้ก่อนแล้วค่อยเปลี่ยนสถานะเป็นคนเดินเท้า
+
+       ฐานข้อมูลล้างซ้ำอีกชั้นเมื่อสถานะเป็นคนเดินเท้า
+       เพราะหน้าเว็บแก้ได้ด้วยเครื่องมือนักพัฒนา แต่ฐานข้อมูลแก้ไม่ได้ */
+    function applyDeathPedestrian() {
+      const st  = document.getElementById('dfStatus');
+      const box = document.getElementById('dfVehicleField');
+      const veh = document.getElementById('dfVehicle');
+      const lbl = document.getElementById('dfCpLabel');
+      if (!st || !box || !veh) return;
+      const ped = st.value === 'คนเดินเท้า';
+      box.style.display = ped ? 'none' : '';
+      if (ped) veh.value = '';
+      if (lbl) lbl.textContent = ped ? 'ประเภทรถที่ชน' : 'ประเภทรถคู่กรณี';
+    }
+
+    /* ============ ภาพอินโฟกราฟิกของผู้เสียชีวิต ============
+       หนึ่งภาพ ไม่บังคับ แนวนอน 16:9
+       ระบบไม่ได้สร้างภาพเอง เจ้าหน้าที่ทำภาพมาแล้วค่อยแนบ
+
+       เก็บเป็นภาพเดียวไม่ใช่อาร์เรย์ เพราะถ้าเผื่อไว้หลายภาพตั้งแต่ต้น
+       หน้าเว็บกับฐานข้อมูลจะต้องเดากันเองว่าภาพไหนคือภาพหลัก
+
+       ตอนแก้ไขรายการเดิม ภาพเก่ามาเป็นที่อยู่ ไม่ใช่ไฟล์
+       จึงแยกสองกรณีด้วย existingUrl เหมือนที่ฟอร์มอุบัติเหตุทำ
+       ถ้าไม่แยก การกดบันทึกซ้ำโดยไม่แตะภาพจะอัปโหลดภาพเดิมขึ้นไปใหม่ทุกครั้ง */
+    async function handleDeathInfoFile(event) {
+      const file = (event.target.files || [])[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) {
+        event.target.value = '';
+        await Swal.fire({ icon:'error', title:'ไฟล์มีขนาดใหญ่เกินไป', text:'ภาพต้องไม่เกิน 10 MB' });
+        return;
+      }
+      Swal.fire({ title:'กำลังเตรียมรูปภาพ', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+      try {
+        const img = await resizeImage(file);
+        Swal.close();
+
+        /* เตือนแต่ไม่ห้าม เพราะบางครั้งภาพที่มีอยู่คือสิ่งเดียวที่มี
+           และการกันไม่ให้แนบเลย แย่กว่าการแนบภาพที่สัดส่วนไม่พอดี
+           เกณฑ์ 1.4 คือกว้างกว่าสูงชัดเจน ต่ำกว่านั้นคือจัตุรัสหรือแนวตั้ง */
+        const ratio = img.width && img.height ? img.width / img.height : null;
+        if (ratio !== null && ratio < 1.4) {
+          const go = await Swal.fire({
+            icon: 'warning', title: 'ภาพนี้ไม่ใช่แนวนอน 16:9',
+            html: 'ภาพที่เลือกกว้าง ' + img.width + ' สูง ' + img.height + ' จุด<br>' +
+                  'ระบบออกแบบให้แสดงภาพแนวนอน 16:9<br>ภาพสัดส่วนอื่นจะแสดงได้ แต่จะมีขอบว่างด้านข้าง',
+            showCancelButton: true, confirmButtonText: 'ใช้ภาพนี้', cancelButtonText: 'เลือกใหม่',
+            confirmButtonColor: '#16834b'
+          });
+          if (!go.isConfirmed) { removeDeathInfoImage(); return; }
+        }
+        state.deathInfoImage = img;
+        renderDeathInfoPreview();
+      } catch (error) {
+        Swal.close();
+        await rpcAlert(error, 'ไม่สามารถอ่านรูปภาพได้');
+      }
+    }
+
+    /* กรอบพรีวิวตรึงไว้ที่ 16:9 ตามที่ภาพจะถูกใช้จริง
+       ใช้ contain ไม่ใช่ cover เพราะอินโฟกราฟิกมีตัวหนังสือ
+       การครอบตัดจะกินข้อความริมภาพหายไปโดยที่คนแนบไม่เห็นว่าหาย */
+    function renderDeathInfoPreview() {
+      const box = document.getElementById('dfInfoPreview');
+      if (!box) return;
+      const img = state.deathInfoImage;
+      if (!img) { box.innerHTML = ''; return; }
+      const src = img.existingUrl || img.preview;
+      box.innerHTML = '<div style="position:relative;margin-top:12px;max-width:520px;border:1px solid #d3e1ef;border-radius:14px;background:#eaf0f7;padding:8px">' +
+        '<div style="aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#dde6f0">' +
+        '<img src="' + escapeHtml(src) + '" alt="ภาพอินโฟกราฟิก" style="width:100%;height:100%;object-fit:contain;display:block"></div>' +
+        '<button type="button" onclick="removeDeathInfoImage()" title="ลบภาพนี้" style="position:absolute;right:6px;top:6px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(130,0,16,.85);color:#fff"><i class="fa-solid fa-xmark"></i></button>' +
+        (img.existingUrl ? '<div style="font-size:.78rem;color:#64748b;margin-top:6px">ภาพเดิมของรายการนี้</div>' : '') +
+        '</div>';
+    }
+
+    function removeDeathInfoImage() {
+      state.deathInfoImage = null;
+      const input = document.getElementById('dfInfoFile');
+      if (input) input.value = '';
+      renderDeathInfoPreview();
+    }
+
+    /* คืนที่อยู่ของภาพ หรือคืนค่าว่างเมื่อไม่มีภาพ
+       ค่าว่างสำคัญ เพราะการลบภาพออกตอนแก้ไข ต้องล้างของเดิมในฐานข้อมูลด้วย */
+    async function uploadDeathInfographic() {
+      const img = state.deathInfoImage;
+      if (!img) return '';
+      if (img.existingUrl) return img.existingUrl;
+      const ext = img.mimeType === 'image/png' ? 'png' : 'jpg';
+      const path = 'deaths/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+      const { error } = await db.storage.from(STORAGE_BUCKET)
+        .upload(path, b64ToBlob(img.data, img.mimeType), { contentType: img.mimeType });
+      if (error) throw new Error('อัปโหลดภาพอินโฟกราฟิกไม่สำเร็จ: ' + error.message);
+      const { data } = db.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+      return data.publicUrl;
+    }
+
     function deathFormValues() {
       const dt = document.getElementById('dfDatetime').value;
       return {
         p_datetime: dt ? dt + ':00+07:00' : null,
         p_age: document.getElementById('dfAge').value ? Number(document.getElementById('dfAge').value) : null,
         p_gender: valueOf('dfGender'), p_status: valueOf('dfStatus'),
-        p_vehicle: valueOf('dfVehicle'), p_safety: valueOf('dfSafety'),
+        p_vehicle: valueOf('dfVehicle'), p_cp_vehicle: valueOf('dfCpVehicle'),
+        p_safety: valueOf('dfSafety'),
         p_injury: valueOf('dfInjury'), p_body: valueOf('dfBody'),
         p_license: valueOf('dfLicense'), p_road_type: valueOf('dfRoadType'),
         p_cause: valueOf('dfCause'), p_highway_type: valueOf('dfHighway'),
         p_road_name: valueOf('dfRoadName'), p_subdistrict: valueOf('dfSubdistrict'),
-        p_coordinates: valueOf('dfCoords'), p_domicile: valueOf('dfDomicile')
+        p_coordinates: valueOf('dfCoords'), p_domicile: valueOf('dfDomicile'),
+        p_infographic: ''   // เติมค่าจริงใน saveDeath หลังอัปโหลดเสร็จ
       };
     }
 
@@ -3903,6 +4018,8 @@
       state.deathEditId = null;
       DEATH_FIELDS.forEach(id => document.getElementById(id).value = '');
       document.getElementById('dfDatetime').value = datetimeLocalNow();
+      removeDeathInfoImage();
+      applyDeathPedestrian();
       document.getElementById('deathFormTitle').innerHTML = '<i class="fa-solid fa-file-circle-plus"></i> เพิ่มข้อมูลผู้เสียชีวิต';
       document.getElementById('deathSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล';
       document.getElementById('deathCancelBtn').style.display = 'none';
@@ -3948,6 +4065,14 @@
             if (!goOn.isConfirmed) return;
           }
         } catch (e) { /* เช็คไม่ได้ก็บันทึกตามปกติ */ }
+      }
+      // อัปโหลดภาพก่อน ถ้าอัปโหลดไม่ผ่านให้หยุดตรงนี้
+      // ไม่บันทึกแถวไว้ก่อนแล้วค่อยเติมภาพ เพราะจะได้แถวที่ไม่มีภาพโดยไม่มีใครรู้
+      try {
+        values.p_infographic = await uploadDeathInfographic();
+      } catch (error) {
+        await rpcAlert(error, 'อัปโหลดภาพไม่สำเร็จ');
+        return;
       }
       Swal.fire({ title:'กำลังบันทึก...', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
       try {
@@ -4043,14 +4168,21 @@
           row('วันเวลาเกิดเหตุ', formatThaiDateTimeStr(r.incident_datetime)) +
           row('อายุ', r.age != null ? r.age + ' ปี' : '') +
           row('เพศ', r.gender) + row('สถานะ', r.status) +
-          row('ประเภทรถ', r.vehicle_type) + row('อุปกรณ์นิรภัย', r.safety_equipment) +
+          row('ประเภทรถ', r.vehicle_type) + row('ประเภทรถคู่กรณี', r.counterpart_vehicle) +
+          row('อุปกรณ์นิรภัย', r.safety_equipment) +
           row('อาการ', r.col_g) + row('อวัยวะบาดเจ็บ', r.col_h) +
           row('ใบอนุญาตขับขี่', r.license) + row('ลักษณะทาง', r.road_type) +
           row('สาเหตุ', r.cause) + row('ประเภททางหลวง', r.col_l) +
           row('ถนน', r.road_name) + row('ตำบล', r.subdistrict) +
           (mapLink ? '<tr><td style="padding:4px 12px 4px 0;font-weight:700;color:#475569;white-space:nowrap">พิกัด</td><td style="padding:4px 0">' + mapLink + '</td></tr>' : '') +
           row('ภูมิลำเนา', r.domicile) +
-          '</table></div>',
+          '</table>' +
+          (r.infographic_url
+            ? '<div style="margin-top:10px"><a href="' + escapeHtml(r.infographic_url) + '" target="_blank" rel="noopener">' +
+              '<img src="' + escapeHtml(r.infographic_url) + '" alt="ภาพอินโฟกราฟิก" style="width:100%;aspect-ratio:16/9;object-fit:contain;background:#eaf0f7;border-radius:12px;border:1px solid #d3e1ef;display:block"></a>' +
+              '<div style="font-size:.78rem;color:#64748b;margin-top:4px">แตะที่ภาพเพื่อเปิดขนาดเต็ม</div></div>'
+            : '') +
+          '</div>',
         width: 540, confirmButtonText: 'ปิด',
         showDenyButton: true, denyButtonText: '<i class="fa-solid fa-pen"></i> แก้ไขรายการนี้', denyButtonColor: '#1d4ed8'
       }).then(result => {
@@ -4067,6 +4199,8 @@
       document.getElementById('dfGender').value = r.gender || '';
       document.getElementById('dfStatus').value = r.status || '';
       document.getElementById('dfVehicle').value = r.vehicle_type || '';
+      document.getElementById('dfCpVehicle').value = r.counterpart_vehicle || '';
+      applyDeathPedestrian();
       document.getElementById('dfSafety').value = r.safety_equipment || '';
       document.getElementById('dfInjury').value = r.col_g || '';
       document.getElementById('dfBody').value = r.col_h || '';
@@ -4078,6 +4212,10 @@
       document.getElementById('dfSubdistrict').value = r.subdistrict || '';
       document.getElementById('dfCoords').value = r.coordinates || '';
       document.getElementById('dfDomicile').value = r.domicile || '';
+      const infoInput = document.getElementById('dfInfoFile');
+      if (infoInput) infoInput.value = '';
+      state.deathInfoImage = r.infographic_url ? { existingUrl: r.infographic_url } : null;
+      renderDeathInfoPreview();
       document.getElementById('deathFormTitle').innerHTML = '<i class="fa-solid fa-pen"></i> แก้ไขข้อมูลผู้เสียชีวิต (รายการ #' + id + ')';
       document.getElementById('deathSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกการแก้ไข';
       document.getElementById('deathCancelBtn').style.display = 'inline-flex';
@@ -4336,6 +4474,7 @@
         document.getElementById('detailCount').textContent = event.target.value.length;
       });
       document.getElementById('imageFiles').addEventListener('change', handleImageFiles);
+      document.getElementById('dfInfoFile').addEventListener('change', handleDeathInfoFile);
       document.getElementById('accidentForm').addEventListener('submit', submitAccident);
       updateRoadCharacterOther();
       updateParty2Visibility();
@@ -4467,7 +4606,7 @@
             canvas.getContext('2d').drawImage(image, 0, 0, width, height);
             const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
             const dataUrl = canvas.toDataURL(outputType, .82);
-            resolve({ fileName:file.name, mimeType:outputType, data:dataUrl.split(',')[1], preview:dataUrl });
+            resolve({ fileName:file.name, mimeType:outputType, data:dataUrl.split(',')[1], preview:dataUrl, width:width, height:height });
           };
           image.src = reader.result;
         };
