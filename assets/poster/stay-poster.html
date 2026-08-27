@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>อยู่ในกลุ่มแล้วได้อะไร</title>
+<style>
+/* ============================================================
+   อินโฟกราฟิก  อยู่ในกลุ่มสถานการณ์อุบัติเหตุกับชอนตะวันแล้วได้อะไร
+   งานจราจร สภ.เมืองนครสวรรค์
+   ============================================================
+   ขนาด 1080 x 1350 สัดส่วน 4 ต่อ 5 เท่าโปสเตอร์กิจกรรม
+   เป็นสัดส่วนที่กินพื้นที่มากที่สุดในฟีดไลน์โดยไม่ถูกตัดขอบ
+
+   คนกลุ่มนี้ต่างจากคนที่ยังไม่เข้ากลุ่ม เขาเข้ามาแล้วและกำลังชั่งใจว่าจะอยู่ต่อไหม
+   สิ่งที่ทำให้คนออกจากกลุ่มราชการมีสองอย่าง คือข้อความเยอะเกินไป
+   กับไม่เห็นว่าตัวเองได้อะไร  โปสเตอร์นี้จึงตอบสองข้อนั้นตรง ๆ
+
+   หลักที่ยึด
+     1 ตัวเลขทุกตัวเป็นของจริงที่วัดจากระบบ ไม่มีคำโฆษณาลอย ๆ
+       เพราะคนในกลุ่มเห็นข้อความจริงอยู่แล้ว ถ้าเขียนเกินจริงเขาจับได้ทันที
+       และจะเสียความน่าเชื่อถือของทุกข้อความหลังจากนั้น
+     2 ยกเรื่องความถี่ขึ้นมาพูดก่อนใครถาม
+       ความกลัวว่าจะโดนสแปมคือเหตุผลอันดับหนึ่งที่คนกดออกจากกลุ่ม
+       การบอกไปเลยว่าเดือนที่แล้วส่งกี่ข้อความ แก้ได้ตรงจุดกว่าการชวนให้อยู่
+     3 ไม่ขู่ ไม่ใช้ภาพอุบัติเหตุ ไม่พูดถึงการเสียสิทธิ์หมวก
+       การขู่ว่าจะเสียสิทธิ์ได้ผลระยะสั้นแต่สร้างความรู้สึกถูกบังคับ
+       คนที่อยู่เพราะกลัวเสียของ จะออกทันทีที่ได้ของ
+   ============================================================ */
+* { margin:0; padding:0; box-sizing:border-box }
+html, body { width:1080px; height:1350px; overflow:hidden }
+body {
+  font-family:'Leelawadee UI','Tahoma',sans-serif;
+  background:linear-gradient(165deg,#0a1c36 0%,#123163 46%,#0a1c36 100%);
+  color:#fff; position:relative;
+}
+
+/* ลายเส้นถนนจาง ๆ ให้รู้ว่าเป็นเรื่องจราจรตั้งแต่ยังไม่ทันอ่าน */
+.road { position:absolute; inset:0; opacity:.08; overflow:hidden }
+.road .lane {
+  position:absolute; left:-14%; width:128%; height:24px; background:#fff;
+  transform:rotate(-13deg); border-radius:20px;
+}
+
+.wrap { position:relative; height:100%; display:flex; flex-direction:column; padding:46px 58px 0 }
+
+.top { display:flex; align-items:center; gap:20px; margin-bottom:22px }
+.top img { width:88px; height:88px; object-fit:contain }
+.top h1 { font-size:27px; font-weight:700; line-height:1.28 }
+.top span { display:block; font-size:21px; color:#a9c3e8; font-weight:400; margin-top:3px }
+
+.title { font-size:70px; font-weight:800; line-height:1.06; margin:2px 0 8px }
+.title em { font-style:normal; color:#ffd76a }
+.sub { font-size:29px; color:#cfe0fa; line-height:1.34; margin-bottom:24px }
+
+/* รายการสิ่งที่ได้  ไอคอนซ้าย ข้อความขวา อ่านไล่ลงได้เร็ว */
+.list { display:flex; flex-direction:column; gap:15px }
+.item { display:flex; gap:18px; align-items:flex-start;
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.13);
+  border-radius:18px; padding:17px 20px }
+.ic { flex:0 0 56px; height:56px; border-radius:15px; display:flex;
+  align-items:center; justify-content:center; font-size:30px; background:rgba(255,215,106,.17) }
+.tx b { display:block; font-size:31px; font-weight:700; line-height:1.24 }
+.tx p { font-size:24px; color:#c3d6f2; line-height:1.34; margin-top:4px }
+
+/* กล่องเรื่องความถี่  ต้องเด่นกว่ารายการอื่น เพราะเป็นข้อกังวลอันดับหนึ่ง */
+.quiet { margin-top:22px; background:#ffd76a; color:#0a1c36;
+  border-radius:20px; padding:22px 26px; display:flex; gap:20px; align-items:center }
+.quiet .big { flex:0 0 130px; text-align:center; font-size:66px; font-weight:800; line-height:1 }
+.quiet .big small { display:block; font-size:20px; font-weight:700; margin-top:6px }
+.quiet p { font-size:26px; line-height:1.36; font-weight:600 }
+
+/* ทางออกที่ไม่ใช่การออกจากกลุ่ม
+   คนที่รำคาญเสียงแจ้งเตือนมักไม่รู้ว่าปิดเสียงเฉพาะกลุ่มได้
+   เขาเลยเลือกวิธีที่รู้จักวิธีเดียวคือกดออก  บอกทางเลือกไว้จึงรักษาคนไว้ได้จริง
+   และเป็นการบอกตามจริง ไม่ใช่การขอร้องให้ทน */
+.tip { margin-top:18px; background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.16); border-radius:18px;
+  padding:18px 22px; display:flex; gap:16px; align-items:center }
+.tip .ic2 { flex:0 0 46px; height:46px; border-radius:13px; display:flex;
+  align-items:center; justify-content:center; font-size:25px; background:rgba(255,255,255,.12) }
+.tip p { font-size:25px; line-height:1.36; color:#e6eefb }
+.tip b { color:#ffd76a }
+
+.foot { margin-top:auto; padding:22px 0 30px; display:flex; align-items:center; gap:18px }
+.foot .line { flex:1; font-size:24px; color:#a9c3e8; line-height:1.4 }
+.foot b { color:#fff }
+</style>
+</head>
+<body>
+
+<div class="road">
+  <div class="lane" style="top:16%"></div>
+  <div class="lane" style="top:46%"></div>
+  <div class="lane" style="top:76%"></div>
+</div>
+
+<div class="wrap">
+
+  <div class="top">
+    <img src="logo.png" alt="">
+    <h1>สถานีตำรวจภูธรเมืองนครสวรรค์
+      <span>กลุ่มไลน์ สถานการณ์อุบัติเหตุ กับชอนตะวัน</span></h1>
+  </div>
+
+  <div class="title">อยู่ในกลุ่มนี้<br><em>ได้อะไรบ้าง</em></div>
+  <div class="sub">ทุกอย่างส่งให้ฟรี ไม่มีค่าใช้จ่าย ไม่มีโฆษณา</div>
+
+  <div class="list">
+
+    <div class="item">
+      <div class="ic">🌧️</div>
+      <div class="tx"><b>เตือนก่อนฝนเข้าเมือง</b>
+        <p>เรดาร์ตรวจทุก 15 นาที พบกลุ่มฝนเข้าใกล้ตัวเมืองเมื่อไร แจ้งทันที
+           ได้เวลาเตรียมตัวก่อนออกจากบ้านราว 15 นาที</p></div>
+    </div>
+
+    <div class="item">
+      <div class="ic">⚠️</div>
+      <div class="tx"><b>บอกจุดที่เกิดเหตุซ้ำ</b>
+        <p>รวบรวมจุดที่เกิดอุบัติเหตุซ้ำในรอบ 30 วัน พร้อมพิกัดแผนที่
+           กดดูได้ว่าอยู่ตรงไหน จะได้ระวังตอนขับผ่าน</p></div>
+    </div>
+
+    <div class="item">
+      <div class="ic">🚨</div>
+      <div class="tx"><b>รู้เหตุสำคัญในพื้นที่ก่อน</b>
+        <p>เกิดเหตุร้ายแรงบนถนนสายหลัก แจ้งภายในไม่กี่นาที
+           เลี่ยงเส้นทางได้ทันก่อนติดยาว</p></div>
+    </div>
+
+    <div class="item">
+      <div class="ic">🗺️</div>
+      <div class="tx"><b>แผนที่จุดเสี่ยงและกล้องถนน</b>
+        <p>เปิดดูจุดเสี่ยง เส้นทางที่ควรเลี่ยง แผนที่ฝนสด
+           และกล้องทางหลวง 8 จุด ได้ตลอดเวลาบนเว็บของเรา</p></div>
+    </div>
+
+  </div>
+
+  <div class="quiet">
+    <div class="big">10<small>ข้อความ</small></div>
+    <p>เดือนที่ผ่านมา กลุ่มนี้มีข้อความจากระบบ<br>
+       ราว 10 ข้อความ เฉลี่ยสามวันครั้ง<br>
+       เราแจ้งเฉพาะเรื่องที่ต้องรู้จริง ๆ</p>
+  </div>
+
+  <div class="tip">
+    <div class="ic2">🔕</div>
+    <p>ถ้าข้อความรบกวนเวลาพัก <b>ปิดเสียงเฉพาะกลุ่มนี้ได้</b>
+       โดยไม่ต้องออกจากกลุ่ม ข้อความยังอยู่ให้ย้อนอ่านเมื่อไรก็ได้</p>
+  </div>
+
+  <div class="foot">
+    <div class="line">ดูข้อมูลทั้งหมดได้ที่<br>
+      <b>traffic-risk-muangnakhonsawan.netlify.app</b></div>
+  </div>
+
+</div>
+
+</body>
+</html>
