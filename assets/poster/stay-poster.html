@@ -48,41 +48,53 @@ body {
 .top h1 { font-size:27px; font-weight:700; line-height:1.28 }
 .top span { display:block; font-size:21px; color:#a9c3e8; font-weight:400; margin-top:3px }
 
-.title { font-size:70px; font-weight:800; line-height:1.06; margin:2px 0 8px }
+.title { font-size:62px; font-weight:800; line-height:1.06; margin:0 0 6px }
 .title em { font-style:normal; color:#ffd76a }
-.sub { font-size:29px; color:#cfe0fa; line-height:1.34; margin-bottom:24px }
+.sub { font-size:26px; color:#cfe0fa; line-height:1.32; margin-bottom:16px }
 
 /* รายการสิ่งที่ได้  ไอคอนซ้าย ข้อความขวา อ่านไล่ลงได้เร็ว */
-.list { display:flex; flex-direction:column; gap:15px }
-.item { display:flex; gap:18px; align-items:flex-start;
+.list { display:flex; flex-direction:column; gap:11px }
+.item { display:flex; gap:15px; align-items:flex-start;
   background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.13);
-  border-radius:18px; padding:17px 20px }
-.ic { flex:0 0 56px; height:56px; border-radius:15px; display:flex;
-  align-items:center; justify-content:center; font-size:30px; background:rgba(255,215,106,.17) }
-.tx b { display:block; font-size:31px; font-weight:700; line-height:1.24 }
-.tx p { font-size:24px; color:#c3d6f2; line-height:1.34; margin-top:4px }
+  border-radius:16px; padding:13px 17px }
+.ic { flex:0 0 48px; height:48px; border-radius:13px; display:flex;
+  align-items:center; justify-content:center; font-size:26px; background:rgba(255,215,106,.17) }
+.tx b { display:block; font-size:28px; font-weight:700; line-height:1.22 }
+.tx p { font-size:22px; color:#c3d6f2; line-height:1.32; margin-top:3px }
+
+/* แถบคำที่พิมพ์ถามได้
+   ข้อดีสามข้อที่คนถามถึงคือ สะดวก เร็ว แม่นยำ  แถบนี้ตอบทั้งสามข้อพร้อมกัน
+   สะดวกเพราะไม่ต้องเปิดเว็บ เร็วเพราะตอบทันที
+   แม่นยำเพราะนับจากฐานข้อมูลตอนที่ถาม ไม่ใช่ข้อความที่พิมพ์แช่ไว้ล่วงหน้า */
+.ask { margin-top:16px; background:rgba(255,215,106,.13);
+  border:1px solid rgba(255,215,106,.4); border-radius:18px; padding:16px 20px }
+.ask h3 { font-size:27px; font-weight:800; color:#ffd76a; margin-bottom:4px }
+.ask .hint { font-size:21px; color:#c3d6f2; margin-bottom:10px }
+.chips { display:flex; flex-wrap:wrap; gap:8px }
+.chip { background:#fff; color:#0a1c36; border-radius:999px;
+  padding:7px 16px; font-size:23px; font-weight:700 }
 
 /* กล่องเรื่องความถี่  ต้องเด่นกว่ารายการอื่น เพราะเป็นข้อกังวลอันดับหนึ่ง */
-.quiet { margin-top:22px; background:#ffd76a; color:#0a1c36;
-  border-radius:20px; padding:22px 26px; display:flex; gap:20px; align-items:center }
-.quiet .big { flex:0 0 130px; text-align:center; font-size:66px; font-weight:800; line-height:1 }
-.quiet .big small { display:block; font-size:20px; font-weight:700; margin-top:6px }
-.quiet p { font-size:26px; line-height:1.36; font-weight:600 }
+.quiet { margin-top:14px; background:#ffd76a; color:#0a1c36;
+  border-radius:18px; padding:16px 22px; display:flex; gap:18px; align-items:center }
+.quiet .big { flex:0 0 112px; text-align:center; font-size:54px; font-weight:800; line-height:1 }
+.quiet .big small { display:block; font-size:18px; font-weight:700; margin-top:4px }
+.quiet p { font-size:23px; line-height:1.34; font-weight:600 }
 
 /* ทางออกที่ไม่ใช่การออกจากกลุ่ม
    คนที่รำคาญเสียงแจ้งเตือนมักไม่รู้ว่าปิดเสียงเฉพาะกลุ่มได้
    เขาเลยเลือกวิธีที่รู้จักวิธีเดียวคือกดออก  บอกทางเลือกไว้จึงรักษาคนไว้ได้จริง
    และเป็นการบอกตามจริง ไม่ใช่การขอร้องให้ทน */
-.tip { margin-top:18px; background:rgba(255,255,255,.09);
-  border:1px solid rgba(255,255,255,.16); border-radius:18px;
-  padding:18px 22px; display:flex; gap:16px; align-items:center }
-.tip .ic2 { flex:0 0 46px; height:46px; border-radius:13px; display:flex;
-  align-items:center; justify-content:center; font-size:25px; background:rgba(255,255,255,.12) }
-.tip p { font-size:25px; line-height:1.36; color:#e6eefb }
+.tip { margin-top:12px; background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.16); border-radius:16px;
+  padding:14px 20px; display:flex; gap:14px; align-items:center }
+.tip .ic2 { flex:0 0 40px; height:40px; border-radius:12px; display:flex;
+  align-items:center; justify-content:center; font-size:22px; background:rgba(255,255,255,.12) }
+.tip p { font-size:22px; line-height:1.34; color:#e6eefb }
 .tip b { color:#ffd76a }
 
-.foot { margin-top:auto; padding:22px 0 30px; display:flex; align-items:center; gap:18px }
-.foot .line { flex:1; font-size:24px; color:#a9c3e8; line-height:1.4 }
+.foot { margin-top:auto; padding:16px 0 26px; display:flex; align-items:center; gap:18px }
+.foot .line { flex:1; font-size:22px; color:#a9c3e8; line-height:1.4 }
 .foot b { color:#fff }
 </style>
 </head>
@@ -135,6 +147,19 @@ body {
            และกล้องทางหลวง 8 จุด ได้ตลอดเวลาบนเว็บของเรา</p></div>
     </div>
 
+  </div>
+
+  <div class="ask">
+    <h3>พิมพ์ถามในแชทได้ทันที</h3>
+    <div class="hint">ตอบกลับใน 1 วินาที นับจากข้อมูลจริง ณ เวลาที่ถาม</div>
+    <div class="chips">
+      <span class="chip">สรุปวันนี้</span>
+      <span class="chip">สรุปสัปดาห์</span>
+      <span class="chip">สรุปเดือน</span>
+      <span class="chip">สรุปปี</span>
+      <span class="chip">ฝน</span>
+      <span class="chip">จุดเสี่ยง</span>
+    </div>
   </div>
 
   <div class="quiet">
