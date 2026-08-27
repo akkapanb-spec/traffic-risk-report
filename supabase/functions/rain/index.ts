@@ -27,7 +27,46 @@ import { decode } from 'npm:fast-png@6.2.0';
 
 const LAT = 15.693907;                // แยกเดชาติวงศ์ จากพิกัดที่เจ้าหน้าที่บันทึกไว้เอง
 const LNG = 100.122704;
-const KM  = 8;                        // รัศมีที่เฝ้า ให้เวลาล่วงหน้าราว 15 นาที
+const KM  = 8;                        // รัศมีที่ใช้ตัดสินว่าฝนเข้าเมืองแล้ว
+
+/* วงนอกใช้มองหาฝนที่ยังมาไม่ถึง เพื่อบอกทิศทางและเวลาที่คาดว่าจะถึง
+   30 กม. ที่ความเร็วฝนราว 18 กม./ชม. เท่ากับเห็นล่วงหน้าราวหนึ่งชั่วโมง
+   กว้างกว่านี้ก็ได้ แต่ฝนที่อยู่ไกลเกินหนึ่งชั่วโมงมักสลายหรือเปลี่ยนทางก่อนถึง
+   การรายงานมันจึงเป็นการเดามากกว่าการเตือน */
+const OUTER_KM = 30;
+
+/* ------------------------------------------------------------
+   ภาพย้อนหลังของกรมฯ  ใช้หาทิศทางที่ฝนเคลื่อน
+   ------------------------------------------------------------
+   หน้าเว็บของกรมฯ มีภาพย้อนหลังหกใบ ชื่อ tkl1 ถึง tkl6
+   tkl1 เก่าสุด tkl6 ใหม่สุด ห่างกันใบละ 6 นาที รวม 30 นาที
+   ยืนยันจากเวลากำกับในภาพเมื่อ 28 ส.ค. 2569  23:18 23:24 23:30 23:36 23:42 23:48
+   ตัวเลขนี้ยังบอกด้วยว่าเรดาร์ออกภาพใหม่ทุก 6 นาที
+   การตรวจถี่กว่านั้นจึงได้ภาพซ้ำ ไม่ได้ข้อมูลเพิ่ม
+
+   ภาพย้อนหลังย่อขนาดลงเหลือ 683x536 ไม่เท่าภาพหลักที่ 1020x800
+   ค่ามาตราส่วนจึงคนละชุด วัดด้วยการฟิตวงระยะเช่นเดียวกับภาพหลัก
+   ได้วงที่ 56 112 168 223 พิกเซล ตรงกับ 50 100 150 200 กิโลเมตร
+   จึงเป็น 0.895 กม. ต่อพิกเซล และศูนย์กลางอยู่ที่ 267, 267 */
+const LOOP_URL  = 'https://weather.tmd.go.th/tkl/tkl';
+const LOOP_CX   = 267;
+const LOOP_CY   = 267;
+const LOOP_KMPX = 0.8949;
+const LOOP_GAP_MIN = 6;
+
+/* ใช้เฉพาะสามใบล่าสุด ไม่ดึงทั้งหกใบ
+   สามใบให้การเทียบสองคู่ ซึ่งพอจะรู้ว่าผลนิ่งหรือไม่นิ่ง
+   ดึงหกใบก็ได้ผลดีขึ้นเล็กน้อย แต่โหลดภาพจากเครื่องของราชการเป็นสองเท่า
+   ภาพใบละ 533 กิโลไบต์ ดึงเฉพาะตอนมีฝนเท่านั้น วันฟ้าใสจึงไม่ดึงเลย */
+const LOOP_FRAMES = [4, 5, 6];
+
+/* รัศมีที่ใช้เทียบภาพ  120 กม. ครอบคลุมฝนที่จะถึงเราภายในหกชั่วโมง
+   กว้างกว่านี้ทำให้ช้าลงโดยไม่ได้ความแม่นเพิ่ม */
+const LOOP_RAD_KM = 120;
+
+/* ค้นหาการเลื่อนไม่เกิน 12 พิกเซล เท่ากับ 10.7 กม. ต่อ 6 นาที หรือ 107 กม./ชม.
+   เร็วกว่านี้ไม่ใช่ฝน  ถ้าเจอค่าติดขอบการค้นหา แปลว่าจับผิดก้อน จึงทิ้งผลนั้น */
+const LOOP_MAX_SHIFT = 12;
 
 /* แนะนำตัวตามจริง ไม่ปลอมเป็นเบราว์เซอร์
    ทดสอบแล้วว่าเซิร์ฟเวอร์ของกรมฯ ยอมรับ และถ้าวันหนึ่งเขาอยากติดต่อกลับ
@@ -125,6 +164,43 @@ async function readTakhli(km: number) {
     }
   }
 
+  /* ------------------------------------------------------------
+     วงนอก  ใช้ตอบว่าฝนที่ยังมาไม่ถึง อยู่ทางไหนและใกล้แค่ไหน
+     ------------------------------------------------------------
+     เก็บสามอย่าง
+       จุดศูนย์กลางของกลุ่มฝน  เอาไว้เทียบสองรอบเพื่อหาทิศที่มันเคลื่อน
+       ระยะของฝนที่ใกล้ที่สุด   เอาไว้คำนวณว่าอีกกี่นาทีจะถึง
+       จำนวนจุดที่มีฝน         เอาไว้ดูว่ากลุ่มโตขึ้นหรือสลายไป
+
+     ใช้ระยะที่ใกล้ที่สุดคำนวณเวลา ไม่ใช้จุดศูนย์กลาง
+     เพราะขอบของก้อนฝนคือสิ่งที่มาถึงคนก่อน ไม่ใช่ใจกลางก้อน */
+  const oRad = OUTER_KM / TKL_KMPX;
+  let oChecked = 0, oRain = 0, sumX = 0, sumY = 0, nearestPx = Infinity;
+  let nearDx = 0, nearDy = 0;
+
+  for (let dy = -Math.ceil(oRad); dy <= Math.ceil(oRad); dy++) {
+    for (let dx = -Math.ceil(oRad); dx <= Math.ceil(oRad); dx++) {
+      const d2 = dx * dx + dy * dy;
+      if (d2 > oRad * oRad) continue;
+      const x = Math.round(cx + dx), y = Math.round(cy + dy);
+      if (x < 0 || y < 0 || x >= img.width || y >= img.height) continue;
+      const o = (y * img.width + x) * ch;
+      const v = dbzAt(dat[o], dat[o + 1], dat[o + 2]);
+      oChecked++;
+      if (v === null || v < TKL_MIN_DBZ) continue;
+      oRain++;
+      sumX += dx; sumY += dy;
+      if (d2 < nearestPx) { nearestPx = d2; nearDx = dx; nearDy = dy; }
+    }
+  }
+
+  /* แปลงตำแหน่งพิกเซลกลับเป็นละติจูดลองจิจูด
+     ที่ละติจูดนี้ หนึ่งองศาเหนือใต้ราว 111.32 กม. ส่วนตะวันออกตกต้องคูณโคไซน์ */
+  const kmPerDegLat = 111.32;
+  const kmPerDegLng = 111.32 * Math.cos(LAT * Math.PI / 180);
+  const cLat = oRain ? LAT - (sumY / oRain) * TKL_KMPX / kmPerDegLat : null;
+  const cLng = oRain ? LNG + (sumX / oRain) * TKL_KMPX / kmPerDegLng : null;
+
   return {
     source: 'takhli',
     sourceThai: 'เรดาร์ตาคลี กรมฝนหลวงและการบินเกษตร',
@@ -135,6 +211,20 @@ async function readTakhli(km: number) {
     maxDbz,
     rainPercent: checked ? Math.round(rain * 1000 / checked) / 10 : 0,
     atPoint,
+
+    outerRadiusKm: OUTER_KM,
+    outerChecked: oChecked,
+    outerRainPixels: oRain,
+    outerPercent: oChecked ? Math.round(oRain * 1000 / oChecked) / 10 : 0,
+    /* ระยะถึงฝนที่ใกล้ที่สุด  null เมื่อไม่มีฝนเลยในวงนอก
+       ไม่ใช้เลข 0 แทนไม่มีฝน เพราะ 0 แปลว่าฝนอยู่บนหัวพอดี ซึ่งตรงข้ามกันคนละขั้ว */
+    nearestKm: oRain ? Math.round(Math.sqrt(nearestPx) * TKL_KMPX * 10) / 10 : null,
+    /* ตำแหน่งของฝนที่ใกล้ที่สุด เทียบจากแยกเดชาติวงศ์ หน่วยกิโลเมตร
+       บวกคือตะวันออกและเหนือ  ใช้คู่กับทิศที่ฝนเคลื่อน เพื่อคำนวณว่าเข้าหาเราจริงไหม */
+    nearestEastKm:  oRain ? Math.round(nearDx * TKL_KMPX * 10) / 10 : null,
+    nearestNorthKm: oRain ? Math.round(-nearDy * TKL_KMPX * 10) / 10 : null,
+    centroidLat: cLat === null ? null : Math.round(cLat * 100000) / 100000,
+    centroidLng: cLng === null ? null : Math.round(cLng * 100000) / 100000,
     /* ชื่อไฟล์เป็น latest เฉย ๆ ไม่มีเวลากำกับ และเซิร์ฟเวอร์ไม่ส่ง Last-Modified มา
        จึงบอกอายุภาพจากตัวมันเองไม่ได้ ต้องให้ฝั่งฐานข้อมูลเทียบลายนิ้วมือนี้กับรอบก่อน
        ถ้าเหมือนเดิมติดกันหลายรอบ แปลว่าระบบเขาค้าง ไม่ใช่ว่าฟ้าใส */
@@ -228,6 +318,121 @@ async function readRainViewer(km: number) {
 
 // ------------------------------------------------------------
 
+
+// ------------------------------------------------------------
+// ทิศทางที่ฝนเคลื่อน  ด้วยการเลื่อนภาพไปทับกัน
+// ------------------------------------------------------------
+// วิธีแรกที่ลองคือหาจุดศูนย์กลางของกลุ่มฝนแล้วดูว่าขยับไปไหน
+// ทดสอบกับภาพจริงหกใบเมื่อ 28 ส.ค. 2569 แล้วได้ 173 กม./ชม. แกว่ง บวกลบ 144
+// ซึ่งเป็นไปไม่ได้ ฝนไม่เคลื่อนที่เร็วกว่าเครื่องบิน
+//
+// สาเหตุคือในภาพมีกลุ่มฝนกระจายหลายก้อน จุดศูนย์กลางเฉลี่ยจึงกระโดดไปมา
+// ตามก้อนที่โผล่และหายไป มันไม่ได้ติดตามก้อนใดเลย
+//
+// วิธีนี้เลื่อนภาพทั้งภาพไปทับภาพก่อนหน้าทีละพิกเซล แล้วหาว่าเลื่อนเท่าไรทับกันดีที่สุด
+// ทนต่อการที่ก้อนหนึ่งสลายและอีกก้อนก่อตัว เพราะดูรูปทรงรวมไม่ใช่ค่าเฉลี่ยตำแหน่ง
+// ข้อมูลชุดเดียวกันให้ 12 กม./ชม. แกว่ง บวกลบ 9 ซึ่งเป็นความเร็วฝนที่เป็นจริง
+
+const LOOP_RAD_PX = Math.round(LOOP_RAD_KM / LOOP_KMPX);
+const LOOP_SIZE   = LOOP_RAD_PX * 2 + 1;
+
+async function loopMask(n: number): Promise<Uint8Array | null> {
+  const res = await fetch(LOOP_URL + n + '.png', { headers: { 'User-Agent': UA }, cache: 'no-store' });
+  if (!res.ok) return null;
+  const img = decode(new Uint8Array(await res.arrayBuffer()));
+
+  /* ภาพย้อนหลังต้องเป็นขนาดที่วัดมาตราส่วนไว้ ถ้าไม่ใช่ให้เลิกใช้
+     คำนวณต่อด้วยมาตราส่วนผิดจะได้ทิศที่ดูสมเหตุสมผลแต่ผิด ซึ่งอันตรายกว่าไม่มีเลย */
+  if (img.width !== 683 || img.height !== 536) return null;
+
+  const dat = img.data as Uint8Array, ch = img.channels, W = img.width;
+  const m = new Uint8Array(LOOP_SIZE * LOOP_SIZE);
+  for (let dy = -LOOP_RAD_PX; dy <= LOOP_RAD_PX; dy++) {
+    for (let dx = -LOOP_RAD_PX; dx <= LOOP_RAD_PX; dx++) {
+      if (dx * dx + dy * dy > LOOP_RAD_PX * LOOP_RAD_PX) continue;
+      const x = LOOP_CX + dx, y = LOOP_CY + dy;
+      if (x < 0 || y < 0 || x >= img.width || y >= img.height) continue;
+      const o = (y * W + x) * ch;
+      const v = dbzAt(dat[o], dat[o + 1], dat[o + 2]);
+      if (v === null || v < TKL_MIN_DBZ) continue;
+      m[(dy + LOOP_RAD_PX) * LOOP_SIZE + (dx + LOOP_RAD_PX)] = 1;
+    }
+  }
+  return m;
+}
+
+function bestShift(a: Uint8Array, b: Uint8Array) {
+  let best = { score: -1, dx: 0, dy: 0 };
+  const lim = LOOP_MAX_SHIFT;
+  for (let dy = -lim; dy <= lim; dy++) {
+    for (let dx = -lim; dx <= lim; dx++) {
+      let hit = 0;
+      for (let y = lim; y < LOOP_SIZE - lim; y += 2) {
+        const rowB = (y + dy) * LOOP_SIZE + dx;
+        const rowA = y * LOOP_SIZE;
+        for (let x = lim; x < LOOP_SIZE - lim; x += 2) {
+          if (b[rowB + x] && a[rowA + x]) hit++;
+        }
+      }
+      if (hit > best.score) best = { score: hit, dx, dy };
+    }
+  }
+  return best;
+}
+
+async function takhliMotion() {
+  const masks: Array<Uint8Array | null> = [];
+  for (const n of LOOP_FRAMES) masks.push(await loopMask(n));
+  if (masks.some(m => m === null)) return { ok: false, why: 'อ่านภาพย้อนหลังไม่ครบ' };
+
+  const counts = masks.map(m => m!.reduce((s, v) => s + v, 0));
+
+  /* ฝนน้อยเกินไป การเลื่อนภาพทับกันจะเจอค่าสูงสุดหลายจุดพอ ๆ กัน แล้วเลือกมั่ว
+     ต่ำกว่าสามสิบจุดถือว่าไม่พอ บอกไปตรง ๆ ดีกว่าคืนทิศที่เดาเอา */
+  if (counts.some(c => c < 30)) {
+    return { ok: false, why: 'ฝนในภาพน้อยเกินกว่าจะหาทิศได้', pixels: counts };
+  }
+
+  const vs: Array<{ ex: number; ny: number }> = [];
+  for (let i = 1; i < masks.length; i++) {
+    const sh = bestShift(masks[i - 1]!, masks[i]!);
+
+    /* ค่าที่ติดขอบการค้นหา แปลว่าของจริงอาจอยู่ไกลกว่านั้น หรือจับผิดก้อน
+       ทิ้งไป ไม่เอามาเฉลี่ย */
+    if (Math.abs(sh.dx) >= LOOP_MAX_SHIFT || Math.abs(sh.dy) >= LOOP_MAX_SHIFT) continue;
+
+    vs.push({
+      ex: sh.dx * LOOP_KMPX / (LOOP_GAP_MIN / 60),
+      ny: -sh.dy * LOOP_KMPX / (LOOP_GAP_MIN / 60)
+    });
+  }
+  if (!vs.length) return { ok: false, why: 'เทียบภาพไม่ได้สักคู่' };
+
+  const ex = vs.reduce((s, v) => s + v.ex, 0) / vs.length;
+  const ny = vs.reduce((s, v) => s + v.ny, 0) / vs.length;
+  const kmh = Math.hypot(ex, ny);
+
+  /* ความไม่แน่นอน วัดจากการที่แต่ละคู่ให้ผลต่างกันแค่ไหน
+     ถ้าสองคู่ชี้คนละทาง ตัวเลขเฉลี่ยไม่มีความหมาย ฝั่งฐานข้อมูลจะได้ไม่เอาไปใช้ */
+  const spread = vs.length < 2 ? null
+    : Math.round(Math.max(...vs.map(v => Math.hypot(v.ex - ex, v.ny - ny))) * 10) / 10;
+
+  let toDeg = Math.atan2(ex, ny) * 180 / Math.PI;
+  if (toDeg < 0) toDeg += 360;
+
+  return {
+    ok: true,
+    speedKmh: Math.round(kmh * 10) / 10,
+    eastKmh:  Math.round(ex * 10) / 10,
+    northKmh: Math.round(ny * 10) / 10,
+    toDeg: Math.round(toDeg),
+    fromDeg: Math.round((toDeg + 180) % 360),
+    pairs: vs.length,
+    spreadKmh: spread,
+    framePixels: counts
+  };
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
@@ -240,7 +445,20 @@ const handler = async (req: Request): Promise<Response> => {
 
   for (const s of order) {
     try {
-      const out = s === 'tmd' ? await readTakhli(km) : await readRainViewer(km);
+      const out: any = s === 'tmd' ? await readTakhli(km) : await readRainViewer(km);
+
+      /* หาทิศทางเฉพาะตอนมีฝนในวงนอกเท่านั้น
+         วันฟ้าใสจึงไม่ดึงภาพย้อนหลังเลย ไม่เพิ่มภาระให้เครื่องของกรมฯ ฟรี ๆ */
+      /* motion=1 บังคับให้คำนวณแม้ไม่มีฝนในวง 30 กม.
+         มีไว้เพื่อทดสอบว่าตัวคำนวณทำงานถูก โดยไม่ต้องรอให้ฝนตกจริง
+         ถ้าไม่มีทางทดสอบ เราจะได้รู้ว่ามันพังก็ต่อเมื่อวันที่ต้องใช้จริง */
+      const forceMotion = url.searchParams.get('motion') === '1';
+      if (s === 'tmd' && (out.outerRainPixels > 0 || forceMotion)
+          && url.searchParams.get('motion') !== '0') {
+        try { out.motion = await takhliMotion(); }
+        catch (e) { out.motion = { ok: false, why: String(e).slice(0, 120) }; }
+      }
+
       return new Response(JSON.stringify({
         ok: true, radiusKm: km, triedBefore: tried, ...out
       }, null, 2), { headers: CORS });
