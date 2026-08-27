@@ -709,7 +709,17 @@ canvas{max-width:100%!important;}
 .av-lyr.empty{opacity:.3;cursor:not-allowed}
 .av-lyr.empty:hover{border-color:#d8e3f0}
 .av-lyr.empty .av-lyrn{background:#f1f3f6;color:#8a97a6}
-@media(max-width:860px){.av-lyrbar{display:none!important}}
+/* เดิมซ่อนแถบนี้ทิ้งทั้งแถบบนจอเล็ก ทำให้มือถือเปิดชั้นเรดาร์ฝนกับชั้นอื่นไม่ได้เลย
+   ทั้งที่ปุ่มมีอยู่ครบเจ็ดปุ่ม แค่กล่องถูกบีบให้สูงศูนย์
+   คนใช้มือถือคือคนส่วนใหญ่ของหน้านี้ การซ่อนจึงเท่ากับปิดฟีเจอร์ทิ้งสำหรับคนส่วนใหญ่
+   แสดงต่อไปแต่ย่อขนาดลง ปุ่มขึ้นบรรทัดใหม่ได้เอง ไม่ต้องเลื่อนแนวนอนตามหา */
+@media(max-width:860px){
+  .av-lyrbar{gap:5px;padding:8px 10px}
+  .av-lyrlbl{font-size:.68rem;width:100%;margin:0 0 2px}
+  .av-lyr{padding:5px 9px;font-size:.68rem;gap:4px}
+  .av-lyrn{font-size:.62rem;padding:1px 5px;min-width:15px}
+  .av-heatnote{font-size:.68rem;padding:7px 10px}
+}
 /* แถวสถิติจุดเสี่ยงจากการวิเคราะห์ */
 .bs-row-hint{font-size:.72rem;color:#5b6b7f;padding-left:2px}
 .av-list{padding:10px 12px 12px;display:grid;gap:8px}
