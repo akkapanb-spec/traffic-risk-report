@@ -2445,6 +2445,30 @@ function ensureAvoidMap() {
     avoidLMap = L.map('avoidMap', { scrollWheelZoom:false }).setView([15.705, 100.14], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(avoidLMap);
     setTimeout(() => avoidLMap.invalidateSize(), 300);
+
+    /* Leaflet วัดขนาดกล่องครั้งเดียวตอนสร้าง แล้วจำค่านั้นไว้
+       ถ้าตอนนั้นกล่องยังถูกซ่อนอยู่ มันจะจำว่ากว้างศูนย์สูงศูนย์
+       แล้ววาดเหมือนจอเล็กเท่าจุดเดียว ภาพซ้อนรอบ ๆ อย่างเรดาร์ฝนจึงไม่โผล่
+       ทั้งที่ไทล์โหลดมาครบแล้ว
+
+       บนจอคอมไม่เห็นอาการ เพราะกล่องมีขนาดตั้งแต่แรก
+       บนมือถือกล่องเพิ่งได้ขนาดตอนผู้ใช้เลื่อนมาถึง ซึ่งเลยเวลาที่ตั้งไว้ไปแล้ว
+       วัดจริงเมื่อ 27 ส.ค. 2569  กล่องกว้าง 303x488 แต่ Leaflet จำไว้ 0x0
+       พอสั่งวัดใหม่ พื้นที่ที่มองเห็นกลายเป็น 44 กม. กลุ่มฝนที่ชุมแสงก็เข้ามาในจอทันที
+
+       การตั้งเวลาแก้ไม่ได้ เพราะไม่มีใครรู้ว่าผู้ใช้จะเลื่อนมาถึงเมื่อไร
+       ตัวเฝ้าขนาดจะบอกแผนที่ทุกครั้งที่กล่องเปลี่ยนขนาดจริง
+       ครอบคลุมทั้งตอนเพิ่งถูกแสดง ตอนหมุนจอ และตอนสลับแท็บ */
+    if (window.ResizeObserver) {
+      let lastW = 0, lastH = 0;
+      new ResizeObserver(() => {
+        const el = document.getElementById('avoidMap');
+        if (!el || !el.offsetWidth || !el.offsetHeight) return;
+        if (el.offsetWidth === lastW && el.offsetHeight === lastH) return;
+        lastW = el.offsetWidth; lastH = el.offsetHeight;
+        avoidLMap.invalidateSize();
+      }).observe(document.getElementById('avoidMap'));
+    }
   }
   return true;
 }
