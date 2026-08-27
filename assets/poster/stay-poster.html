@@ -71,8 +71,12 @@ body {
 .ask h3 { font-size:27px; font-weight:800; color:#ffd76a; margin-bottom:4px }
 .ask .hint { font-size:21px; color:#c3d6f2; margin-bottom:10px }
 .chips { display:flex; flex-wrap:wrap; gap:8px }
-.chip { background:#fff; color:#0a1c36; border-radius:999px;
-  padding:7px 16px; font-size:23px; font-weight:700 }
+/* คำสั่งขึ้นต้นด้วยเครื่องหมาย # ซึ่งคนทั่วไปไม่คุ้น
+   จึงต้องมีคำอธิบายไทยกำกับใต้คำสั่ง ไม่งั้นคนอ่านแล้วไม่รู้ว่าพิมพ์ไปได้อะไร */
+.chip { background:#fff; color:#0a1c36; border-radius:16px;
+  padding:9px 18px; font-size:25px; font-weight:800; text-align:center }
+.chip i { display:block; font-style:normal; font-size:18px;
+  font-weight:600; color:#4a5c74; margin-top:1px }
 
 /* กล่องเรื่องความถี่  ต้องเด่นกว่ารายการอื่น เพราะเป็นข้อกังวลอันดับหนึ่ง */
 .quiet { margin-top:14px; background:#ffd76a; color:#0a1c36;
@@ -150,15 +154,13 @@ body {
   </div>
 
   <div class="ask">
-    <h3>พิมพ์ถามในแชทได้ทันที</h3>
-    <div class="hint">ตอบกลับใน 1 วินาที นับจากข้อมูลจริง ณ เวลาที่ถาม</div>
+    <h3>พิมพ์คำสั่งในแชทได้ทันที</h3>
+    <div class="hint">ตอบกลับทันที พร้อมสถิติและพิกัดจุดเกิดเหตุ</div>
     <div class="chips">
-      <span class="chip">สรุปวันนี้</span>
-      <span class="chip">สรุปสัปดาห์</span>
-      <span class="chip">สรุปเดือน</span>
-      <span class="chip">สรุปปี</span>
-      <span class="chip">ฝน</span>
-      <span class="chip">จุดเสี่ยง</span>
+      <span class="chip">#ac-w<i>รอบสัปดาห์</i></span>
+      <span class="chip">#ac-m<i>รอบเดือน</i></span>
+      <span class="chip">#ac-y<i>รอบปี</i></span>
+      <span class="chip">ช่วยเหลือ<i>สอบถามเจ้าหน้าที่</i></span>
     </div>
   </div>
 
