@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>อินโฟประชาสัมพันธ์จุดเสี่ยง สภ.เมืองนครสวรรค์</title>
+<!--
+   ขนาด 1080 x 1920  สัดส่วน 9 ต่อ 16  สำหรับสตอรี่และการส่งต่อในไลน์
+
+   ตัวเลขทุกตัวในหน้านี้ดึงจากฐานข้อมูลจริงเมื่อ 31 ส.ค. 2569
+   ไม่มีตัวไหนปัดขึ้นหรือประมาณเอา และทุกตัวเขียนกำกับว่าเป็นกี่จาก กี่ราย
+   เพราะการเขียนแค่เปอร์เซ็นต์ทำให้คนเถียงไม่ได้ว่าฐานมาจากไหน
+
+   ตัวเลขที่ตั้งใจไม่ใช้
+     ภูมิลำเนา  69 จาก 93 รายเป็น อยู่ระหว่างตรวจสอบ จึงสรุปอะไรไม่ได้เลย
+     จำนวนสมาชิกกลุ่ม  ตัวเลขในตารางเป็นผู้ลงทะเบียนกิจกรรมหมวกนิรภัย
+                       ไม่ใช่จำนวนคนในกลุ่มไลน์ จึงไม่เอามาอ้าง
+-->
+<style>
+  * { margin:0; padding:0; box-sizing:border-box }
+  html, body { width:1080px; height:1920px; overflow:hidden }
+  body {
+    font-family:'Leelawadee UI','Tahoma',sans-serif;
+    background:#0a1c36; color:#e6eefb;
+    display:flex; flex-direction:column;
+  }
+
+  .head { padding:32px 60px 18px; display:flex; align-items:center; gap:24px }
+  .head img { width:92px; height:92px; object-fit:contain }
+  .head .org { font-size:31px; font-weight:700; color:#cfe0fa; line-height:1.32 }
+  .head .org span { display:block; font-size:23px; font-weight:400; color:#a9c3e8 }
+
+  .hook { padding:0 60px; text-align:center }
+  .hook h1 { font-size:66px; font-weight:700; line-height:1.14; color:#fff; letter-spacing:-1px }
+  .hook h1 em { font-style:normal; color:#ffd76a }
+  .hook p { margin-top:13px; font-size:27px; color:#a9c3e8; line-height:1.45 }
+
+  /* ตัวเลขใหญ่ตัวเดียว ให้คนจำได้หนึ่งอย่างพอ */
+  .big { margin:26px 60px 0; background:#123163; border-radius:28px; padding:26px 40px; text-align:center }
+  .big .n { font-size:112px; font-weight:700; color:#ffd76a; line-height:1 }
+  .big .u { font-size:33px; font-weight:700; color:#fff; margin-top:5px }
+  .big .sub { font-size:23px; color:#a9c3e8; margin-top:10px; line-height:1.45 }
+
+  .facts { margin:22px 60px 0; display:flex; flex-direction:column; gap:14px }
+  .fact { background:#0f2547; border-radius:22px; padding:20px 28px; display:flex; align-items:center; gap:24px }
+  .fact .num { font-size:50px; font-weight:700; color:#ffd76a; line-height:1; min-width:180px; text-align:center }
+  .fact .num small { display:block; font-size:19px; font-weight:400; color:#a9c3e8; margin-top:5px }
+  .fact .txt { font-size:27px; line-height:1.38; color:#e6eefb }
+  .fact .txt b { color:#fff }
+
+  .hours { margin:22px 60px 0; background:#0f2547; border-radius:22px; padding:20px 28px }
+  .hours h3 { font-size:26px; color:#fff; font-weight:700 }
+  .hours p { font-size:21px; color:#a9c3e8; margin-top:3px }
+  .bars { display:flex; gap:14px; margin-top:16px }
+  .bar { flex:1; background:#16305c; border-radius:16px; padding:14px 6px 12px; text-align:center }
+  .bar b { display:block; font-size:44px; color:#ffd76a; line-height:1 }
+  .bar span { display:block; font-size:19px; color:#cfe0fa; margin-top:8px; line-height:1.3 }
+
+  .cta { margin-top:auto; background:#061428; padding:26px 60px 30px }
+  .cta h2 { font-size:36px; font-weight:700; color:#fff; text-align:center; line-height:1.28 }
+  .cta h2 em { font-style:normal; color:#ffd76a }
+  .qrs { display:flex; gap:24px; margin-top:18px }
+  .qr { flex:1; background:#fff; border-radius:20px; padding:14px 14px 13px; text-align:center }
+  .qr .box { display:flex; justify-content:center }
+  .qr .label { font-size:23px; font-weight:700; color:#0a1c36; margin-top:10px; line-height:1.28 }
+  .qr .note { font-size:18px; color:#4a5c74; margin-top:3px; line-height:1.32 }
+
+  .foot { font-size:19px; color:#7f9ac4; text-align:center; margin-top:16px; line-height:1.45 }
+</style>
+</head>
+<body>
+
+  <div class="head">
+    <img src="logo.png" alt="">
+    <div class="org">สถานีตำรวจภูธรเมืองนครสวรรค์
+      <span>ระบบแจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ</span>
+    </div>
+  </div>
+
+  <div class="hook">
+    <h1>อุบัติเหตุ<br><em>ไม่เลือกว่าเป็นใคร</em></h1>
+    <p>ทุกตัวเลขข้างล่างนี้ คือคนที่เคยคิดว่าจะไม่เกิดกับตัวเอง</p>
+  </div>
+
+  <div class="big">
+    <div class="n">93</div>
+    <div class="u">คน เสียชีวิตบนถนนในพื้นที่เรา</div>
+    <div class="sub">ม.ค. 2566 ถึง ส.ค. 2569 · อายุน้อยที่สุด 10 ปี มากที่สุด 82 ปี<br>
+      ใน 92 รายที่ทราบอายุ มี 25 ราย ที่อายุไม่เกิน 25 ปี</div>
+  </div>
+
+  <div class="facts">
+    <div class="fact">
+      <div class="num">59<small>จาก 91 ราย</small></div>
+      <div class="txt">เกิดบน <b>ทางตรง</b> ไม่ใช่ทางโค้งอันตราย<br>ถนนที่เราขับผ่านทุกวันนั่นเอง</div>
+    </div>
+    <div class="fact">
+      <div class="num">62<small>จาก 92 ราย</small></div>
+      <div class="txt"><b>เสียชีวิตที่จุดเกิดเหตุ</b><br>ไม่มีโอกาสแม้แต่จะได้ไปถึงโรงพยาบาล</div>
+    </div>
+    <div class="fact">
+      <div class="num">50<small>จาก 61 ราย</small></div>
+      <div class="txt">ผู้เสียชีวิตที่ขี่จักรยานยนต์<br><b>ไม่ได้สวมหมวกนิรภัย</b></div>
+    </div>
+  </div>
+
+  <div class="hours">
+    <h3>ไม่มีช่วงเวลาไหนที่ปลอดภัย</h3>
+    <p>จำนวนผู้เสียชีวิต แยกตามช่วงเวลาที่เกิดเหตุ · ทุกช่วงพอ ๆ กัน</p>
+    <div class="bars">
+      <div class="bar"><b>21</b><span>เช้า<br>06–11 น.</span></div>
+      <div class="bar"><b>22</b><span>บ่าย<br>12–17 น.</span></div>
+      <div class="bar"><b>27</b><span>ค่ำ<br>18–23 น.</span></div>
+      <div class="bar"><b>23</b><span>ดึก<br>00–05 น.</span></div>
+    </div>
+  </div>
+
+  <div class="cta">
+    <h2>รู้ก่อน ระวังก่อน<br><em>ไม่ต้องเป็นตัวเลขถัดไป</em></h2>
+
+    <div class="qrs">
+      <div class="qr">
+        <div class="box" id="qrGroup"></div>
+        <div class="label">เข้ากลุ่มไลน์<br>สถานการณ์อุบัติเหตุ</div>
+        <div class="note">แจ้งเตือนจุดเสี่ยงซ้ำ<br>และฝนตกในเขตเมือง</div>
+      </div>
+      <div class="qr">
+        <div class="box" id="qrSite"></div>
+        <div class="label">เปิดแผนที่<br>จุดเสี่ยงอุบัติเหตุ</div>
+        <div class="note">12 จุดเสี่ยง · เรดาร์ฝน<br>สถิติในพื้นที่ · แจ้งจุดเสี่ยงได้</div>
+      </div>
+    </div>
+
+    <div class="foot">
+      ข้อมูลจากบันทึกอุบัติเหตุของ สภ.เมืองนครสวรรค์ 1,131 เคส · ปรับปรุง 31 ส.ค. 2569<br>
+      ด้วยความปรารถนาดี น้องจราจรชอนตะวัน
+    </div>
+  </div>
+
+<script src="qrcode.js"></script>
+<script>
+/* สร้าง QR ในเครื่องเอง ไม่ส่ง URL ออกไปให้บริการภายนอกวาดให้
+   ระดับแก้ความผิดพลาด H เพราะอินโฟที่พิมพ์ออกมาอาจมีรอยพับหรือเปื้อน
+   ยังสแกนติดแม้ภาพเสียหายถึงราวสามสิบเปอร์เซ็นต์ */
+function drawQR(elId, url, px) {
+  var qr = qrcode(0, 'H');
+  qr.addData(url);
+  qr.make();
+  var el = document.getElementById(elId);
+  el.innerHTML = qr.createImgTag(6, 0);
+  var img = el.querySelector('img');
+  if (img) { img.style.width = px + 'px'; img.style.height = px + 'px'; img.style.imageRendering = 'pixelated'; }
+}
+drawQR('qrGroup', 'https://line.me/R/ti/g/jPPvVrVU_r', 204);
+drawQR('qrSite',  'https://traffic-risk-muangnakhonsawan.netlify.app/index.html', 204);
+</script>
+</body>
+</html>
