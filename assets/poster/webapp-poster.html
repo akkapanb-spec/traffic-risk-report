@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>อินโฟประชาสัมพันธ์เว็บแอป สภ.เมืองนครสวรรค์</title>
+<style>
+/* ============================================================
+   อินโฟประชาสัมพันธ์เว็บแอปแจ้งจุดเสี่ยงอุบัติเหตุ
+   ขนาด 1080 x 1920  อัตราส่วน 9 ต่อ 16  สำหรับสตอรี่และจอมือถือ
+   ============================================================
+   ทุกตัวเลขในหน้านี้มาจากฐานข้อมูลจริง ไม่มีตัวไหนที่เขียนขึ้นเอง
+   ฟังก์ชันที่โฆษณาก็สำรวจจากหน้าเว็บจริงทีละอัน ไม่ได้เขียนจากความจำ
+   ถ้าโฆษณาสิ่งที่ไม่มี คนกดเข้าไปแล้วไม่เจอ จะเลิกเชื่อทั้งระบบ
+
+   สีคนละชุดกับอินโฟเตือนอุบัติเหตุโดยตั้งใจ
+   ใบนั้นเป็นการเตือนภัย ใบนี้เป็นการชวนใช้บริการ น้ำเสียงต้องต่างกัน
+   ============================================================ */
+
+* { margin:0; padding:0; box-sizing:border-box }
+html, body { width:1080px; height:1920px; overflow:hidden }
+body {
+  font-family:'Leelawadee UI','Tahoma',sans-serif;
+  background:#08182e;
+  color:#eaf2fb;
+  display:flex; flex-direction:column;
+}
+
+/* ---------- หัวกระดาษ ---------- */
+.head { display:flex; align-items:center; gap:20px; padding:34px 60px 0 }
+.head img { width:82px; height:82px; object-fit:contain }
+.head b { display:block; font-size:31px; letter-spacing:.3px }
+.head span { display:block; font-size:20px; color:#8fb0d8; margin-top:3px }
+
+/* ---------- ประโยคเปิด ---------- */
+.hook { text-align:center; padding:26px 60px 0 }
+.hook h1 { font-size:60px; line-height:1.16; font-weight:800 }
+.hook h1 em { font-style:normal; color:#4fd1c5 }
+.hook p { margin-top:12px; font-size:26px; color:#a9c6e6; line-height:1.45 }
+
+/* ---------- แถบตัวเลขความน่าเชื่อถือ ---------- */
+.nums { display:flex; gap:14px; margin:24px 60px 0 }
+.num { flex:1; background:#0f2748; border-radius:18px; padding:16px 6px 13px; text-align:center }
+.num b { display:block; font-size:44px; color:#ffd166; line-height:1 }
+.num span { display:block; font-size:19px; color:#9dbbdd; margin-top:8px; line-height:1.3 }
+
+/* ---------- รายการฟังก์ชัน ---------- */
+.feats { margin:20px 60px 0; display:flex; flex-direction:column; gap:15px }
+.f {
+  display:flex; align-items:flex-start; gap:20px;
+  background:#0f2748; border-radius:20px; padding:18px 24px;
+}
+.f .ico {
+  width:60px; height:60px; flex:0 0 60px; border-radius:16px;
+  background:#16385f; display:flex; align-items:center; justify-content:center;
+  font-size:32px;
+}
+.f .tx { flex:1; padding-top:2px }
+.f .tx b { display:block; font-size:28px; line-height:1.25 }
+.f .tx span { display:block; font-size:21px; color:#9dbbdd; margin-top:5px; line-height:1.4 }
+
+/* ---------- ปิดท้าย ---------- */
+.cta { margin-top:auto; background:#050f20; border-top:3px solid #16385f; padding:24px 60px 22px; text-align:center }
+.cta h2 { font-size:40px; line-height:1.2; font-weight:800 }
+.cta h2 em { font-style:normal; color:#4fd1c5 }
+.cta p { font-size:23px; color:#a9c6e6; margin-top:9px }
+
+.qrwrap { display:flex; align-items:center; justify-content:center; gap:26px; margin-top:18px }
+.qrbox { background:#fff; border-radius:20px; padding:14px }
+.qrside { text-align:left }
+.qrside b { display:block; font-size:26px; color:#fff }
+.qrside span { display:block; font-size:20px; color:#9dbbdd; margin-top:6px; line-height:1.45 }
+.url { font-size:19px; color:#7f9ac4; margin-top:14px; word-break:break-all }
+.foot { font-size:18px; color:#6d87ae; margin-top:10px; line-height:1.5 }
+</style>
+</head>
+<body>
+
+  <div class="head">
+    <img src="logo.png" alt="ตราสถานีตำรวจ">
+    <div>
+      <b>สถานีตำรวจภูธรเมืองนครสวรรค์</b>
+      <span>ระบบแจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ</span>
+    </div>
+  </div>
+
+  <div class="hook">
+    <h1>รู้ก่อนออกจากบ้าน<br><em>ถนนไหนเสี่ยง จุดไหนต้องระวัง</em></h1>
+    <p>เปิดจากมือถือได้ทันที ไม่ต้องติดตั้งแอป ไม่ต้องสมัครสมาชิก</p>
+  </div>
+
+  <!-- ตัวเลขวางไว้ก่อนรายการฟังก์ชัน เพื่อให้คนรู้ว่าข้างในมีของจริง
+       ถ้าเอารายการฟังก์ชันขึ้นก่อน จะอ่านเหมือนโฆษณาที่ยังไม่มีอะไรรองรับ -->
+  <div class="nums">
+    <div class="num"><b>1,139</b><span>อุบัติเหตุ<br>ที่บันทึกไว้</span></div>
+    <div class="num"><b>14</b><span>เดือน<br>ของข้อมูล</span></div>
+    <div class="num"><b>23</b><span>จุดเสี่ยง<br>ที่ประชาชนแจ้ง</span></div>
+    <div class="num"><b>9</b><span>จุด<br>แก้ไขแล้ว</span></div>
+  </div>
+
+  <div class="feats">
+
+    <div class="f">
+      <div class="ico">🗺️</div>
+      <div class="tx">
+        <b>แผนที่จุดเสี่ยงและเส้นทางที่ควรเลี่ยง</b>
+        <span>เปิดปิดได้ 7 ชั้น จุดเสี่ยง จุดเมาขับ โซนอันตราย เส้นทางเสี่ยง ความหนาแน่นอุบัติเหตุ</span>
+      </div>
+    </div>
+
+    <div class="f">
+      <div class="ico">🌧️</div>
+      <div class="tx">
+        <b>เรดาร์ฝนสด ย้อนหลังได้ 2 ชั่วโมง</b>
+        <span>ดูว่าฝนกำลังเข้าเขตเมืองหรือยัง ช่วงอันตรายที่สุดคือไม่กี่นาทีแรกที่ถนนเริ่มเปียก</span>
+      </div>
+    </div>
+
+    <div class="f">
+      <div class="ico">📊</div>
+      <div class="tx">
+        <b>สถิติอุบัติเหตุในพื้นที่ 12 มุมมอง</b>
+        <span>แยกตามถนน ตำบล ช่วงเวลา สาเหตุ ประเภทรถ อายุ และการสวมหมวกนิรภัย</span>
+      </div>
+    </div>
+
+    <div class="f">
+      <div class="ico">📍</div>
+      <div class="tx">
+        <b>แจ้งจุดเสี่ยงด้วยตัวเอง แล้วติดตามได้</b>
+        <span>ปักหมุดบนแผนที่ แนบรูป แล้วดูสถานะได้ว่ายังไม่ดำเนินการ กำลังทำ หรือแก้ไขแล้ว</span>
+      </div>
+    </div>
+
+    <div class="f">
+      <div class="ico">📹</div>
+      <div class="tx">
+        <b>กล้องจราจรสด 8 จุด จากกรมทางหลวง</b>
+        <span>ดูสภาพถนนจริงก่อนออกเดินทาง ทล.1 ทล.11 ทล.122 ทล.225 และทางเลี่ยงเมือง</span>
+      </div>
+    </div>
+
+    <div class="f">
+      <div class="ico">🪖</div>
+      <div class="tx">
+        <b>คลิปรณรงค์ และโครงการหมวกนิรภัย</b>
+        <span>ดูคลิปสั้นเรื่องความปลอดภัย และร่วมโครงการรับส่วนลดค่าหมวกนิรภัย</span>
+      </div>
+    </div>
+
+    <div class="f">
+      <div class="ico">🔔</div>
+      <div class="tx">
+        <b>ให้ระบบเตือนถึงมือถือ ผ่านไลน์</b>
+        <span>เตือนเมื่อฝนกำลังตกในเขตเมือง และเมื่อพบจุดที่เกิดเหตุซ้ำ พิมพ์คำสั่งสั้น ๆ ถามสถิติได้</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="cta">
+    <h2>สแกนแล้วใช้ได้เลย<br><em>ทั้งหมดนี้ไม่มีค่าใช้จ่าย</em></h2>
+
+    <div class="qrwrap">
+      <div class="qrbox"><div id="qrSite"></div></div>
+      <div class="qrside">
+        <b>เว็บแอปแจ้งจุดเสี่ยง</b>
+        <span>สภ.เมืองนครสวรรค์<br>เปิดได้ทั้งมือถือและคอมพิวเตอร์</span>
+      </div>
+    </div>
+
+    <div class="url">traffic-risk-muangnakhonsawan.netlify.app</div>
+    <div class="foot">
+      ข้อมูลจากบันทึกอุบัติเหตุของ สภ.เมืองนครสวรรค์ · อัปเดตอัตโนมัติ<br>
+      ด้วยความปรารถนาดี น้องจราจรชอนตะวัน
+    </div>
+  </div>
+
+<script src="qrcode.js"></script>
+<script>
+/* สร้าง QR ในเครื่องเอง ไม่ส่ง URL ออกไปให้บริการภายนอกวาดให้
+   ระดับแก้ความผิดพลาด H เพราะอินโฟที่พิมพ์ออกมาอาจมีรอยพับหรือเปื้อน
+   ยังสแกนติดแม้ภาพเสียหายถึงราวสามสิบเปอร์เซ็นต์ */
+function drawQR(elId, url, px) {
+  var qr = qrcode(0, 'H');
+  qr.addData(url);
+  qr.make();
+  var el = document.getElementById(elId);
+  el.innerHTML = qr.createImgTag(6, 0);
+  var img = el.querySelector('img');
+  if (img) { img.style.width = px + 'px'; img.style.height = px + 'px'; img.style.imageRendering = 'pixelated'; img.style.display = 'block'; }
+}
+drawQR('qrSite', 'https://traffic-risk-muangnakhonsawan.netlify.app/index.html', 210);
+</script>
+</body>
+</html>
