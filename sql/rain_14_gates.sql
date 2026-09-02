@@ -90,8 +90,13 @@ alter table rain_track add column if not exists yolk_pct numeric;
 insert into bs_settings (key, val) values
   ('rainHeavyMinPx', to_jsonb(3)),
   ('rainYolkMinPct', to_jsonb(15)),
-  ('rainYolkUrl',    to_jsonb('https://ftpruljwwsmvipfcedyk.supabase.co/functions/v1/rain?km=3'))
+  ('rainYolkUrl',    to_jsonb('https://ftpruljwwsmvipfcedyk.supabase.co/functions/v1/rain?km=3'::text))
 on conflict (key) do nothing;
+
+-- ต้องเขียน ::text ต่อท้ายข้อความ  ห้ามตัดออก
+-- to_jsonb รับได้ทุกชนิด Postgres จึงต้องรู้ก่อนว่าที่ส่งมาเป็นชนิดอะไร
+-- ข้อความเปล่า ๆ ในคำสั่งยังไม่มีชนิด มันจึงตอบว่า could not determine polymorphic type
+-- ตัวเลขไม่มีปัญหาเพราะรู้อยู่แล้วว่าเป็นจำนวนเต็ม
 
 -- ==========================================================
 -- 3  ตัวยิงคำถาม  ยิงสองวง
