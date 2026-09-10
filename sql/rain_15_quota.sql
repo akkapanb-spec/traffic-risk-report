@@ -20,7 +20,7 @@
 -- ------------------------------------------------------------
 --   นอกช่วงเร่งด่วน       วันละ 1 ครั้ง
 --   เร่งด่วนเช้า 06:45 ถึง 08:00   วันละ 1 ครั้ง
---   เร่งด่วนเย็น 15:20 ถึง 17:30   วันละ 1 ครั้ง
+--   เร่งด่วนเย็น 15:20 ถึง 18:00   วันละ 1 ครั้ง
 --
 -- รวมยังไม่เกินสามเหมือนเดิม แต่สองช่องหลังถูกกันไว้ให้ชั่วโมงที่คนอยู่บนถนนหนาแน่น
 -- ใครมาก่อนไม่ได้สิทธิ์ไปทั้งหมดอีกแล้ว
@@ -375,7 +375,7 @@ begin
      and (now() at time zone 'Asia/Bangkok')::time <  time '08:00' then 'am'
     when extract(isodow from (now() at time zone 'Asia/Bangkok')) between 1 and 5
      and (now() at time zone 'Asia/Bangkok')::time >= time '15:20'
-     and (now() at time zone 'Asia/Bangkok')::time <  time '17:30' then 'pm'
+     and (now() at time zone 'Asia/Bangkok')::time <  time '18:00' then 'pm'
     else null
   end;
 
