@@ -10,6 +10,159 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- ============================================================
+     แผนที่ทุกแผนที่ในหน้านี้ เปิดดูเต็มจอได้
+     ============================================================
+     ใช้ L.Map.addInitHook ซึ่ง Leaflet เรียกทุกครั้งที่สร้างแผนที่ใหม่
+     แผนที่ทุกตัวในหน้าจึงได้ปุ่มเต็มจอเอง รวมแผนที่ปักหมุดในป๊อปอัปที่สร้างทีหลัง
+     ไม่ต้องไปแก้จุดที่สร้างแผนที่ทีละจุด และแผนที่ที่เพิ่มในอนาคตก็ได้ด้วยโดยไม่ต้องจำ
+     ต้องวางต่อจากสคริปต์ Leaflet ทันที ก่อนโค้ดใดสร้างแผนที่
+
+     สองชั้น
+     ชั้นแรก ขยายด้วย CSS ให้กล่องแผนที่คลุมทั้งหน้าจอ ทำงานได้ทุกเครื่อง
+     ชั้นสอง ขอเต็มจอจริงจากเบราว์เซอร์ ซ่อนแถบที่อยู่ด้วย ถ้าเครื่องรองรับ
+     iPhone ไม่รองรับการขอเต็มจอกับกล่องธรรมดา ให้แค่กับวิดีโอ
+     ถ้าใช้ชั้นสองอย่างเดียว คนใช้ iPhone จะกดปุ่มแล้วไม่เกิดอะไรขึ้นเลย
+
+     ย้ายกล่องแผนที่ไปไว้ใต้ body ระหว่างเต็มจอ แล้วคืนที่เดิมตอนออก
+     เพราะ position fixed ที่อยู่ในกล่องที่มี transform จะยึดกับกล่องนั้น ไม่ใช่กับหน้าจอ
+     ป๊อปอัปของ SweetAlert มี transform จากแอนิเมชันตอนเปิด
+     ถ้าไม่ย้าย แผนที่ปักหมุดในป๊อปอัปจะขยายได้แค่เท่าป๊อปอัป ไม่ใช่เต็มจอ
+     ============================================================ -->
+<style>
+.map-fs-on{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;
+  width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;max-height:none!important;
+  margin:0!important;border:0!important;border-radius:0!important;z-index:2147483000!important}
+html.map-fs-lock,html.map-fs-lock body{overflow:hidden!important}
+.leaflet-control-fs a{display:flex!important;align-items:center;justify-content:center;background:#fff;color:#1f2a3d;cursor:pointer}
+.leaflet-control-fs a:hover{background:#f1f5f9}
+.leaflet-control-fs svg{width:16px;height:16px;display:block}
+.map-fs-on .leaflet-control-fs a{background:#123b7a;color:#fff}
+</style>
+<script>
+(function () {
+  if (!window.L || !L.Map || !L.Control) return;
+
+  var ICON_IN  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+  var ICON_OUT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+
+  var active = null;   // แผนที่ที่กำลังเต็มจออยู่ มีได้ทีละตัว
+
+  function setBtn(a, on) {
+    if (!a) return;
+    a.innerHTML = on ? ICON_OUT : ICON_IN;
+    a.title = on ? 'ออกจากเต็มจอ' : 'ดูเต็มจอ';
+    a.setAttribute('aria-label', a.title);
+  }
+
+  /* Leaflet จำขนาดกล่องไว้ตอนสร้าง พอขนาดเปลี่ยนต้องสั่งให้วัดใหม่
+     และจับจุดกลางกับระดับซูมไว้ก่อนขยับ ไม่งั้นแผนที่จะเลื่อนไปมุมหนึ่ง */
+  function refit(map, ctr, z) {
+    setTimeout(function () {
+      try { map.invalidateSize(false); if (ctr) map.setView(ctr, z, { animate: false }); } catch (e) {}
+    }, 60);
+  }
+
+  /* บางแผนที่มีกฎผูกกับ ID อยู่แล้ว เช่น #mapContainer height 320px !important
+     กฎที่ผูกกับ class ต่อให้ใส่ !important ก็แพ้กฎที่ผูกกับ ID
+     วัดจริงแล้ว แผนที่ในป๊อปอัปขยายกว้างเต็มจอ แต่สูงค้างที่ 320 เกินจอไป 10 px
+     จึงตั้งค่าตรงที่ตัวกล่องด้วย !important ซึ่งชนะกฎในไฟล์ CSS ทุกกฎ
+     แล้วตอนออกคืน style เดิมกลับไปทั้งก้อน ไม่ทิ้งอะไรค้างไว้ */
+  var FS_PROPS = [
+    ['position', 'fixed'], ['top', '0'], ['left', '0'], ['right', '0'], ['bottom', '0'],
+    ['width', '100vw'], ['height', '100vh'], ['height', '100dvh'],
+    ['max-width', 'none'], ['max-height', 'none'], ['min-height', '0'], ['min-width', '0'],
+    ['margin', '0'], ['border', '0'], ['border-radius', '0'], ['transform', 'none'],
+    ['z-index', '2147483000']
+  ];
+  function applyFs(c) {
+    // ตั้ง height สองรอบ เครื่องที่ไม่รู้จัก dvh จะข้ามรอบที่สอง แล้วใช้ vh ตามรอบแรก
+    FS_PROPS.forEach(function (p) { c.style.setProperty(p[0], p[1], 'important'); });
+  }
+
+  function enter(map, a) {
+    if (active) exit();
+    var c = map.getContainer();
+    active = { map: map, c: c, a: a, parent: c.parentNode, next: c.nextSibling,
+               scroll: window.pageYOffset, ctr: map.getCenter(), z: map.getZoom(),
+               style0: c.getAttribute('style') };
+    document.body.appendChild(c);
+    c.classList.add('map-fs-on');
+    applyFs(c);
+    document.documentElement.classList.add('map-fs-lock');
+    setBtn(a, true);
+    var rq = c.requestFullscreen || c.webkitRequestFullscreen;
+    if (rq) { try { var p = rq.call(c); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
+    refit(map, active.ctr, active.z);
+  }
+
+  function exit() {
+    if (!active) return;
+    var s = active; active = null;
+    // เก็บตำแหน่งที่คนเลื่อนไปดูตอนเต็มจอไว้ ไม่เด้งกลับไปที่เดิม เพราะเขาตั้งใจเลื่อนมา
+    var ctr = s.map.getCenter(), z = s.map.getZoom();
+    if (s.style0 === null) s.c.removeAttribute('style'); else s.c.setAttribute('style', s.style0);
+    s.c.classList.remove('map-fs-on');
+    document.documentElement.classList.remove('map-fs-lock');
+    if (s.parent) {
+      if (s.next && s.next.parentNode === s.parent) s.parent.insertBefore(s.c, s.next);
+      else s.parent.appendChild(s.c);
+    }
+    setBtn(s.a, false);
+    var fe = document.fullscreenElement || document.webkitFullscreenElement;
+    if (fe === s.c) {
+      var ex = document.exitFullscreen || document.webkitExitFullscreen;
+      if (ex) { try { var p = ex.call(document); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
+    }
+    window.scrollTo(0, s.scroll);
+    refit(s.map, ctr, z);
+  }
+
+  /* ออกจากเต็มจอจริงด้วยปุ่ม Esc หรือปุ่มย้อนกลับของ Android
+     เบราว์เซอร์ออกให้เอง แต่กล่องยังค้างอยู่ใต้ body ต้องคืนที่เดิมด้วย */
+  function onFsChange() {
+    var fe = document.fullscreenElement || document.webkitFullscreenElement;
+    if (active && !fe) exit();
+  }
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
+
+  /* Esc ในโหมด CSS  ดักตั้งแต่ขาเข้า ก่อน SweetAlert จะได้ยิน
+     ถ้าปล่อยให้ SweetAlert ได้ยินก่อน มันจะปิดป๊อปอัป
+     แล้วแผนที่ที่ย้ายไปไว้ใต้ body จะค้างคลุมจอทั้งที่ป๊อปอัปหายไปแล้ว */
+  window.addEventListener('keydown', function (e) {
+    if (active && (e.key === 'Escape' || e.key === 'Esc')) {
+      e.preventDefault(); e.stopImmediatePropagation(); exit();
+    }
+  }, true);
+
+  var FsControl = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd: function (map) {
+      var box = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-fs');
+      var a = L.DomUtil.create('a', '', box);
+      a.href = '#'; a.setAttribute('role', 'button');
+      setBtn(a, false);
+      L.DomEvent.disableClickPropagation(box);
+      L.DomEvent.disableScrollPropagation(box);
+      L.DomEvent.on(a, 'click', function (e) {
+        L.DomEvent.preventDefault(e);
+        if (active && active.map === map) exit(); else enter(map, a);
+      });
+      return box;
+    }
+  });
+
+  L.Map.addInitHook(function () {
+    var map = this;
+    if (map.options.fullscreenControl === false) return;   // เผื่อแผนที่ไหนไม่อยากได้
+    new FsControl().addTo(map);
+    /* หน้าเจ้าหน้าที่ทำลายแผนที่ตอนปิดป๊อปอัป ถ้าทำลายระหว่างเต็มจอ
+       ต้องคืนกล่องที่เดิมก่อน ไม่งั้นกล่องเปล่าจะค้างคลุมจอ */
+    map.on('unload', function () { if (active && active.map === map) exit(); });
+  });
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
 <style>
 :root{
