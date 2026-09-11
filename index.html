@@ -801,6 +801,25 @@ canvas{max-width:100%!important;}
   border-radius:999px;padding:2px 9px;font-size:.62rem;font-weight:800;white-space:nowrap}
 .death-cta:hover .srowx{border-color:#e79aab}
 .death-cta:hover .death-cta-bar{background:#fbdde3;border-color:#e79aab}
+/* ปุ่มดูสถิติ กระพริบแสงให้เป็นจุดสังเกต
+   สองชั้น  แสงเรืองรอบปุ่มหายใจเข้าออก และแสงวาบวิ่งผ่านเนื้อปุ่มเป็นระยะ
+   รอบละ 1.6 วินาที ช้ากว่าเกณฑ์สามครั้งต่อวินาทีที่ถือว่าเสี่ยงต่อผู้ป่วยโรคลมชักมาก
+   ไม่ใช้ไฟแดงสลับขาวแบบสัญญาณเตือน เพราะการ์ดนี้ชวนให้กด ไม่ได้บอกว่ามีอันตราย
+   overflow hidden ตัดเฉพาะแสงวาบที่เป็นลูก ไม่ตัดแสงเรืองซึ่งเป็นเงาของตัวปุ่มเอง */
+.death-cta-bar .cta-go{position:relative;overflow:hidden;animation:ctaGlow 1.6s ease-in-out infinite}
+.death-cta-bar .cta-go::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.9),transparent);transform:skewX(-20deg);
+  animation:ctaShine 2.4s ease-in-out infinite;pointer-events:none}
+@keyframes ctaGlow{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(193,18,47,.6),0 0 0 0 rgba(255,90,110,0)}
+  50%{transform:scale(1.08);box-shadow:0 0 0 7px rgba(193,18,47,0),0 0 18px 5px rgba(255,70,95,.95)}
+}
+@keyframes ctaShine{0%{left:-70%}55%,100%{left:135%}}
+/* คนที่ตั้งเครื่องให้ลดการเคลื่อนไหว ได้แสงเรืองคงที่แทน ปุ่มยังเด่นแต่ไม่ขยับ */
+@media (prefers-reduced-motion: reduce){
+  .death-cta-bar .cta-go{animation:none;box-shadow:0 0 10px 2px rgba(255,90,110,.6)}
+  .death-cta-bar .cta-go::after{animation:none;display:none}
+}
 .srow-ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-size:.85rem;flex:0 0 34px}
 .srow-t{min-width:0;flex:0 0 auto;width:88px}
 .srow-t b{display:block;font-size:.82rem;line-height:1.25;color:#132238}
