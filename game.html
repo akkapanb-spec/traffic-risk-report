@@ -36,6 +36,13 @@ body{font-family:'Leelawadee UI','Sarabun',system-ui,sans-serif;background:#eef3
 
 .scene{position:relative;height:196px;overflow:hidden;background:#0b1f3a}
 
+/* ---------- ฉากมุมสูง ----------
+   สูงกว่าฉากเดิม เพราะภาพมุมสูงต้องเห็นทั้งทางแยกและเส้นทางที่รถสองคันจะไปทับกัน
+   ถ้าใช้ความสูงเดิม 196px จะเห็นแค่แถบถนนแนวนอน มองไม่ออกว่าใครตัดหน้าใคร
+   ใช้ aspect-ratio แทนความสูงตายตัว ภาพจะไม่ถูกครอบตัดบนจอแคบ */
+.scene.td{height:auto;aspect-ratio:400/260;max-height:62vh}
+.scene-top{position:absolute;inset:0;width:100%;height:100%;display:block}
+
 /* ---------- คำถามและตัวเลือก ---------- */
 .body{padding:16px}
 .q{font-size:1.06rem;font-weight:700;line-height:1.45;margin-bottom:14px}
@@ -140,6 +147,7 @@ body{font-family:'Leelawadee UI','Sarabun',system-ui,sans-serif;background:#eef3
 </div>
 
 <script src="assets/scene-art.js"></script>
+<script src="assets/scene-top.js"></script>
 <script src="assets/questions.js"></script>
 <script>
 'use strict';
@@ -203,7 +211,6 @@ function render() {
 
   // วาดฉากใหม่ทุกข้อ ถ้ามีไฟล์ภาพจริงจะทับภาพวาด ถ้ายังไม่มีก็ใช้ภาพวาดไปก่อน
   // ใช้ onerror ลบตัวเองทิ้ง จึงเพิ่มภาพทีละฉากได้โดยไม่ต้องแก้โค้ด
-  $('scene').className = 'scene';
 
   /* ถ้ามีไฟล์วีดิโอชื่อเดียวกับภาพนิ่งอยู่ในโฟลเดอร์เดียวกัน จะหยิบมาใช้เอง
      เช่น มี junction.jpg อยู่แล้ว วาง junction.mp4 ลงไปก็ใช้ได้ทันที
@@ -212,14 +219,20 @@ function render() {
   var vidSrc = s.vid || (s.img ? s.img.replace(/.(jpg|jpeg|png)$/i, '.mp4') : '');
   if (vidSrc && noClip[vidSrc]) vidSrc = '';
 
-  $('scene').innerHTML = sceneSVG(s.art, s.mood) +
-    (s.img ? '<img class="photo" src="' + s.img + '" alt="" onerror="this.remove()">' : '') +
+  /* ฉากมุมสูงมาก่อนเสมอถ้ามี เพราะคำถามเกือบทั้งหมดถามเรื่องใครให้ทางใคร
+     ซึ่งภาพมุมคนขี่ตอบไม่ได้ ต้องเห็นรูปทรงของแยกจากด้านบน
+     ฉากไหนยังไม่มีมุมสูง จะใช้ภาพนิ่งกับคลิปแบบเดิมต่อไปโดยไม่ต้องแก้อะไร */
+  var top = (window.topSVG ? topSVG(s.art, s.mood, s.tag) : '');
+  $('scene').className = top ? 'scene td' : 'scene';
+
+  $('scene').innerHTML = (top || sceneSVG(s.art, s.mood)) +
+    (!top && s.img ? '<img class="photo" src="' + s.img + '" alt="" onerror="this.remove()">' : '') +
     // เฟรมที่สองของฉากเดียวกัน จางเข้ามาทับกลางทาง ทำให้เห็นว่าสถานการณ์คืบหน้าไป
-    (s.img2 ? '<img class="photo two" src="' + s.img2 + '" alt="" onerror="this.remove()">' : '') +
+    (!top && s.img2 ? '<img class="photo two" src="' + s.img2 + '" alt="" onerror="this.remove()">' : '') +
     // ต้องมี muted กับ playsinline ไม่งั้นมือถือจะไม่ยอมเล่นเอง
     // ใส่ src ที่ตัว video โดยตรง ไม่ใช้ source ลูก เพราะถ้าไฟล์หาย
     // สัญญาณผิดพลาดของ source จะไม่ส่งขึ้นมาถึง video แล้วจะเหลือกล่องดำบังภาพนิ่งไว้
-    (vidSrc ? '<video class="clip" src="' + vidSrc + '"' + (s.img ? ' poster="' + s.img + '"' : '') +
+    (!top && vidSrc ? '<video class="clip" src="' + vidSrc + '"' + (s.img ? ' poster="' + s.img + '"' : '') +
             ' autoplay muted loop playsinline preload="auto"></video>' : '') +
     '<span class="tag">' + s.tag + '</span>';
 
