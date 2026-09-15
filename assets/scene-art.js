@@ -123,6 +123,13 @@ function stopLine(p, t) {
   return '<polygon points="' + l + ',' + y + ' ' + (VX - 2) + ',' + y + ' ' + (VX - 2) + ',' + (y + hgt) + ' ' + (l - 4) + ',' + (y + hgt) + '" fill="' + p.line + '" opacity=".92"/>';
 }
 
+/* ไม่มีใครเรียกตัวนี้แล้ว ตั้งใจเก็บไว้พร้อมเหตุผล
+   เดิมใช้เขียนคำบรรยายลงบนภาพ เช่น ฝนเพิ่งเริ่มตก ถนนเริ่มลื่น
+   ซึ่งใช้ได้ตอนที่ภาพหนึ่งภาพผูกกับคำถามเดียว
+   แต่ภาพชุดนี้กลายเป็นภาพสำรองที่คำถามหลายข้อยืมไปใช้ร่วมกัน
+   คำบรรยายจึงไปทับคำถามที่ไม่ใช่เจ้าของ และขัดกับโจทย์
+   ถ้าจะให้ภาพเจาะจงตรงกับคำถามข้อไหน ให้วาดฉากมุมสูงใน scene-top.js ให้ข้อนั้น
+   อย่าเอาคำบรรยายกลับมาใส่ในภาพสำรอง */
 function label(x, y, txt, anchor) {
   return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-size="11" font-weight="700"' +
          ' fill="#fff" stroke="#0a0f18" stroke-width="3" paint-order="stroke" opacity=".95">' + txt + '</text>';
@@ -146,7 +153,6 @@ var ART = {
       '<rect x="' + (322 + 44 * kAt(tC)) + '" y="' + (gC - 22 * kAt(tC)) + '" width="' + (7 * kAt(tC)) + '" height="' + (7 * kAt(tC)) + '" rx="2" fill="#ff4433" class="blink"/>' +
       // ลูกศรบอกทิศทางที่เขากำลังมุ่งไป คือเข้าหาแยก
       '<path d="M300 ' + (gC + 8) + ' h-42 m0 0 l8 -5 m-8 5 l8 5" stroke="#ffd24a" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
-      label(VX, HZ - 10, 'เราถึงแยกก่อนเล็กน้อย · เขาชะลอเหมือนจะหยุด') +
       egoMoto();
   },
 
@@ -163,7 +169,7 @@ var ART = {
       var x = (j * 41) % 440 - 20;
       s += '<line x1="' + x + '" y1="-16" x2="' + (x - 10) + '" y2="18" stroke="#e2eef8" stroke-width="1.4" opacity=".5"/>';
     }
-    s += '</g>' + label(VX, HZ - 12, 'ฝนเพิ่งเริ่มตก ถนนเริ่มลื่น');
+    s += '</g>';
     return s + egoMoto();
   },
 
@@ -175,13 +181,12 @@ var ART = {
          '<rect x="262" y="60" width="28" height="32" fill="#69737f"/>' +
          '<rect x="300" y="60" width="26" height="20" fill="#93a3b1"/>' +
          '<rect x="58" y="46" width="60" height="46" fill="#c6cfbd"/>' +
-         '<rect x="126" y="58" width="34" height="34" fill="#bcc4b4"/>' +
-         label(VX, HZ - 10, 'ไปแค่ปากซอย ไม่ถึงหนึ่งกิโลเมตร');
+         '<rect x="126" y="58" width="34" height="34" fill="#bcc4b4"/>';
     return s + egoMoto(
       '<g><path d="M282 168 a24 24 0 0 1 48 0 v15 h-48 z" fill="#eef1f5"/>' +
       '<rect x="282" y="181" width="48" height="9" rx="4" fill="#333b45"/>' +
       '<path d="M306 190 v12" stroke="#333b45" stroke-width="3"/>' +
-      label(306, 160, 'หมวกยังแขวนอยู่') + '</g>');
+      '</g>');
   },
 
   // จุดกลับรถ มีเกาะกลางเว้นช่อง และมีจักรยานยนต์สวนมาในเลนตรงข้าม
@@ -193,7 +198,6 @@ var ART = {
              ' ' + (VX + w2) + ',' + yAt(t2) + ' ' + (VX - w2) + ',' + yAt(t2) + '" fill="#a8b0b9"/>'
     };
     s += seg(0, 0.26) + seg(0.54, 1);
-    s += label(VX, HZ - 10, 'จะกลับรถ มีจักรยานยนต์สวนมา');
     s += motoOncoming(VX + halfAt(0.46) * 0.55, 0.46);
     s += '<path d="M' + (VX + halfAt(0.46) * 0.55) + ' ' + (yAt(0.46) + 4) + ' v18" stroke="#e04a3c" stroke-width="2" stroke-dasharray="4 3"/>';
     return s + egoCar();
@@ -208,8 +212,7 @@ var ART = {
       s += '<rect x="' + (rightAt(t) + 5) + '" y="' + (yAt(t) - 16 * kAt(t)) + '" width="' + (5 * kAt(t)) + '" height="' + (16 * kAt(t)) + '" fill="#f6c85a" opacity=".85"/>';
     }
     s += '<rect x="0" y="0" width="' + W + '" height="52" fill="#04060c" opacity=".82"/>' +
-         '<rect x="0" y="' + (H - 34) + '" width="' + W + '" height="34" fill="#04060c" opacity=".82"/>' +
-         label(VX, 32, 'ตาเริ่มหนัก · เหลืออีก 20 กม.');
+         '<rect x="0" y="' + (H - 34) + '" width="' + W + '" height="34" fill="#04060c" opacity=".82"/>';
     return s + egoCar();
   },
 
@@ -224,7 +227,6 @@ var ART = {
       '<circle cx="292" cy="' + (g - 12) + '" r="15" fill="#161b22"/>' +
       '<circle cx="372" cy="' + (g - 12) + '" r="15" fill="#161b22"/>' +
       '<rect x="242" y="' + (g - 66) + '" width="15" height="15" rx="3" fill="#ffb020" class="blink"/>' +
-      label(VX, HZ - 10, 'รถบรรทุกเปิดไฟเลี้ยวซ้าย · เราอยู่จุดบอด') +
       '</g>';
     return s + egoMoto();
   },
@@ -239,8 +241,7 @@ var ART = {
          '<g><rect x="46" y="96" width="26" height="30" rx="3" fill="#f2c14e"/>' +
          '<rect x="46" y="91" width="26" height="9" rx="4" fill="#fff7e2"/>' +
          '<rect x="72" y="103" width="8" height="15" rx="4" fill="#f2c14e"/></g>' +
-         carBack(286, 0.40, '#b23b3b') +
-         label(VX, HZ - 10, 'ดื่มไปสองแก้ว กำลังจะขี่กลับ');
+         carBack(286, 0.40, '#b23b3b');
     return s + egoMoto();
   },
 
@@ -251,8 +252,7 @@ var ART = {
          '<rect x="313" y="8" width="41" height="72" rx="7" fill="#1e232a"/>' +
          '<circle cx="333" cy="24" r="10" fill="#3b424b"/>' +
          '<circle cx="333" cy="44" r="10" fill="#ffc02e"/>' +
-         '<circle cx="333" cy="64" r="10" fill="#3b424b"/>' +
-         label(200, HZ - 12, 'ไฟเปลี่ยนเป็นเหลือง');
+         '<circle cx="333" cy="64" r="10" fill="#3b424b"/>';
     return s + egoCar();
   }
 };

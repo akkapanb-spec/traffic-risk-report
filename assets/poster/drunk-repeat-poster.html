@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>อินโฟเมาแล้วขับซ้ำ ศาลไม่รอลงอาญา สภ.เมืองนครสวรรค์</title>
+<!--
+   ขนาด 1080 x 1920  สัดส่วน 9 ต่อ 16  สำหรับสตอรี่และการส่งต่อในไลน์
+
+   แหล่งข้อมูล
+     ตัวคดี       คำพิพากษาศาลฎีกาที่ 8990/2568 ตามที่เพจฎีกาศึกษาสรุปไว้ในรีล
+                  facebook.com/reel/1419467386706607  อ่านเมื่อ 11 ก.ย. 2569
+                  230 มก.%  คดีก่อนหน้า 2 คดีที่รอลงอาญา  โทษ 5 เดือน 10 วัน
+                  ทุกตัวมาจากคำสรุปนั้น ไม่มีตัวไหนเติมเอง
+     เกณฑ์ 20/50  กฎกระทรวงว่าด้วยลักษณะการเมาสุรา  ผู้ไม่มีใบขับขี่ใช้เกณฑ์ 20
+                  จำเลยคดีนี้ไม่มีใบขับขี่ จึงเทียบกับ 20  230 หาร 20 ได้ 11.5
+     โทษ          พ.ร.บ.จราจรทางบก (ฉบับที่ 13) พ.ศ. 2565  มาตรา 160 ตรี และ 160 ตรี/1
+                  ตรวจกับเว็บวุฒิสภาและข่าวหลายสำนักก่อนเขียน
+
+   สิ่งที่ตั้งใจไม่ทำ
+     ไม่เขียนว่าคดีนี้ตัดสินตามมาตรา 160 ตรี/1  คำสรุปไม่ได้บอกบทมาตรา
+     และคดีก่อนหน้าอาจเกิดก่อนกฎหมายปี 65 ใช้บังคับ  จึงแยกกล่อง "คดีนี้"
+     ออกจากกล่อง "กฎหมายวันนี้" ให้ขาดจากกัน
+     ไม่เขียนว่าทำผิดซ้ำแล้วติดคุกแน่นอน  กฎหมายเขียนว่าจำคุกไม่เกินสองปี
+     ศาลยังรอลงอาญาได้ในทางทฤษฎี  สิ่งที่คดีนี้บอกคือศาลเลิกให้โอกาสแล้ว
+     ไม่ใส่ตัวเลขอุบัติเหตุจากเมาแล้วขับในพื้นที่  เพราะไม่ได้ดึงจากฐานข้อมูลจริง
+-->
+<style>
+  * { margin:0; padding:0; box-sizing:border-box }
+  html, body { width:1080px; height:1920px; overflow:hidden }
+  body {
+    font-family:'Leelawadee UI','Tahoma',sans-serif;
+    background:#0a1c36; color:#e6eefb;
+    display:flex; flex-direction:column;
+  }
+
+  .head { padding:26px 60px 10px; display:flex; align-items:center; gap:22px }
+  .head img { width:86px; height:86px; object-fit:contain }
+  .head .org { font-size:29px; font-weight:700; color:#cfe0fa; line-height:1.3 }
+  .head .org span { display:block; font-size:22px; font-weight:400; color:#a9c3e8 }
+
+  .hook { padding:0 60px; text-align:center }
+  .tag { display:inline-block; background:#3a1520; color:#ffb3b3; border:2px solid #7a2a3a;
+         font-size:22px; font-weight:700; padding:6px 22px; border-radius:40px; letter-spacing:.3px }
+  .hook h1 { margin-top:10px; font-size:63px; font-weight:700; line-height:1.12; color:#fff; letter-spacing:-1px }
+  .hook h1 em { font-style:normal; color:#ff8a8a }
+  .hook p { margin-top:10px; font-size:25px; color:#a9c3e8; line-height:1.4 }
+
+  .card { margin:14px 60px 0; background:#0f2547; border-radius:22px; padding:16px 28px }
+  .card h3 { font-size:27px; color:#fff; font-weight:700 }
+  .card h3 small { font-size:20px; font-weight:400; color:#a9c3e8; margin-left:8px }
+
+  /* ---------- เส้นเวลา 3 คดี ---------- */
+  .tl { margin-top:12px; position:relative }
+  .tl::before { content:''; position:absolute; left:27px; top:24px; bottom:40px; width:4px; background:#244a80; border-radius:2px }
+  .st { display:flex; gap:20px; align-items:flex-start; padding:7px 0; position:relative }
+  .st .dot { width:58px; height:58px; flex:0 0 58px; border-radius:50%; background:#1b3d6e; border:4px solid #0f2547;
+             display:flex; align-items:center; justify-content:center; font-size:25px; font-weight:700; color:#cfe0fa; z-index:1 }
+  .st .tx { flex:1; padding-top:4px }
+  .st .tx b { display:block; font-size:27px; color:#fff; line-height:1.25 }
+  .st .tx span { display:block; font-size:21px; color:#a9c3e8; margin-top:3px; line-height:1.35 }
+  .st .tx .res { display:inline-block; margin-top:6px; font-size:21px; font-weight:700; padding:3px 14px; border-radius:10px;
+             background:#1b3d6e; color:#ffd76a }
+  /* สองคดีแรกเป็นฉากหลัง ให้ผลคดีอยู่บรรทัดเดียวกับเหตุ เก็บพื้นที่ไว้ให้คดีที่สาม */
+  .st.short .tx b { display:inline; margin-right:12px }
+  .st.short .tx .res { margin-top:0; vertical-align:2px }
+  .st.last .dot { background:#b3263a; color:#fff }
+  .st.last .tx .res { background:#b3263a; color:#fff; font-size:26px; padding:6px 16px }
+  .st.last .tx .aff { display:inline; margin-left:12px; font-size:20px }
+
+  /* ---------- แท่งแอลกอฮอล์ ---------- */
+  .bars { margin-top:8px; display:flex; flex-direction:column; gap:6px }
+  .bar { display:flex; align-items:center; gap:14px }
+  .bar .lb { width:250px; font-size:21px; color:#cfe0fa; line-height:1.2; text-align:right }
+  .bar .lb small { display:block; font-size:17px; color:#8fabd4 }
+  .bar .track { flex:1; display:flex; align-items:center; gap:12px }
+  .bar .fill { height:30px; border-radius:8px; background:#3b6aa8 }
+  .bar .v { font-size:25px; font-weight:700; color:#fff; white-space:nowrap }
+  .bar.hot .fill { background:linear-gradient(90deg,#d9485c,#ff8a8a) }
+  .bar.hot .v { color:#ff8a8a; font-size:32px }
+  .bars .note { font-size:21px; color:#a9c3e8; margin-top:4px; line-height:1.4 }
+  .bars .note b { color:#ffd76a }
+
+  /* ---------- คำศาล ---------- */
+  .quote { margin:14px 60px 0; border-left:8px solid #ffd76a; background:#132c55; border-radius:0 22px 22px 0; padding:16px 28px }
+  .quote q { display:block; font-size:32px; font-weight:700; color:#fff; line-height:1.35; quotes:'“' '”' }
+  .quote .by { font-size:21px; color:#a9c3e8; margin-top:6px; line-height:1.4 }
+
+  /* ---------- กฎหมายวันนี้ ---------- */
+  .law { margin:14px 60px 0 }
+  .law h3 { font-size:27px; color:#fff; font-weight:700; text-align:center }
+  .law h3 small { display:block; font-size:19px; font-weight:400; color:#8fabd4; margin-top:2px }
+  .cols { display:flex; gap:14px; margin-top:10px }
+  .col { flex:1; background:#0f2547; border-radius:20px; padding:14px 18px 12px }
+  .col .k { font-size:23px; font-weight:700; color:#cfe0fa; text-align:center; padding-bottom:8px; border-bottom:1px solid #1c3b6b }
+  .col ul { list-style:none; margin-top:8px }
+  .col li { font-size:21px; color:#e6eefb; line-height:1.3; padding:4px 0 }
+  .col li b { font-size:28px; color:#ffd76a; line-height:1.15; margin-right:6px }
+  .col li small { display:block; font-size:19px; color:#a9c3e8 }
+  .col.rep { background:#2a1422; border:2px solid #7a2a3a }
+  .col.rep .k { color:#ffb3b3; border-color:#5a2334 }
+  .col.rep li b { color:#ff8a8a }
+  .and { display:inline-block; font-size:18px; font-weight:700; color:#fff; background:#b3263a; border-radius:6px; padding:0 8px; margin:2px 0 }
+  .or  { display:inline-block; font-size:18px; color:#a9c3e8; border:1px solid #3b5f92; border-radius:6px; padding:0 8px; margin:2px 0 }
+
+  .cta { margin-top:auto; background:#061428; padding:18px 60px 20px }
+  .cta h2 { font-size:40px; font-weight:700; color:#fff; text-align:center; line-height:1.22 }
+  .cta h2 em { font-style:normal; color:#ffd76a }
+  .alt { display:flex; gap:12px; margin-top:12px }
+  .alt div { flex:1; background:#0f2547; border-radius:16px; padding:9px 12px; display:flex; align-items:center; gap:10px;
+             font-size:21px; color:#e6eefb; line-height:1.28 }
+  .alt div i { font-style:normal; font-size:34px; line-height:1 }
+  .qrwrap { display:flex; align-items:center; justify-content:center; gap:24px; margin-top:14px }
+  .qrbox { background:#fff; border-radius:16px; padding:10px }
+  .qrside b { display:block; font-size:24px; color:#fff }
+  .qrside span { display:block; font-size:19px; color:#a9c3e8; margin-top:4px; line-height:1.4 }
+  .foot { font-size:17px; color:#7f9ac4; text-align:center; margin-top:12px; line-height:1.45 }
+</style>
+</head>
+<body>
+
+  <div class="head">
+    <img src="logo.png" alt="ตราสถานีตำรวจ">
+    <div class="org">สถานีตำรวจภูธรเมืองนครสวรรค์<span>งานจราจร · ระบบแจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ</span></div>
+  </div>
+
+  <div class="hook">
+    <div class="tag">⚖️ คดีจริง · คำพิพากษาศาลฎีกาที่ 8990/2568</div>
+    <h1>เมาแล้วขับซ้ำ<br><em>ศาลไม่รอลงอาญาให้อีก</em></h1>
+    <p>รอลงอาญามาแล้วสองครั้ง ครั้งที่สามศาลให้จำคุกจริง</p>
+  </div>
+
+  <!-- เส้นเวลาคือแก่นของเรื่อง คนต้องเห็นว่าโอกาสถูกให้มาแล้วสองครั้ง
+       ถ้าเขียนแค่ผลคดี จะอ่านเหมือนศาลลงโทษหนักเกินเหตุ -->
+  <div class="card">
+    <h3>เส้นทางของคดีนี้</h3>
+    <div class="tl">
+      <div class="st short">
+        <div class="dot">1</div>
+        <div class="tx"><b>เมาแล้วขับ ถูกพิพากษาครั้งแรก</b><span class="res">ศาลรอการลงโทษ</span></div>
+      </div>
+      <div class="st short">
+        <div class="dot">2</div>
+        <div class="tx"><b>เมาแล้วขับอีก ถูกพิพากษาครั้งที่สอง</b><span class="res">ศาลรอการลงโทษอีก</span></div>
+      </div>
+      <div class="st last">
+        <div class="dot">3</div>
+        <div class="tx">
+          <b>ขี่จักรยานยนต์ขณะเมา ไม่มีใบขับขี่<br>ขณะยังอยู่ในช่วงรอการลงโทษ</b>
+          <span class="res">จำคุก 5 เดือน 10 วัน ไม่รอลงอาญา</span><span class="aff">ศาลฎีกาพิพากษายืน</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>แอลกอฮอล์ในเลือดของจำเลย<small>หน่วย มิลลิกรัมเปอร์เซ็นต์</small></h3>
+    <!-- ความกว้างแท่งเทียบสัดส่วนจริง เต็มราง 230 : 20 เท่ากับ 8.7% ของ 230, 50 เท่ากับ 21.7% -->
+    <div class="bars">
+      <div class="bar">
+        <div class="lb">เกณฑ์ผู้ไม่มีใบขับขี่<small>เกินนี้ถือว่าเมา</small></div>
+        <div class="track"><div class="fill" style="width:8.7%"></div><div class="v">20</div></div>
+      </div>
+      <div class="bar">
+        <div class="lb">เกณฑ์ผู้ขับขี่ทั่วไป<small>เกินนี้ถือว่าเมา</small></div>
+        <div class="track"><div class="fill" style="width:21.7%"></div><div class="v">50</div></div>
+      </div>
+      <div class="bar hot">
+        <div class="lb">จำเลยคดีนี้<small>ไม่มีใบขับขี่</small></div>
+        <div class="track"><div class="fill" style="width:78%"></div><div class="v">230</div></div>
+      </div>
+      <div class="note">จำเลยไม่มีใบขับขี่ จึงใช้เกณฑ์ 20 &nbsp;วัดได้ <b>สูงกว่าเกณฑ์กว่า 11 เท่า</b></div>
+    </div>
+  </div>
+
+  <div class="quote">
+    <q>วิธีการรอการลงโทษจำคุกจึงไม่ได้ผลกับจำเลย</q>
+    <div class="by">ศาลฎีกา · แม้จำเลยไม่เคยถูกจำคุกมาก่อน ก็ไม่มีเหตุสมควรให้รอการลงโทษอีก</div>
+  </div>
+
+  <div class="law">
+    <h3>โทษเมาแล้วขับตามกฎหมายวันนี้<small>พ.ร.บ.จราจรทางบก มาตรา 160 ตรี และ 160 ตรี/1</small></h3>
+    <div class="cols">
+      <div class="col">
+        <div class="k">ครั้งแรก</div>
+        <ul>
+          <li><b>จำคุกไม่เกิน 1 ปี</b><span class="or">หรือ</span></li>
+          <li><b>ปรับ 5,000–20,000 บาท</b><small>หรือทั้งจำทั้งปรับ</small></li>
+          <li>พักใบขับขี่อย่างน้อย 6 เดือน หรือเพิกถอน</li>
+        </ul>
+      </div>
+      <div class="col rep">
+        <div class="k">ทำผิดซ้ำภายใน 2 ปี</div>
+        <ul>
+          <li><b>จำคุกไม่เกิน 2 ปี</b><span class="and">และ</span></li>
+          <li><b>ปรับ 50,000–100,000 บาท</b></li>
+          <li>พักใบขับขี่อย่างน้อย 1 ปี หรือเพิกถอน</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta">
+    <h2>ดื่มแล้ว <em>ไม่ขับ</em><br>ครั้งหน้าอาจไม่มีใครรอให้อีก</h2>
+    <div class="alt">
+      <div><i>🙋</i>ให้คนที่ไม่ดื่ม<br>ขับแทน</div>
+      <div><i>🚕</i>เรียกรถ<br>กลับบ้าน</div>
+      <div><i>🏠</i>ค้างคืน<br>ไม่ต้องรีบ</div>
+    </div>
+    <div class="qrwrap">
+      <div class="qrbox"><div id="qrSite"></div></div>
+      <div class="qrside">
+        <b>แผนที่จุดเสี่ยงและจุดเมาขับ</b>
+        <span>สภ.เมืองนครสวรรค์<br>เปิดจากมือถือได้ทันที ไม่ต้องติดตั้งแอป</span>
+      </div>
+    </div>
+    <div class="foot">
+      ที่มา คำพิพากษาศาลฎีกาที่ 8990/2568 สรุปโดยเพจฎีกาศึกษา · โทษตาม พ.ร.บ.จราจรทางบก (ฉบับที่ 13) พ.ศ. 2565<br>
+      ด้วยความปรารถนาดี น้องจราจรชอนตะวัน
+    </div>
+  </div>
+
+<script src="qrcode.js"></script>
+<script>
+/* สร้าง QR ในเครื่องเอง ระดับแก้ความผิดพลาด H เผื่อภาพถูกบีบอัดตอนส่งต่อในไลน์ */
+function drawQR(elId, url, px) {
+  var qr = qrcode(0, 'H');
+  qr.addData(url);
+  qr.make();
+  var el = document.getElementById(elId);
+  el.innerHTML = qr.createImgTag(6, 0);
+  var img = el.querySelector('img');
+  if (img) { img.style.width = px + 'px'; img.style.height = px + 'px'; img.style.imageRendering = 'pixelated'; img.style.display = 'block'; }
+}
+drawQR('qrSite', 'https://traffic-risk-muangnakhonsawan.netlify.app/index.html', 136);
+</script>
+</body>
+</html>

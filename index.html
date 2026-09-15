@@ -492,6 +492,31 @@ a.promo-card:hover{border-color:#b9d3f3;box-shadow:0 12px 26px rgba(23,52,88,.14
 .promo-t b{display:block;font-size:.92rem;line-height:1.35;color:#132238}
 .promo-t span{display:block;font-size:.74rem;color:#5b6b7f;margin-top:2px;line-height:1.5}
 .promo-go{position:absolute;top:12px;right:12px;font-size:.66rem;color:#7c3aed}
+
+/* ป้ายชื่อกลุ่มไลน์ในการ์ดไลน์ของหน่วย
+   เป็นลูกโดยตรงของการ์ด ไม่ได้อยู่ในคอลัมน์ข้อความ จึงกว้างเต็มการ์ดและอ่านได้ครบชื่อ
+   ต้องอ่านได้ครบ เพราะคนใช้บรรทัดนี้ไปค้นหาชื่อกลุ่มในแอปไลน์
+   ชื่อที่ถูกตัดครึ่งหรือแตกเป็นบรรทัดละคำ ใช้ค้นหาไม่ได้ บรรทัดนี้ก็ไม่มีประโยชน์ */
+.line-group{display:flex;align-items:center;gap:8px;font-size:.78rem;line-height:1.5;
+  color:#0a7a45;font-weight:600;background:#eefaf3;border:1px solid #cdecdb;
+  border-radius:10px;padding:7px 10px}
+.line-group i{flex:0 0 auto;font-size:.9em;opacity:.8}
+
+/* ปุ่มเข้าร่วมแบบเล็ก วางต่อท้ายบรรทัดของสิ่งที่มันพาไป
+   ปุ่มเพิ่มเพื่อนอยู่ท้ายชื่อบัญชี ปุ่มเข้ากลุ่มอยู่ท้ายชื่อกลุ่ม
+   จับคู่กันชัดว่าปุ่มไหนพาไปไหน ต่างจากตอนวางสองปุ่มเรียงกันไว้ท้ายการ์ด
+   ซึ่งเหลือแต่ไอคอนบนมือถือ แล้วคนต้องเดาเอาเองว่าอันไหนคือกลุ่ม */
+/* ต้องเขียนเป็น .promo-t .line-name ไม่ใช่ .line-name เฉย ๆ
+   เพราะกฎ .promo-t span ด้านบนสั่ง display block ให้ทุกสแปนในคอลัมน์ข้อความ
+   และมีน้ำหนักมากกว่าคลาสเดี่ยว ปุ่มจึงตกลงไปอยู่ใต้ชื่อแทนที่จะต่อท้ายบรรทัด */
+.promo-t .line-name{display:flex;align-items:center;gap:9px}
+.line-name b{flex:1;min-width:0}
+.line-join{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+  width:36px;height:32px;border-radius:9px;background:#25344b;color:#fff;
+  text-decoration:none;transition:background .15s}
+.line-join:hover{background:#06c755}
+.line-join i{font-size:.95rem;opacity:1;margin:0}
+.line-group .line-join{margin-left:auto}
 .promo-desc{font-size:.78rem;color:#5b6b7f;line-height:1.6;flex:1}
 .store-row{display:flex;gap:8px}
 .store-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;
@@ -522,6 +547,9 @@ a.promo-card:hover .promo-open{background:#1d4ed8;color:#fff}
      ไอคอนและชื่อ แล้วดันความกว้างจนทั้งหน้าเลื่อนซ้ายขวาได้ */
   .promo-card{flex-wrap:wrap}
   .call-row{flex:1 0 100%;margin-top:2px;padding-top:8px;gap:6px}
+  /* ชื่อกลุ่มไลน์ตกลงมาเป็นแถวเต็มใต้ไอคอน ชื่อ และปุ่ม
+     ถ้าปล่อยให้อยู่แถวเดียวกับปุ่ม จะถูกบีบจนแตกเป็นบรรทัดละคำ */
+  .line-group{flex:1 0 100%;margin-top:3px;font-size:.72rem;padding:6px 9px}
   .call-btn{flex:1 1 0;min-width:0;padding:6px 9px;gap:7px}
   .call-t{font-size:.64rem}
   .call-t b{font-size:.78rem}
@@ -731,6 +759,7 @@ canvas{max-width:100%!important;}
 .bi-amber{background:linear-gradient(135deg,#fbbf24,#c2410c)}
 .bi-green{background:linear-gradient(135deg,#34d399,#0f7a47)}
 .bi-slate{background:linear-gradient(135deg,#94a3b8,#475569)}
+.bi-teal{background:linear-gradient(135deg,#2dd4bf,#0f766e)}
 .nav-tab-v6.active .big-ic{background:rgba(255,255,255,.2);box-shadow:none}
 
 /* แยกปุ่ม 2 ชนิดให้เห็นด้วยตา: เส้นคั่น + ลูกศร ↗ บนปุ่มที่เปิดหน้าใหม่ + ป้ายกำกับใต้แถบ */
@@ -1104,6 +1133,7 @@ canvas{max-width:100%!important;}
     <button onclick="toggleHomeDrawer(false);openAccidentRecord()"><i class="fa-solid fa-user-shield" style="background:#e3edff;color:#2563eb"></i> บันทึกอุบัติเหตุ (เจ้าหน้าที่) <i class="fa-solid fa-arrow-up-right-from-square drawer-arrow"></i></button>
     <button onclick="toggleHomeDrawer(false);openTrafficCams()"><i class="fa-solid fa-video" style="background:#e9f9ef;color:#0f7a47"></i> กล้องจราจรสด กรมทางหลวง <i class="fa-solid fa-arrow-up-right-from-square drawer-arrow"></i></button>
     <button onclick="toggleHomeDrawer(false);openVideoCampaign()"><i class="fa-solid fa-circle-play" style="background:#f3edff;color:#7c3aed"></i> Clip Video รณรงค์ <i class="fa-solid fa-arrow-up-right-from-square drawer-arrow"></i></button>
+    <button onclick="toggleHomeDrawer(false);openDecisionGame()"><i class="fa-solid fa-brain" style="background:#e6faf6;color:#0f766e"></i> ทดสอบการตัดสินใจ <i class="fa-solid fa-arrow-up-right-from-square drawer-arrow"></i></button>
     <button onclick="toggleHomeDrawer(false);openHelmetProject()"><i class="fa-solid fa-helmet-safety" style="background:#fff6e6;color:#d97706"></i> โครงการหมวกนิรภัย ได้ส่วนลด <i class="fa-solid fa-arrow-up-right-from-square drawer-arrow"></i></button>
   </nav>
 </aside>
@@ -1128,6 +1158,8 @@ canvas{max-width:100%!important;}
 
   <button class="nav-tab-v6 ext" onclick="openVideoCampaign()"><i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i><span class="big-ic bi-purple"><i class="fa-solid fa-circle-play"></i></span><span>Clip Video</span></button>
 
+  <button class="nav-tab-v6 ext" onclick="openDecisionGame()"><i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i><span class="big-ic bi-teal"><i class="fa-solid fa-brain"></i></span><span>ทดสอบตัดสินใจ</span></button>
+
   <button class="nav-tab-v6 ext" onclick="openHelmetProject()"><i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i><span class="big-ic bi-amber"><i class="fa-solid fa-helmet-safety"></i></span><span>หมวกนิรภัย</span></button>
 
   <!-- มือถือเท่านั้น: ปุ่มเพิ่มเติม เปิดเมนูไอคอนของตัวเอง (ลิงก์ 4 อันที่ซ่อนไว้บนจอเล็ก) -->
@@ -1143,6 +1175,7 @@ canvas{max-width:100%!important;}
     <button role="menuitem" onclick="toggleMoreMenu(false);openAccidentRecord()"><span class="big-ic bi-blue"><i class="fa-solid fa-user-shield"></i></span><span>บันทึก<br>(จนท.)</span></button>
     <button role="menuitem" onclick="toggleMoreMenu(false);openTrafficCams()"><span class="big-ic bi-green"><i class="fa-solid fa-video"></i></span><span>กล้อง<br>จราจร</span></button>
     <button role="menuitem" onclick="toggleMoreMenu(false);openVideoCampaign()"><span class="big-ic bi-purple"><i class="fa-solid fa-circle-play"></i></span><span>Clip<br>Video</span></button>
+    <button role="menuitem" onclick="toggleMoreMenu(false);openDecisionGame()"><span class="big-ic bi-teal"><i class="fa-solid fa-brain"></i></span><span>ทดสอบ<br>ตัดสินใจ</span></button>
     <button role="menuitem" onclick="toggleMoreMenu(false);openHelmetProject()"><span class="big-ic bi-amber"><i class="fa-solid fa-helmet-safety"></i></span><span>หมวก<br>นิรภัย</span></button>
   </div>
 </div>
@@ -1366,13 +1399,13 @@ canvas{max-width:100%!important;}
           <span class="promo-card" id="lineOaCard" style="display:none;cursor:default">
             <span class="promo-top">
               <span class="promo-ic" style="background:#06c755;color:#fff"><i class="fa-brands fa-line"></i></span>
-              <span class="promo-t"><b>ไลน์ Chontawan TF Police</b><span>สภ.เมืองนครสวรรค์</span></span>
+              <span class="promo-t"><span class="line-name"><b>ไลน์ ชอนตะวัน TF Police</b><a class="line-join" id="lineOaAdd" href="#" target="_blank" rel="noopener" aria-label="เพิ่มเพื่อนไลน์ ชอนตะวัน TF Police"><i class="fa-solid fa-user-plus"></i></a></span></span>
             </span>
+            <!-- ชื่อกลุ่มไลน์ ขึ้นพร้อมปุ่มเข้ากลุ่มเสมอ ดู lineOaInit
+                 มีไว้ให้คนที่หาปุ่มไม่เจอ ค้นหาชื่อกลุ่มในแอปไลน์เอาเองได้ -->
+            <span class="line-group" id="lineGroupName" style="display:none"><i class="fa-solid fa-users" aria-hidden="true"></i><span>กลุ่มสถานการณ์อุบัติเหตุ สภ.เมืองนครสวรรค์</span><a class="line-join" id="lineGroupBtn" style="display:none" href="#" target="_blank" rel="noopener" aria-label="เข้ากลุ่มสถานการณ์อุบัติเหตุ สภ.เมืองนครสวรรค์"><i class="fa-solid fa-users"></i></a></span>
             <span class="promo-desc">เพื่อติดตามสถานการณ์อุบัติเหตุ และรับแจ้งเตือนอุบัติเหตุซ้ำ</span>
-            <span class="store-row">
-              <a class="store-btn" id="lineOaAdd" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-user-plus"></i><span class="store-lb"> เพิ่มเพื่อน</span></a>
-              <a class="store-btn" id="lineGroupBtn" style="display:none" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-users"></i><span class="store-lb"> เข้ากลุ่มไลน์</span></a>
-            </span>
+            <!-- แถวปุ่มเดิมถูกยกเลิก ปุ่มทั้งสองย้ายไปอยู่ท้ายบรรทัดชื่อของตัวเองแล้ว -->
           </span>
 
           <!-- 2 -->
@@ -1717,7 +1750,14 @@ function lineOaInit() {
   // ตรวจโดเมนด้วยตัวเดียวกับปุ่มเพิ่มเพื่อน จะได้ไม่มีทางวางลิงก์นอกไลน์ลงบนหน้านี้
   const gUrl = lineOaUrl(LINE_GROUP_URL);
   const gBtn = document.getElementById('lineGroupBtn');
-  if (gUrl && gBtn) { gBtn.href = gUrl; gBtn.style.display = ''; }
+  // ชื่อกลุ่มกับปุ่มเข้ากลุ่มขึ้นพร้อมกันเสมอ ใช้เงื่อนไขเดียวกัน
+  // ถ้าแยกเงื่อนไขกัน วันหนึ่งจะเหลือชื่อกลุ่มค้างอยู่โดยไม่มีปุ่มให้กด
+  // ซึ่งแย่กว่าไม่เขียนชื่อกลุ่มไว้เลย เพราะคนจะไปตามหากลุ่มนั้นเอง
+  const gName = document.getElementById('lineGroupName');
+  if (gUrl && gBtn) {
+    gBtn.href = gUrl; gBtn.style.display = '';
+    if (gName) gName.style.display = '';
+  }
 
   card.style.display = '';
 }
@@ -4369,6 +4409,7 @@ window.addEventListener('resize', () => {
 
 function openVideoCampaign() { window.open('videos.html', '_blank'); }
 function openTrafficCams() { window.open('cctv.html', '_blank'); }
+function openDecisionGame() { window.open('game.html', '_blank'); }
 
 // เมนูไอคอน "เพิ่มเติม" บนแถบล่างมือถือ — เปิดเมนูของตัวเอง ไม่ใช่ drawer
 function toggleMoreMenu(force) {

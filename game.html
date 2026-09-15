@@ -64,7 +64,7 @@ body{font-family:'Leelawadee UI','Sarabun',system-ui,sans-serif;background:#eef3
 .fact.law + .fact{border-top:0;margin-top:6px;padding-top:0}
 
 .bar{display:flex;align-items:center;gap:10px;padding:11px 16px;background:#f7fafd;border-top:1px solid #e4ecf6}
-/* เล่นรอบละ 20 ข้อ จุดจึงต้องตัดบรรทัดได้ ไม่งั้นบีบปุ่มจนล้นจอมือถือ
+/* เล่นรอบละ 25 ข้อ จุดจึงต้องตัดบรรทัดได้ ไม่งั้นบีบปุ่มจนล้นจอมือถือ
    min-width:0 จำเป็นเพราะ flex item ปกติจะไม่ยอมหดต่ำกว่าความกว้างเนื้อหา */
 .dots{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0;align-content:center}
 .dot{width:8px;height:8px;border-radius:50%;background:#d2dde9;flex:0 0 8px}
@@ -80,6 +80,20 @@ body{font-family:'Leelawadee UI','Sarabun',system-ui,sans-serif;background:#eef3
 /* ---------- หน้าสรุป ---------- */
 .sum{padding:22px 18px;text-align:center}
 .score{font-size:2.6rem;font-weight:700;line-height:1}
+
+/* ตารางสรุปรายคน  ต้องเลื่อนแนวนอนได้ในกล่องของตัวเอง
+   ถ้าปล่อยให้กว้างตามเนื้อหา ทั้งหน้าจะเลื่อนซ้ายขวาบนมือถือ ซึ่งเป็นบั๊กที่แก้มาหลายรอบแล้ว */
+.rank-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:10px}
+.rank-tb{width:100%;min-width:420px;border-collapse:collapse;font-size:.8rem}
+.rank-tb th,.rank-tb td{padding:7px 8px;text-align:right;white-space:nowrap;
+  border-bottom:1px solid #e4ebf3}
+.rank-tb th{font-size:.72rem;font-weight:600;color:#5b6b7f;background:#f3f7fb;
+  position:sticky;top:0}
+.rank-tb th:nth-child(2),.rank-tb td:nth-child(2){text-align:left;white-space:normal;
+  min-width:96px;word-break:break-word}
+.rank-tb td:first-child{color:#8496aa}
+.rank-tb tr.me td{background:#eef6ff;font-weight:700;color:#12325c}
+.rank-tb td.pt{font-weight:700;color:#12325c}
 .score small{font-size:1rem;font-weight:400;color:#5b6b7f}
 .verdict{margin:10px 0 16px;font-size:1.02rem;line-height:1.5}
 .miss{text-align:right;background:#fff8ec;border:1px solid #f0dcb8;border-radius:12px;
@@ -103,6 +117,18 @@ body{font-family:'Leelawadee UI','Sarabun',system-ui,sans-serif;background:#eef3
 .blink{animation:bl .8s steps(1) infinite}
 @keyframes bl{50%{opacity:.2}}
 @media (prefers-reduced-motion:reduce){.dash,.rainfall,.blink,.photo{animation:none}}
+
+/* ---------- คะแนนสะสมและอันดับ ---------- */
+.rank-box{margin:16px 0 14px;text-align:right;background:#f4f7fb;border:1px solid #dbe4ef;
+          border-radius:12px;padding:12px 14px}
+.rank-box b{display:block;margin-bottom:8px;text-align:center;color:#1d4ed8}
+.rank-name{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.rank-name input{flex:1;min-width:0;padding:9px 10px;border:1px solid #c3d0e0;border-radius:9px;
+                 font-family:inherit;font-size:.95rem}
+.rank-me{text-align:center;font-size:.95rem;line-height:1.6;color:#22304a}
+.rank-me em{font-style:normal;font-weight:700;color:#1d4ed8;font-size:1.2rem}
+/* กฎของกระดานแบบรายการถูกถอดออกแล้ว กระดานเปลี่ยนเป็นตารางในคลาส rank-tb */
+.rank-msg{text-align:center;font-size:.86rem;color:#6b7a8d;margin-top:8px;line-height:1.6}
 .hidden{display:none}
 </style>
 </head>
@@ -133,6 +159,25 @@ body{font-family:'Leelawadee UI','Sarabun',system-ui,sans-serif;background:#eef3
       <div class="score" id="score">0<small> / 0</small></div>
       <div class="verdict" id="verdict"></div>
       <div class="miss hidden" id="miss"></div>
+
+      <div class="rank-box" id="rankBox">
+        <b>คะแนนสะสมและอันดับ</b>
+        <div class="rank-name" id="rankForm">
+          <button class="btn" id="rankSave" type="button">บันทึกคะแนน</button>
+          <input id="rankName" maxlength="30" placeholder="ใส่ชื่อที่จะให้ขึ้นกระดาน" autocomplete="nickname">
+        </div>
+        <div class="rank-me" id="progress"></div>
+        <div class="rank-me hidden" id="rankMe"></div>
+        <!-- กระดานเป็นตาราง เพราะมีหลายคอลัมน์ที่ต้องเทียบกันตามแนวตั้ง
+             ครอบด้วยกล่องที่เลื่อนแนวนอนได้ ไม่งั้นบนมือถือตารางจะดันทั้งหน้าให้เลื่อนซ้ายขวา -->
+        <div class="rank-wrap hidden" id="rankWrap">
+          <table class="rank-tb"><thead><tr>
+            <th>#</th><th>ชื่อ</th><th>ทำแล้ว</th><th>ถูก</th><th>วินาที/ข้อ</th><th>คะแนน/ข้อ</th>
+          </tr></thead><tbody id="rankList"></tbody></table>
+        </div>
+        <div class="rank-msg" id="rankMsg"></div>
+      </div>
+
       <div class="links">
         <button class="btn" id="again">เล่นอีกครั้ง</button>
         <a class="btn ghost" href="index.html" style="text-decoration:none">กลับหน้าหลัก</a>
@@ -142,12 +187,18 @@ body{font-family:'Leelawadee UI','Sarabun',system-ui,sans-serif;background:#eef3
 
   <p class="foot">
     ทุกสถานการณ์อ้างอิงจากลักษณะอุบัติเหตุที่เกิดจริงในพื้นที่<br>
-    สุ่มมาเล่นรอบละ 20 ข้อ จากคลัง 56 ข้อ เล่นซ้ำได้ ไม่ซ้ำชุดเดิม<br>ชวนคนในบ้านเล่นด้วยกันได้
+    สุ่มมาเล่นรอบละ 25 ข้อ จากคลัง 100 ข้อ เล่นซ้ำได้ ไม่ซ้ำชุดเดิม<br>ชวนคนในบ้านเล่นด้วยกันได้
   </p>
 </div>
 
 <script src="assets/scene-art.js"></script>
 <script src="assets/scene-top.js"></script>
+<script src="assets/scene-top2.js"></script>
+<script src="assets/scene-top3.js"></script>
+<script src="assets/scene-top4.js"></script>
+<script src="assets/scene-top5.js"></script>
+<script src="assets/scene-top6.js"></script>
+<script src="assets/scene-top7.js"></script>
 <script src="assets/questions.js"></script>
 <script>
 'use strict';
@@ -161,10 +212,63 @@ const SCENES = window.QUESTIONS || [];
 /* จำนวนข้อที่หยิบมาเล่นในหนึ่งรอบ
    สุ่มจากคลังทั้งหมด จึงเล่นซ้ำได้หลายรอบโดยไม่เจอชุดเดิม
    ถ้าคลังมีน้อยกว่านี้ จะใช้เท่าที่มี */
-const PER_ROUND = 20;
+const PER_ROUND = 25;
 
 /* ---------- สถานะการเล่น ---------- */
 var order = [], idx = 0, score = 0, missed = [], answered = false;
+
+/* ============================================================
+   ไม่สุ่มข้อที่เคยเจอแล้วซ้ำอีก
+   ============================================================
+   seen คือรหัสข้อที่เคยเจอในรอบใหญ่ที่กำลังเล่นอยู่  cycle คือรอบใหญ่ที่เท่าไร
+   ทำครบทั้งคลังเมื่อไร ขึ้นรอบใหญ่ใหม่แล้วสุ่มได้ทั้งร้อยข้ออีกครั้ง
+
+   จำด้วยรหัสข้อ ไม่ใช่ลำดับในคลัง เพราะลำดับเลื่อนทุกครั้งที่เพิ่มหรือตัดคำถาม
+   ซึ่งเกิดขึ้นมาแล้วหลายรอบ ถ้าจำด้วยลำดับ ประวัติจะชี้ไปผิดข้อโดยไม่มีใครรู้
+
+   เก็บสองที่  ฐานข้อมูลเป็นตัวจริง ส่วนในเครื่องเป็นตัวสำรอง
+   เพื่อให้ยังไม่สุ่มซ้ำแม้เน็ตหลุดหรือฐานข้อมูลล่ม ซึ่งเกมยังเล่นได้ตามปกติ
+   ============================================================ */
+var SEEN_KEY = 'trafficGameSeen';
+var seen = {}, cycle = 1;
+
+/* คำตอบของรอบนี้  เก็บทีละข้อ ทั้งรหัสข้อ ถูกหรือผิด และเวลาที่ใช้
+   ส่งขึ้นฐานข้อมูลทีเดียวตอนจบรอบ ไม่ได้ยิงทีละข้อ
+   เพราะยิงทีละข้อจะกลายเป็นยี่สิบห้าครั้งต่อรอบ และคนที่เล่นแล้วปิดกลางคันจะทิ้งข้อมูลค้างไว้ */
+var answers = [], qStart = 0;
+
+function nowMs() {
+  return (window.performance && window.performance.now) ? window.performance.now() : Date.now();
+}
+
+function loadSeen() {
+  try {
+    var v = JSON.parse(lsGet(SEEN_KEY) || "null");
+    if (v && typeof v.cycle === "number" && v.ids && v.ids.length !== undefined) {
+      cycle = v.cycle;
+      seen = {};
+      for (var i = 0; i < v.ids.length; i++) { seen[v.ids[i]] = 1; }
+    }
+  } catch (e) { /* ค่าเสียก็เริ่มใหม่ ไม่ใช่เรื่องคอขาดบาดตาย */ }
+}
+
+function saveSeen() {
+  lsSet(SEEN_KEY, JSON.stringify({ cycle: cycle, ids: Object.keys(seen) }));
+}
+
+/* หยิบข้อที่ยังไม่เคยเจอมาเล่น  ถ้าเหลือไม่ถึงยี่สิบห้าข้อก็ใช้เท่าที่เหลือ
+   ถ้าไม่เหลือเลยแปลว่าทำครบทั้งคลังแล้ว ขึ้นรอบใหญ่ใหม่ */
+function pickOrder() {
+  var pool = [], i;
+  for (i = 0; i < SCENES.length; i++) {
+    if (!seen[SCENES[i].id]) pool.push(i);
+  }
+  if (!pool.length) {
+    cycle += 1; seen = {}; saveSeen();
+    for (i = 0; i < SCENES.length; i++) { pool.push(i); }
+  }
+  return shuffle(pool).slice(0, PER_ROUND);
+}
 
 /* จำชื่อคลิปที่หาไม่เจอไว้ ฉากที่ยังไม่มีวีดิโอจะได้ไม่ถูกยิงซ้ำทุกครั้งที่เล่นวนมาใหม่ */
 var noClip = {};
@@ -193,10 +297,28 @@ function clip(text, max) {
   return cut.replace(/[ ]+$/, '') + '…';
 }
 
+/* ถามฐานข้อมูลว่าเครื่องนี้ทำข้อไหนไปแล้วบ้าง แล้วค่อยเริ่มเล่น
+   ถ้าถามไม่สำเร็จก็ใช้ที่จำไว้ในเครื่องแทน เกมต้องเริ่มได้เสมอไม่ว่าเน็ตจะเป็นอย่างไร */
 function start() {
-  // สุ่มทั้งคลังแล้วหยิบมาแค่ PER_ROUND ข้อ ถ้าคลังเล็กกว่านั้นก็ใช้เท่าที่มี
-  order = shuffle(SCENES.map(function (_, i) { return i; })).slice(0, PER_ROUND);
-  idx = 0; score = 0; missed = [];
+  var btn = $('startBtn');
+  if (btn) { btn.disabled = true; }
+  rpc('game_progress', { p_key: deviceKey(), p_pool: SCENES.length })
+    .then(function (r) {
+      if (r && typeof r.cycle === 'number') {
+        cycle = r.cycle;
+        seen = {};
+        var ids = r.seen || [];
+        for (var i = 0; i < ids.length; i++) { seen[ids[i]] = 1; }
+        saveSeen();
+      }
+    })
+    .catch(function () { /* ใช้ที่จำไว้ในเครื่องต่อไป */ })
+    .then(function () { if (btn) { btn.disabled = false; } beginRound(); });
+}
+
+function beginRound() {
+  order = pickOrder();
+  idx = 0; score = 0; missed = []; answers = [];
   $('end').classList.add('hidden');
   $('play').classList.remove('hidden');
   $('dots').innerHTML = order.map(function (_, i) {
@@ -222,7 +344,7 @@ function render() {
   /* ฉากมุมสูงมาก่อนเสมอถ้ามี เพราะคำถามเกือบทั้งหมดถามเรื่องใครให้ทางใคร
      ซึ่งภาพมุมคนขี่ตอบไม่ได้ ต้องเห็นรูปทรงของแยกจากด้านบน
      ฉากไหนยังไม่มีมุมสูง จะใช้ภาพนิ่งกับคลิปแบบเดิมต่อไปโดยไม่ต้องแก้อะไร */
-  var top = (window.topSVG ? topSVG(s.art, s.mood, s.tag) : '');
+  var top = (window.topSVG && s.top ? topSVG(s.top, s.mood) : '');
   $('scene').className = top ? 'scene td' : 'scene';
 
   $('scene').innerHTML = (top || sceneSVG(s.art, s.mood)) +
@@ -241,6 +363,10 @@ function render() {
   var clip = $('scene').querySelector('.clip');
   if (clip) clip.addEventListener('error', function () { noClip[vidSrc] = 1; clip.remove(); });
   $('q').textContent = s.q;
+
+  /* เริ่มจับเวลาหลังวาดฉากและคำถามเสร็จแล้ว ไม่ใช่ตอนกดปุ่มข้อถัดไป
+     เพราะเวลาที่ใช้วาดฉากไม่ใช่เวลาที่ผู้เล่นใช้คิด */
+  qStart = nowMs();
 
   var opts = shuffle(s.opts.map(function (_, i) { return i; }));
   $('opts').innerHTML = opts.map(function (i) {
@@ -278,6 +404,14 @@ function choose(i) {
   if (dot) { dot.classList.remove('on'); dot.classList.add(right ? 'win' : 'lose'); }
   if (right) score++; else missed.push(s);
 
+  /* เวลาที่ใช้ในข้อนี้  ฝั่งฐานข้อมูลจะบีบให้อยู่ในช่วงที่เป็นไปได้อีกชั้นหนึ่ง
+     ที่นี่แค่ปัดเป็นจำนวนเต็มและกันค่าติดลบจากนาฬิกาที่กระโดด */
+  answers.push({
+    qid: s.id,
+    ok: right,
+    ms: Math.max(0, Math.round(nowMs() - qStart))
+  });
+
   var why = $('why');
   why.className = 'why show ' + (right ? 'good' : 'bad');
   // แยกไอคอนระหว่างข้อกฎหมายกับตัวเลขสถิติ เพราะเป็นหลักฐานคนละชนิด
@@ -292,11 +426,159 @@ function choose(i) {
   why.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+
+/* ============================================================
+   คะแนนสะสมและอันดับ
+   ============================================================
+   เกมนี้ไม่มีระบบสมัครสมาชิกและไม่ควรมี เพราะจะทำให้คนเลิกเล่นตั้งแต่หน้าแรก
+   จึงสร้างรหัสประจำเครื่องขึ้นมาเองหนึ่งชุด เก็บไว้ในเครื่องผู้เล่น
+   คะแนนผูกกับรหัสนั้น ส่วนชื่อเป็นแค่สิ่งที่เอาไปแสดงบนกระดาน เปลี่ยนได้ตลอด
+
+   ที่ต้องยอมรับไว้ ล้างข้อมูลเบราว์เซอร์แล้วคะแนนสะสมจะขาดตอน
+   และเปิดคนละเบราว์เซอร์จะนับเป็นคนละคน
+   อันดับนี้จึงมีไว้กระตุ้นให้เล่นซ้ำ ไม่ได้มีไว้ตัดสินรางวัลที่มีมูลค่า
+
+   การนับคะแนนและการจัดอันดับทำในฐานข้อมูลทั้งหมด ฝั่งนี้ไม่คำนวณอะไรเลย
+   เพราะทุกอย่างในหน้าเว็บผู้เล่นแก้ได้ ตัวเลขที่เชื่อได้ต้องมาจากฝั่งเซิร์ฟเวอร์
+   ============================================================ */
+var SB_URL = 'https://ftpruljwwsmvipfcedyk.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0cHJ1bGp3d3NtdmlwZmNlZHlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTM5ODgsImV4cCI6MjA5OTkyOTk4OH0.CQDf2PUO5hjsamJojOfLMuqobwL0d8EbXxMT-2EdAts';
+
+var RANK_KEY_ID = 'trafficGameDeviceKey';
+var RANK_KEY_NAME = 'trafficGamePlayerName';
+var rankSaved = false;
+
+/* อ่านค่าจากที่เก็บในเครื่อง  ต้องครอบ try ไว้เสมอ
+   เพราะหน้าต่างส่วนตัวของบางเบราว์เซอร์โยนข้อผิดพลาดตั้งแต่ตอนอ่าน ไม่ใช่คืนค่าว่าง
+   ถ้าไม่ครอบ เกมจะพังทั้งหน้าเพียงเพราะผู้เล่นปิดการเก็บข้อมูลเว็บไว้ */
+function lsGet(k) { try { return window.localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function lsSet(k, v) { try { window.localStorage.setItem(k, v); } catch (e) {} }
+
+function deviceKey() {
+  var v = lsGet(RANK_KEY_ID);
+  if (v && v.length === 36) return v;
+  /* crypto.randomUUID ไม่มีในเบราว์เซอร์เก่าและไม่มีในหน้าที่ไม่ใช่ https
+     จึงต้องมีทางสำรอง ไม่งั้นคนที่เปิดผ่าน http จะบันทึกคะแนนไม่ได้เลย */
+  if (window.crypto && window.crypto.randomUUID) { v = window.crypto.randomUUID(); }
+  else {
+    v = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : ((r & 3) | 8)).toString(16);
+    });
+  }
+  lsSet(RANK_KEY_ID, v);
+  return v;
+}
+
+function rpc(fn, body) {
+  return fetch(SB_URL + '/rest/v1/rpc/' + fn, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY },
+    body: JSON.stringify(body)
+  }).then(function (r) {
+    if (!r.ok) throw new Error('สถานะ ' + r.status);
+    return r.json();
+  });
+}
+
+/* ชื่อผู้เล่นถูกพิมพ์เข้ามาเองและถูกนำไปแสดงให้คนอื่นเห็นบนกระดาน
+   จึงต้องแปลงอักขระพิเศษก่อนเสมอ ไม่งั้นชื่อที่มีแท็กจะกลายเป็นสคริปต์ในหน้าจอคนอื่น
+   ฝั่งฐานข้อมูลตัดความยาวไว้แล้ว แต่ไม่ได้กรองอักขระ
+   เพราะที่ที่ถูกต้องสำหรับการกรองคือตอนแสดงผล ไม่ใช่ตอนเก็บ */
+function esc(t) {
+  return String(t == null ? "" : t)
+    .split("&").join("&amp;")
+    .split("<").join("&lt;")
+    .split(">").join("&gt;")
+    .split("\"").join("&quot;");
+}
+
+/* วาดตารางสรุปรายคน  แถวของเราเองถูกเน้นไว้ให้หาเจอโดยไม่ต้องไล่อ่าน
+   คอลัมน์ ทำแล้ว คือจำนวนข้อที่ไม่ซ้ำกันในรอบใหญ่ที่กำลังเล่นอยู่ ไม่ใช่จำนวนครั้งที่ตอบ
+   คอลัมน์ คะแนน/ข้อ เต็มสิบห้า คือตอบถูกสิบ บวกคะแนนความเร็วอีกไม่เกินห้า */
+function drawBoard(rows, myName) {
+  var tb = document.getElementById('rankList');
+  var wrap = document.getElementById('rankWrap');
+  if (!rows || !rows.length) { wrap.classList.add('hidden'); return; }
+  tb.innerHTML = rows.map(function (r) {
+    var mine = (myName && r.name === myName);
+    return '<tr class="' + (mine ? 'me' : '') + '">' +
+      '<td>' + r.rank + '</td>' +
+      '<td>' + esc(r.name) + '</td>' +
+      '<td>' + r.done + ' / ' + SCENES.length + '</td>' +
+      '<td>' + r.pct + '%</td>' +
+      '<td>' + r.avg_sec + '</td>' +
+      '<td class="pt">' + r.avg_points + '</td></tr>';
+  }).join("");
+  wrap.classList.remove('hidden');
+}
+
+function loadBoard(myName) {
+  return rpc('game_board', { p_limit: 20 })
+    .then(function (rows) { drawBoard(rows, myName); })
+    .catch(function () { /* กระดานโหลดไม่ขึ้นไม่ใช่เรื่องคอขาดบาดตาย ปล่อยว่างไว้ */ });
+}
+
+function saveScore() {
+  if (rankSaved) return;
+  var nameEl = document.getElementById('rankName');
+  var msg = document.getElementById('rankMsg');
+  var btn = document.getElementById('rankSave');
+  var nm = (nameEl.value || '').trim();
+  if (!nm) { msg.textContent = 'ใส่ชื่อก่อนบันทึกนะครับ'; nameEl.focus(); return; }
+
+  btn.disabled = true;
+  msg.textContent = 'กำลังบันทึก…';
+  lsSet(RANK_KEY_NAME, nm);
+
+  rpc('game_round_save', {
+    p_key: deviceKey(), p_name: nm, p_cycle: cycle, p_answers: answers
+  }).then(function (res) {
+    if (!res || !res.success) {
+      msg.textContent = (res && res.message) || 'บันทึกไม่สำเร็จ';
+      btn.disabled = false;
+      return;
+    }
+    rankSaved = true;
+    document.getElementById('rankForm').classList.add('hidden');
+    var me = document.getElementById('rankMe');
+    /* ฐานข้อมูลเป็นตัวจริงเรื่องความคืบหน้า จึงเอาค่าที่มันคืนมาทับของในเครื่อง
+       กันกรณีเล่นหลายเครื่องด้วยรหัสเดียวกัน หรือในเครื่องเพี้ยนไป */
+    if (typeof res.cycle === 'number') { cycle = res.cycle; saveSeen(); }
+    me.innerHTML = 'ทำไปแล้ว <em>' + res.done + '</em> จาก ' + SCENES.length + ' ข้อ' +
+      ' &nbsp;·&nbsp; คะแนนเฉลี่ย <em>' + res.avg_points + '</em> จาก 15' +
+      ' &nbsp;·&nbsp; เฉลี่ย ' + res.avg_sec + ' วินาทีต่อข้อ' +
+      (res.ranked ? ' &nbsp;·&nbsp; อันดับที่ <em>' + res.rank + '</em>'
+                  : ' &nbsp;·&nbsp; ทำครบ 25 ข้อแล้วจะขึ้นกระดาน');
+    me.classList.remove('hidden');
+    msg.textContent = 'เล่นอีกรอบเพื่อสะสมคะแนนเพิ่ม';
+    loadBoard(res.name, res.rank);
+  }).catch(function () {
+    msg.textContent = 'เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง';
+    btn.disabled = false;
+  });
+}
+
 function finish() {
   $('play').classList.add('hidden');
   $('end').classList.remove('hidden');
   var n = order.length;
   $('score').innerHTML = score + '<small> / ' + n + '</small>';
+
+  /* จดข้อที่เพิ่งเล่นไว้ทันทีที่จบรอบ ไม่รอให้กดบันทึกคะแนน
+     เพราะผู้เล่นที่ไม่ใส่ชื่อก็ไม่ควรเจอข้อเดิมซ้ำในรอบถัดไป
+     ส่วนฐานข้อมูลจะรู้ก็ต่อเมื่อกดบันทึก ซึ่งเป็นคนละเรื่องกัน */
+  for (var k = 0; k < order.length; k++) { seen[SCENES[order[k]].id] = 1; }
+  saveSeen();
+
+  var doneNow = Object.keys(seen).length;
+  var prog = $('progress');
+  if (prog) {
+    prog.innerHTML = 'ทำไปแล้ว <b>' + doneNow + '</b> จาก ' + SCENES.length + ' ข้อ' +
+      (doneNow >= SCENES.length
+        ? ' &nbsp;·&nbsp; ครบคลังแล้ว รอบหน้าเริ่มสุ่มใหม่ได้ทั้งหมด'
+        : ' &nbsp;·&nbsp; รอบหน้าจะได้ข้อที่ยังไม่เคยเจอ');
+  }
 
   var v;
   if (score === n) v = 'ตอบถูกทุกข้อ — ความรู้แน่นแล้ว สิ่งที่เหลือคือทำให้ได้จริงทุกครั้งที่อยู่บนถนน';
@@ -314,6 +596,17 @@ function finish() {
   } else {
     box.classList.add('hidden');
   }
+
+  /* เปิดกล่องอันดับใหม่ทุกรอบ เพราะผู้เล่นกดเล่นอีกครั้งได้เรื่อย ๆ
+     และคะแนนรอบใหม่ต้องบันทึกได้อีกครั้งหนึ่ง ไม่ใช่บันทึกได้ครั้งเดียวต่อการเปิดหน้า */
+  rankSaved = false;
+  document.getElementById('rankForm').classList.remove('hidden');
+  document.getElementById('rankSave').disabled = false;
+  document.getElementById('rankMe').classList.add('hidden');
+  document.getElementById('rankName').value = lsGet(RANK_KEY_NAME);
+  document.getElementById('rankMsg').textContent =
+    'บันทึกแล้วผลรอบนี้จะถูกเก็บไว้ และนำไปรวมกับรอบก่อน ๆ ของเครื่องนี้';
+  loadBoard();
 }
 
 $('next').addEventListener('click', function () {
@@ -321,7 +614,14 @@ $('next').addEventListener('click', function () {
   else finish();
 });
 $('again').addEventListener('click', start);
+$('rankSave').addEventListener('click', saveScore);
+$('rankName').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') { e.preventDefault(); saveScore(); }
+});
 
+/* อ่านข้อที่เคยเจอจากเครื่องก่อน แล้ว start จะไปถามฐานข้อมูลทับอีกชั้นหนึ่ง
+   ลำดับนี้สำคัญ ถ้าอ่านทีหลังจะไปทับค่าที่ฐานข้อมูลเพิ่งให้มา */
+loadSeen();
 start();
 </script>
 </body>
