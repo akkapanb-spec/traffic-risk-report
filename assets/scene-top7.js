@@ -52,9 +52,11 @@ var TD_SCENES7 = {
      ช่องขวาสุดคือช่องที่อยู่ล่างสุดของครึ่งบน เพราะขวามือของคนที่วิ่งไปทางขวาคือด้านล่าง */
   threelane: function (p) {
     var cy = 132, hh = 62, l1 = cy - 50, l2 = cy - 30, l3 = cy - 10, out = '', i;
-    for (i = 0; i < 4; i++) {
-      out += tdCar(70 + i * 74, l1, 0, '#8a94a3', 1, true) + tdCar(104 + i * 74, l2, 0, '#8a94a3', 1, true);
-    }
+    /* แถวรถในช่องซ้ายเริ่มที่ 210 เพราะช่วงก่อนหน้านั้นเป็นที่ของรถเรา ซึ่งอยู่ที่ 150
+       ถ้าไล่ระยะเท่ากันทั้งแถวเหมือนช่องกลาง จะมีคันหนึ่งไปตกทับรถเราพอดี
+       แถวช่องกลางไม่ต้องเว้น เพราะอยู่คนละช่อง ไม่มีทางทับกัน */
+    for (i = 0; i < 3; i++) { out += tdCar(210 + i * 72, l1, 0, '#8a94a3', 1, true); }
+    for (i = 0; i < 4; i++) { out += tdCar(104 + i * 74, l2, 0, '#8a94a3', 1, true); }
     return tdRoadH(p, cy, hh) + tdSolidH(p, cy + 2, -4, 404, 3) +
       tdDashH(p, cy - 40, -4, 404) + tdDashH(p, cy - 20, -4, 404) +
       tdLaneArrow(30, l1, 'e', p.line) + tdLaneArrow(30, l2, 'e', p.line) + tdLaneArrow(30, l3, 'e', p.line) +
@@ -163,9 +165,8 @@ var TD_SCENES7 = {
       tdBuilding(300, 36, 110, 48, '#8f8a5e', '#635f40') +
       tdBuilding(110, 226, 120, 44, '#7d8796', '#5c646f') +
       tdBuilding(270, 230, 130, 46, '#9a7350', '#6c4e34') +
-      tdCar(120, eb, 0, TD_BLUE, 1, false) +
-      tdPath('tdpA', 'M140 ' + eb + ' L368 ' + eb, TD_BLUE, 230, 1.2) +
-      tdDrive(tdCar(0, 0, 0, TD_BLUE, 1, false) + tdStreak(-22, 4), 'tdpA', .001, TD_LOOP, 0) +
+      tdPath('tdpA', 'M120 ' + eb + ' L368 ' + eb, TD_BLUE, 248, 1.2) +
+      tdDrive(tdCar(0, 0, 0, TD_BLUE, 1, false) + tdStreak(-22, 4), 'tdpA', .8, TD_LOOP, 0) +
       tdStream('tdpOnc', 'M448 ' + wb + ' L-48 ' + wb, '#8a94a3', 6.8, 2, false);
   },
 
@@ -184,7 +185,7 @@ var TD_SCENES7 = {
       '<rect x="250" y="206" width="130" height="48" rx="4" fill="' + tdShade(p.grass, .8) + '"/></g>' +
       tdTree(30, 40, 14) + tdTree(196, 26, 12) + tdTree(360, 222, 13) + tdTree(96, 236, 12) +
       tdPath('tdpA', 'M24 ' + eb + ' L380 ' + eb, TD_BLUE, 358, 1.2) +
-      tdDrive(tdCar(0, 0, 0, TD_BLUE, 1, false) + tdStreak(-22, 4), 'tdpA', .001, TD_LOOP, 0) +
+      tdDrive(tdCar(0, 0, 0, TD_BLUE, 1, false) + tdStreak(-22, 4), 'tdpA', .8, TD_LOOP, 0) +
       tdStream('tdpOnc', 'M448 ' + wb + ' L-48 ' + wb, '#8a94a3', 8.4, 1, false);
   },
 
@@ -201,7 +202,7 @@ var TD_SCENES7 = {
       tdBuilding(140, 228, 140, 44, '#b4784a', '#7d5232') +
       tdBuilding(300, 226, 120, 42, '#7d8796', '#5c646f') +
       tdPath('tdpA', 'M30 ' + eb + ' L372 ' + eb, TD_BLUE, 344, 1.2) +
-      tdDrive(tdMoto(0, 0, 0, 1, TD_BLUE) + tdStreak(-15, 4), 'tdpA', .001, TD_LOOP, 0) +
+      tdDrive(tdMoto(0, 0, 0, 1, TD_BLUE) + tdStreak(-15, 4), 'tdpA', .8, TD_LOOP, 0) +
       tdStream('tdpOnc', 'M448 ' + wb + ' L-48 ' + wb, '#8a94a3', 6.4, 2, false);
   },
 
