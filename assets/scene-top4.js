@@ -27,11 +27,25 @@
 
 /* ฐานร่วมของทุกฉากในไฟล์นี้  ถนนสองทิศ ขอบทางบนคือฝั่งที่เราจอด */
 var TD_PARK = { cy: 142, hh: 46 };
-function tdParkBase(p) {
+/* รถที่วิ่งสวนมาในเลนตรงข้าม
+   ฉากจอดรถทุกฉากเป็นถนนสองทาง ถ้าเลนตรงข้ามว่างเปล่าตลอด ภาพจะอ่านได้ว่าถนนปิด
+   ทั้งที่คำถามกลุ่มนี้หลายข้อวางอยู่บนเหตุผลว่าถนนเส้นนี้มีคนใช้อยู่จริง
+   เช่น จอดซ้อนคัน จอดขวางปากทาง หรือเปิดประตูลงจากรถ
+   วางไว้ในฐานของทุกฉาก ไม่ใช่ไล่เติมทีละฉาก จะได้ไม่มีฉากไหนตกหล่นอีก
+   กลางคืนให้เปิดไฟหน้าเอง โดยดูจากชุดสีที่ส่งเข้ามา ไม่ต้องให้แต่ละฉากบอก */
+function tdParkOncoming(p) {
+  var y = TD_PARK.cy + 23, night = (typeof TD_COL !== 'undefined' && p === TD_COL.night);
+  return tdStream('tdpParkOnc', 'M448 ' + y + ' L-48 ' + y, '#8a94a3', 7.6, 2, night, false);
+}
+
+/* onc ส่ง false เข้ามาได้ สำหรับฉากที่มีรถอยู่ในเลนตรงข้ามอยู่แล้ว
+   ซึ่งถ้าเติมซ้ำเข้าไปอีก รถจะวิ่งทับกันเอง */
+function tdParkBase(p, onc) {
   var cy = TD_PARK.cy, hh = TD_PARK.hh;
   return tdRoadH(p, cy, hh) + tdDashH(p, cy, -4, 404) +
     tdLaneArrow(40, cy - 23, 'e', p.line) + tdLaneArrow(200, cy - 23, 'e', p.line) +
-    tdLaneArrow(40, cy + 23, 'w', p.line) + tdLaneArrow(200, cy + 23, 'w', p.line);
+    tdLaneArrow(40, cy + 23, 'w', p.line) + tdLaneArrow(200, cy + 23, 'w', p.line) +
+    (onc === false ? '' : tdParkOncoming(p));
 }
 /* เส้น y ที่ใช้บ่อย  ky คือแนวขอบทาง  py คือแนวกลางตัวรถที่จอดเทียบขอบ */
 function tdKy() { return TD_PARK.cy - TD_PARK.hh - 7; }
@@ -209,6 +223,10 @@ var TD_SCENES4 = {
       tdCar(240, kerbRow, 0, '#8a94a3', 1, false) + tdCar(306, kerbRow, 0, '#8a94a3', 1, false) +
       /* ที่ที่เรากำลังจะไปจอด คือซ้อนออกมาเทียบรถที่จอดอยู่แล้ว */
       tdBaySpot(240, 68, dblRow) +
+      /* รถที่วิ่งสวนมาในเลนตรงข้าม  ฉากนี้ใช้ถนนของตัวเอง จึงไม่ได้รับมาจากฐานร่วม
+         ต้องเติมเอง ไม่งั้นจะเป็นฉากจอดรถฉากเดียวที่เลนตรงข้ามว่างเปล่า */
+      tdStream('tdpDblOnc', 'M448 ' + (cy + 32) + ' L-48 ' + (cy + 32), '#8a94a3', 7.6, 2, false, false) +
+
       /* รถที่วิ่งผ่านในช่องทาง สองคันเหลื่อมเวลากัน ไม่ใช่รถที่จอดอยู่ */
       '<path id="tdpFlow" d="M-44 ' + lane + ' L444 ' + lane + '" fill="none" opacity="0"/>' +
       tdMove(tdCar(0, 0, 0, '#c2492f', 1, false), 'tdpFlow', 4.4, 0) +
@@ -341,7 +359,7 @@ var TD_SCENES4 = {
      รถที่จอดอยู่ฝั่งนั้นต้องหันหน้าไปทางซ้ายของภาพ เพราะเป็นทิศทางของเลนนั้น */
   parkopposite: function (p) {
     var cy = TD_PARK.cy, hh = TD_PARK.hh, ky2 = cy + hh, py2 = cy + hh - 13;
-    return tdParkBase(p) +
+    return tdParkBase(p, false) +
       tdKerbOk(36, 366) + tdKerbOk(36, 366, TD_PARK.cy + TD_PARK.hh) +
       tdBuilding(120, tdKy() - 44, 132, 48, '#7d8796', '#5c646f') +
       tdBuilding(240, 236, 128, 46, '#b4784a', '#7d5232') +
@@ -396,7 +414,7 @@ var TD_SCENES4 = {
      คำถามคือควรเปิดไฟดวงไหนไว้ ภาพจึงต้องมืดจริงและเห็นว่ารถไม่มีไฟดวงใดติดอยู่ */
   parknight: function (p) {
     var ky = tdKy(), py = tdPy(), cy = TD_PARK.cy;
-    return tdParkBase(p) +
+    return tdParkBase(p, false) +
       tdKerbOk(36, 366) +
       tdTree(60, 40, 13) + tdTree(300, 42, 12) +
       tdCar(206, py, 0, '#3d4654', 1, false) +
