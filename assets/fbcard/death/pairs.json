@@ -1,14 +1,46 @@
 {
-  "_note": "ภาพการ์ดอุบัติเหตุเสียชีวิต 36 แบบ ครบทุกคู่ของผู้ใช้ถนน 8 ประเภท ตามลำดับที่ผู้ใช้กำหนดเมื่อ 21 ก.ย. 2569  ชื่อไฟล์คือรหัสประเภทสองตัว เรียงเลขน้อยก่อน เช่น moto-car.jpg  ภาพต้นฉบับเป็น PNG 941x1672 จากไฟล์ รูปแบบอุบัติเหตุเสียชีวิต.zip แปลงเป็น JPEG คุณภาพ 85  ภาพยังมีรายละเอียดตัวอย่างฝังอยู่ในกล่องรายละเอียด ต้องวาดทับหรือใช้ชุดที่เว้นกล่องว่าง",
+  "_note": "ภาพการ์ดอุบัติเหตุเสียชีวิต 36 แบบ ครบทุกคู่ของผู้ใช้ถนน 8 ประเภท จากไฟล์ รูปแบบอุบัติเหตุเสียชีวิต_แก้ไขแล้ว.zip เมื่อ 21 ก.ย. 2569  กล่องรายละเอียดเว้นว่างทุกภาพ ระบบเขียนข้อมูลลงเอง  ชื่อไฟล์คือรหัสประเภทสองตัว เรียงเลขน้อยก่อน  ต้นฉบับชื่อ ภาพ_18 กับ ภาพ_19 สลับกับรายการของผู้ใช้ จึงจับคู่ตามป้ายในภาพ ไม่ใช่ตามเลขไฟล์  ภาพต้นฉบับ 941x1672 แปลงเป็น JPEG คุณภาพ 85",
   "types": [
-    { "no": 1, "code": "moto",    "label": "รถจักรยานยนต์" },
-    { "no": 2, "code": "car",     "label": "รถยนต์เก๋ง" },
-    { "no": 3, "code": "pickup",  "label": "รถยนต์กระบะ" },
-    { "no": 4, "code": "truck6",  "label": "รถบรรทุก 6 ล้อ" },
-    { "no": 5, "code": "truck10", "label": "รถบรรทุก 10 ล้อ" },
-    { "no": 6, "code": "trailer", "label": "รถพ่วงหรือเทรลเลอร์" },
-    { "no": 7, "code": "walk",    "label": "คนเดินเท้า" },
-    { "no": 8, "code": "other",   "label": "รถลักษณะอื่น" }
+    {
+      "no": 1,
+      "code": "moto",
+      "label": "รถจักรยานยนต์"
+    },
+    {
+      "no": 2,
+      "code": "car",
+      "label": "รถยนต์เก๋ง"
+    },
+    {
+      "no": 3,
+      "code": "pickup",
+      "label": "รถยนต์กระบะ"
+    },
+    {
+      "no": 4,
+      "code": "truck6",
+      "label": "รถบรรทุก 6 ล้อ"
+    },
+    {
+      "no": 5,
+      "code": "truck10",
+      "label": "รถบรรทุก 10 ล้อ"
+    },
+    {
+      "no": 6,
+      "code": "trailer",
+      "label": "รถพ่วงหรือเทรลเลอร์"
+    },
+    {
+      "no": 7,
+      "code": "walk",
+      "label": "คนเดินเท้า"
+    },
+    {
+      "no": 8,
+      "code": "other",
+      "label": "รถลักษณะอื่น"
+    }
   ],
   "fromForm": {
     "_note": "ค่าที่มาจากฟอร์มบันทึกเหตุและฟอร์มผู้เสียชีวิต จับคู่กับประเภท ค่าที่ไม่อยู่ในรายการนี้ถือเป็น other  รถบรรทุก 6 ล้อขึ้นไป ในฟอร์มผู้เสียชีวิตไม่บอกว่ากี่ล้อ จึงใช้ภาพ 6 ล้อ",
@@ -26,15 +58,65 @@
     "รถตู้": "other",
     "รถไถ/รถการเกษตร": "other"
   },
-  "noCounterpart": ["ไม่มี", "ไม่มีคู่กรณี"],
+  "noCounterpart": [
+    "ไม่มี",
+    "ไม่มีคู่กรณี"
+  ],
   "files": [
-    "moto-moto", "moto-car", "moto-pickup", "moto-truck6", "moto-truck10", "moto-trailer", "moto-walk",
-    "car-car", "car-pickup", "car-truck6", "car-truck10", "car-trailer", "car-walk",
-    "pickup-pickup", "pickup-truck6", "pickup-truck10", "pickup-trailer", "pickup-walk",
-    "truck6-truck6", "truck6-truck10", "truck6-trailer", "truck6-walk",
-    "truck10-truck10", "truck10-trailer", "truck10-walk",
-    "trailer-trailer", "trailer-walk",
+    "moto-moto",
+    "moto-car",
+    "moto-pickup",
+    "moto-truck6",
+    "moto-truck10",
+    "moto-trailer",
+    "moto-walk",
+    "car-car",
+    "car-pickup",
+    "car-truck6",
+    "car-truck10",
+    "car-trailer",
+    "car-walk",
+    "pickup-pickup",
+    "pickup-truck6",
+    "pickup-truck10",
+    "pickup-trailer",
+    "pickup-walk",
+    "truck6-truck6",
+    "truck6-truck10",
+    "truck6-trailer",
+    "truck6-walk",
+    "truck10-truck10",
+    "truck10-trailer",
+    "truck10-walk",
+    "trailer-trailer",
+    "trailer-walk",
     "walk-walk",
-    "moto-other", "car-other", "pickup-other", "truck6-other", "truck10-other", "trailer-other", "walk-other", "other-other"
-  ]
+    "moto-other",
+    "car-other",
+    "pickup-other",
+    "truck6-other",
+    "truck10-other",
+    "trailer-other",
+    "walk-other",
+    "other-other"
+  ],
+  "rows": {
+    "_note": "แปดแถวในกล่อง ตรงกับป้ายที่พิมพ์ไว้ในภาพทุกภาพ  แถวสุดท้ายทุกภาพเขียนว่า ใบขับขี่ผู้เสียชีวิต จึงใช้ใบขับขี่ของผู้เสียชีวิต ไม่ใช่ของคู่กรณี",
+    "labels": [
+      "เวลา",
+      "สถานที่",
+      "ประเภทยานพาหนะคู่กรณี",
+      "สาเหตุ",
+      "ผู้เสียชีวิต",
+      "การบาดเจ็บ",
+      "อุปกรณ์นิรภัย",
+      "ใบขับขี่ผู้เสียชีวิต"
+    ]
+  },
+  "rules": {
+    "pedestrianSafety": "ผู้เสียชีวิตเป็นคนเดินเท้า ช่องอุปกรณ์นิรภัยแสดงว่า ไม่มี  ตามที่ผู้ใช้กำหนดเมื่อ 21 ก.ย. 2569"
+  },
+  "boxes": {
+    "_note": "พิกัดช่องเขียนข้อมูลของแต่ละภาพ ยังไม่ได้วัด  การจัดวางมีหลายแบบ แบบ ก ภาพ 1-17 และกระบะชนคนเดินเท้า  แบบ ค ภาพ 29-36  และอีกสิบภาพที่จัดวางต่างกันทุกภาพ"
+  }
 }
