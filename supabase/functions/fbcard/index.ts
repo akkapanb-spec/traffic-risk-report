@@ -9,12 +9,19 @@
    ภาพพื้นหลังกับพิกัดช่องอยู่ในคลังโค้ดบน GitHub ไม่ได้ฝังมากับฟังก์ชัน
    เพราะภาพทั้งชุด 14 MB ใหญ่เกินกว่าจะรวมมาในฟังก์ชัน และแก้ภาพทีหลังได้โดยไม่ต้อง deploy ใหม่
 
+   deploy: Supabase Dashboard -> Edge Functions -> fbcard -> Code -> Deploy updates
+           และต้องปิด Verify JWT with legacy secret ในแท็บ Settings ทุกครั้งหลัง deploy
+           ตัวแก้ไขในหน้าเว็บเก็บสำเนาของมันเอง การแก้ไฟล์ในเครื่องแล้วกด Deploy updates
+           จะได้เลขรุ่นใหม่แต่โค้ดเดิม ต้องวางโค้ดลงในตัวแก้ไขก่อนทุกครั้ง
+
    เรื่องที่ต้องระวังสามข้อ
      หนึ่ง  resvg วาดรูปจากลิงก์ภายนอกไม่ได้ ต้องอ่านภาพมาแปลงเป็นข้อมูลฝังในเอกสารก่อน
      สอง   resvg ไม่มีฟอนต์ติดมา ต้องส่งไฟล์ฟอนต์ไทยเข้าไปเอง ไม่งั้นได้ภาพที่ตัวหนังสือหายทั้งใบ
-     สาม   resvg วัดความกว้างข้อความให้ไม่ได้ จึงต้องประมาณเอง แล้วย่อขนาดตัวอักษรถ้าจะล้นช่อง
+     สาม   resvg วัดความกว้างข้อความให้ไม่ได้ จึงต้องวัดเองจากตารางความกว้างรายตัวอักษร
+           ที่ sarabun-widths.json แล้วย่อขนาดตัวอักษรลงถ้าจะล้นช่อง
 */
 
+import { withSupabase } from "npm:@supabase/server@^1";
 import { Resvg, initWasm } from "https://esm.sh/@resvg/resvg-wasm@2.6.2";
 
 const REPO = "https://raw.githubusercontent.com/akkapanb-spec/traffic-risk-report/main";
@@ -302,9 +309,27 @@ async function render(svg: string, width: number): Promise<Uint8Array> {
   return r.render().asPng();
 }
 
-Deno.serve(async (req) => {
+/* เฟซบุ๊กมาดึงภาพเอง ไม่มีโทเคนติดมาด้วย จึงต้องเปิดให้เรียกได้โดยไม่ต้องล็อกอิน
+   ตัวจัดการแบบ Deno.serve เปล่า ๆ จะถูกปฏิเสธตั้งแต่ยังไม่ได้ทำงาน
+   ต้องห่อด้วย withSupabase auth none เหมือนฟังก์ชัน drive
+   และต้องปิด Verify JWT with legacy secret ในแท็บ Settings ทุกครั้งหลัง deploy */
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "content-type",
+};
+
+const handler = async (req: Request): Promise<Response> => {
   const u = new URL(req.url);
   const kind = u.searchParams.get("kind") ?? "";
+
+  /* ไม่ได้บอกอะไร แค่บอกว่าฟังก์ชันตื่นอยู่ ใช้ตรวจว่า deploy ติดไหม */
+  if (kind === "") {
+    return new Response(
+      JSON.stringify({ พร้อมวาดภาพ: true, ใช้ได้: ["death", "weekly"] }, null, 2),
+      { headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" } });
+  }
+
   try {
     let png: Uint8Array;
     if (kind === "death") {
@@ -314,16 +339,21 @@ Deno.serve(async (req) => {
     } else if (kind === "weekly") {
       png = await weeklyCard(Number(u.searchParams.get("days") ?? 7));
     } else {
-      return new Response("ใช้ได้เฉพาะ kind=death หรือ kind=weekly", { status: 400 });
+      return new Response("ใช้ได้เฉพาะ kind=death หรือ kind=weekly", { status: 400, headers: CORS });
     }
     return new Response(png, {
       headers: {
+        ...CORS,
         "content-type": "image/png",
-        /* เฟซบุ๊กดึงภาพครั้งเดียวแล้วเก็บสำเนาของตัวเอง  เก็บแคชสั้น ๆ พอกันการดึงซ้ำถี่ ๆ */
+        /* เฟซบุ๊กดึงภาพครั้งเดียวแล้วเก็บสำเนาของตัวเอง
+           เก็บแคชสั้น ๆ พอกันการดึงซ้ำถี่ ๆ ตอนกำลังตรวจงาน */
         "cache-control": "public, max-age=600",
       },
     });
   } catch (e) {
-    return new Response("วาดภาพไม่สำเร็จ  " + (e instanceof Error ? e.message : String(e)), { status: 500 });
+    return new Response("วาดภาพไม่สำเร็จ  " + (e instanceof Error ? e.message : String(e)),
+      { status: 500, headers: CORS });
   }
-});
+};
+
+export default { fetch: withSupabase({ auth: "none" }, handler) };
