@@ -136,7 +136,7 @@
     "truck6-truck10": [
       750,
       38,
-      500,
+      520,
       24
     ],
     "truck6-trailer": [
@@ -148,31 +148,31 @@
     "truck6-walk": [
       950,
       43,
-      290,
+      332,
       24
     ],
     "truck10-truck10": [
       900,
       45,
-      300,
+      321,
       24
     ],
     "truck10-trailer": [
       889,
       45,
-      300,
+      343,
       24
     ],
     "truck10-walk": [
       993,
       47,
-      270,
+      292,
       24
     ],
     "trailer-trailer": [
       893,
       46,
-      300,
+      327,
       24
     ],
     "trailer-walk": [
@@ -184,77 +184,117 @@
     "walk-walk": [
       740,
       51,
-      282,
+      305,
       24
     ],
     "moto-other": [
       712,
       39,
-      320,
+      334,
       24
     ],
     "car-other": [
       712,
       39,
-      320,
+      334,
       24
     ],
     "pickup-other": [
       709,
       39,
-      302,
+      334,
       24
     ],
     "truck6-other": [
       709,
       39,
-      302,
+      334,
       24
     ],
     "truck10-other": [
       709,
       39,
-      302,
+      334,
       24
     ],
     "trailer-other": [
       709,
       39,
-      302,
+      334,
       24
     ],
     "walk-other": [
       712,
       39,
-      320,
+      334,
       24
     ],
     "other-other": [
       712,
       39,
-      320,
+      334,
       24
     ]
   },
   "cover": {
-    "_note": "บางภาพมีแถวตัวอย่างค้างอยู่ใต้กล่อง ต้องระบายทับก่อนเขียนข้อมูลจริง  x y w h",
+    "_note": "บางภาพมีแถวตัวอย่างค้างอยู่ใต้กล่อง ต้องระบายทับก่อนเขียนข้อมูลจริง  x y w h  สีที่ใช้ระบายคือ fill ซึ่งวัดจากพื้นในกล่องจริง ไม่ได้กะเอา",
     "car-truck10": [
-      95,
-      1035,
-      760,
-      52
+      70,
+      1036,
+      795,
+      50
     ],
     "pickup-truck10": [
-      95,
-      1035,
-      760,
-      52
+      70,
+      1036,
+      795,
+      50
     ],
     "pickup-trailer": [
-      95,
-      1035,
-      760,
-      52
-    ]
+      70,
+      1036,
+      795,
+      50
+    ],
+    "fill": "#08101B"
+  },
+  "boxRight": {
+    "_note": "ขอบขวาของกล่องรายละเอียดในแต่ละภาพ วัดจากเส้นขอบตั้งของกล่องเอง ไม่ได้กะเอา  สามภาพที่กล่องไม่มีเส้นขอบขวา เส้นแบ่งแถวจางหายไปราว 900 จึงใช้ 895",
+    "moto-moto": 883,
+    "moto-car": 883,
+    "moto-pickup": 883,
+    "moto-truck6": 883,
+    "moto-truck10": 883,
+    "moto-trailer": 883,
+    "moto-walk": 883,
+    "car-car": 883,
+    "car-pickup": 883,
+    "car-truck6": 883,
+    "car-truck10": 884,
+    "car-trailer": 883,
+    "car-walk": 882,
+    "pickup-pickup": 883,
+    "pickup-truck6": 882,
+    "pickup-truck10": 883,
+    "pickup-trailer": 883,
+    "pickup-walk": 883,
+    "truck6-truck6": 888,
+    "truck6-truck10": 910,
+    "truck6-trailer": 660,
+    "truck6-walk": 895,
+    "truck10-truck10": 904,
+    "truck10-trailer": 899,
+    "truck10-walk": 895,
+    "trailer-trailer": 911,
+    "trailer-walk": 895,
+    "walk-walk": 913,
+    "moto-other": 887,
+    "car-other": 887,
+    "pickup-other": 887,
+    "truck6-other": 887,
+    "truck10-other": 888,
+    "trailer-other": 887,
+    "walk-other": 887,
+    "other-other": 888
   }
 }
