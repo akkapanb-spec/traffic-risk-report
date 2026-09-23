@@ -6,8 +6,9 @@
      /fbcard?kind=death&id=123     การ์ดอุบัติเหตุเสียชีวิต หนึ่งราย
      /fbcard?kind=weekly&days=7    การ์ดสรุปรายสัปดาห์
 
-   ภาพพื้นหลังกับพิกัดช่องอยู่ในคลังโค้ดบน GitHub ไม่ได้ฝังมากับฟังก์ชัน
+   ภาพพื้นหลังกับพิกัดช่องอยู่บนเว็บสาธารณะของเราเอง ไม่ได้ฝังมากับฟังก์ชัน
    เพราะภาพทั้งชุด 14 MB ใหญ่เกินกว่าจะรวมมาในฟังก์ชัน และแก้ภาพทีหลังได้โดยไม่ต้อง deploy ใหม่
+   แต่แปลว่าโฟลเดอร์ assets/fbcard ต้องอยู่ในซิปที่ลากขึ้น Netlify ด้วย ไม่งั้นวาดภาพไม่ได้
 
    deploy: Supabase Dashboard -> Edge Functions -> fbcard -> Code -> Deploy updates
            และต้องปิด Verify JWT with legacy secret ในแท็บ Settings ทุกครั้งหลัง deploy
@@ -24,7 +25,14 @@
 import { withSupabase } from "npm:@supabase/server@^1";
 import { Resvg, initWasm } from "https://esm.sh/@resvg/resvg-wasm@2.6.2";
 
-const REPO = "https://raw.githubusercontent.com/akkapanb-spec/traffic-risk-report/main";
+/* ภาพแบบการ์ดกับฟอนต์อยู่บนเว็บสาธารณะของเราเอง ที่เดียวกับหน้าเว็บทั้งหมด
+   เคยใช้ที่เก็บโค้ดบน GitHub แต่บัญชีนั้นเคยถูกระงับมาแล้วครั้งหนึ่งจนเว็บล่ม
+   ถ้าถูกระงับอีก ภาพจะดึงไม่ได้ และเฟซบุ๊กจะไม่ขึ้นโพสต์เลย ไม่ใช่ขึ้นแบบไม่มีภาพ
+   ย้ายมาไว้ที่เดียวกับเว็บแล้ว ที่ไหนล่มก็ล่มพร้อมกัน ไม่มีของนอกบ้านมาเป็นจุดตาย
+   เปลี่ยนที่อยู่ได้ด้วย secret ชื่อ FBCARD_ASSETS โดยไม่ต้องแก้โค้ด */
+const ASSETS_RAW = Deno.env.get("FBCARD_ASSETS") ??
+  "https://traffic-risk-muangnakhonsawan.netlify.app";
+const ASSETS = ASSETS_RAW.endsWith("/") ? ASSETS_RAW.slice(0, -1) : ASSETS_RAW;
 const SB_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
@@ -59,9 +67,9 @@ function b64(u8: Uint8Array): string {
 async function loadFonts(): Promise<Uint8Array[]> {
   if (fonts) return fonts;
   fonts = await Promise.all([
-    bytes(REPO + "/assets/fbcard/fonts/Sarabun-Regular.ttf"),
-    bytes(REPO + "/assets/fbcard/fonts/Sarabun-SemiBold.ttf"),
-    bytes(REPO + "/assets/fbcard/fonts/Sarabun-Bold.ttf"),
+    bytes(ASSETS + "/assets/fbcard/fonts/Sarabun-Regular.ttf"),
+    bytes(ASSETS + "/assets/fbcard/fonts/Sarabun-SemiBold.ttf"),
+    bytes(ASSETS + "/assets/fbcard/fonts/Sarabun-Bold.ttf"),
   ]);
   return fonts;
 }
@@ -73,7 +81,7 @@ type WidthTable = Record<string, Record<string, number>>;
 let widths: WidthTable | null = null;
 
 async function loadWidths(): Promise<WidthTable> {
-  if (!widths) widths = await json<WidthTable>(REPO + "/assets/fbcard/fonts/sarabun-widths.json");
+  if (!widths) widths = await json<WidthTable>(ASSETS + "/assets/fbcard/fonts/sarabun-widths.json");
   return widths;
 }
 
@@ -145,8 +153,8 @@ async function deathCard(id: number): Promise<Uint8Array> {
     noCounterpart: string[];
     types: { code: string; label: string }[];
   }>(
-    REPO + "/assets/fbcard/death/pairs.json");
-  const lay = await json<Layout>(REPO + "/assets/fbcard/death/layout.json");
+    ASSETS + "/assets/fbcard/death/pairs.json");
+  const lay = await json<Layout>(ASSETS + "/assets/fbcard/death/layout.json");
 
   const order = ["moto", "car", "pickup", "truck6", "truck10", "trailer", "walk", "other"];
   const codeOf = (v: string): string => {
@@ -185,7 +193,7 @@ async function deathCard(id: number): Promise<Uint8Array> {
      เพราะบางแบบกล่องแคบกว่ามาก มีแผงรูปรถอยู่ทางขวา */
   const boxRight = Number(lay.boxRight?.[pairKey] ?? 883);
 
-  const bg = await bytes(REPO + "/assets/fbcard/death/" + pairKey + ".jpg");
+  const bg = await bytes(ASSETS + "/assets/fbcard/death/" + pairKey + ".jpg");
   const [W, H] = lay.source;
 
   /* เวลาเป็นพุทธศักราชโดยอัตโนมัติ เพราะ th-TH ใช้ปฏิทินพุทธเป็นค่าตั้งต้น */
@@ -245,8 +253,8 @@ type Weekly = {
 
 async function weeklyCard(days: number): Promise<Uint8Array> {
   await loadWidths();
-  const lay = await json<Weekly>(REPO + "/assets/fbcard/weekly/layout.json");
-  const bg = await bytes(REPO + "/assets/fbcard/weekly/blank.jpg");
+  const lay = await json<Weekly>(ASSETS + "/assets/fbcard/weekly/layout.json");
+  const bg = await bytes(ASSETS + "/assets/fbcard/weekly/blank.jpg");
   const data = await rpc("fb_weekly_data", { p_days: days }) as {
     range: string; accidents: number; deaths: number; injuries: number; serious: number;
     roads: { name: string; n: number }[]; cause: string;

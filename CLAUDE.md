@@ -6,8 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ระบบแจ้งข้อมูลจุดเสี่ยงอุบัติเหตุ สภ.เมืองนครสวรรค์ — a traffic-risk reporting and accident-statistics system ported from Google Apps Script to static HTML + Supabase. UI text, labels, and code comments are in Thai; keep new user-facing strings in Thai.
 
-Deployed via GitHub Pages from `main` root → https://akkapanb-spec.github.io/traffic-risk-report/
-**Merging to `main` publishes to production immediately.** Work on a branch, test locally, then PR.
+Deployed to Netlify at https://traffic-risk-muangnakhonsawan.netlify.app by dragging `site.zip`
+onto the Netlify dashboard. GitHub Pages was the original host; the site moved after the
+GitHub account was suspended, and `main` is now a record, not a deploy trigger — **pushing
+publishes nothing.** Nothing reaches the public site until someone builds the zip and drops it.
+
+`site.zip` is curated, not the whole repo. Build it from a staging directory so paths stay
+relative, and only with bsdtar: `/c/Windows/System32/tar.exe -c --format zip -f site.zip *`.
+Verify `od -c site.zip | head -1` starts with `P K` before handing it over. It must carry the
+pages and `data/`, the `assets/scene-*.js` and `assets/questions.js` the quiz loads, and
+`assets/fbcard/` — the Facebook card renderer fetches its artwork and fonts from the live site,
+so leaving that folder out breaks Facebook posting rather than anything visible on the site.
 
 ## Running locally
 
