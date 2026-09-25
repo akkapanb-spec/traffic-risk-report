@@ -768,6 +768,7 @@
         <button class="nav-btn admin-item" data-page="traffic" id="tvNavBtn" style="display:none" onclick="openPage('traffic',this)"><i class="fa-solid fa-gauge-high"></i> ปริมาณจราจรและอัตราอันตราย</button>
         <button class="nav-btn admin-item" data-page="voice" id="vcNavBtn" style="display:none" onclick="openPage('voice',this)"><i class="fa-solid fa-comment-dots"></i> เสียงจากประชาชน <span class="menu-badge" id="badgeVoice" style="display:none"></span></button>
         <button class="nav-btn admin-item" data-page="campaign" id="cpgNavBtn" style="display:none" onclick="openPage('campaign',this)"><i class="fa-solid fa-gift"></i> กิจกรรมแจกของรางวัล</button>
+        <button class="nav-btn admin-item" data-page="spotphoto" id="spNavBtn" style="display:none" onclick="openPage('spotphoto',this)"><i class="fa-solid fa-camera-retro"></i> คลังรูปจุดอุบัติเหตุซ้ำ</button>
         <!-- ลิงก์จริง ไม่ใช่ window.open — popup blocker บล็อก window.open แต่ไม่บล็อกการกดลิงก์ -->
         <a class="nav-btn admin-item" id="dutyNavBtn" style="display:none" href="https://akkapanb-spec.github.io/traffic-duty-daily/" target="_blank" rel="noopener" onclick="toggleDrawer(false)"><i class="fa-solid fa-clipboard-user"></i> ระบบการปฏิบัติหน้าที่จราจรประจำวัน <i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i></a>
       </nav>
@@ -1629,6 +1630,51 @@
         </div>
       </section>
 
+      <section id="page-spotphoto" class="page">
+        <div class="page-head"><div class="page-icon" style="background:linear-gradient(135deg,#2dd4bf,#0f766e)"><i class="fa-solid fa-camera-retro"></i></div><div><h2>คลังรูปจุดอุบัติเหตุซ้ำ</h2><p>รูปสภาพจริงของจุดที่เกิดเหตุบ่อย สำหรับแนบไปกับโพสต์เตือน</p></div></div>
+
+        <div class="card" style="border-color:#99f6e4;background:#f0fdfa">
+          <h3 class="card-title"><i class="fa-solid fa-circle-info"></i> คลังนี้ใช้ทำอะไร</h3>
+          <p class="hint" style="margin:0">ระบบหาจุดที่เกิดเหตุซ้ำเองทุกสัปดาห์ แล้วไปหยิบรูปจากคลังนี้มาแนบกับประกาศ
+          โดยดูจาก<b>พิกัด</b> ไม่ได้ดูจากชื่อ รูปที่อยู่ในรัศมี <b id="spRadius">100</b> เมตรจากจุดที่คำนวณได้จะถูกหยิบมาใช้
+          <br>หนึ่งจุดเก็บรูปเดียวพอ ถ้าปักหมุดใกล้กันเกินรัศมี ระบบจะเตือนตอนบันทึก แต่ยังบันทึกให้</p>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-plus"></i> <span id="spFormTitle">เพิ่มรูปจุดใหม่</span></h3>
+          <div class="form-grid">
+            <div class="field span-6"><label>ชื่อจุด <span class="req">*</span></label>
+              <input id="spName" class="input" placeholder="เช่น แยกสวรรค์วิถีตัดโกสีย์"></div>
+            <div class="field span-6"><label>พิกัด (ละติจูด, ลองจิจูด) <span class="req">*</span></label>
+              <div style="display:flex;gap:8px">
+                <input id="spCoords" class="input" style="flex:1;min-width:0" placeholder="15.7051, 100.1372">
+                <button class="btn btn-soft" type="button" onclick="spOpenMapPicker()" title="จิ้มเลือกบนแผนที่"><i class="fa-solid fa-map-location-dot"></i></button>
+                <button class="btn btn-soft" type="button" onclick="spUseCurrentLocation()" title="ใช้ตำแหน่งปัจจุบัน"><i class="fa-solid fa-crosshairs"></i></button>
+              </div></div>
+            <div class="field span-12"><label>รูปสภาพจุด <span class="req">*</span> <span style="font-weight:400;color:#64748b">(1 รูป · แนะนำแนวนอน)</span></label>
+              <div class="image-drop" style="padding:14px">
+                <i class="fa-solid fa-image"></i><p><strong>เลือกรูป JPG หรือ PNG หนึ่งรูป</strong></p><p>ถ่ายให้เห็นสภาพถนนจริงตรงจุดนั้น · ระบบย่อขนาดให้ก่อนอัปโหลด</p>
+                <label class="btn btn-soft" for="spFile"><i class="fa-solid fa-upload"></i> เลือกรูป</label>
+                <input id="spFile" class="sr-only" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+              </div>
+              <div id="spPreview"></div></div>
+            <div class="field span-12"><label>หมายเหตุ</label>
+              <input id="spNote" class="input" placeholder="เช่น ถ่ายจากฝั่งขาเข้าเมือง (ไม่บังคับ)"></div>
+            <div class="field span-12" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-primary" type="button" id="spSaveBtn" onclick="spSave()"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>
+              <button class="btn btn-soft" type="button" id="spCancelBtn" style="display:none" onclick="spReset()"><i class="fa-solid fa-xmark"></i> ยกเลิกการแก้ไข</button>
+              <button class="btn btn-soft" type="button" onclick="spReset()"><i class="fa-solid fa-broom"></i> ล้างฟอร์ม</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-images"></i> รูปในคลัง <span id="spCount" class="pill">0 จุด</span>
+            <button class="btn btn-soft btn-sm" type="button" style="margin-left:auto" onclick="spLoad()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+          <div id="spList"></div>
+        </div>
+      </section>
+
       <!-- ADMIN: ประชากรและอัตราความเสี่ยง -->
       <!-- ============ สภาพอากาศกับอุบัติเหตุ ============ -->
       <section id="page-weather" class="page">
@@ -1974,7 +2020,7 @@
     const NAKHON_SAWAN_CENTER = [15.7047, 100.1372];
     const SESSION_KEY = 'accidentTrafficPoliceSession';
     const state = {
-      token: '', user: null, preparedImages: [], deathInfoImage: null, currentPage: 'home',
+      token: '', user: null, preparedImages: [], deathInfoImage: null, spotPhotos: [], spotImage: null, spotEditingId: null, currentPage: 'home',
       dashboardLoaded: false, mapLoaded: false, dashboardData: null,
       accidentRows: null, injuryRows: null, deathDates: null,
       pickerMap: null, pickerMarker: null, selectedLocation: null,
@@ -3404,6 +3450,7 @@
       document.getElementById('tvNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('vcNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('cpgNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
+      document.getElementById('spNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('dutyNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminMenuTab').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.querySelector('.mobile-tabbar').classList.toggle('admin-mode', !!state.user.isAdmin);
@@ -3522,6 +3569,7 @@
       if (page === 'population') initPopulationPage();
       if (page === 'voice') initVoicePage();
       if (page === 'campaign') initCampaignPage();
+      if (page === 'spotphoto') initSpotPhotoPage();
       // ไฮไลต์ปุ่ม "ผู้ดูแล" ในแถบล่าง เมื่ออยู่ในหน้าใดหน้าหนึ่งของ admin
       const adminMenuTab = document.getElementById('adminMenuTab');
       if (adminMenuTab) adminMenuTab.classList.toggle('active', ['admin','riskmanage','deaths','avoid','blackspot','roadnet','checkpoint','population','voice'].includes(page));
@@ -3575,6 +3623,7 @@
           tile('checkpoint', '#818cf8,#4338ca', 'fa-clipboard-check',      'จุดตรวจ<br>กวดขัน',      '') +
           tile('population', '#f472b6,#9d174d', 'fa-people-group',         'ประชากร<br>อัตราเสี่ยง',  '') +
           tile('voice',      '#c084fc,#6b21a8', 'fa-comment-dots',         'เสียงจาก<br>ประชาชน',    badge(b.voice)) +
+          tile('spotphoto',  '#2dd4bf,#0f766e', 'fa-camera-retro',        'คลังรูป<br>จุดซ้ำ',      '') +
           extTile(DUTY_SYSTEM_URL, '#38bdf8,#0369a1', 'fa-clipboard-user', 'ปฏิบัติหน้าที่<br>ประจำวัน');
       }
       sheet.classList.toggle('open', open);
@@ -4628,6 +4677,8 @@
       });
       document.getElementById('imageFiles').addEventListener('change', handleImageFiles);
       document.getElementById('dfInfoFile').addEventListener('change', handleDeathInfoFile);
+      const spFileInput = document.getElementById('spFile');
+      if (spFileInput) spFileInput.addEventListener('change', handleSpotFile);
       document.getElementById('accidentForm').addEventListener('submit', submitAccident);
       updateRoadCharacterOther();
       updateParty2Visibility();
@@ -7254,6 +7305,224 @@
         },
         () => Swal.fire({ icon:'error', title:'ไม่สามารถดึงตำแหน่งได้', text:'โปรดอนุญาตการเข้าถึงตำแหน่ง หรือกรอกพิกัดเอง' })
       );
+    }
+
+    /* ============================================================
+       คลังรูปจุดอุบัติเหตุซ้ำ
+
+       ทำไมผูกรูปกับพิกัด ไม่ผูกกับชื่อจุด
+       ชื่อจุดที่ระบบหาเจอเองเปลี่ยนไปเรื่อยตามข้อมูลที่เข้ามาใหม่
+       รูปที่ผูกกับชื่อจึงหลุดจากจุดจริงโดยไม่มีใครรู้ตัว
+       ผูกกับพิกัดแล้วรูปอยู่กับที่ ต่อให้ชื่อจุดเปลี่ยน รูปก็ยังตรงที่เดิม
+       ฝั่งฐานข้อมูลหารูปด้วย st_dwithin ตามรัศมีใน bs_settings คีย์ spotPhotoRadiusM
+       ============================================================ */
+
+    let spPickerMap = null, spPickerMarker = null;
+
+    async function initSpotPhotoPage() { await spLoad(); }
+
+    async function spLoad() {
+      const box = document.getElementById('spList');
+      if (box) box.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const res = await rpc('spot_photo_list', { p_token: state.token });
+        if (!res || !res.success) { await rpcAlert(new Error((res && res.message) || 'อ่านคลังรูปไม่ได้')); return; }
+        state.spotPhotos = res.rows || [];
+        const rad = document.getElementById('spRadius');
+        if (rad && res.radiusM) rad.textContent = res.radiusM;
+        spRender();
+      } catch (e) { await rpcAlert(e, 'อ่านคลังรูปไม่ได้'); }
+    }
+
+    function spRender() {
+      const rows = state.spotPhotos || [];
+      document.getElementById('spCount').textContent = rows.length + ' จุด';
+      const box = document.getElementById('spList');
+      if (!rows.length) {
+        box.innerHTML = '<p class="hint" style="margin:0">ยังไม่มีรูปในคลัง เพิ่มรูปแรกจากช่องด้านบนได้เลย</p>';
+        return;
+      }
+      /* minmax(min(260px,100%),1fr) กับ min-width:0 ตามที่หน้าอื่นใช้
+         ถ้าใช้ 1fr เปล่า ๆ ชื่อจุดยาว ๆ จะดันความกว้างจนล้นจอมือถือ */
+      box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:14px">' +
+        rows.map(function (r) {
+          return '<div style="min-width:0;border:1px solid #d3e1ef;border-radius:14px;overflow:hidden;background:#fff">' +
+            '<div style="aspect-ratio:16/9;background:#eaf0f7">' +
+            '<img src="' + escapeHtml(r.url) + '" alt="' + escapeHtml(r.name) + '" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block"></div>' +
+            '<div style="padding:10px 12px">' +
+            '<div style="font-weight:700;overflow-wrap:anywhere">' + escapeHtml(r.name) + '</div>' +
+            '<div class="hint" style="margin:4px 0 0">' + Number(r.lat).toFixed(5) + ', ' + Number(r.lng).toFixed(5) + '</div>' +
+            (r.note ? '<div class="hint" style="margin:4px 0 0;overflow-wrap:anywhere">' + escapeHtml(r.note) + '</div>' : '') +
+            (r.createdBy ? '<div class="hint" style="margin:4px 0 0">' + escapeHtml(r.createdBy) + ' · ' + escapeHtml(r.createdAt || '') + '</div>' : '') +
+            '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+            '<button class="btn btn-soft btn-sm" type="button" onclick="spEdit(' + r.id + ')"><i class="fa-solid fa-pen"></i> แก้ไข</button>' +
+            '<button class="btn btn-soft btn-sm" type="button" onclick="spDelete(' + r.id + ')"><i class="fa-solid fa-trash"></i> ลบ</button>' +
+            '</div></div></div>';
+        }).join('') + '</div>';
+    }
+
+    function spOpenMapPicker() {
+      Swal.fire({
+        title: 'จิ้มหรือลากหมุดเพื่อเลือกตำแหน่ง',
+        html: '<div id="spMapPicker" style="height:380px;width:100%;border-radius:14px"></div>',
+        width: Math.min(720, window.innerWidth - 20),
+        showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' },
+        showCancelButton: true, confirmButtonText: 'ยืนยันตำแหน่งนี้', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#0f766e',
+        didOpen: function () {
+          var startLat = 15.705, startLng = 100.140;
+          var current = document.getElementById('spCoords').value;
+          if (current && current.indexOf(',') >= 0) {
+            var parts = current.split(',');
+            var lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
+            if (!isNaN(lat) && !isNaN(lng)) { startLat = lat; startLng = lng; }
+          }
+          spPickerMap = L.map('spMapPicker').setView([startLat, startLng], 14);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap', keepBuffer: 6, updateWhenZooming: false, updateWhenIdle: true }).addTo(spPickerMap);
+          /* หมุดของจุดอื่นในคลัง ช่วยให้เห็นว่ากำลังจะปักซ้ำที่เดิมหรือไม่ */
+          (state.spotPhotos || []).forEach(function (r) {
+            if (state.spotEditingId && r.id === state.spotEditingId) return;
+            L.circleMarker([r.lat, r.lng], { radius: 6, color: '#0f766e', weight: 2, fillColor: '#5eead4', fillOpacity: .9 })
+              .addTo(spPickerMap).bindTooltip(r.name);
+          });
+          spPickerMarker = L.marker([startLat, startLng], { draggable: true }).addTo(spPickerMap);
+          spPickerMap.on('click', function (e) { spPickerMarker.setLatLng(e.latlng); });
+          setTimeout(function () { spPickerMap.invalidateSize(); }, 150);
+        },
+        /* อ่านพิกัดตรงนี้ ไม่ใช่ใน willClose เพราะ willClose ทำงานหลังหมุดถูกล้างไปแล้ว */
+        preConfirm: function () { return spPickerMarker ? spPickerMarker.getLatLng() : null; },
+        willClose: function () { if (spPickerMap) { spPickerMap.remove(); spPickerMap = null; spPickerMarker = null; } }
+      }).then(function (result) {
+        if (!(result.isConfirmed && result.value)) return;
+        document.getElementById('spCoords').value = result.value.lat.toFixed(6) + ', ' + result.value.lng.toFixed(6);
+      });
+    }
+
+    function spUseCurrentLocation() {
+      if (!navigator.geolocation) { Swal.fire({ icon: 'error', title: 'เบราว์เซอร์ไม่รองรับ GPS' }); return; }
+      navigator.geolocation.getCurrentPosition(
+        function (pos) { document.getElementById('spCoords').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6); },
+        function () { Swal.fire({ icon: 'error', title: 'ไม่สามารถดึงตำแหน่งได้', text: 'โปรดอนุญาตการเข้าถึงตำแหน่ง หรือกรอกพิกัดเอง' }); }
+      );
+    }
+
+    async function handleSpotFile(ev) {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      Swal.fire({ title: 'กำลังเตรียมรูปภาพ', allowOutsideClick: false, didOpen: function () { Swal.showLoading(); } });
+      try {
+        state.spotImage = await resizeImage(file);
+        Swal.close();
+        renderSpotPreview();
+      } catch (error) {
+        Swal.close();
+        await rpcAlert(error, 'ไม่สามารถอ่านรูปภาพได้');
+      }
+    }
+
+    function renderSpotPreview() {
+      const box = document.getElementById('spPreview');
+      if (!box) return;
+      const img = state.spotImage;
+      if (!img) { box.innerHTML = ''; return; }
+      const src = img.existingUrl || img.preview;
+      box.innerHTML = '<div style="position:relative;margin-top:12px;max-width:520px;border:1px solid #d3e1ef;border-radius:14px;background:#eaf0f7;padding:8px">' +
+        '<div style="aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#dde6f0">' +
+        '<img src="' + escapeHtml(src) + '" alt="รูปจุด" style="width:100%;height:100%;object-fit:cover;display:block"></div>' +
+        '<button type="button" onclick="removeSpotImage()" title="ลบรูปนี้" style="position:absolute;right:6px;top:6px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(130,0,16,.85);color:#fff"><i class="fa-solid fa-xmark"></i></button>' +
+        (img.existingUrl ? '<div style="font-size:.78rem;color:#64748b;margin-top:6px">รูปเดิมของจุดนี้</div>' : '') +
+        '</div>';
+    }
+
+    function removeSpotImage() {
+      state.spotImage = null;
+      const input = document.getElementById('spFile');
+      if (input) input.value = '';
+      renderSpotPreview();
+    }
+
+    async function uploadSpotPhoto() {
+      const img = state.spotImage;
+      if (!img) return '';
+      if (img.existingUrl) return img.existingUrl;
+      const ext = img.mimeType === 'image/png' ? 'png' : 'jpg';
+      const path = 'spots/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      const up = await db.storage.from(STORAGE_BUCKET)
+        .upload(path, b64ToBlob(img.data, img.mimeType), { contentType: img.mimeType });
+      if (up.error) throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + up.error.message);
+      return db.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+    }
+
+    async function spSave() {
+      const name = String(document.getElementById('spName').value || '').trim();
+      const coords = String(document.getElementById('spCoords').value || '').trim();
+      const note = String(document.getElementById('spNote').value || '').trim();
+      if (!name) { Swal.fire({ icon: 'warning', title: 'ยังไม่ได้ตั้งชื่อจุด' }); return; }
+      const parts = coords.split(',');
+      const lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
+      if (parts.length < 2 || isNaN(lat) || isNaN(lng)) {
+        Swal.fire({ icon: 'warning', title: 'พิกัดยังไม่ถูกต้อง', text: 'กดปุ่มแผนที่เพื่อปักหมุด หรือพิมพ์เป็น ละติจูด, ลองจิจูด' });
+        return;
+      }
+      if (!state.spotImage) { Swal.fire({ icon: 'warning', title: 'ยังไม่ได้แนบรูป' }); return; }
+
+      const btn = document.getElementById('spSaveBtn');
+      btn.disabled = true;
+      Swal.fire({ title: 'กำลังบันทึก', allowOutsideClick: false, didOpen: function () { Swal.showLoading(); } });
+      try {
+        const url = await uploadSpotPhoto();
+        const res = await rpc('spot_photo_save', {
+          p_token: state.token, p_id: state.spotEditingId || null,
+          p_name: name, p_lat: lat, p_lng: lng, p_url: url, p_note: note
+        });
+        Swal.close();
+        if (!res || !res.success) { await rpcAlert(new Error((res && res.message) || 'บันทึกไม่สำเร็จ')); return; }
+        /* ข้อความที่คืนมาอาจเป็นคำเตือนว่ามีรูปอื่นอยู่ในรัศมีเดียวกัน ต้องให้อ่านจบก่อน */
+        await Swal.fire({ icon: 'success', title: 'บันทึกแล้ว', text: res.message || '', confirmButtonColor: '#0f766e' });
+        spReset();
+        await spLoad();
+      } catch (e) {
+        Swal.close();
+        await rpcAlert(e, 'บันทึกไม่สำเร็จ');
+      } finally { btn.disabled = false; }
+    }
+
+    function spEdit(id) {
+      const r = (state.spotPhotos || []).find(function (x) { return x.id === id; });
+      if (!r) return;
+      state.spotEditingId = id;
+      state.spotImage = { existingUrl: r.url };
+      document.getElementById('spName').value = r.name || '';
+      document.getElementById('spCoords').value = Number(r.lat).toFixed(6) + ', ' + Number(r.lng).toFixed(6);
+      document.getElementById('spNote').value = r.note || '';
+      document.getElementById('spFormTitle').textContent = 'แก้ไขจุด ' + r.name;
+      document.getElementById('spCancelBtn').style.display = '';
+      renderSpotPreview();
+      document.getElementById('spName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    async function spDelete(id) {
+      const r = (state.spotPhotos || []).find(function (x) { return x.id === id; });
+      const go = await Swal.fire({
+        icon: 'warning', title: 'ลบรูปจุดนี้', text: r ? r.name : '',
+        showCancelButton: true, confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#b91c1c'
+      });
+      if (!go.isConfirmed) return;
+      try {
+        const res = await rpc('spot_photo_delete', { p_token: state.token, p_id: id });
+        if (!res || !res.success) { await rpcAlert(new Error((res && res.message) || 'ลบไม่สำเร็จ')); return; }
+        if (state.spotEditingId === id) spReset();
+        await spLoad();
+      } catch (e) { await rpcAlert(e, 'ลบไม่สำเร็จ'); }
+    }
+
+    function spReset() {
+      state.spotEditingId = null;
+      state.spotImage = null;
+      ['spName', 'spCoords', 'spNote'].forEach(function (id) { const el = document.getElementById(id); if (el) el.value = ''; });
+      const f = document.getElementById('spFile'); if (f) f.value = '';
+      document.getElementById('spFormTitle').textContent = 'เพิ่มรูปจุดใหม่';
+      document.getElementById('spCancelBtn').style.display = 'none';
+      renderSpotPreview();
     }
 
     /* ============================================================
