@@ -188,6 +188,11 @@ back to plain text; clearing that one setting is the emergency lever when the re
   carrying an image timed out — on all three channels, while `fb_send_*` still returned `sent: 1`,
   because pg_net reports the handoff and not the outcome. `fb_post` now passes
   `timeout_milliseconds := 30000`. The first post that ever reached the Page came right after.
+- **A timeout is not a failure, and clearing the ledger row on that assumption posts twice.** The
+  first weekly post timed out at five seconds and was retried after the row was deleted; both
+  requests had reached Facebook, so the Page carried the same summary twice, ten minutes apart.
+  A row holding a `req_id` was sent — look at the Page before clearing anything.
+  `fb_clear_for_retry(kind, ref)` refuses such rows and only clears ones that never fired.
 - **The advisory sender decides timing itself, the cron does not.** A closure that starts and ends
   on the same Bangkok day goes out on the next run; anything longer waits for the run that lands in
   the 09:00 hour, and only once the day after it was entered. The job stays on a quarter-hour
