@@ -154,6 +154,55 @@ Deploying the Edge Function is the fragile step; see the deploy notes in memory.
 
 > The campaign group is the **same group** that `line_send_new_deaths` posts to (`C81363…`). Inviting the public into it was a deliberate decision made on 21 Aug 2026 after the consequence was spelled out: fatality alerts carry time, road, subdistrict, gender, age and role, and go out within five minutes — possibly before the family is told. There is no separate officer group, and `line_broadcast` only sends to `target_type = 'group'`, so turning `want_death` off here would stop death alerts for everyone.
 
+## Facebook Page posting (`sql/fb_*.sql`, `fb_` tables, the `fbcard` Edge Function)
+
+Posts to the station's Page from Postgres over pg_net. `fbEnabled` in `bs_settings` is the
+master switch and every sender checks it, so the whole subsystem is inert while it is false.
+Four pg_cron jobs call `fb_send_deaths`, `fb_send_advisories`, `fb_send_hotspots` and
+`fb_send_weekly`. Wording is never rewritten here — the senders call LINE's own text builders
+(`line_msg_death`, `line_adv_item_text`) so a story reads the same on both channels.
+
+`fb_sent` is the dedupe ledger, keyed `(kind, ref_id)`. **`fb_post` books its row before firing,**
+not after: two concurrent runs would otherwise both fire before either could record it, and on a
+public Page that means the same post twice. A row with `req_id` null was never sent — it was only
+marked "do not send". That distinction is the first thing to read when a post fails to appear.
+
+Facebook is handed a URL and fetches the image itself, so **a broken image kills the whole post**,
+not just the picture. `fb_card_url` returns null when `fbCardUrl` is blank, which drops every post
+back to plain text; clearing that one setting is the emergency lever when the renderer misbehaves.
+
+### Traps that cost a day each
+
+- **The backlog guards are not time-aware.** `fb_3a` and `fb_3c` end by writing a `fb_sent` row for
+  every death and every advisory then on file, so a first run cannot flood the Page with history.
+  `fb_3c` marks advisories **without looking at the start time**, so a notice entered in advance is
+  retired before its day arrives. That is how the Chun Hong festival, entered 22 Sep for the 24th,
+  was silenced on 23 Sep and never posted. `sql/fb_15_unskip_future.sql` frees rows like that
+  (advisory, never sent, start still ahead). Re-running `fb_3c` re-arms the trap.
+- **Reading the result can fail in a way that looks like no result.** `fb_2b_read.sql` joins
+  `net._http_response`; when that table cannot be read the statement dies and the editor shows
+  nothing, which is indistinguishable from an empty ledger. `fb_13_count.sql` and
+  `fb_14_last_rows.sql` touch `fb_sent` alone and cannot fail that way — use them first.
+- **The advisory sender decides timing itself, the cron does not.** A closure that starts and ends
+  on the same Bangkok day goes out on the next run; anything longer waits for the run that lands in
+  the 09:00 hour, and only once the day after it was entered. The job stays on a quarter-hour
+  schedule for that reason — moving it to once a day silences every one-day closure with no sign.
+
+### The card renderer
+
+`supabase/functions/fbcard/index.ts` draws the images on demand: `?kind=death&id=` and
+`?kind=weekly&days=`. Facebook fetches them with no token, so it uses `withSupabase({auth:'none'})`
+and **"Verify JWT with legacy secret" must be turned off after every dashboard deploy** — it
+re-arms itself. Artwork, layouts and fonts come from the live Netlify site, not from the repo and
+not bundled, so `assets/fbcard/` has to be inside `site.zip` or every card 500s.
+
+Three things about resvg drive the design: it will not fetch remote images (the template is inlined
+as base64), it ships no fonts (the three Sarabun files are passed in as buffers), and it cannot
+measure text. Widths come from `assets/fbcard/fonts/sarabun-widths.json`, a per-character advance
+table measured out of the font files — summing it matches a whole-string measurement exactly, where
+the character-count estimate it replaced overflowed the box. Each death template also carries its
+own `boxRight`, because several layouts put a picture panel to the right of a much narrower box.
+
 ## Google Drive access (`videos.html` + the `drive` Edge Function)
 
 `videos.html` used to carry a Google API key inline, referrer-locked to `akkapanb-spec.github.io`. When the site moved to Netlify after the GitHub suspension the key did not move with it, so **every request from the new domain returned 403 and the clip page silently showed an error for weeks**. The referrer lock is why the leak was never dangerous — and also why the page broke.
