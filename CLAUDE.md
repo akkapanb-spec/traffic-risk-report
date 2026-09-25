@@ -183,6 +183,11 @@ back to plain text; clearing that one setting is the emergency lever when the re
   `net._http_response`; when that table cannot be read the statement dies and the editor shows
   nothing, which is indistinguishable from an empty ledger. `fb_13_count.sql` and
   `fb_14_last_rows.sql` touch `fb_sent` alone and cannot fail that way — use them first.
+- **pg_net waits 5 seconds by default, and a photo post needs more.** Facebook is given a URL and
+  fetches the card before it replies, and the renderer takes 5.6 to 6.4 seconds, so every post
+  carrying an image timed out — on all three channels, while `fb_send_*` still returned `sent: 1`,
+  because pg_net reports the handoff and not the outcome. `fb_post` now passes
+  `timeout_milliseconds := 30000`. The first post that ever reached the Page came right after.
 - **The advisory sender decides timing itself, the cron does not.** A closure that starts and ends
   on the same Bangkok day goes out on the next run; anything longer waits for the run that lands in
   the 09:00 hour, and only once the day after it was entered. The job stays on a quarter-hour
