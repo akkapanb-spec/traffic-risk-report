@@ -193,6 +193,15 @@ back to plain text; clearing that one setting is the emergency lever when the re
   requests had reached Facebook, so the Page carried the same summary twice, ten minutes apart.
   A row holding a `req_id` was sent — look at the Page before clearing anything.
   `fb_clear_for_retry(kind, ref)` refuses such rows and only clears ones that never fired.
+- **A post can be perfect and still reach nobody.** Two advisories on 2 Oct 2026 reached 1 person
+  each while the officers own posts on either side of them reached 959 and 3,423. They were
+  published, public, is_hidden false, correctly placed in the Page timeline — Facebook simply did
+  not distribute them, which reads from the wall exactly like a post that was never made. Days went
+  into the plumbing before anyone looked at the reach column in Business Suite; that column is the
+  first thing to check, not the wall. Both carried two outbound links in the body, so fb_post now
+  strips links out and fb_finish_posts puts them in the first comment. Whether that is enough is
+  measured the same way: the reach number on the next post, not whether it can be found by
+  scrolling.
 - **The advisory sender decides timing itself, the cron does not.** A closure that starts and ends
   on the same Bangkok day goes out on the next run; anything longer waits for the run that lands in
   the 09:00 hour, and only once the day after it was entered. The job stays on a quarter-hour
