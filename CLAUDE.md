@@ -207,6 +207,25 @@ back to plain text; clearing that one setting is the emergency lever when the re
   the 09:00 hour, and only once the day after it was entered. The job stays on a quarter-hour
   schedule for that reason — moving it to once a day silences every one-day closure with no sign.
 
+### Measured: the app is the thing Facebook demotes
+
+Settled on 3 Oct 2026 by posting the same notice twice, seventy minutes apart. The system posted
+it at 15:31 and reached **2 people**. An officer pasted the identical text and card by hand at
+16:44 and reached **514**, with 7 reactions and a share, still climbing an hour later. Same words,
+same image, same Page, same afternoon. Nothing else differed.
+
+Everything tried before that — moving links to a comment, dropping links entirely, text with no
+image, photo attached to a feed post rather than sent to /photos — changed nothing, because
+content was never the variable.
+
+So the system stopped publishing and started preparing. `fb_manual_queue(p_token)` returns the
+weekly summary, the repeat-crash report, every advisory in force and any fatality in the last 48
+hours, each with the exact text its automatic sender would have used and the card to go with it;
+the officer page gives each one a copy button and a save button. It calls the same text builders
+the senders call, so the two can never drift apart.
+
+LINE remains the channel for speed — the group has it within five minutes and nobody has to be at
+a desk. Facebook is for reach, and reach costs one paste.
 ### The card renderer
 
 `supabase/functions/fbcard/index.ts` draws the images on demand: `?kind=death&id=` and
