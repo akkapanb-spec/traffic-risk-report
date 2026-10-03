@@ -769,6 +769,7 @@
         <button class="nav-btn admin-item" data-page="voice" id="vcNavBtn" style="display:none" onclick="openPage('voice',this)"><i class="fa-solid fa-comment-dots"></i> เสียงจากประชาชน <span class="menu-badge" id="badgeVoice" style="display:none"></span></button>
         <button class="nav-btn admin-item" data-page="campaign" id="cpgNavBtn" style="display:none" onclick="openPage('campaign',this)"><i class="fa-solid fa-gift"></i> กิจกรรมแจกของรางวัล</button>
         <button class="nav-btn admin-item" data-page="spotphoto" id="spNavBtn" style="display:none" onclick="openPage('spotphoto',this)"><i class="fa-solid fa-camera-retro"></i> คลังรูปจุดอุบัติเหตุซ้ำ</button>
+        <button class="nav-btn admin-item" data-page="fbmanual" id="fbmNavBtn" style="display:none" onclick="openPage('fbmanual',this)"><i class="fa-brands fa-facebook"></i> ช่วยโพสต์เฟซบุ๊ก</button>
         <!-- ลิงก์จริง ไม่ใช่ window.open — popup blocker บล็อก window.open แต่ไม่บล็อกการกดลิงก์ -->
         <a class="nav-btn admin-item" id="dutyNavBtn" style="display:none" href="https://akkapanb-spec.github.io/traffic-duty-daily/" target="_blank" rel="noopener" onclick="toggleDrawer(false)"><i class="fa-solid fa-clipboard-user"></i> ระบบการปฏิบัติหน้าที่จราจรประจำวัน <i class="fa-solid fa-arrow-up-right-from-square ext-arrow"></i></a>
       </nav>
@@ -1675,6 +1676,30 @@
         </div>
       </section>
 
+      <section id="page-fbmanual" class="page">
+        <div class="page-head"><div class="page-icon" style="background:linear-gradient(135deg,#60a5fa,#1d4ed8)"><i class="fa-brands fa-facebook"></i></div><div><h2>ช่วยโพสต์เฟซบุ๊ก</h2><p>คัดลอกข้อความและรูปที่ระบบเตรียมไว้ ไปวางที่หน้าเพจเอง</p></div></div>
+
+        <div class="card" style="border-color:#bfdbfe;background:#f0f6ff">
+          <h3 class="card-title"><i class="fa-solid fa-circle-info"></i> ทำไมต้องโพสต์เอง</h3>
+          <p class="hint" style="margin:0">ระบบโพสต์ขึ้นเพจเองได้ และขึ้นจริงทุกครั้ง แต่วัดมาหนึ่งสัปดาห์แล้วพบว่า
+          <b>โพสต์ที่มาจากระบบมีคนเห็น 0 ถึง 1 คน ส่วนโพสต์ที่เจ้าหน้าที่พิมพ์เองมีคนเห็นพันกว่าถึงสามพัน</b>
+          ทุกครั้งโดยไม่มีข้อยกเว้น ลองเปลี่ยนเนื้อหามาสี่แบบแล้วก็ไม่ต่าง
+          <br>เป็นการตัดสินใจของเฟซบุ๊กเองว่าจะกระจายโพสต์จากแอปแค่ไหน ไม่มีหน้าตั้งค่าไหนปรับได้
+          <br><br>หน้านี้จึงเตรียมข้อความกับรูปไว้ให้ครบ <b>กดคัดลอกแล้วไปวางที่หน้าเพจ ใช้เวลาไม่ถึงนาที</b>
+          ได้ทั้งความถูกต้องของข้อมูลจากระบบ และการมองเห็นของโพสต์ที่คนพิมพ์เอง</p>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-list-check"></i> เนื้อหาที่พร้อมโพสต์ <span id="fbmCount" class="pill">0 รายการ</span>
+            <button class="btn btn-soft btn-sm" type="button" style="margin-left:auto" onclick="fbmLoad()"><i class="fa-solid fa-rotate"></i> รีเฟรช</button></h3>
+          <div class="filter-bar" style="margin-bottom:12px">
+            <a class="btn btn-primary btn-sm" href="https://www.facebook.com/147045742304847" target="_blank" rel="noopener"><i class="fa-brands fa-facebook"></i> เปิดหน้าเพจ</a>
+            <span class="hint" style="margin:0">เปิดเพจไว้อีกแท็บ แล้วสลับมาคัดลอกทีละรายการ</span>
+          </div>
+          <div id="fbmList"></div>
+        </div>
+      </section>
+
       <!-- ADMIN: ประชากรและอัตราความเสี่ยง -->
       <!-- ============ สภาพอากาศกับอุบัติเหตุ ============ -->
       <section id="page-weather" class="page">
@@ -2020,7 +2045,7 @@
     const NAKHON_SAWAN_CENTER = [15.7047, 100.1372];
     const SESSION_KEY = 'accidentTrafficPoliceSession';
     const state = {
-      token: '', user: null, preparedImages: [], deathInfoImage: null, spotPhotos: [], spotImage: null, spotEditingId: null, currentPage: 'home',
+      token: '', user: null, preparedImages: [], deathInfoImage: null, spotPhotos: [], spotImage: null, spotEditingId: null, fbmRows: [], currentPage: 'home',
       dashboardLoaded: false, mapLoaded: false, dashboardData: null,
       accidentRows: null, injuryRows: null, deathDates: null,
       pickerMap: null, pickerMarker: null, selectedLocation: null,
@@ -3451,6 +3476,7 @@
       document.getElementById('vcNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('cpgNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('spNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
+      document.getElementById('fbmNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('dutyNavBtn').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.getElementById('adminMenuTab').style.display = state.user.isAdmin ? 'flex' : 'none';
       document.querySelector('.mobile-tabbar').classList.toggle('admin-mode', !!state.user.isAdmin);
@@ -3570,6 +3596,7 @@
       if (page === 'voice') initVoicePage();
       if (page === 'campaign') initCampaignPage();
       if (page === 'spotphoto') initSpotPhotoPage();
+      if (page === 'fbmanual') initFbManualPage();
       // ไฮไลต์ปุ่ม "ผู้ดูแล" ในแถบล่าง เมื่ออยู่ในหน้าใดหน้าหนึ่งของ admin
       const adminMenuTab = document.getElementById('adminMenuTab');
       if (adminMenuTab) adminMenuTab.classList.toggle('active', ['admin','riskmanage','deaths','avoid','blackspot','roadnet','checkpoint','population','voice'].includes(page));
@@ -3624,6 +3651,7 @@
           tile('population', '#f472b6,#9d174d', 'fa-people-group',         'ประชากร<br>อัตราเสี่ยง',  '') +
           tile('voice',      '#c084fc,#6b21a8', 'fa-comment-dots',         'เสียงจาก<br>ประชาชน',    badge(b.voice)) +
           tile('spotphoto',  '#2dd4bf,#0f766e', 'fa-camera-retro',        'คลังรูป<br>จุดซ้ำ',      '') +
+          tile('fbmanual',   '#60a5fa,#1d4ed8', 'fa-share-nodes',         'ช่วยโพสต์<br>เฟซบุ๊ก',   '') +
           extTile(DUTY_SYSTEM_URL, '#38bdf8,#0369a1', 'fa-clipboard-user', 'ปฏิบัติหน้าที่<br>ประจำวัน');
       }
       sheet.classList.toggle('open', open);
@@ -7305,6 +7333,114 @@
         },
         () => Swal.fire({ icon:'error', title:'ไม่สามารถดึงตำแหน่งได้', text:'โปรดอนุญาตการเข้าถึงตำแหน่ง หรือกรอกพิกัดเอง' })
       );
+    }
+
+    /* ============================================================
+       ช่วยโพสต์เฟซบุ๊กด้วยมือ
+
+       ระบบโพสต์เองได้และขึ้นจริงทุกครั้ง แต่ยอดเข้าถึงอยู่ที่ 0 ถึง 1 เสมอ
+       ขณะที่โพสต์ซึ่งเจ้าหน้าที่พิมพ์เองได้พันกว่าถึงสามพันทุกครั้ง
+       วัดจากแปดโพสต์ตลอดหนึ่งสัปดาห์ ลองเนื้อหาสี่แบบแล้วไม่ต่างกัน
+       ตัวแปรเดียวที่เหลือคือโพสต์นั้นมาจากแอปหรือมาจากคน ซึ่งปรับไม่ได้
+
+       หน้านี้จึงไม่ส่งอะไรออกไป แค่หยิบข้อความชุดเดียวกับที่ตัวส่งอัตโนมัติใช้
+       มาวางให้คัดลอกง่าย ๆ พร้อมรูปการ์ด
+       ============================================================ */
+
+    async function initFbManualPage() { await fbmLoad(); }
+
+    async function fbmLoad() {
+      const box = document.getElementById('fbmList');
+      if (box) box.innerHTML = '<div class="loading-skeleton"></div>';
+      try {
+        const res = await rpc('fb_manual_queue', { p_token: state.token });
+        if (!res || !res.success) { await rpcAlert(new Error((res && res.message) || 'อ่านรายการไม่ได้')); return; }
+        state.fbmRows = res.rows || [];
+        fbmRender();
+      } catch (e) { await rpcAlert(e, 'อ่านรายการไม่ได้'); }
+    }
+
+    function fbmRender() {
+      const rows = state.fbmRows || [];
+      document.getElementById('fbmCount').textContent = rows.length + ' รายการ';
+      const box = document.getElementById('fbmList');
+      if (!rows.length) {
+        box.innerHTML = '<p class="hint" style="margin:0">ยังไม่มีเนื้อหาที่พร้อมโพสต์</p>';
+        return;
+      }
+      box.innerHTML = rows.map(function (r, i) {
+        /* ป้ายบอกว่าระบบเคยยิงเรื่องนี้ไปแล้วหรือยัง
+           เคยยิงแล้วไม่ได้แปลว่าห้ามโพสต์ซ้ำด้วยมือ เพราะอันที่ระบบยิงแทบไม่มีคนเห็น
+           แต่ต้องรู้ไว้ก่อนตัดสินใจ จะได้ไม่งงว่าทำไมเพจมีสองอัน */
+        const badge = r.posted
+          ? '<span class="pill" style="background:#fee2e2;color:#9a1420">ระบบยิงไปแล้ว</span>'
+          : '<span class="pill" style="background:#dcfce7;color:#166534">ยังไม่ได้ยิง</span>';
+        return '<div style="border:1px solid #d3e1ef;border-radius:14px;padding:14px;margin-bottom:14px;background:#fff">' +
+          '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">' +
+          '<b style="overflow-wrap:anywhere">' + escapeHtml(r.label || '') + '</b>' + badge + '</div>' +
+          (r.image
+            ? '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px">' +
+              '<img src="' + escapeHtml(r.image) + '" alt="รูปประกอบ" loading="lazy" ' +
+              'style="width:200px;max-width:100%;border-radius:10px;border:1px solid #d3e1ef;background:#eaf0f7">' +
+              '<div style="display:flex;flex-direction:column;gap:8px">' +
+              '<button class="btn btn-soft btn-sm" type="button" onclick="fbmSaveImage(' + i + ')"><i class="fa-solid fa-download"></i> บันทึกรูป</button>' +
+              '<a class="btn btn-soft btn-sm" href="' + escapeHtml(r.image) + '" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> เปิดรูปเต็ม</a>' +
+              '</div></div>'
+            : '<p class="hint" style="margin:0 0 10px">รายการนี้เป็นข้อความล้วน ไม่มีรูป</p>') +
+          '<textarea id="fbmTx' + i + '" class="input" readonly rows="8" ' +
+          'style="width:100%;font-family:inherit;line-height:1.55;resize:vertical">' + escapeHtml(r.text || '') + '</textarea>' +
+          '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+          '<button class="btn btn-primary btn-sm" type="button" onclick="fbmCopy(' + i + ')"><i class="fa-solid fa-copy"></i> คัดลอกข้อความ</button>' +
+          '</div></div>';
+      }).join('');
+    }
+
+    async function fbmCopy(i) {
+      const r = (state.fbmRows || [])[i];
+      if (!r) return;
+      const ta = document.getElementById('fbmTx' + i);
+      try {
+        await navigator.clipboard.writeText(r.text || '');
+      } catch (e) {
+        /* เบราว์เซอร์เก่าหรือหน้าไม่ได้เปิดผ่าน https จะใช้คลิปบอร์ดไม่ได้
+           เลือกข้อความไว้ให้แทน ผู้ใช้กดคัดลอกเองได้ ดีกว่าไม่เกิดอะไรเลย */
+        if (ta) { ta.focus(); ta.select(); }
+        Swal.fire({ icon:'info', title:'คัดลอกอัตโนมัติไม่ได้', text:'เลือกข้อความไว้ให้แล้ว กด Ctrl+C เพื่อคัดลอก' });
+        return;
+      }
+      Swal.fire({ icon:'success', title:'คัดลอกแล้ว', text:'ไปวางในช่องสร้างโพสต์ของเพจได้เลย',
+                  timer:1400, showConfirmButton:false });
+    }
+
+    /* ดาวน์โหลดรูปข้ามโดเมน  ต้องดึงมาเป็นก้อนข้อมูลก่อน
+       ใส่ download บนลิงก์ตรง ๆ ไม่ได้ผลเมื่อไฟล์อยู่คนละโดเมน เบราว์เซอร์จะเปิดดูแทน */
+    async function fbmSaveImage(i) {
+      const r = (state.fbmRows || [])[i];
+      if (!r || !r.image) return;
+      Swal.fire({ title:'กำลังเตรียมรูป', allowOutsideClick:false, didOpen:function(){ Swal.showLoading(); } });
+      try {
+        const resp = await fetch(r.image);
+        if (!resp.ok) throw new Error('โหลดรูปไม่ได้ ' + resp.status);
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'fb-' + (r.kind || 'post') + '-' + (r.ref || '') + (blob.type === 'image/png' ? '.png' : '.jpg');
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+        Swal.close();
+      } catch (e) {
+        Swal.close();
+        /* ดาวน์โหลดไม่ได้ก็ยังเปิดดูได้ แล้วกดบันทึกเองจากเบราว์เซอร์ */
+        const go = await Swal.fire({
+          icon:'warning', title:'บันทึกอัตโนมัติไม่ได้',
+          text:'เปิดรูปในแท็บใหม่แล้วกดบันทึกเองได้',
+          showCancelButton:true, confirmButtonText:'เปิดรูป', cancelButtonText:'ปิด'
+        });
+        if (go.isConfirmed) window.open(r.image, '_blank', 'noopener');
+      }
     }
 
     /* ============================================================
